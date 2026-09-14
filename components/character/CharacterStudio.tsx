@@ -393,7 +393,9 @@ export function CharacterStudio() {
                 <div className="mt-2 space-y-1.5">
                   {[
                     ["Mode", spec.mode === "normal" ? "Normal" : "Uncensored"],
-                    ["Age", spec.age],
+                    ["Age", `${spec.age} years old`],
+                    ["Ethnicity", spec.ethnicity],
+                    ["Country", spec.country],
                     ["Aspect Ratio", spec.aspect],
                     ["Resolution", spec.resolution],
                     ["Style", spec.style],

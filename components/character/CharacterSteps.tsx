@@ -10,10 +10,13 @@ import {
   RESOLUTIONS,
 } from "@/lib/constants";
 import {
-  AGES,
+  AGE_MAX,
+  AGE_MIN,
   BODY_TYPES,
   BUILDS,
   CHARACTER_STYLES,
+  COUNTRIES,
+  ETHNICITIES,
   EYE_COLORS,
   EYE_SHAPES,
   FACE_SHAPES,
@@ -29,7 +32,9 @@ import {
   SKIN_TONES,
   WEIGHTS,
   accessoryGroups,
+  ageBucketLabel,
   bodyDetailOptions,
+  clampAge,
   clothingGroups,
   expressionOptions,
   lookById,
@@ -297,6 +302,42 @@ function NsfwSlider({
   );
 }
 
+/** Whole-year age picker — precise steps with the classic buckets as a hint. */
+function AgeSlider({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (age: number) => void;
+}) {
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-3">
+        <label htmlFor="character-age" className="text-[13px] font-semibold text-ink-soft">
+          Age
+        </label>
+        <span className="text-[12px] font-semibold text-ink">{value} years old</span>
+      </div>
+      <input
+        id="character-age"
+        type="range"
+        min={AGE_MIN}
+        max={AGE_MAX}
+        step={1}
+        value={value}
+        aria-valuetext={`${value} years old`}
+        onChange={(e) => onChange(clampAge(Number(e.target.value)))}
+        className="mt-2 w-full accent-primary"
+      />
+      <div className="mt-1 flex justify-between text-[10.5px] font-medium text-muted">
+        <span>{AGE_MIN}</span>
+        <span>{AGE_MAX}</span>
+      </div>
+      <p className="mt-1.5 text-[12px] text-muted">{ageBucketLabel(value)}</p>
+    </div>
+  );
+}
+
 function TemplateChips({
   templates,
   activeText,
@@ -485,17 +526,7 @@ export function StepAppearance({
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <SelectField
-              label="Age"
-              value={spec.age}
-              onChange={(e) => patch({ age: e.target.value })}
-            >
-              {AGES.map((age) => (
-                <option key={age} value={age}>
-                  {age}
-                </option>
-              ))}
-            </SelectField>
+            <AgeSlider value={spec.age} onChange={(age) => patch({ age })} />
             <SelectField
               label="Body Type"
               value={spec.bodyType}
@@ -504,6 +535,28 @@ export function StepAppearance({
               {BODY_TYPES.map((type) => (
                 <option key={type} value={type}>
                   {type}
+                </option>
+              ))}
+            </SelectField>
+            <SelectField
+              label="Ethnicity"
+              value={spec.ethnicity}
+              onChange={(e) => patch({ ethnicity: e.target.value })}
+            >
+              {ETHNICITIES.map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </SelectField>
+            <SelectField
+              label="Country"
+              value={spec.country}
+              onChange={(e) => patch({ country: e.target.value })}
+            >
+              {COUNTRIES.map((value) => (
+                <option key={value} value={value}>
+                  {value}
                 </option>
               ))}
             </SelectField>
@@ -1148,7 +1201,9 @@ export function StepReview({
 
           <ReviewCard title="Appearance">
             <ReviewRow label="Gender">{spec.gender}</ReviewRow>
-            <ReviewRow label="Age">{spec.age}</ReviewRow>
+            <ReviewRow label="Age">{spec.age} years old</ReviewRow>
+            <ReviewRow label="Ethnicity">{spec.ethnicity}</ReviewRow>
+            <ReviewRow label="Country">{spec.country}</ReviewRow>
             <ReviewRow label="Body Type">{spec.bodyType}</ReviewRow>
             <ReviewRow label="Skin Tone">
               <span className="inline-flex items-center justify-end gap-1.5">
