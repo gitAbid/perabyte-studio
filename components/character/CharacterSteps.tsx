@@ -6,16 +6,14 @@ import { MediaFrame } from "@/components/Media";
 import { Button, Segmented, SelectField, TextAreaField, Toggle } from "@/components/ui";
 import {
   ASPECTS,
-  IMAGE_STYLES,
   PROMPT_MAX,
   RESOLUTIONS,
 } from "@/lib/constants";
 import {
-  ACCESSORIES,
   AGES,
   BODY_TYPES,
   BUILDS,
-  EXPRESSIONS,
+  CHARACTER_STYLES,
   EYE_COLORS,
   EYE_SHAPES,
   FACE_SHAPES,
@@ -25,12 +23,22 @@ import {
   HAIR_STYLES,
   HEIGHTS,
   LOOK_PRESETS,
-  OUTFITS,
+  NSFW_LEVELS,
+  NUDITY,
+  SEXUAL_CONTENT,
   SKIN_TONES,
   WEIGHTS,
+  accessoryGroups,
+  bodyDetailOptions,
+  clothingGroups,
+  expressionOptions,
   lookById,
+  poseOptions,
+  sanitizeSpecForMode,
+  violenceOptions,
   type CharacterMode,
   type CharacterSpec,
+  type OptionGroup,
 } from "@/lib/character";
 
 export const CHARACTER_STEPS = [
@@ -165,12 +173,12 @@ export function ModePicker({
     {
       id: "normal",
       title: "Normal",
-      body: "Auto-enhanced prompt with standard styling.",
+      body: "Fully clothed, safety checker on, NSFW locked at 0.",
     },
     {
       id: "uncensored",
       title: "Uncensored",
-      body: "Your prompt is sent exactly as written. For creative and artistic use only.",
+      body: "Adult creative control. Clothing optional, NSFW 0–5. 18+ only.",
       badge: "NEW",
     },
   ];
@@ -248,6 +256,70 @@ function ReviewCard({
 
 const toneById = (id: string) => SKIN_TONES.find((t) => t.id === id);
 
+function NsfwSlider({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  const current = NSFW_LEVELS.find((level) => level.value === value) ?? NSFW_LEVELS[0];
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-3">
+        <label htmlFor="nsfw-level" className="text-[13px] font-semibold text-ink-soft">
+          NSFW Level
+        </label>
+        <span className="text-[12px] font-semibold text-ink">
+          {current.value} · {current.label}
+        </span>
+      </div>
+      <input
+        id="nsfw-level"
+        type="range"
+        min={0}
+        max={5}
+        step={1}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="mt-2 w-full accent-primary"
+      />
+      <div className="mt-1 flex justify-between text-[10.5px] font-medium text-muted">
+        {NSFW_LEVELS.map((level) => (
+          <span key={level.value}>{level.value}</span>
+        ))}
+      </div>
+      <p className="mt-1.5 text-[12px] text-muted">{current.hint}</p>
+    </div>
+  );
+}
+
+function GroupedSelect({
+  label,
+  value,
+  groups,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  groups: OptionGroup[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <SelectField label={label} value={value} onChange={(e) => onChange(e.target.value)}>
+      {groups.map((group) => (
+        <optgroup key={group.label} label={group.label}>
+          {group.options.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </optgroup>
+      ))}
+    </SelectField>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /* Step 1 — Character Details                                          */
 /* ------------------------------------------------------------------ */
@@ -312,7 +384,7 @@ export function StepDetails({
           value={spec.style}
           onChange={(e) => patch({ style: e.target.value })}
         >
-          {Object.keys(IMAGE_STYLES).map((style) => (
+          {CHARACTER_STYLES.map((style) => (
             <option key={style} value={style}>
               {style}
             </option>
@@ -320,7 +392,14 @@ export function StepDetails({
         </SelectField>
       </div>
 
-      <ModePicker value={spec.mode} onChange={(mode) => patch({ mode })} />
+      <ModePicker
+        value={spec.mode}
+        onChange={(mode) => patch(sanitizeSpecForMode(spec, mode))}
+      />
+      <p className="text-[12px] text-muted">
+        Characters are strictly 18+. Regular Mode keeps clothing on and NSFW off;
+        Uncensored Mode unlocks adult options and is auto-tagged in History.
+      </p>
 
       <StepNav onBack={onBack} onNext={onNext} nextLabel="Next" nextIcon="arrow-right" backHidden />
     </div>
@@ -475,7 +554,7 @@ export function StepAppearance({
                     value={spec.expression}
                     onChange={(e) => patch({ expression: e.target.value })}
                   >
-                    {EXPRESSIONS.map((value) => (
+                    {expressionOptions(spec.mode).map((value) => (
                       <option key={value} value={value}>
                         {value}
                       </option>
@@ -536,30 +615,20 @@ export function StepAppearance({
                 </>
               )}
               {tab === "Clothing" && (
-                <SelectField
-                  label="Outfit Style"
+                <GroupedSelect
+                  label={spec.mode === "normal" ? "Outfit Style" : "Clothing (optional)"}
                   value={spec.outfit}
-                  onChange={(e) => patch({ outfit: e.target.value })}
-                >
-                  {OUTFITS.map((value) => (
-                    <option key={value} value={value}>
-                      {value}
-                    </option>
-                  ))}
-                </SelectField>
+                  groups={clothingGroups(spec.mode)}
+                  onChange={(outfit) => patch({ outfit })}
+                />
               )}
               {tab === "Accessories" && (
-                <SelectField
+                <GroupedSelect
                   label="Accessories"
                   value={spec.accessories}
-                  onChange={(e) => patch({ accessories: e.target.value })}
-                >
-                  {ACCESSORIES.map((value) => (
-                    <option key={value} value={value}>
-                      {value}
-                    </option>
-                  ))}
-                </SelectField>
+                  groups={accessoryGroups(spec.mode)}
+                  onChange={(accessories) => patch({ accessories })}
+                />
               )}
             </div>
           </div>
@@ -774,6 +843,83 @@ export function StepAdvanced({
         </SelectField>
       </div>
 
+      <div className="grid gap-4 sm:grid-cols-2">
+        <SelectField
+          label="Body Details"
+          value={spec.bodyDetails}
+          onChange={(e) => patch({ bodyDetails: e.target.value })}
+        >
+          {bodyDetailOptions(spec.mode).map((value) => (
+            <option key={value} value={value}>
+              {value}
+            </option>
+          ))}
+        </SelectField>
+        <SelectField
+          label="Pose"
+          value={spec.pose}
+          onChange={(e) => patch({ pose: e.target.value })}
+        >
+          {poseOptions(spec.mode).map((value) => (
+            <option key={value} value={value}>
+              {value}
+            </option>
+          ))}
+        </SelectField>
+        <SelectField
+          label="Violence / Gore"
+          value={spec.violence}
+          onChange={(e) => patch({ violence: e.target.value })}
+        >
+          {violenceOptions(spec.mode).map((value) => (
+            <option key={value} value={value}>
+              {value}
+            </option>
+          ))}
+        </SelectField>
+      </div>
+
+      {spec.mode === "uncensored" ? (
+        <div className="space-y-4 rounded-[14px] border border-warning/30 bg-[#fffbeb] p-4">
+          <p className="text-[12.5px] font-semibold text-warning">
+            Uncensored · 18+ only · auto-tagged in History
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <SelectField
+              label="Nudity"
+              value={spec.nudity}
+              onChange={(e) => patch({ nudity: e.target.value })}
+            >
+              {NUDITY.map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </SelectField>
+            <SelectField
+              label="Sexual Content"
+              value={spec.sexualContent}
+              onChange={(e) => patch({ sexualContent: e.target.value })}
+            >
+              {SEXUAL_CONTENT.map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </SelectField>
+          </div>
+          <NsfwSlider
+            value={spec.nsfwLevel}
+            onChange={(nsfwLevel) => patch({ nsfwLevel })}
+          />
+        </div>
+      ) : (
+        <p className="rounded-[14px] border border-border bg-surface px-4 py-3 text-[12.5px] text-muted">
+          Regular Mode: clothing is required, nudity and sexual content are
+          disabled, and NSFW is locked at 0.
+        </p>
+      )}
+
       <div className="grid gap-x-8 gap-y-3 rounded-[14px] border border-border bg-surface p-4 sm:grid-cols-3">
         <Toggle
           label="Tattoos"
@@ -812,18 +958,18 @@ export function StepAdvanced({
 
         <Disclosure
           icon="sparkle"
-          title="Pose & Outfit"
-          subtitle="Describe the pose, outfit, or scene you want."
+          title="Scene Notes"
+          subtitle="Optional extra direction for the scene or setting."
           open={poseOpen}
           onToggle={() => setPoseOpen((v) => !v)}
         >
           <TextAreaField
-            label="Pose & Outfit (optional)"
-            value={spec.pose}
+            label="Scene notes (optional)"
+            value={spec.sceneNotes}
             maxLength={300}
             rows={3}
-            placeholder="e.g. sitting on a café terrace, relaxed pose, morning light."
-            onChange={(pose) => patch({ pose })}
+            placeholder="e.g. sitting on a café terrace, morning light."
+            onChange={(sceneNotes) => patch({ sceneNotes })}
           />
         </Disclosure>
 
@@ -975,9 +1121,22 @@ export function StepReview({
             <ReviewRow label="Eyes">
               {spec.eyeColor} · {spec.eyeShape}
             </ReviewRow>
+            <ReviewRow label="Clothing">{spec.outfit}</ReviewRow>
+            <ReviewRow label="Pose">{spec.pose}</ReviewRow>
+            <ReviewRow label="Body Details">{spec.bodyDetails}</ReviewRow>
             <ReviewRow label="Height">{spec.height}</ReviewRow>
             <ReviewRow label="Weight">{spec.weight}</ReviewRow>
             <ReviewRow label="Build">{spec.build}</ReviewRow>
+            {spec.mode === "uncensored" && (
+              <>
+                <ReviewRow label="Nudity">{spec.nudity}</ReviewRow>
+                <ReviewRow label="Sexual Content">{spec.sexualContent}</ReviewRow>
+                <ReviewRow label="NSFW Level">
+                  {spec.nsfwLevel} · {NSFW_LEVELS.find((l) => l.value === spec.nsfwLevel)?.label}
+                </ReviewRow>
+              </>
+            )}
+            <ReviewRow label="Violence">{spec.violence}</ReviewRow>
             <ReviewRow label="Extras">
               {[
                 spec.tattoos && "Tattoos",

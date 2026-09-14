@@ -25,6 +25,8 @@ export interface GenerationSettings {
   seed: string;
   negativePrompt: string;
   enhance: boolean;
+  /** Provider safety checker. Regular Mode forces this on; Uncensored Mode turns it off. */
+  safe?: boolean;
 }
 
 export interface GeneratedMedia {

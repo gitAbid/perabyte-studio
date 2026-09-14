@@ -19,6 +19,7 @@ import {
   composeCharacterPrompt,
   characterGenerationSettings,
   lookById,
+  sanitizeSpecForMode,
   type CharacterSpec,
 } from "@/lib/character";
 import { downloadMedia, useGeneration } from "@/lib/generation";
@@ -78,7 +79,12 @@ export function CharacterStudio() {
   }, [phase, step]);
 
   function patchSpec(patch: Partial<CharacterSpec>) {
-    setSpec((s) => ({ ...s, ...patch }));
+    setSpec((s) => {
+      const next = { ...s, ...patch };
+      return patch.mode && patch.mode !== s.mode
+        ? sanitizeSpecForMode(next, patch.mode)
+        : next;
+    });
   }
 
   function goToStep(next: number) {
@@ -139,13 +145,15 @@ export function CharacterStudio() {
       settings: characterGenerationSettings(spec),
       createdAt: Date.now(),
       favorite: false,
-      mode: "Character Studio",
+      mode: spec.mode === "uncensored" ? "Character Studio (Uncensored)" : "Character Studio",
       meta: {
         requestId: result.requestId,
         seeds: result.media.map((m) => m.seed).join(", "),
         example: false,
         characterMode: spec.mode,
         look: spec.look,
+        nsfwLevel: spec.nsfwLevel,
+        rating: spec.mode === "uncensored" ? "Uncensored" : "Regular",
         referenceThumb: reference?.dataUrl ?? "",
       },
     };
@@ -385,9 +393,13 @@ export function CharacterStudio() {
                 <div className="mt-2 space-y-1.5">
                   {[
                     ["Mode", spec.mode === "normal" ? "Normal" : "Uncensored"],
-                    ["Aspect Ratio", `${spec.aspect} (Portrait)`],
+                    ["Age", spec.age],
+                    ["Aspect Ratio", spec.aspect],
                     ["Resolution", spec.resolution],
                     ["Style", spec.style],
+                    ...(spec.mode === "uncensored"
+                      ? ([["NSFW Level", String(spec.nsfwLevel)]] as const)
+                      : []),
                   ].map(([label, value]) => (
                     <div key={label} className="flex items-baseline justify-between gap-3">
                       <span className="text-[12px] text-muted">{label}</span>

@@ -10,6 +10,10 @@ export type CharacterMode = "normal" | "uncensored";
  * Everything the wizard collects. Selects store human-readable values that
  * are folded straight into the composed prompt, so there is one source of
  * truth per option and no separate label/prompt mapping to maintain.
+ *
+ * Characters are strictly adults (18+) in both modes. Regular Mode locks
+ * clothing on and NSFW off; Uncensored Mode unlocks the adult creative
+ * options and an NSFW intensity slider.
  */
 export interface CharacterSpec {
   // Step 1 — Character Details
@@ -38,11 +42,20 @@ export interface CharacterSpec {
   height: string;
   weight: string;
   build: string;
+  bodyDetails: string;
+  pose: string;
+  violence: string;
   tattoos: boolean;
   piercings: boolean;
   facialHair: boolean;
   personality: string;
-  pose: string;
+  sceneNotes: string;
+  /** Uncensored-only. Regular Mode always stores "None". */
+  nudity: string;
+  /** Uncensored-only. Regular Mode always stores "None". */
+  sexualContent: string;
+  /** Uncensored-only, 0–5. Regular Mode is locked at 0. */
+  nsfwLevel: number;
   /** Id of a look preset from the inspiration grid, or "" when untouched. */
   look: string;
 }
@@ -71,26 +84,46 @@ export const DEFAULT_CHARACTER_SPEC: CharacterSpec = {
   height: `5'6" (168 cm)`,
   weight: "55 kg",
   build: "Slim",
+  bodyDetails: "Normal proportions",
+  pose: "Portrait",
+  violence: "None",
   tattoos: false,
   piercings: false,
   facialHair: false,
   personality: "",
-  pose: "",
+  sceneNotes: "",
+  nudity: "None",
+  sexualContent: "None",
+  nsfwLevel: 0,
   look: "",
 };
 
 /* ------------------------------------------------------------------ */
-/* Option tables                                                       */
+/* Shared option tables                                                */
 /* ------------------------------------------------------------------ */
 
-export const GENDERS = ["Female", "Male", "Non-binary"] as const;
+/**
+ * Style presets offered by the character studio. Every key must exist in
+ * IMAGE_STYLES — the render API validates style names against that table.
+ */
+export const CHARACTER_STYLES = [
+  "Realistic",
+  "Anime",
+  "Semi-Realistic",
+  "3D Render",
+  "South Asian",
+] as const;
 
+/** Characters are strictly adults: every option is 18+ by definition. */
 export const AGES = [
-  "Young Adult (18–24)",
   "Adult (18+)",
+  "Young Adult (18–24)",
+  "Adult (25–39)",
   "Mature (40–59)",
   "Senior (60+)",
 ] as const;
+
+export const GENDERS = ["Female", "Male", "Non-binary"] as const;
 
 export const BODY_TYPES = ["Slim", "Athletic", "Average", "Curvy", "Plus-size"] as const;
 
@@ -108,12 +141,13 @@ export const FACE_SHAPES = ["Oval", "Round", "Square", "Heart", "Diamond", "Long
 export const FACIAL_FEATURES = [
   "Natural",
   "Freckled",
+  "Mole",
+  "Scar",
+  "Birthmark",
   "Sharp cheekbones",
   "Soft rounded",
   "Dimpled smile",
 ] as const;
-
-export const EXPRESSIONS = ["Neutral", "Warm smile", "Confident", "Serene", "Playful", "Serious"] as const;
 
 export const HAIR_COLORS = [
   "Black",
@@ -142,27 +176,6 @@ export const EYE_COLORS = ["Brown", "Hazel", "Blue", "Green", "Grey", "Amber", "
 
 export const EYE_SHAPES = ["Almond", "Round", "Hooded", "Monolid", "Upturned"] as const;
 
-export const OUTFITS = [
-  "Casual",
-  "Streetwear",
-  "Business attire",
-  "Elegant evening dress",
-  "Sporty activewear",
-  "Fantasy armor",
-  "Cosplay costume",
-  "Traditional attire",
-] as const;
-
-export const ACCESSORIES = [
-  "None",
-  "Glasses",
-  "Statement jewelry",
-  "Earrings",
-  "Necklace",
-  "Hat",
-  "Scarf",
-] as const;
-
 export const HEIGHTS = [
   `5'0" (152 cm)`,
   `5'3" (160 cm)`,
@@ -175,6 +188,288 @@ export const HEIGHTS = [
 export const WEIGHTS = ["45 kg", "55 kg", "65 kg", "75 kg", "85 kg", "95 kg"] as const;
 
 export const BUILDS = ["Slim", "Athletic", "Average", "Muscular", "Curvy", "Plus-size"] as const;
+
+/* ------------------------------------------------------------------ */
+/* Regular Mode                                                        */
+/* ------------------------------------------------------------------ */
+
+export const EXPRESSIONS_REGULAR = [
+  "Neutral",
+  "Happy",
+  "Serious",
+  "Smiling",
+  "Confident",
+  "Thoughtful",
+  "Graceful",
+] as const;
+
+export const OUTFITS_REGULAR = [
+  "Casual",
+  "Formal",
+  "Fantasy armor",
+  "Sportswear",
+  "Uniform (adult)",
+  "Traditional",
+  "Modern streetwear",
+  "Business attire",
+] as const;
+
+export const OUTFITS_SUBCONTINENT_REGULAR = [
+  "Saree",
+  "Salwar Kameez",
+  "Lehenga",
+  "Kurta-Pajama",
+  "Sherwani",
+  "Dhoti",
+  "Anarkali",
+  "Indo-Western",
+  "Ghagra Choli",
+  "Pathani suit",
+] as const;
+
+export const ACCESSORIES_REGULAR = [
+  "None",
+  "Glasses",
+  "Jewelry",
+  "Hats",
+  "Bags",
+  "Weapons (non-gore)",
+] as const;
+
+export const ACCESSORIES_SUBCONTINENT_REGULAR = [
+  "Bindi",
+  "Maang Tikka",
+  "Jhumka earrings",
+  "Nose ring (nath)",
+  "Bangles",
+  "Anklets",
+  "Dupatta",
+  "Turban",
+  "Mangalsutra",
+] as const;
+
+export const BODY_DETAILS_REGULAR = [
+  "Normal proportions",
+  "Athletic",
+  "Slim",
+  "Curvy (clothed)",
+  "South Asian features",
+] as const;
+
+export const POSES_REGULAR = [
+  "Standing",
+  "Sitting",
+  "Walking",
+  "Portrait",
+  "Action",
+  "Relaxed",
+  "Dynamic",
+  "Classical dance pose",
+] as const;
+
+export const VIOLENCE_REGULAR = ["None", "Light scratches", "Minor bruises"] as const;
+
+/* ------------------------------------------------------------------ */
+/* Uncensored Mode                                                     */
+/* ------------------------------------------------------------------ */
+
+export const EXPRESSIONS_UNCENSORED = [
+  "Neutral",
+  "Happy",
+  "Seductive",
+  "Aroused",
+  "Moaning",
+  "Ecstatic",
+  "Dominant",
+  "Submissive",
+  "Coy",
+] as const;
+
+export const OUTFITS_UNCENSORED = [
+  "Fully clothed",
+  "Partially clothed",
+  "Lingerie",
+  "Underwear only",
+  "Nude",
+  "Transparent clothing",
+  "Micro bikini",
+  "Latex",
+  "Bondage gear",
+  "Fetish outfits",
+] as const;
+
+export const OUTFITS_SUBCONTINENT_UNCENSORED = [
+  "Saree (draped / slipped)",
+  "Blouse only",
+  "Lehenga (open)",
+  "Transparent saree",
+  "Wet saree",
+  "Ghagra (revealing)",
+  "Traditional lingerie fusion",
+  "Indo-Western lingerie",
+  "Nude with jewelry only",
+] as const;
+
+export const ACCESSORIES_UNCENSORED = [
+  "None",
+  "Lingerie",
+  "Collars",
+  "Restraints",
+  "Toys",
+  "Body jewelry",
+  "Piercings",
+  "Tattoos (explicit)",
+] as const;
+
+export const ACCESSORIES_SUBCONTINENT_UNCENSORED = [
+  "Bindi",
+  "Maang Tikka",
+  "Jhumka",
+  "Nose ring",
+  "Heavy bangles",
+  "Anklets",
+  "Waist chain (kamarbandh)",
+  "Toe rings",
+  "Traditional jewelry with nude body",
+  "Mehndi patterns",
+] as const;
+
+export const BODY_DETAILS_UNCENSORED = [
+  "Normal proportions",
+  "South Asian body features",
+  "Enhanced proportions",
+  "Detailed breasts",
+  "Detailed genitals",
+  "Detailed ass",
+  "Wet skin",
+  "Sweat",
+  "Body fluids",
+] as const;
+
+export const POSES_UNCENSORED = [
+  "Standing",
+  "Sitting",
+  "Lying down",
+  "Arched back",
+  "On all fours",
+  "Spreading",
+  "Sexual positions",
+  "Dynamic action",
+  "Submissive",
+  "Dominant",
+  "Classical dance (erotic interpretation)",
+] as const;
+
+export const VIOLENCE_UNCENSORED = ["None", "Mild", "Moderate", "Heavy", "Extreme"] as const;
+
+export const NUDITY = ["None", "Topless", "Bottomless", "Full nude", "Partial nude"] as const;
+
+export const SEXUAL_CONTENT = [
+  "None",
+  "Suggestive",
+  "Soft erotic",
+  "Explicit sexual",
+  "Fetish acts",
+] as const;
+
+export const NSFW_LEVELS = [
+  { value: 0, label: "Safe", hint: "Fully clothed / safe" },
+  { value: 1, label: "Suggestive", hint: "Suggestive / revealing" },
+  { value: 2, label: "Lingerie", hint: "Lingerie / partial nude" },
+  { value: 3, label: "Nude", hint: "Full nude" },
+  { value: 4, label: "Explicit", hint: "Explicit sexual" },
+  { value: 5, label: "Extreme", hint: "Extreme / fetish / hardcore" },
+] as const;
+
+export const NSFW_LEVEL_MAX = 5;
+
+/* ------------------------------------------------------------------ */
+/* Mode helpers                                                        */
+/* ------------------------------------------------------------------ */
+
+export interface OptionGroup {
+  label: string;
+  options: readonly string[];
+}
+
+export function clothingGroups(mode: CharacterMode): OptionGroup[] {
+  return mode === "uncensored"
+    ? [
+        { label: "Clothing", options: OUTFITS_UNCENSORED },
+        { label: "Subcontinent", options: OUTFITS_SUBCONTINENT_UNCENSORED },
+      ]
+    : [
+        { label: "Clothing", options: OUTFITS_REGULAR },
+        { label: "Subcontinent", options: OUTFITS_SUBCONTINENT_REGULAR },
+      ];
+}
+
+export function accessoryGroups(mode: CharacterMode): OptionGroup[] {
+  return mode === "uncensored"
+    ? [
+        { label: "Accessories", options: ACCESSORIES_UNCENSORED },
+        { label: "Subcontinent", options: ACCESSORIES_SUBCONTINENT_UNCENSORED },
+      ]
+    : [
+        { label: "Accessories", options: ACCESSORIES_REGULAR },
+        { label: "Subcontinent", options: ACCESSORIES_SUBCONTINENT_REGULAR },
+      ];
+}
+
+export function expressionOptions(mode: CharacterMode): readonly string[] {
+  return mode === "uncensored" ? EXPRESSIONS_UNCENSORED : EXPRESSIONS_REGULAR;
+}
+
+export function poseOptions(mode: CharacterMode): readonly string[] {
+  return mode === "uncensored" ? POSES_UNCENSORED : POSES_REGULAR;
+}
+
+export function bodyDetailOptions(mode: CharacterMode): readonly string[] {
+  return mode === "uncensored" ? BODY_DETAILS_UNCENSORED : BODY_DETAILS_REGULAR;
+}
+
+export function violenceOptions(mode: CharacterMode): readonly string[] {
+  return mode === "uncensored" ? VIOLENCE_UNCENSORED : VIOLENCE_REGULAR;
+}
+
+function flatten(groups: OptionGroup[]): string[] {
+  return groups.flatMap((group) => [...group.options]);
+}
+
+function clampOption(value: string, allowed: readonly string[], fallback: string): string {
+  return allowed.includes(value) ? value : fallback;
+}
+
+/**
+ * When the user switches Regular ⇄ Uncensored, drop any selection that is
+ * not legal in the destination mode so the composed prompt cannot leak
+ * locked options (e.g. a Regular render never inherits Uncensored clothing).
+ */
+export function sanitizeSpecForMode(spec: CharacterSpec, mode: CharacterMode): CharacterSpec {
+  const next: CharacterSpec = { ...spec, mode };
+  next.outfit = clampOption(next.outfit, flatten(clothingGroups(mode)), mode === "uncensored" ? "Fully clothed" : "Casual");
+  next.accessories = clampOption(next.accessories, flatten(accessoryGroups(mode)), "None");
+  next.expression = clampOption(next.expression, expressionOptions(mode), "Neutral");
+  next.pose = clampOption(next.pose, poseOptions(mode), mode === "uncensored" ? "Standing" : "Portrait");
+  next.bodyDetails = clampOption(
+    next.bodyDetails,
+    bodyDetailOptions(mode),
+    "Normal proportions",
+  );
+  next.violence = clampOption(next.violence, violenceOptions(mode), "None");
+
+  if (mode === "normal") {
+    next.nudity = "None";
+    next.sexualContent = "None";
+    next.nsfwLevel = 0;
+  } else {
+    next.nudity = clampOption(next.nudity, NUDITY, "None");
+    next.sexualContent = clampOption(next.sexualContent, SEXUAL_CONTENT, "None");
+    next.nsfwLevel = Math.min(NSFW_LEVEL_MAX, Math.max(0, Math.trunc(next.nsfwLevel) || 0));
+  }
+
+  return next;
+}
 
 /* ------------------------------------------------------------------ */
 /* Look presets — the inspiration grid on the Appearance step          */
@@ -241,26 +536,43 @@ const GENDER_NOUN: Record<string, string> = {
 };
 
 const AGE_PROMPT: Record<string, string> = {
-  "Young Adult (18–24)": "young adult",
   "Adult (18+)": "adult",
-  "Mature (40–59)": "middle-aged",
-  "Senior (60+)": "senior",
+  "Young Adult (18–24)": "young adult",
+  "Adult (25–39)": "adult",
+  "Mature (40–59)": "middle-aged adult",
+  "Senior (60+)": "senior adult",
 };
+
+const NSFW_LEVEL_PROMPT: Record<number, string> = {
+  0: "fully clothed, safe for work",
+  1: "suggestive, revealing clothing",
+  2: "lingerie, partial nude",
+  3: "full nude",
+  4: "explicit sexual content",
+  5: "extreme fetish, hardcore",
+};
+
+const NUDE_OUTFITS = new Set([
+  "Nude",
+  "Nude with jewelry only",
+]);
 
 /**
  * Fold every wizard choice into one descriptive prompt for the render
  * provider. The user's own prompt always leads; the attribute selections
- * read like a character sheet after it.
+ * read like a character sheet after it. Characters are always framed as
+ * adults — age options contain no minors and "adult" is stated explicitly.
  */
 export function composeCharacterPrompt(spec: CharacterSpec): string {
   const parts: string[] = [];
+  const uncensored = spec.mode === "uncensored";
 
   const base = spec.prompt.trim();
   if (base) parts.push(base);
 
   const noun = GENDER_NOUN[spec.gender] ?? "person";
   const age = AGE_PROMPT[spec.age] ?? "adult";
-  parts.push(`portrait of an ${age} ${noun}`);
+  parts.push(`portrait of an adult ${age} ${noun}, 18+`);
 
   const tone = SKIN_TONES.find((t) => t.id === spec.skinTone);
   if (tone) parts.push(`${tone.prompt} skin`);
@@ -276,18 +588,40 @@ export function composeCharacterPrompt(spec: CharacterSpec): string {
 
   if (spec.bodyType && spec.bodyType !== "Average") parts.push(`${spec.bodyType.toLowerCase()} body`);
   if (spec.build && spec.build !== "Average") parts.push(`${spec.build.toLowerCase()} build`);
+  if (spec.bodyDetails && spec.bodyDetails !== "Normal proportions")
+    parts.push(spec.bodyDetails.toLowerCase());
   if (spec.height) parts.push(`${spec.height.replace(/\s*\(.*\)/, "")} tall`);
 
-  parts.push(`wearing ${spec.outfit.toLowerCase()}`);
+  if (uncensored) {
+    const level = NSFW_LEVELS.find((item) => item.value === spec.nsfwLevel);
+    if (level) parts.push(`NSFW level ${level.value} (${NSFW_LEVEL_PROMPT[level.value]})`);
+    if (spec.nudity && spec.nudity !== "None") parts.push(spec.nudity.toLowerCase());
+    if (spec.sexualContent && spec.sexualContent !== "None")
+      parts.push(spec.sexualContent.toLowerCase());
+
+    if (NUDE_OUTFITS.has(spec.outfit) || spec.nudity === "Full nude") {
+      parts.push("nude");
+      if (spec.outfit === "Nude with jewelry only") parts.push("wearing jewelry only");
+    } else if (spec.outfit && spec.outfit !== "Fully clothed") {
+      parts.push(`wearing ${spec.outfit.toLowerCase()}`);
+    } else if (spec.nsfwLevel === 0) {
+      parts.push("wearing fully clothed outfit");
+    }
+  } else {
+    parts.push(`wearing ${spec.outfit.toLowerCase()}, fully clothed`);
+  }
+
   if (spec.accessories && spec.accessories !== "None")
     parts.push(`with ${spec.accessories.toLowerCase()}`);
 
+  if (spec.pose) parts.push(`${spec.pose.toLowerCase()} pose`);
+  if (spec.violence && spec.violence !== "None") parts.push(spec.violence.toLowerCase());
   if (spec.tattoos) parts.push("visible tattoos");
   if (spec.piercings) parts.push("piercings");
   if (spec.facialHair) parts.push("facial hair");
 
   if (spec.personality.trim()) parts.push(`vibe of someone who is ${spec.personality.trim()}`);
-  if (spec.pose.trim()) parts.push(spec.pose.trim());
+  if (spec.sceneNotes.trim()) parts.push(spec.sceneNotes.trim());
 
   const look = lookById(spec.look);
   if (look) parts.push(look.prompt);
@@ -299,22 +633,32 @@ export function composeCharacterPrompt(spec: CharacterSpec): string {
     .trim();
 }
 
+/** Blocks sexual content outright — applied in Regular Mode. */
+const NSFW_NEGATIVE =
+  "nsfw, nude, nudity, topless, bottomless, sexual, explicit, erotic, lingerie, fetish, suggestive, underwear, underage, minor, child, teen";
+
+/** Uncensored Mode still never waives protection of minors. */
+const MINOR_NEGATIVE = "underage, minor, child, teen, under 18";
+
 /**
- * Mode shapes how the request is sent, not what it is allowed to depict:
- * Normal Mode uses the provider's prompt auto-enhancement (it rewrites the
- * prompt for quality), Uncensored Mode sends the description exactly as
- * composed for full creative control. Content policy is enforced upstream
- * by the provider in both modes.
+ * Mode shapes how the request is sent:
+ * - Regular Mode: safety checker on, prompt auto-enhancement, NSFW locked at 0,
+ *   negative prompt blocks all NSFW terms.
+ * - Uncensored Mode: safety checker off, prompt sent as composed, NSFW slider
+ *   0–5, negative prompt only blocks underage terms. Content is tagged
+ *   Uncensored in History.
  */
 export function characterGenerationSettings(spec: CharacterSpec) {
+  const uncensored = spec.mode === "uncensored";
   return {
     kind: "image" as const,
     aspect: spec.aspect,
     resolution: spec.resolution,
     style: spec.style,
     count: 4,
-    enhance: spec.mode === "normal",
-    negativePrompt: "",
+    enhance: !uncensored,
+    safe: !uncensored,
+    negativePrompt: uncensored ? MINOR_NEGATIVE : NSFW_NEGATIVE,
     seed: "",
     duration: "5s" as const,
   };

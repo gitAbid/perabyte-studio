@@ -26,11 +26,13 @@ export const IMAGE_STYLES = {
   Realistic: "photorealistic, natural lighting, sharp focus, high detail",
   Cinematic: "cinematic lighting, film grain, dramatic composition, depth of field",
   Anime: "anime illustration, cel shading, expressive line work, vibrant palette",
+  "Semi-Realistic": "semi-realistic rendering, lifelike proportions, subtle stylisation, soft natural detail",
   "Digital Art": "digital painting, painterly brushwork, rich colour grading",
   Watercolor: "watercolour on textured paper, soft bleeding edges, muted washes",
   "3D Render": "octane render, volumetric light, glossy materials, studio setup",
   "Minimal Line Art": "minimal line art, flat colour blocks, generous negative space",
   "Photo Studio": "studio softbox lighting, seamless backdrop, editorial photography",
+  "South Asian": "south asian aesthetic, warm cinematic tones, rich cultural detail, elegant traditional ambience",
 } as const;
 
 export const VIDEO_STYLES = {

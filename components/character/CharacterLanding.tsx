@@ -16,12 +16,12 @@ const MODE_CARDS: {
   {
     id: "normal",
     title: "Normal Mode",
-    body: "Creates characters with standard styling and auto-enhanced prompts.",
+    body: "Fully clothed adult characters. Safety checker on, NSFW locked at 0.",
   },
   {
     id: "uncensored",
     title: "Uncensored Mode",
-    body: "For creative and artistic use. Your prompt is sent exactly as written, without auto-enhancement.",
+    body: "Adult creative control with clothing, nudity and NSFW intensity. 18+ only.",
     badge: "NEW",
   },
 ];
