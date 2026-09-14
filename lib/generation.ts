@@ -41,6 +41,7 @@ export async function requestGeneration({
         seed: settings.seed,
         negativePrompt: settings.negativePrompt,
         enhance: settings.enhance,
+        safe: settings.safe,
       }),
       signal,
     });

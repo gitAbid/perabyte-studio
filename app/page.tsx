@@ -21,6 +21,12 @@ const MODES = [
     body: "Generate a continuing story with multiple scenes.",
     href: "/story",
   },
+  {
+    icon: "character" as const,
+    title: "Character Studio",
+    body: "Design a reusable AI character in a guided wizard.",
+    href: "/character",
+  },
 ];
 
 export default function HomePage() {

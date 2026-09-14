@@ -48,6 +48,7 @@ interface Payload {
   seed?: unknown;
   negativePrompt?: unknown;
   enhance?: unknown;
+  safe?: unknown;
 }
 
 function bad(error: string, field?: string, status = 400) {
@@ -115,6 +116,7 @@ export async function POST(request: Request) {
         resolution: resolution as keyof typeof RESOLUTIONS,
         style,
         enhance: body.enhance !== false,
+        safe: body.safe === false ? false : body.safe === true ? true : undefined,
         negativePrompt:
           typeof body.negativePrompt === "string" ? body.negativePrompt : "",
       },

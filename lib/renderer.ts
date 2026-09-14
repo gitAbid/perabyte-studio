@@ -19,6 +19,8 @@ export interface RenderRequest {
   seed?: number | string | null;
   negativePrompt?: string;
   enhance?: boolean;
+  /** When true, the provider's safety checker is enabled. */
+  safe?: boolean;
 }
 
 /** Fold the chosen style preset into the prompt sent to the render provider. */
@@ -99,6 +101,8 @@ export function buildMediaUrl(req: RenderRequest, seed: number): string {
     nologo: "true",
   });
   if (req.enhance) params.set("enhance", "true");
+  if (req.safe === false) params.set("safe", "false");
+  else if (req.safe) params.set("safe", "true");
   if (req.negativePrompt?.trim()) params.set("negative", req.negativePrompt.trim());
 
   const prompt = styleWithPrompt(req.prompt, req.style);
