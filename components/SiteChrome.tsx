@@ -131,67 +131,38 @@ export function SiteHeader() {
   );
 }
 
-const FOOTER_GROUPS = [
-  {
-    title: "Create",
-    links: [
-      { href: "/generate/image", label: "Solo Mode" },
-      { href: "/story", label: "Story Mode" },
-    ],
-  },
-  {
-    title: "Library",
-    links: [
-      { href: "/history", label: "History" },
-      { href: "/styleguide", label: "Style guide" },
-    ],
-  },
+const FOOTER_LINKS = [
+  { href: "/generate/image", label: "Solo Mode" },
+  { href: "/story", label: "Story Mode" },
+  { href: "/history", label: "History" },
+  { href: "/styleguide", label: "Style guide" },
 ] as const;
 
 export function SiteFooter() {
   return (
     <footer className="border-t border-border bg-surface">
-      <div className="mx-auto w-full max-w-[1280px] px-4 py-8 sm:px-6">
-        <div className="flex flex-col gap-8 md:flex-row md:justify-between">
-          <div className="max-w-xs">
-            <Logo size={26} />
-            <p className="mt-3 text-[13px] leading-relaxed text-muted">
-              An easy-to-use image and video generation studio for everyone.
-              Create, explore, and bring your imagination to life — in seconds.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-8 sm:gap-16">
-            {FOOTER_GROUPS.map((group) => (
-              <nav key={group.title} aria-label={`Footer — ${group.title}`}>
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-ink">
-                  {group.title}
-                </p>
-                <ul className="mt-3 space-y-2">
-                  {group.links.map((link) => (
-                    <li key={link.href}>
-                      <Link
-                        href={link.href}
-                        className="text-[13px] font-medium text-muted transition-colors hover:text-primary"
-                      >
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-8 flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-2.5 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="flex items-center gap-2.5">
+          <Logo size={22} />
           <p className="text-[12px] text-muted">
-            © {new Date().getFullYear()} PeraByte Studio. All rights reserved.
-          </p>
-          <p className="text-[12px] text-muted">
-            Renders are AI-generated · Built for the web
+            © {new Date().getFullYear()} PeraByte Studio · Renders are
+            AI-generated
           </p>
         </div>
+        <nav
+          aria-label="Footer"
+          className="-mx-1.5 flex flex-wrap items-center gap-0.5"
+        >
+          {FOOTER_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="rounded-[8px] px-1.5 py-1 text-[12.5px] font-medium text-muted transition-colors hover:bg-surface-2 hover:text-ink"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
       </div>
     </footer>
   );
