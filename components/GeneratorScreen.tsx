@@ -76,6 +76,13 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
     const [w, h] = settings.aspect.split(":").map(Number);
     return `${w} / ${h}`;
   })();
+  const aspectClass = {
+    "16:9": "aspect-video",
+    "9:16": "aspect-[9/16]",
+    "1:1": "aspect-square",
+    "4:5": "aspect-[4/5]",
+    "3:2": "aspect-[3/2]",
+  }[settings.aspect] ?? "aspect-video";
 
   function patchSettings(patch: Partial<GenerationSettings>) {
     setSettings((s) => ({ ...s, ...patch }));
@@ -145,10 +152,15 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
           >
             <Icon name="arrow-left" size={16} />
           </Link>
-          <h1 className="truncate text-[18px] font-extrabold tracking-[-0.02em] text-ink sm:text-[22px]">
+          <div className="min-w-0">
+            <h1 className="truncate text-[18px] font-extrabold tracking-[-0.02em] text-ink sm:text-[22px]">
             <span className="sm:hidden">{kind === "video" ? "Video" : "Image"}</span>
             <span className="hidden sm:inline">{copy.title}</span>
-          </h1>
+            </h1>
+            <p className="mt-0.5 hidden text-[12px] text-muted lg:block">
+              Configure your scene on the left and preview it on the right.
+            </p>
+          </div>
           {result && (
             <span className="hidden sm:inline-flex">
               <Badge tone="primary">
@@ -172,9 +184,35 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
       </div>
 
       {/* ------------------------------ Preview ------------------------------ */}
-      <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-[20px] border border-border bg-surface p-3">
+      <div className="grid min-h-0 flex-1 gap-4 overflow-hidden lg:grid-cols-[minmax(320px,390px)_minmax(0,1fr)] lg:items-stretch">
+        <div className="order-2 min-h-0 overflow-y-auto rounded-[20px] border border-border bg-white p-3 lg:order-1 lg:p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <div>
+              <p className="text-[13px] font-bold text-ink">Prompt composer</p>
+              <p className="mt-0.5 text-[11.5px] text-muted">Your settings stay attached to the prompt.</p>
+            </div>
+            <Badge tone="primary"><Icon name="sparkle" size={12} /> Solo</Badge>
+          </div>
+          <PromptComposer
+            kind={kind}
+            prompt={prompt}
+            onPromptChange={(value) => {
+              setPrompt(value);
+              if (promptError) setPromptError(undefined);
+            }}
+            promptError={promptError}
+            settings={settings}
+            large
+            onSettingsChange={patchSettings}
+            busy={busy}
+            onGenerate={handleGenerate}
+            onCancel={cancel}
+            onCopyPrompt={handleCopyPrompt}
+          />
+        </div>
+        <div className="relative order-1 flex min-h-0 items-center justify-center overflow-hidden rounded-[20px] border border-border bg-surface p-3 lg:order-2">
         {job.phase === "idle" && (
-          <div className="flex h-full w-full flex-col items-center justify-center rounded-[16px] border border-dashed border-border-strong px-6 text-center">
+          <div className={`flex ${aspectClass} max-h-full w-full max-w-full flex-col items-center justify-center rounded-[16px] border border-dashed border-border-strong px-6 text-center`}>
             <span className="inline-flex size-12 items-center justify-center rounded-full bg-white text-muted shadow-card">
               <Icon name={kind === "video" ? "video" : "image"} size={22} />
             </span>
@@ -313,24 +351,9 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
             )}
           </>
         )}
+        </div>
       </div>
 
-      {/* ------------------------------ Composer ----------------------------- */}
-      <PromptComposer
-        kind={kind}
-        prompt={prompt}
-        onPromptChange={(value) => {
-          setPrompt(value);
-          if (promptError) setPromptError(undefined);
-        }}
-        promptError={promptError}
-        settings={settings}
-        onSettingsChange={patchSettings}
-        busy={busy}
-        onGenerate={handleGenerate}
-        onCancel={cancel}
-        onCopyPrompt={handleCopyPrompt}
-      />
     </div>
   );
 }

@@ -251,6 +251,7 @@ export default function StoryPage() {
                 if (promptError) setPromptError(undefined);
               }}
               promptError={promptError}
+              large
               settings={currentSettings()}
               onSettingsChange={(patch) => setSettings((s) => ({ ...s, ...patch }))}
               busy={busy}

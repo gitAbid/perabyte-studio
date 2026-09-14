@@ -278,6 +278,7 @@ export function PromptComposer({
   onGenerate,
   onCancel,
   onCopyPrompt,
+  large = false,
 }: {
   kind: "image" | "video";
   prompt: string;
@@ -289,6 +290,7 @@ export function PromptComposer({
   onGenerate: () => void;
   onCancel: () => void;
   onCopyPrompt: () => void;
+  large?: boolean;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const styles = kind === "video" ? VIDEO_STYLES : IMAGE_STYLES;
@@ -330,7 +332,9 @@ export function PromptComposer({
             if (!busy) onGenerate();
           }
         }}
-        className="block max-h-[120px] w-full resize-none bg-transparent px-2 pt-1.5 text-[14px] leading-relaxed text-ink placeholder:text-muted focus:outline-none sm:text-[14.5px]"
+        className={`block w-full resize-none bg-transparent px-2 pt-1.5 text-[14px] leading-relaxed text-ink placeholder:text-muted focus:outline-none sm:text-[14.5px] ${
+          large ? "min-h-[108px] max-h-[190px] lg:min-h-[170px]" : "max-h-[120px]"
+        }`}
       />
 
       <div className="mt-2 flex flex-wrap items-center gap-2">
