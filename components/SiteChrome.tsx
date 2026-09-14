@@ -26,7 +26,7 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-white/90 backdrop-blur-md">
-      <div className="mx-auto flex h-16 w-full max-w-[1240px] items-center gap-4 px-4 sm:px-6">
+      <div className="mx-auto flex h-16 w-full max-w-[1280px] items-center gap-4 px-4 sm:px-6">
         <Link href="/" aria-label="PeraByte home" className="shrink-0">
           <Logo />
         </Link>
@@ -131,42 +131,51 @@ export function SiteHeader() {
   );
 }
 
+const FOOTER_LINKS = [
+  { href: "/generate/image", label: "Solo Mode" },
+  { href: "/story", label: "Story Mode" },
+  { href: "/history", label: "History" },
+  { href: "/styleguide", label: "Style guide" },
+] as const;
+
 export function SiteFooter() {
   return (
-    <footer className="mt-16 border-t border-border bg-surface">
-      <div className="mx-auto flex w-full max-w-[1240px] flex-col items-center gap-4 px-4 py-7 sm:flex-row sm:px-6">
-        <Logo size={24} />
-        <nav aria-label="Footer" className="flex items-center gap-4 sm:ml-auto">
-          {NAV.map((item) => (
+    <footer className="border-t border-border bg-surface">
+      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-2.5 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="flex items-center gap-2.5">
+          <Logo size={22} />
+          <p className="text-[12px] text-muted">
+            © {new Date().getFullYear()} PeraByte Studio · Renders are
+            AI-generated
+          </p>
+        </div>
+        <nav
+          aria-label="Footer"
+          className="-mx-1.5 flex flex-wrap items-center gap-0.5"
+        >
+          {FOOTER_LINKS.map((link) => (
             <Link
-              key={item.href}
-              href={item.href}
-              className="text-[12.5px] font-medium text-muted hover:text-ink"
+              key={link.href}
+              href={link.href}
+              className="rounded-[8px] px-1.5 py-1 text-[12.5px] font-medium text-muted transition-colors hover:bg-surface-2 hover:text-ink"
             >
-              {item.label}
+              {link.label}
             </Link>
           ))}
-          <Link
-            href="/styleguide"
-            className="text-[12.5px] font-medium text-muted hover:text-ink"
-          >
-            Style guide
-          </Link>
         </nav>
-        <span className="inline-flex size-8 items-center justify-center rounded-full border border-border bg-white text-muted">
-          <Icon name="user" size={15} />
-        </span>
       </div>
     </footer>
   );
 }
 
 /**
- * The generator screens fill the viewport, so the footer is suppressed there
- * and rendered everywhere else.
+ * The generator and story screens are full-height workspaces, so the footer is
+ * suppressed there and rendered on every content page.
  */
 export function ConditionalFooter() {
   const pathname = usePathname();
-  if (pathname?.startsWith("/generate")) return null;
+  if (pathname?.startsWith("/generate") || pathname?.startsWith("/story")) {
+    return null;
+  }
   return <SiteFooter />;
 }
