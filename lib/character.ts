@@ -432,6 +432,156 @@ export function violenceOptions(mode: CharacterMode): readonly string[] {
   return mode === "uncensored" ? VIOLENCE_UNCENSORED : VIOLENCE_REGULAR;
 }
 
+export interface CharacterTemplate {
+  id: string;
+  label: string;
+  text: string;
+}
+
+export const PERSONALITY_TEMPLATES_REGULAR: CharacterTemplate[] = [
+  {
+    id: "scholar",
+    label: "The Scholar",
+    text: "Curious and patient. Collects vintage books, asks careful questions, and would rather listen than perform.",
+  },
+  {
+    id: "athlete",
+    label: "The Athlete",
+    text: "Competitive and disciplined. An early-morning runner who treats every day like training.",
+  },
+  {
+    id: "artist",
+    label: "The Artist",
+    text: "Quiet and observant. Sketches strangers in cafés and notices colour before conversation.",
+  },
+  {
+    id: "diplomat",
+    label: "The Diplomat",
+    text: "Warm, measured, and hard to rattle. Loves classical music and keeps confidences.",
+  },
+  {
+    id: "explorer",
+    label: "The Explorer",
+    text: "Restless and optimistic. Always planning the next trip and packing light.",
+  },
+  {
+    id: "host",
+    label: "The Host",
+    text: "Graceful and hospitable. Proud of family traditions, cooks for friends, never lets a guest leave hungry.",
+  },
+];
+
+export const PERSONALITY_TEMPLATES_UNCENSORED: CharacterTemplate[] = [
+  {
+    id: "temptress",
+    label: "The Temptress",
+    text: "Confident and teasing. Enjoys being watched, sets the pace, and never asks twice.",
+  },
+  {
+    id: "dominant",
+    label: "The Dominant",
+    text: "Calm and commanding. Speaks softly, expects obedience, and rewards those who listen.",
+  },
+  {
+    id: "submissive",
+    label: "The Submissive",
+    text: "Shy, eager to please, blushing easily. Follows a lead and waits to be told what happens next.",
+  },
+  {
+    id: "exhibitionist",
+    label: "The Exhibitionist",
+    text: "Bold and uninhibited. Likes the risk of being seen and dresses (or undresses) for an audience.",
+  },
+  {
+    id: "romantic",
+    label: "The Romantic",
+    text: "Slow and intimate. Whispers instead of shouting, lingers on skin, and treats desire like a ritual.",
+  },
+  {
+    id: "forbidden",
+    label: "The Forbidden",
+    text: "Secretive and intense. Meets after hours, keeps the lights low, and never talks about it after.",
+  },
+];
+
+export const SCENE_NOTE_TEMPLATES_REGULAR: CharacterTemplate[] = [
+  {
+    id: "rooftop",
+    label: "Rooftop café",
+    text: "Rooftop café at golden hour, city skyline behind, warm wind, a half-finished cup of chai.",
+  },
+  {
+    id: "library",
+    label: "Library aisle",
+    text: "Quiet library aisle, afternoon light through tall windows, dust motes, a book held open at the chest.",
+  },
+  {
+    id: "rain-street",
+    label: "Rainy street",
+    text: "Rain-washed street at dusk, neon reflections on wet stone, walking under a dark umbrella.",
+  },
+  {
+    id: "courtyard",
+    label: "Temple courtyard",
+    text: "Temple courtyard at dusk, marigold petals on stone, incense smoke, a dupatta lifting in the breeze.",
+  },
+  {
+    id: "studio",
+    label: "Portrait studio",
+    text: "Clean studio portrait, softbox lighting, seamless grey backdrop, editorial stillness.",
+  },
+  {
+    id: "overlook",
+    label: "Mountain overlook",
+    text: "Mountain trail overlook, wind in the hair, distant peaks, late-afternoon sun.",
+  },
+];
+
+export const SCENE_NOTE_TEMPLATES_UNCENSORED: CharacterTemplate[] = [
+  {
+    id: "hotel",
+    label: "Hotel suite",
+    text: "Dim hotel suite, rumpled sheets, city lights through sheer curtains, jewellery on the nightstand.",
+  },
+  {
+    id: "steam",
+    label: "Steamed bath",
+    text: "Candlelit bathroom, steam on the mirror, wet tile, skin still glistening from the shower.",
+  },
+  {
+    id: "balcony",
+    label: "Night balcony",
+    text: "Private balcony at night, city below, barely dressed, a glass in one hand.",
+  },
+  {
+    id: "silk",
+    label: "Silk bedroom",
+    text: "Silk-draped bedroom, one warm lamp, jewellery on the dresser, the rest of the clothes on the floor.",
+  },
+  {
+    id: "after-hours",
+    label: "After hours",
+    text: "Locked office after midnight, desk lamp, blinds half-drawn, the rest of the building empty.",
+  },
+  {
+    id: "wet-terrace",
+    label: "Wet terrace",
+    text: "Rain-soaked terrace, fabric clinging, thunder in the distance, no one else outside.",
+  },
+];
+
+export function personalityTemplates(mode: CharacterMode): CharacterTemplate[] {
+  return mode === "uncensored"
+    ? PERSONALITY_TEMPLATES_UNCENSORED
+    : PERSONALITY_TEMPLATES_REGULAR;
+}
+
+export function sceneNoteTemplates(mode: CharacterMode): CharacterTemplate[] {
+  return mode === "uncensored"
+    ? SCENE_NOTE_TEMPLATES_UNCENSORED
+    : SCENE_NOTE_TEMPLATES_REGULAR;
+}
+
 function flatten(groups: OptionGroup[]): string[] {
   return groups.flatMap((group) => [...group.options]);
 }
@@ -462,6 +612,12 @@ export function sanitizeSpecForMode(spec: CharacterSpec, mode: CharacterMode): C
     next.nudity = "None";
     next.sexualContent = "None";
     next.nsfwLevel = 0;
+    if (PERSONALITY_TEMPLATES_UNCENSORED.some((t) => t.text === next.personality)) {
+      next.personality = "";
+    }
+    if (SCENE_NOTE_TEMPLATES_UNCENSORED.some((t) => t.text === next.sceneNotes)) {
+      next.sceneNotes = "";
+    }
   } else {
     next.nudity = clampOption(next.nudity, NUDITY, "None");
     next.sexualContent = clampOption(next.sexualContent, SEXUAL_CONTENT, "None");

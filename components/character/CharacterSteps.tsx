@@ -33,11 +33,14 @@ import {
   clothingGroups,
   expressionOptions,
   lookById,
+  personalityTemplates,
   poseOptions,
   sanitizeSpecForMode,
+  sceneNoteTemplates,
   violenceOptions,
   type CharacterMode,
   type CharacterSpec,
+  type CharacterTemplate,
   type OptionGroup,
 } from "@/lib/character";
 
@@ -290,6 +293,40 @@ function NsfwSlider({
         ))}
       </div>
       <p className="mt-1.5 text-[12px] text-muted">{current.hint}</p>
+    </div>
+  );
+}
+
+function TemplateChips({
+  templates,
+  activeText,
+  onPick,
+}: {
+  templates: CharacterTemplate[];
+  activeText: string;
+  onPick: (text: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {templates.map((template) => {
+        const active = activeText === template.text;
+        return (
+          <button
+            key={template.id}
+            type="button"
+            aria-pressed={active}
+            title={template.text}
+            onClick={() => onPick(active ? "" : template.text)}
+            className={`rounded-full border px-2.5 py-1 text-[12px] font-semibold transition-colors ${
+              active
+                ? "border-primary bg-primary-soft text-primary"
+                : "border-border bg-white text-ink-soft hover:border-border-strong hover:text-ink"
+            }`}
+          >
+            {template.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -946,14 +983,21 @@ export function StepAdvanced({
           open={personalityOpen}
           onToggle={() => setPersonalityOpen((v) => !v)}
         >
-          <TextAreaField
-            label="Personality (optional)"
-            value={spec.personality}
-            maxLength={300}
-            rows={3}
-            placeholder="e.g. friendly and adventurous, loves photography and travel."
-            onChange={(personality) => patch({ personality })}
+          <TemplateChips
+            templates={personalityTemplates(spec.mode)}
+            activeText={spec.personality}
+            onPick={(text) => patch({ personality: text })}
           />
+          <div className="mt-3">
+            <TextAreaField
+              label="Personality (optional)"
+              value={spec.personality}
+              maxLength={300}
+              rows={3}
+              placeholder="e.g. friendly and adventurous, loves photography and travel."
+              onChange={(personality) => patch({ personality })}
+            />
+          </div>
         </Disclosure>
 
         <Disclosure
@@ -963,14 +1007,21 @@ export function StepAdvanced({
           open={poseOpen}
           onToggle={() => setPoseOpen((v) => !v)}
         >
-          <TextAreaField
-            label="Scene notes (optional)"
-            value={spec.sceneNotes}
-            maxLength={300}
-            rows={3}
-            placeholder="e.g. sitting on a café terrace, morning light."
-            onChange={(sceneNotes) => patch({ sceneNotes })}
+          <TemplateChips
+            templates={sceneNoteTemplates(spec.mode)}
+            activeText={spec.sceneNotes}
+            onPick={(text) => patch({ sceneNotes: text })}
           />
+          <div className="mt-3">
+            <TextAreaField
+              label="Scene notes (optional)"
+              value={spec.sceneNotes}
+              maxLength={300}
+              rows={3}
+              placeholder="e.g. sitting on a café terrace, morning light."
+              onChange={(sceneNotes) => patch({ sceneNotes })}
+            />
+          </div>
         </Disclosure>
 
         <Disclosure
