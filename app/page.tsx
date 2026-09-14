@@ -1,45 +1,10 @@
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { LinkButton } from "@/components/ui";
-import { buildMediaUrl } from "@/lib/renderer";
 
-const HERO_MAIN = buildMediaUrl(
-  {
-    kind: "image",
-    prompt:
-      "A serene mountain landscape with a lake, sunrise, and pine trees",
-    aspect: "16:9",
-    resolution: "1080p",
-    style: "Realistic",
-    enhance: true,
-  },
-  4821,
-);
-
-const HERO_SIDE = [
-  buildMediaUrl(
-    {
-      kind: "image",
-      prompt: "A glowing fantasy forest with floating lights",
-      aspect: "1:1",
-      resolution: "720p",
-      style: "Digital Art",
-      enhance: true,
-    },
-    3390,
-  ),
-  buildMediaUrl(
-    {
-      kind: "image",
-      prompt: "A neon city street at night in the rain",
-      aspect: "1:1",
-      resolution: "720p",
-      style: "Cinematic",
-      enhance: true,
-    },
-    7712,
-  ),
-];
+/** Pre-rendered examples live in /public/demo so the landing page is instant. */
+const HERO_MAIN = "/demo/mountain-lake.jpg";
+const HERO_SIDE = ["/demo/fantasy-forest.jpg", "/demo/city-night.jpg"];
 
 const MODES = [
   {

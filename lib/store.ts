@@ -6,11 +6,10 @@ import {
   DEFAULT_VIDEO_SETTINGS,
   titleFromPrompt,
 } from "./constants";
-import { buildMediaUrl } from "./renderer";
 import type { Asset, GenerationResponse, GenerationSettings } from "./types";
 
-const STORAGE_KEY = "perabyte.assets.v1";
-const SEED_KEY = "perabyte.seeded.v1";
+const STORAGE_KEY = "perabyte.assets.v2";
+const SEED_KEY = "perabyte.seeded.v2";
 
 const EMPTY: Asset[] = [];
 let cache: Asset[] | null = null;
@@ -70,6 +69,8 @@ interface DemoSpec {
   style: string;
   ageHours: number;
   seed: number;
+  /** Pre-rendered example stored in /public/demo (see scripts/prerender_examples.py). */
+  file: string;
 }
 
 const DEMO_SPECS: DemoSpec[] = [
@@ -81,6 +82,7 @@ const DEMO_SPECS: DemoSpec[] = [
     style: "Realistic",
     ageHours: 12,
     seed: 4821,
+    file: "/demo/mountain-lake.jpg",
   },
   {
     title: "City at Night",
@@ -90,6 +92,7 @@ const DEMO_SPECS: DemoSpec[] = [
     style: "Cinematic",
     ageHours: 30,
     seed: 7712,
+    file: "/demo/city-night.jpg",
   },
   {
     title: "Fantasy Forest",
@@ -99,6 +102,7 @@ const DEMO_SPECS: DemoSpec[] = [
     style: "Digital Art",
     ageHours: 52,
     seed: 3390,
+    file: "/demo/fantasy-forest.jpg",
   },
   {
     title: "Ocean Sunset",
@@ -108,6 +112,7 @@ const DEMO_SPECS: DemoSpec[] = [
     style: "Realistic",
     ageHours: 78,
     seed: 9014,
+    file: "/demo/ocean-sunset.jpg",
   },
   {
     title: "Robot in City",
@@ -117,6 +122,7 @@ const DEMO_SPECS: DemoSpec[] = [
     style: "Animated",
     ageHours: 120,
     seed: 2265,
+    file: "/demo/robot-city.jpg",
   },
   {
     title: "Winter Village",
@@ -126,6 +132,7 @@ const DEMO_SPECS: DemoSpec[] = [
     style: "Watercolor",
     ageHours: 160,
     seed: 6120,
+    file: "/demo/winter-village.jpg",
   },
 ];
 
@@ -138,39 +145,41 @@ function demoAsset(spec: DemoSpec): Asset {
     aspect: spec.aspect,
     style: spec.style,
   };
-  const url = buildMediaUrl(
-    {
-      kind: spec.kind,
-      prompt: spec.prompt,
-      aspect: spec.aspect,
-      resolution: "1080p",
-      style: spec.style,
-      enhance: true,
-    },
-    spec.seed,
-  );
   return {
     id: `demo_${spec.seed}`,
     kind: spec.kind,
     title: spec.title,
     prompt: spec.prompt,
-    url,
-    variants: [url],
-    posterUrl: url,
+    url: spec.file,
+    variants: [spec.file],
+    posterUrl: spec.file,
     settings,
     createdAt: Date.now() - spec.ageHours * HOUR,
     favorite: false,
     mode: spec.kind === "video" ? "Solo Mode (Video)" : "Solo Mode (Image)",
-    meta: { example: true },
+    meta: { example: true, seed: spec.seed },
   };
 }
 
-function seedDemoContent() {
+/**
+ * Ensure the fixed example assets exist. Safe to call from anywhere: it only
+ * runs once per browser and **merges** instead of replacing, so a render
+ * generated before the first History visit is never clobbered.
+ */
+export function seedDemoContent() {
   if (typeof window === "undefined") return;
   try {
     if (window.localStorage.getItem(SEED_KEY)) return;
     window.localStorage.setItem(SEED_KEY, "1");
-    persist(DEMO_SPECS.map(demoAsset));
+
+    const existing = read();
+    const known = new Set(existing.map((a) => a.id));
+    const additions = DEMO_SPECS.map(demoAsset).filter((a) => !known.has(a.id));
+    if (!additions.length) return;
+
+    persist(
+      [...existing, ...additions].sort((a, b) => b.createdAt - a.createdAt),
+    );
   } catch {
     /* ignore blocked storage */
   }
@@ -242,12 +251,9 @@ export function useAssets(): { assets: Asset[]; ready: boolean } {
   return { assets, ready };
 }
 
-/** True once the client has mounted and demo content has been ensured. */
+/** True once the client has mounted. */
 export function useHydrated(): boolean {
   const [ready, setReady] = useState(false);
-  useEffect(() => {
-    seedDemoContent();
-    setReady(true);
-  }, []);
+  useEffect(() => setReady(true), []);
   return ready;
 }

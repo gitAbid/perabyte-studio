@@ -78,6 +78,26 @@ export function isAllowedMediaUrl(raw: string): boolean {
   }
 }
 
+/**
+ * Every render is displayed through our own origin.
+ *
+ * Two reasons this is not optional:
+ * 1. Chrome's Opaque Response Blocking refuses the provider's rate-limit (429)
+ *    responses for a cross-origin <img>, so failures surface as broken images
+ *    with no way to retry.
+ * 2. The `download` attribute is ignored cross-origin, so downloads must come
+ *    from the same origin anyway.
+ *
+ * Local assets (pre-rendered examples, anything under /public) pass through.
+ */
+export function displaySrc(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (isAllowedMediaUrl(url)) {
+    return `/api/media?u=${encodeURIComponent(url)}`;
+  }
+  return url;
+}
+
 export function randomSeed(): number {
   return Math.floor(Math.random() * 1_000_000);
 }

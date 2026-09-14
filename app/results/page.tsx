@@ -16,6 +16,7 @@ import {
 } from "@/components/ui";
 import { ASPECTS } from "@/lib/constants";
 import { downloadMedia } from "@/lib/generation";
+import { displaySrc } from "@/lib/renderer";
 import { getAsset, removeAsset, toggleFavorite, useAssets } from "@/lib/store";
 import type { Asset } from "@/lib/types";
 
@@ -173,7 +174,7 @@ export default function ResultsPage() {
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={url}
+                  src={displaySrc(url) as string}
                   alt=""
                   loading="lazy"
                   className="size-[92px] object-cover"

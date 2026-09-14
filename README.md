@@ -21,23 +21,50 @@ Tailwind CSS v4** on Vercel.
 - `app/` — App Router routes. Pages are server components; interactive screens
   use focused client components.
 - `app/api/generate/route.ts` — validates the request (prompt length, aspect,
-  resolution, style preset, variation count) and returns signed-off media URLs.
-- `app/api/media/route.ts` — streams a render through our own origin so
-  downloads work and the render provider is never linked directly. It allows
-  only the configured provider host, which blocks SSRF.
+  resolution, style preset, variation count), then **warms the primary render**
+  before answering. The provider takes ~40s to render a URL for the first time
+  and then serves it from cache in under a second, so warming means the browser
+  paints the finished image immediately instead of showing another 40s of
+  skeleton. Extra variations are warmed after the response with `after()`.
+- `app/api/media/route.ts` — serves every render through our own origin and
+  retries on the provider's rate limits (HTTP 429) with backoff. This is
+  required twice over: Chrome's opaque response blocking rejects the provider's
+  non-image 429 bodies for a cross-origin `<img>`, and the `download` attribute
+  is ignored cross-origin. The route only proxies an allow-listed host, which
+  blocks SSRF.
 - `lib/constants.ts` — aspect, resolution, style, duration presets.
-- `lib/renderer.ts` — pure prompt/dimension building plus the host allow-list.
+- `lib/renderer.ts` — prompt/dimension building, the host allow-list, and
+  `displaySrc()` which routes remote renders through `/api/media`.
 - `lib/generation.ts` — client API wrapper, job lifecycle hook, download helper.
 - `lib/store.ts` — localStorage-backed asset history (URLs + metadata only, no
   blob storage) exposed through `useSyncExternalStore`.
 - `components/` — design-system primitives and screen composition.
 - `app/globals.css` — Tailwind v4 `@theme` tokens mirroring `DESIGN.md`.
 
+## Scripts
+
+```bash
+npm run dev                # dev server
+npm run build              # production build + type check
+npm run typecheck          # tsc --noEmit
+npm run prerender:examples # re-render the fixed /public/demo examples
+npm run verify             # screenshot + end-to-end check (needs a running server)
+```
+
+`scripts/verify.mjs` drives a real browser over every screen, records console
+errors and broken images, then performs a live generation and asserts the
+result lands in History. `scripts/prerender_examples.py` pre-renders the six
+fixed example assets so the landing page and seeded History paint instantly —
+run it again if you change the example prompts.
+
 ## Honest limitations of this build
 
 - **Renders are real; the provider is keyless.** Images come from a free
   text-to-image endpoint, so a production deployment should swap
   `lib/renderer.ts` for a paid provider with an API key held server-side.
+- **The free provider is slow and rate-limits hard.** First render ≈ 40s, and
+  parallel requests get HTTP 429, which is why variations are warmed one at a
+  time and the API answers only after the primary render exists.
 - **Video is a preview, not an exported file.** The provider returns stills, so
   video results are presented as animated keyframes with working transport
   controls and labelled *Preview render* in the UI. MP4 encoding is a follow-up

@@ -31,6 +31,7 @@ import {
   type ResolutionKey,
 } from "@/lib/constants";
 import { downloadMedia, useGeneration } from "@/lib/generation";
+import { displaySrc } from "@/lib/renderer";
 import { addAsset, assetFromResponse, toggleFavorite, updateAsset } from "@/lib/store";
 import type { GenerationSettings } from "@/lib/types";
 
@@ -447,7 +448,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={media.url}
+                          src={displaySrc(media.url) as string}
                           alt=""
                           className="size-[76px] object-cover"
                           loading="lazy"

@@ -40,6 +40,8 @@ export interface GenerationResponse {
   status: "completed";
   kind: GenerationKind;
   elapsedMs: number;
+  /** True when the primary render was already produced before we answered. */
+  prewarmed?: boolean;
   media: GeneratedMedia[];
 }
 

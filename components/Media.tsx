@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "./Icon";
+import { displaySrc } from "@/lib/renderer";
 
 /* ------------------------------------------------------------------ */
 /* Image frame with skeleton + recoverable error state                 */
@@ -33,7 +34,7 @@ export function MediaFrame({
     setFailed(false);
   }, [src, attempt]);
 
-  const url = src ? withRetryParam(src, attempt) : null;
+  const url = src ? withRetryParam(displaySrc(src) as string, attempt) : null;
 
   return (
     <div
@@ -137,7 +138,7 @@ export function VideoStage({
     >
       {posterUrl ? (
         <img
-          src={posterUrl}
+          src={displaySrc(posterUrl) as string}
           alt={title}
           className={`size-full object-cover ${playing ? "kenburns" : ""}`}
         />

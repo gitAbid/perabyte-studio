@@ -127,7 +127,15 @@ await page.getByRole("textbox").first().fill(
   "A lighthouse on a rocky cliff at golden hour, waves crashing below",
 );
 await page.getByRole("button", { name: /^generate$/i }).first().click();
-await page.waitForSelector("img[alt*='lighthouse' i]", { timeout: 90_000 });
+
+// Generation waits on the provider (30-60s on the free tier), then the render
+// is served from our own origin.
+try {
+  await page.waitForSelector("img[alt*='lighthouse' i]", { timeout: 180_000 });
+} catch (error) {
+  console.error("generate step failed:", error.message);
+  await page.screenshot({ path: `${OUT}12-generated-FAILED.png`, fullPage: true });
+}
 
 const generated = await page.evaluate(() => {
   const img = document.querySelector("img[alt*='lighthouse' i]");

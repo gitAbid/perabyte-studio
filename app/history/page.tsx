@@ -14,7 +14,6 @@ import {
   formatTime,
   useToast,
 } from "@/components/ui";
-import { ASPECTS } from "@/lib/constants";
 import { downloadMedia } from "@/lib/generation";
 import { removeAsset, toggleFavorite, useAssets } from "@/lib/store";
 import type { Asset } from "@/lib/types";
@@ -172,13 +171,9 @@ export default function HistoryPage() {
                 <MediaFrame
                   src={asset.url}
                   alt={asset.title}
-                  ratio={
-                    ASPECTS[asset.settings.aspect]
-                      ? `${ASPECTS[asset.settings.aspect].width}/${ASPECTS[asset.settings.aspect].height}`
-                      : "1/1"
-                  }
+                  ratio="16/9"
                   rounded="rounded-[12px]"
-                  className="w-[92px]"
+                  className="w-[104px]"
                 />
               </Link>
 

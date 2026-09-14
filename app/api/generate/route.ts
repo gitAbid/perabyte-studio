@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import {
   ASPECTS,
   IMAGE_STYLES,
@@ -10,6 +10,33 @@ import { buildMediaUrl, randomSeed } from "@/lib/renderer";
 import type { GeneratedMedia, GenerationResponse } from "@/lib/types";
 
 export const runtime = "nodejs";
+/** Rendering is synchronous against the provider, so allow a long budget. */
+export const maxDuration = 60;
+
+/**
+ * Ask the provider for a render before we answer the client.
+ *
+ * The provider renders on first request (~40s) and then serves the same URL
+ * from cache in under a second. Warming here means the browser's own request —
+ * which goes through /api/media — is a cache hit, so the completed render
+ * appears immediately instead of after another 40s of blank skeleton.
+ */
+async function warm(url: string, timeoutMs = 45_000): Promise<boolean> {
+  try {
+    const response = await fetch(url, {
+      headers: { accept: "image/*" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    if (!response.ok || !response.body) return false;
+    const contentType = response.headers.get("content-type") ?? "";
+    if (!contentType.startsWith("image/")) return false;
+    await response.arrayBuffer();
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 interface Payload {
   kind?: unknown;
@@ -110,7 +137,23 @@ export async function POST(request: Request) {
     media,
   };
 
-  return NextResponse.json(payload, {
-    headers: { "cache-control": "no-store" },
-  });
+  // Warm the primary render inline so the client sees pixels, not a skeleton.
+  // Extra variations are warmed after the response — the provider 429s if we
+  // ask for several renders at once, so they queue one at a time.
+  const [primary, ...extras] = media;
+  const prewarmed = primary ? await warm(primary.url) : false;
+
+  if (extras.length) {
+    after(async () => {
+      for (const extra of extras) {
+        const ok = await warm(extra.url, 75_000);
+        if (!ok) break;
+      }
+    });
+  }
+
+  return NextResponse.json(
+    { ...payload, elapsedMs: Date.now() - started, prewarmed },
+    { headers: { "cache-control": "no-store" } },
+  );
 }

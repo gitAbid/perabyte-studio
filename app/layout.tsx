@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
+import { StoreBootstrap } from "@/components/StoreBootstrap";
 import { ToastProvider } from "@/components/ui";
 
 export const metadata: Metadata = {
@@ -34,6 +35,7 @@ export default function RootLayout({
           Skip to content
         </a>
         <ToastProvider>
+          <StoreBootstrap />
           <SiteHeader />
           <main id="main" className="flex-1">
             {children}
