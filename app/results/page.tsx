@@ -16,7 +16,6 @@ import {
 } from "@/components/ui";
 import { ASPECTS } from "@/lib/constants";
 import { downloadMedia } from "@/lib/generation";
-import { displaySrc } from "@/lib/renderer";
 import { getAsset, removeAsset, toggleFavorite, useAssets } from "@/lib/store";
 import type { Asset } from "@/lib/types";
 
@@ -172,12 +171,12 @@ export default function ResultsPage() {
                     : "border-transparent hover:border-border-strong"
                 }`}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={displaySrc(url) as string}
+                <MediaFrame
+                  src={url}
                   alt=""
-                  loading="lazy"
-                  className="size-[92px] object-cover"
+                  ratio="1/1"
+                  rounded="rounded-[12px]"
+                  className="w-[92px]"
                 />
               </button>
             ))}

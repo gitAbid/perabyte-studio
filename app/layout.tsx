@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
+import { ConditionalFooter, SiteHeader } from "@/components/SiteChrome";
 import { StoreBootstrap } from "@/components/StoreBootstrap";
 import { ToastProvider } from "@/components/ui";
 
@@ -37,10 +37,10 @@ export default function RootLayout({
         <ToastProvider>
           <StoreBootstrap />
           <SiteHeader />
-          <main id="main" className="flex-1">
+          <main id="main" className="flex flex-1 flex-col">
             {children}
           </main>
-          <SiteFooter />
+          <ConditionalFooter />
         </ToastProvider>
       </body>
     </html>

@@ -338,12 +338,15 @@ export function Segmented<T extends string>({
   onChange,
   ariaLabel,
   size = "md",
+  collapseOnMobile,
 }: {
   options: { value: T; label: string; icon?: IconName }[];
   value: T;
   onChange: (value: T) => void;
   ariaLabel: string;
   size?: "sm" | "md";
+  /** Show icons only on narrow screens so the row never wraps. */
+  collapseOnMobile?: boolean;
 }) {
   return (
     <div
@@ -359,6 +362,7 @@ export function Segmented<T extends string>({
             type="button"
             role="tab"
             aria-selected={active}
+            aria-label={option.label}
             onClick={() => onChange(option.value)}
             className={`inline-flex items-center gap-1.5 rounded-[9px] font-semibold transition-all ${
               size === "sm" ? "h-7 px-2.5 text-[12px]" : "h-8 px-3 text-[13px]"
@@ -369,7 +373,9 @@ export function Segmented<T extends string>({
             }`}
           >
             {option.icon && <Icon name={option.icon} size={14} />}
-            {option.label}
+            <span className={collapseOnMobile ? "hidden sm:inline" : undefined}>
+              {option.label}
+            </span>
           </button>
         );
       })}

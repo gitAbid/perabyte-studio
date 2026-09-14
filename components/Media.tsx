@@ -8,6 +8,9 @@ import { displaySrc } from "@/lib/renderer";
 /* Image frame with skeleton + recoverable error state                 */
 /* ------------------------------------------------------------------ */
 
+/** Automatic retries before the user is asked to intervene. */
+const AUTO_RETRIES = 3;
+
 export function MediaFrame({
   src,
   alt,
@@ -16,6 +19,7 @@ export function MediaFrame({
   rounded = "rounded-[16px]",
   sizes,
   priority,
+  fit,
 }: {
   src: string | null;
   alt: string;
@@ -24,8 +28,11 @@ export function MediaFrame({
   rounded?: string;
   sizes?: string;
   priority?: boolean;
+  /** Size to the container (contain) instead of a fixed aspect-ratio box. */
+  fit?: boolean;
 }) {
   const [attempt, setAttempt] = useState(0);
+  const [autoTries, setAutoTries] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -34,12 +41,33 @@ export function MediaFrame({
     setFailed(false);
   }, [src, attempt]);
 
+  // The render provider rate-limits hard (HTTP 429), which shows up here as a
+  // failed image. Those clear within seconds, so retry automatically a few
+  // times with backoff before handing control to the user.
+  useEffect(() => {
+    if (!failed || autoTries >= AUTO_RETRIES) return;
+    const timer = setTimeout(
+      () => {
+        setAutoTries((n) => n + 1);
+        setAttempt((n) => n + 1);
+        setFailed(false);
+      },
+      2000 * (autoTries + 1),
+    );
+    return () => clearTimeout(timer);
+  }, [failed, autoTries]);
+
   const url = src ? withRetryParam(displaySrc(src) as string, attempt) : null;
+  const autoRetrying = failed && autoTries < AUTO_RETRIES;
 
   return (
     <div
-      className={`relative overflow-hidden bg-surface-2 ${rounded} ${className}`}
-      style={{ aspectRatio: ratio }}
+      className={`relative overflow-hidden ${
+        fit
+          ? "flex h-full w-full items-center justify-center"
+          : "bg-surface-2"
+      } ${rounded} ${className}`}
+      style={fit ? undefined : { aspectRatio: ratio }}
     >
       {!loaded && !failed && <div className="skeleton absolute inset-0" />}
 
@@ -53,26 +81,44 @@ export function MediaFrame({
           decoding="async"
           onLoad={() => setLoaded(true)}
           onError={() => setFailed(true)}
-          className={`size-full object-cover transition-opacity duration-500 ${
-            loaded ? "opacity-100" : "opacity-0"
-          }`}
+          className={
+            fit
+              ? `max-h-full max-w-full rounded-[14px] object-contain transition-opacity duration-500 ${
+                  loaded ? "opacity-100" : "opacity-0"
+                }`
+              : `size-full object-cover transition-opacity duration-500 ${
+                  loaded ? "opacity-100" : "opacity-0"
+                }`
+          }
         />
       )}
 
       {failed && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-surface px-4 text-center">
-          <Icon name="alert" size={20} className="text-warning" />
+          <Icon
+            name={autoRetrying ? "clock" : "alert"}
+            size={20}
+            className={autoRetrying ? "text-muted" : "text-warning"}
+          />
           <p className="text-[12px] font-medium text-ink-soft">
-            This render could not be loaded.
+            {autoRetrying
+              ? "The render provider is busy — retrying…"
+              : "This render could not be loaded."}
           </p>
-          <button
-            type="button"
-            onClick={() => setAttempt((a) => a + 1)}
-            className="inline-flex items-center gap-1 rounded-lg border border-border-strong bg-white px-2.5 py-1 text-[12px] font-semibold text-ink hover:border-muted"
-          >
-            <Icon name="refresh" size={13} />
-            Retry
-          </button>
+          {!autoRetrying && (
+            <button
+              type="button"
+              onClick={() => {
+                setAutoTries(0);
+                setFailed(false);
+                setAttempt((a) => a + 1);
+              }}
+              className="inline-flex items-center gap-1 rounded-lg border border-border-strong bg-white px-2.5 py-1 text-[12px] font-semibold text-ink hover:border-muted"
+            >
+              <Icon name="refresh" size={13} />
+              Retry
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -100,11 +146,14 @@ export function VideoStage({
   title,
   durationSeconds = 5,
   className = "",
+  fit,
 }: {
   posterUrl: string | null;
   title: string;
   durationSeconds?: number;
   className?: string;
+  /** Shrink to the container instead of claiming a fixed 16:9 box. */
+  fit?: boolean;
 }) {
   const [playing, setPlaying] = useState(true);
   const [elapsed, setElapsed] = useState(0);
@@ -134,7 +183,17 @@ export function VideoStage({
     <div
       ref={shellRef}
       className={`group relative overflow-hidden rounded-[20px] bg-ink ${className}`}
-      style={{ aspectRatio: "16/9" }}
+      style={
+        fit
+          ? {
+              aspectRatio: "16 / 9",
+              height: "100%",
+              width: "auto",
+              maxWidth: "100%",
+              maxHeight: "100%",
+            }
+          : { aspectRatio: "16/9" }
+      }
     >
       {posterUrl ? (
         <img

@@ -160,3 +160,13 @@ export function SiteFooter() {
     </footer>
   );
 }
+
+/**
+ * The generator screens fill the viewport, so the footer is suppressed there
+ * and rendered everywhere else.
+ */
+export function ConditionalFooter() {
+  const pathname = usePathname();
+  if (pathname?.startsWith("/generate")) return null;
+  return <SiteFooter />;
+}

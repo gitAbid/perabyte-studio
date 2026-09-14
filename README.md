@@ -9,12 +9,32 @@ Tailwind CSS v4** on Vercel.
 | Screen | Route | Notes |
 | --- | --- | --- |
 | Homepage | `/` | Hero preview cluster, mode cards, "Start creating" section |
-| Generator — Solo Mode (Image) | `/generate/image` | Settings, prompt composer, live preview, variations |
-| Generator — Solo Mode (Video) | `/generate/video` | Adds duration, animated preview with transport controls |
+| Generator — Solo Mode (Image) | `/generate/image` | Single-screen composer: prompt + settings badges, preview fills the viewport |
+| Generator — Solo Mode (Video) | `/generate/video` | Same, plus a duration badge and an animated preview with transport controls |
 | Generator — Story Mode | `/story` | 3-step flow, scene list, per-scene generation |
 | Results — image & video preview | `/results?id=…` | Viewer, variations, metadata, actions |
 | History | `/history` | Search, type filters, sort, favourites, per-row actions |
 | UI elements & style guide | `/styleguide` | Colour, type, button, input, card and icon tokens |
+
+## Generator layout
+
+Both solo generators are a single screen that never scrolls:
+
+- The prompt box at the bottom holds everything — the textarea plus
+  **badge dropdowns** for aspect ratio, resolution, style and (video) duration.
+  Selecting a badge opens a small menu above it; there is no separate settings
+  panel, so there is nothing to scroll past.
+- A sliders badge opens **Advanced** (variations, seed lock, negative prompt,
+  prompt enhancement).
+- The preview above it is `flex-1 min-h-0` and the media uses `object-contain`,
+  so any aspect ratio scales to whatever space is left rather than forcing the
+  page to grow. Result actions (download, save, copy, open, regenerate) float
+  over the preview instead of occupying a toolbar row.
+- `main` is a flex column and the generator root is `flex-1 min-h-0`, so the
+  height comes from layout rather than a `calc()` — no rounding gap, no scroll.
+  The footer is suppressed on `/generate/*` via `ConditionalFooter`.
+- Verified at 1440×900, 1280×800 and 390×844: page overflow is 0px on every
+  combination, before and after generating (`scripts/verify-generator.mjs`).
 
 ## Architecture
 
@@ -49,6 +69,7 @@ npm run build              # production build + type check
 npm run typecheck          # tsc --noEmit
 npm run prerender:examples # re-render the fixed /public/demo examples
 npm run verify             # screenshot + end-to-end check (needs a running server)
+npm run verify:generator   # viewport-fit + badge menu + live render check
 ```
 
 `scripts/verify.mjs` drives a real browser over every screen, records console

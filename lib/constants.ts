@@ -55,7 +55,7 @@ export const DEFAULT_IMAGE_SETTINGS = {
   resolution: "1080p" as ResolutionKey,
   style: "Realistic" as ImageStyleKey,
   duration: "5s" as DurationKey,
-  count: 2 as number,
+  count: 1 as number,
   seed: "" as string,
   negativePrompt: "" as string,
   enhance: true,
