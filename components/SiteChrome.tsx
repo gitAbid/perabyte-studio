@@ -26,7 +26,7 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-white/90 backdrop-blur-md">
-      <div className="mx-auto flex h-16 w-full max-w-[1240px] items-center gap-4 px-4 sm:px-6">
+      <div className="mx-auto flex h-16 w-full max-w-[1280px] items-center gap-4 px-4 sm:px-6">
         <Link href="/" aria-label="PeraByte home" className="shrink-0">
           <Logo />
         </Link>
@@ -131,42 +131,80 @@ export function SiteHeader() {
   );
 }
 
+const FOOTER_GROUPS = [
+  {
+    title: "Create",
+    links: [
+      { href: "/generate/image", label: "Solo Mode" },
+      { href: "/story", label: "Story Mode" },
+    ],
+  },
+  {
+    title: "Library",
+    links: [
+      { href: "/history", label: "History" },
+      { href: "/styleguide", label: "Style guide" },
+    ],
+  },
+] as const;
+
 export function SiteFooter() {
   return (
-    <footer className="mt-16 border-t border-border bg-surface">
-      <div className="mx-auto flex w-full max-w-[1240px] flex-col items-center gap-4 px-4 py-7 sm:flex-row sm:px-6">
-        <Logo size={24} />
-        <nav aria-label="Footer" className="flex items-center gap-4 sm:ml-auto">
-          {NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="text-[12.5px] font-medium text-muted hover:text-ink"
-            >
-              {item.label}
-            </Link>
-          ))}
-          <Link
-            href="/styleguide"
-            className="text-[12.5px] font-medium text-muted hover:text-ink"
-          >
-            Style guide
-          </Link>
-        </nav>
-        <span className="inline-flex size-8 items-center justify-center rounded-full border border-border bg-white text-muted">
-          <Icon name="user" size={15} />
-        </span>
+    <footer className="border-t border-border bg-surface">
+      <div className="mx-auto w-full max-w-[1280px] px-4 py-8 sm:px-6">
+        <div className="flex flex-col gap-8 md:flex-row md:justify-between">
+          <div className="max-w-xs">
+            <Logo size={26} />
+            <p className="mt-3 text-[13px] leading-relaxed text-muted">
+              An easy-to-use image and video generation studio for everyone.
+              Create, explore, and bring your imagination to life — in seconds.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-8 sm:gap-16">
+            {FOOTER_GROUPS.map((group) => (
+              <nav key={group.title} aria-label={`Footer — ${group.title}`}>
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-ink">
+                  {group.title}
+                </p>
+                <ul className="mt-3 space-y-2">
+                  {group.links.map((link) => (
+                    <li key={link.href}>
+                      <Link
+                        href={link.href}
+                        className="text-[13px] font-medium text-muted transition-colors hover:text-primary"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-8 flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-[12px] text-muted">
+            © {new Date().getFullYear()} PeraByte Studio. All rights reserved.
+          </p>
+          <p className="text-[12px] text-muted">
+            Renders are AI-generated · Built for the web
+          </p>
+        </div>
       </div>
     </footer>
   );
 }
 
 /**
- * The generator screens fill the viewport, so the footer is suppressed there
- * and rendered everywhere else.
+ * The generator and story screens are full-height workspaces, so the footer is
+ * suppressed there and rendered on every content page.
  */
 export function ConditionalFooter() {
   const pathname = usePathname();
-  if (pathname?.startsWith("/generate")) return null;
+  if (pathname?.startsWith("/generate") || pathname?.startsWith("/story")) {
+    return null;
+  }
   return <SiteFooter />;
 }

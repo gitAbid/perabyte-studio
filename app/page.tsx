@@ -27,27 +27,30 @@ const MODES = [
 
 export default function HomePage() {
   return (
-    <div className="mx-auto w-full max-w-[1240px] px-4 pb-10 pt-10 sm:px-6 sm:pt-14">
-      <section className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-14">
+    // The landing page is designed to fit the viewport on desktop: the hero
+    // centres in the space left over after the compact "Start creating" row,
+    // and the page simply scrolls on short or mobile screens.
+    <div className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-4 pb-6 pt-4 sm:px-6 sm:pt-5 lg:min-h-[calc(100dvh-19rem)]">
+      <section className="grid flex-1 items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-12">
         <div className="animate-[fade-up_0.4s_ease-out_both]">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
             AI image &amp; video generation studio
           </p>
-          <h1 className="mt-4 text-[38px] font-extrabold leading-[1.05] tracking-[-0.03em] text-ink sm:text-[52px]">
+          <h1 className="mt-3 text-[32px] font-extrabold leading-[1.06] tracking-[-0.03em] text-ink sm:text-[44px] lg:text-[48px]">
             Turn your ideas into{" "}
             <span className="text-primary">stunning images</span> and videos
           </h1>
-          <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-muted">
+          <p className="mt-4 max-w-xl text-[14.5px] leading-relaxed text-muted sm:text-[15px]">
             An easy-to-use image and video generation studio for everyone.
             Create, explore, and bring your imagination to life — in seconds.
           </p>
 
-          <div className="mt-7 grid gap-3 sm:grid-cols-2">
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
             {MODES.map((mode) => (
               <Link
                 key={mode.title}
                 href={mode.href}
-                className="group flex items-start gap-3 rounded-[16px] border border-border bg-white p-4 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-card"
+                className="group flex items-start gap-3 rounded-[16px] border border-border bg-white p-3.5 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-card"
               >
                 <span className="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-primary-soft text-primary">
                   <Icon name={mode.icon} size={17} />
@@ -72,13 +75,13 @@ export default function HomePage() {
             <img
               src={HERO_MAIN}
               alt="Example render: a mountain lake at sunrise"
-              className="aspect-[16/10] w-full object-cover"
+              className="aspect-[16/9] w-full object-cover"
             />
             <span className="absolute left-1/2 top-1/2 inline-flex size-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-ink shadow-lift backdrop-blur">
               <Icon name="play" size={22} />
             </span>
           </div>
-          <div className="absolute -right-3 top-1/3 hidden w-[104px] flex-col gap-3 sm:flex">
+          <div className="absolute -right-3 top-1/3 hidden w-[104px] flex-col gap-3 lg:flex">
             {HERO_SIDE.map((src, i) => (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -92,37 +95,44 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mt-16 sm:mt-20">
-        <h2 className="text-[22px] font-extrabold tracking-[-0.02em] text-ink">
-          Start creating
-        </h2>
-        <p className="mt-1.5 text-sm text-muted">
-          Choose a mode and begin your creative journey.
-        </p>
+      <section className="mt-8 sm:mt-10">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <h2 className="text-[20px] font-extrabold tracking-[-0.02em] text-ink sm:text-[22px]">
+              Start creating
+            </h2>
+            <p className="mt-1 text-[13px] text-muted sm:text-sm">
+              Choose a mode and begin your creative journey.
+            </p>
+          </div>
+        </div>
 
-        <div className="mt-6 grid gap-5 md:grid-cols-2">
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
           {MODES.map((mode) => (
             <article
               key={mode.title}
-              className="flex flex-col rounded-[20px] border border-border bg-white p-7 shadow-card transition-shadow hover:shadow-lift"
+              className="flex flex-col gap-4 rounded-[20px] border border-border bg-white p-4 shadow-card transition-shadow hover:shadow-lift sm:flex-row sm:items-center sm:gap-5 sm:p-5"
             >
-              <span className="inline-flex size-12 items-center justify-center rounded-[14px] bg-primary-soft text-primary">
-                <Icon name={mode.icon} size={22} />
+              <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-[13px] bg-primary-soft text-primary">
+                <Icon name={mode.icon} size={20} />
               </span>
-              <h3 className="mt-5 text-[17px] font-bold text-ink">{mode.title}</h3>
-              <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">
-                {mode.body}
-              </p>
-              <div className="mt-6">
-                <LinkButton
-                  href={mode.href}
-                  variant={mode.variant}
-                  block
-                  iconRight="arrow-right"
-                >
-                  {mode.cta}
-                </LinkButton>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-[15px] font-bold text-ink sm:text-[16px]">
+                  {mode.title}
+                </h3>
+                <p className="mt-0.5 text-[12.5px] leading-snug text-muted sm:text-[13px]">
+                  {mode.body}
+                </p>
               </div>
+              <LinkButton
+                href={mode.href}
+                variant={mode.variant}
+                size="sm"
+                className="shrink-0 max-md:w-full"
+                iconRight="arrow-right"
+              >
+                {mode.cta}
+              </LinkButton>
             </article>
           ))}
         </div>
