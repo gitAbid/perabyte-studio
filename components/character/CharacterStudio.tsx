@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { MediaFrame } from "@/components/Media";
@@ -27,6 +28,19 @@ import { addAsset } from "@/lib/store";
 import { titleFromPrompt } from "@/lib/constants";
 import type { GenerationResponse } from "@/lib/types";
 import type { ReferenceImage } from "@/components/character/CharacterSteps";
+
+// WebGL canvas — client-only.
+const AvatarPreview = dynamic(
+  () => import("@/components/character/preview/AvatarPreview"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex aspect-[4/5] w-full items-center justify-center rounded-[20px] border border-border bg-white shadow-card">
+        <span className="text-[12.5px] text-muted">Loading 3D preview…</span>
+      </div>
+    ),
+  },
+);
 
 type Phase = "landing" | "wizard" | "generating" | "ready";
 
@@ -55,6 +69,7 @@ export function CharacterStudio() {
   const [result, setResult] = useState<GenerationResponse | null>(null);
   const [activeVariant, setActiveVariant] = useState(0);
   const [saved, setSaved] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const { job, run, cancel, reset } = useGeneration();
 
@@ -426,71 +441,113 @@ export function CharacterStudio() {
   return (
     <div
       ref={scrollRef}
-      className="mx-auto flex w-full max-w-[980px] flex-1 flex-col px-4 py-5 sm:px-6 lg:py-7"
+      className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-4 py-5 sm:px-6 lg:py-7"
     >
-      <div className="flex items-center gap-2.5">
-        <button
-          type="button"
-          aria-label="Back to character overview"
-          onClick={() => setPhase("landing")}
-          className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-white text-ink-soft transition-colors hover:border-border-strong hover:text-ink"
-        >
-          <Icon name="arrow-left" size={16} />
-        </button>
-        <h1 className="min-w-0 truncate text-[17px] font-extrabold tracking-[-0.02em] text-ink sm:text-[19px]">
-          Character Studio
-        </h1>
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:items-start lg:gap-6">
+        <div className="flex min-w-0 flex-col">
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              aria-label="Back to character overview"
+              onClick={() => setPhase("landing")}
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-white text-ink-soft transition-colors hover:border-border-strong hover:text-ink"
+            >
+              <Icon name="arrow-left" size={16} />
+            </button>
+            <h1 className="min-w-0 truncate text-[17px] font-extrabold tracking-[-0.02em] text-ink sm:text-[19px]">
+              Character Studio
+            </h1>
+            <button
+              type="button"
+              onClick={() => setPreviewOpen(true)}
+              className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-3 py-1.5 text-[12.5px] font-semibold text-ink-soft transition-colors hover:border-border-strong hover:text-ink lg:hidden"
+            >
+              <Icon name="user" size={14} />
+              Preview
+            </button>
+          </div>
+
+          <div className="mt-4 sm:mt-5">
+            <Stepper
+              current={step}
+              maxVisited={maxVisited}
+              onStepClick={(next) => goToStep(next)}
+            />
+          </div>
+
+          <div className="mt-4 rounded-[20px] border border-border bg-white p-5 shadow-card sm:p-7">
+            {step === 1 && (
+              <StepDetails
+                spec={spec}
+                patch={patchSpec}
+                promptError={promptError}
+                onBack={() => setPhase("landing")}
+                onNext={handleDetailsNext}
+              />
+            )}
+            {step === 2 && (
+              <StepAppearance
+                spec={spec}
+                patch={patchSpec}
+                onBack={() => goToStep(1)}
+                onNext={() => goToStep(3)}
+              />
+            )}
+            {step === 3 && (
+              <StepAdvanced
+                spec={spec}
+                patch={patchSpec}
+                reference={reference}
+                onReferenceChange={setReference}
+                onBack={() => goToStep(2)}
+                onNext={() => goToStep(4)}
+              />
+            )}
+            {step === 4 && (
+              <StepReview
+                spec={spec}
+                reference={reference}
+                onBack={() => goToStep(3)}
+                onGenerate={handleGenerate}
+              />
+            )}
+          </div>
+
+          <p className="mt-3 text-center text-[12px] text-muted">
+            Step {step} of {CHARACTER_STEPS.length} · {CHARACTER_STEPS[step - 1]}
+          </p>
+        </div>
+
+        <aside className="mt-6 hidden lg:sticky lg:top-6 lg:mt-0 lg:block">
+          <AvatarPreview spec={spec} />
+        </aside>
       </div>
 
-      <div className="mt-4 sm:mt-5">
-        <Stepper
-          current={step}
-          maxVisited={maxVisited}
-          onStepClick={(next) => goToStep(next)}
-        />
-      </div>
-
-      <div className="mt-4 rounded-[20px] border border-border bg-white p-5 shadow-card sm:p-7">
-        {step === 1 && (
-          <StepDetails
-            spec={spec}
-            patch={patchSpec}
-            promptError={promptError}
-            onBack={() => setPhase("landing")}
-            onNext={handleDetailsNext}
+      {/* Mobile preview sheet */}
+      {previewOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Live 3D preview">
+          <button
+            type="button"
+            aria-label="Close preview"
+            onClick={() => setPreviewOpen(false)}
+            className="absolute inset-0 bg-ink/40 backdrop-blur-[2px]"
           />
-        )}
-        {step === 2 && (
-          <StepAppearance
-            spec={spec}
-            patch={patchSpec}
-            onBack={() => goToStep(1)}
-            onNext={() => goToStep(3)}
-          />
-        )}
-        {step === 3 && (
-          <StepAdvanced
-            spec={spec}
-            patch={patchSpec}
-            reference={reference}
-            onReferenceChange={setReference}
-            onBack={() => goToStep(2)}
-            onNext={() => goToStep(4)}
-          />
-        )}
-        {step === 4 && (
-          <StepReview
-            spec={spec}
-            reference={reference}
-            onBack={() => goToStep(3)}
-            onGenerate={handleGenerate}
-          />
-        )}
-      </div>
-
-      <p className="mt-3 text-center text-[12px] text-muted">
-        Step {step} of {CHARACTER_STEPS.length} · {CHARACTER_STEPS[step - 1]}
-      </p>
+          <div className="absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-[20px] bg-white p-3 shadow-2xl">
+            <div className="mb-2 flex items-center justify-between px-1">
+              <span className="text-[13px] font-bold text-ink">Live 3D Preview</span>
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={() => setPreviewOpen(false)}
+                className="inline-flex size-8 items-center justify-center rounded-full bg-surface-2 text-ink-soft"
+              >
+                <Icon name="close" size={14} />
+              </button>
+            </div>
+            <AvatarPreview spec={spec} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
