@@ -35,3 +35,6 @@ yarn-error.log*
 # local verification artifacts
 /shots
 .env*
+
+# git worktrees
+/.worktrees
