@@ -11,30 +11,39 @@ Tailwind CSS v4** on Vercel.
 | Homepage | `/` | Hero preview cluster, mode cards, "Start creating" section |
 | Generator — Solo Mode (Image) | `/generate/image` | Single-screen composer: prompt + settings badges, preview fills the viewport |
 | Generator — Solo Mode (Video) | `/generate/video` | Same, plus a duration badge and an animated preview with transport controls |
-| Generator — Story Mode | `/story` | 3-step flow, scene list, per-scene generation |
+| Generator — Story Mode | `/story` | Scene slots (first scene + placeholders), per-scene generation |
 | Results — image & video preview | `/results?id=…` | Viewer, variations, metadata, actions |
 | History | `/history` | Search, type filters, sort, favourites, per-row actions |
 | UI elements & style guide | `/styleguide` | Colour, type, button, input, card and icon tokens |
 
 ## Generator layout
 
-Both solo generators are a single screen that never scrolls:
+Both solo generators are single-screen workspaces:
 
-- The prompt box at the bottom holds everything — the textarea plus
-  **badge dropdowns** for aspect ratio, resolution, style and (video) duration.
-  Selecting a badge opens a small menu above it; there is no separate settings
-  panel, so there is nothing to scroll past.
-- A sliders badge opens **Advanced** (variations, seed lock, negative prompt,
-  prompt enhancement).
-- The preview above it is `flex-1 min-h-0` and the media uses `object-contain`,
-  so any aspect ratio scales to whatever space is left rather than forcing the
-  page to grow. Result actions (download, save, copy, open, regenerate) float
-  over the preview instead of occupying a toolbar row.
-- `main` is a flex column and the generator root is `flex-1 min-h-0`, so the
-  height comes from layout rather than a `calc()` — no rounding gap, no scroll.
-  The footer is suppressed on `/generate/*` via `ConditionalFooter`.
-- Verified at 1440×900, 1280×800 and 390×844: page overflow is 0px on every
-  combination, before and after generating (`scripts/verify-generator.mjs`).
+- The prompt box holds everything — the textarea (on a tinted surface, with an
+  **Enhance prompt** action that expands the text with style-aware detail),
+  **badge dropdowns** for aspect ratio, resolution, style, (video) duration and
+  variation count, and a sliders badge for **More options** (seed lock,
+  negative prompt). Selecting a badge opens a small menu above it; there is no
+  separate settings panel. A centered Solo ⇄ Story switch sits in the header of
+  both workspaces. The preview canvas is ratio-locked and top-left aligned,
+  with a strip below it showing the render's variations, or the most recent
+  generations from History (examples on a fresh browser).
+- On desktop the composer and preview panels stretch to fill the viewport
+  under the header (`main` is a flex column and the generator root is
+  `flex-1 min-h-0`, so the height comes from layout rather than a `calc()`).
+  The media uses contain-fit sizing (container-query units for the ratio
+  boxes, `object-contain` for renders), so any aspect ratio — including the
+  video default 9:16 — scales to the space available instead of overflowing.
+- On small screens the panels stack (composer above preview) and the page
+  scrolls naturally; the viewport-fit is only enforced from `lg` up.
+- Result actions (download, save, copy, open, regenerate) float over the
+  preview instead of occupying a toolbar row.
+- The footer is suppressed on the workspace routes (`/generate/*` and
+  `/story`) via `ConditionalFooter`.
+- The landing page fits the viewport on desktop heights (≥ ~830px) and scrolls
+  on shorter screens; verified at 1440×900 and 1280×800 together with the
+  generators (`scripts/verify-generator.mjs`).
 
 ## Architecture
 

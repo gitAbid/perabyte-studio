@@ -105,14 +105,16 @@ const stillFits = await p.evaluate(
 );
 
 /* --- advanced panel opens ----------------------------------------------- */
-await p.click('button[aria-label="Advanced settings"]');
+await p.click('button[aria-label="More options"]');
 await p.waitForTimeout(300);
 await p.screenshot({ path: `${OUT}gen-advanced.png` });
 const advancedVisible = await p.isVisible("text=Negative prompt");
+const enhanceVisible = await p.isVisible('button[aria-label="Prompt enhancement"]');
 
 report.selections = selections;
 report.stillFitsAfterSelection = stillFits;
 report.advancedPanelVisible = advancedVisible;
+report.enhanceToggleVisible = enhanceVisible;
 await context.close();
 
 /* --- real generation, then re-check the fit ----------------------------- */

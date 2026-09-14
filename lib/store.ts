@@ -61,7 +61,7 @@ export function getServerSnapshot(): Asset[] {
 
 const HOUR = 3_600_000;
 
-interface DemoSpec {
+export interface DemoSpec {
   title: string;
   prompt: string;
   kind: "image" | "video";
@@ -73,7 +73,9 @@ interface DemoSpec {
   file: string;
 }
 
-const DEMO_SPECS: DemoSpec[] = [
+/** Pre-rendered examples (see scripts/prerender_examples.py), also used by the
+ * generator's "try an example" strip. */
+export const DEMO_SPECS: DemoSpec[] = [
   {
     title: "Mountain Lake",
     prompt: "A serene mountain landscape with a lake, sunrise, and pine trees",

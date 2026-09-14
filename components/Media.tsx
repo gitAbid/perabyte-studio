@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { Icon } from "./Icon";
 import { displaySrc } from "@/lib/renderer";
 
@@ -147,6 +147,7 @@ export function VideoStage({
   durationSeconds = 5,
   className = "",
   fit,
+  fitStyle,
 }: {
   posterUrl: string | null;
   title: string;
@@ -154,6 +155,9 @@ export function VideoStage({
   className?: string;
   /** Shrink to the container instead of claiming a fixed 16:9 box. */
   fit?: boolean;
+  /** Exact sizing for fit mode (e.g. the render's aspect ratio), applied when
+   * `fit` is set so portrait renders are not cropped into a 16:9 stage. */
+  fitStyle?: CSSProperties;
 }) {
   const [playing, setPlaying] = useState(true);
   const [elapsed, setElapsed] = useState(0);
@@ -185,13 +189,13 @@ export function VideoStage({
       className={`group relative overflow-hidden rounded-[20px] bg-ink ${className}`}
       style={
         fit
-          ? {
+          ? (fitStyle ?? {
               aspectRatio: "16 / 9",
               height: "100%",
               width: "auto",
               maxWidth: "100%",
               maxHeight: "100%",
-            }
+            })
           : { aspectRatio: "16/9" }
       }
     >
