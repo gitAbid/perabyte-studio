@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { resetStudioEnvForTests } from "@/lib/config/env";
 import { logger } from "@/lib/logging/logger";
 import type { NormalizedGenerationRequest } from "@/lib/domain/models";
-import { ProviderError } from "@/lib/providers/types";
+import { ProviderError, type ProviderProgress } from "@/lib/providers/types";
 import { setSogniClientForTests, type SogniClient } from "@/lib/providers/sogni/client";
 import {
   IMAGE_DEADLINE_MS,
@@ -42,15 +42,22 @@ interface CapturedCreate {
 
 function fakeClient(completion: Promise<string[]>) {
   const created: CapturedCreate[] = [];
+  const progressListeners: ((percent: number) => void)[] = [];
   const client: SogniClient = {
     projects: {
       create(params) {
         created.push({ params: params as unknown as Record<string, unknown>, completion });
-        return Promise.resolve({ waitForCompletion: () => completion });
+        return Promise.resolve({
+          waitForCompletion: () => completion,
+          on: (_event: "progress", listener: (percent: number) => void) => {
+            progressListeners.push(listener);
+          },
+        });
       },
+      getAvailableModels: async () => [],
     },
   };
-  return { client, created };
+  return { client, created, progressListeners };
 }
 
 beforeEach(() => {
@@ -107,6 +114,43 @@ describe("sogni provider", () => {
 
     await sogniProvider.generateImage(imageRequest({ safe: true }), imageModel, { logger });
     expect(created[1].params.disableNSFWFilter).toBe(false);
+  });
+
+  it("streams submitted + rendering progress, deduplicated and clamped", async () => {
+    const { client, progressListeners } = fakeClient(
+      new Promise<string[]>((resolve) =>
+        setTimeout(() => resolve(["https://cdn.sogni.ai/a.png"]), 10),
+      ),
+    );
+    setSogniClientForTests(client);
+
+    const ticks: ProviderProgress[] = [];
+    const pending = sogniProvider.generateImage(imageRequest(), imageModel, {
+      logger,
+      onProgress: (progress) => ticks.push(progress),
+    });
+    await vi.waitFor(() => expect(progressListeners.length).toBe(1));
+
+    progressListeners[0](37.2);
+    progressListeners[0](37.2); // duplicate percent — dropped
+    progressListeners[0](140); // clamped to 100
+    await pending;
+
+    expect(ticks[0]).toEqual({
+      stage: "submitted",
+      message: "Sogni AI accepted the render — waiting for a free GPU…",
+    });
+    expect(ticks).toContainEqual({
+      stage: "rendering",
+      message: "Sogni AI is rendering — 37%",
+      percent: 37,
+    });
+    expect(ticks).toContainEqual({
+      stage: "rendering",
+      message: "Sogni AI is rendering — 100%",
+      percent: 100,
+    });
+    expect(ticks.filter((tick) => tick.message.includes("37%"))).toHaveLength(1);
   });
 
   it("fails loudly and non-retryably when unconfigured", async () => {

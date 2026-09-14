@@ -18,9 +18,11 @@ import {
   ProviderError,
   type GeneratedArtifact,
   type ImageProvider,
+  type ProviderProgress,
   type VideoProvider,
 } from "@/lib/providers/types";
 import { getMediaRepository } from "@/lib/repositories/media.repository";
+import { isPlausibleMp4 } from "@/lib/media/mp4";
 import {
   isAllowedMediaUrl,
   randomSeed,
@@ -37,6 +39,11 @@ import type { GeneratedMedia, GenerationResponse } from "@/lib/types";
 export interface RunGenerationOptions {
   signal?: AbortSignal;
   logger?: Logger;
+  /**
+   * Live progress sink for streaming controllers. Receives the provider's
+   * ticks plus this service's own stages (e.g. caching the finished media).
+   */
+  onProgress?: (progress: ProviderProgress) => void;
 }
 
 export class GenerationServiceError extends Error {
@@ -191,9 +198,18 @@ async function materializeArtifact(
     });
     if (!response.ok) throw new Error(`status ${response.status}`);
     const bytes = Buffer.from(await response.arrayBuffer());
+    if (artifact.ext === "mp4" && !isPlausibleMp4(bytes)) {
+      // A placeholder mp4 decodes to a silent black player; that is a failed
+      // render, not a cached one.
+      throw new ProviderError(
+        "The provider finished the video but the file is unreadable. Please retry.",
+        { retryable: true, status: 502 },
+      );
+    }
     log.info("url-only artifact cached server-side", { size: bytes.length });
     return { ...artifact, bytes, url: null };
   } catch (error) {
+    if (error instanceof ProviderError) throw error;
     // Last resort: hand over the raw URL (better than losing the render);
     // logged so the degradation is visible.
     log.warn("url-only artifact could not be cached — returning raw url", { error });
@@ -301,14 +317,18 @@ export async function runGeneration(
         ? await (resolved.provider as VideoProvider).generateVideo(
             normalized,
             resolved.model,
-            { logger: log, signal: options.signal },
+            { logger: log, signal: options.signal, onProgress: options.onProgress },
           )
         : await (resolved.provider as ImageProvider).generateImage(
             normalized,
             resolved.model,
-            { logger: log, signal: options.signal },
+            { logger: log, signal: options.signal, onProgress: options.onProgress },
           );
 
+    options.onProgress?.({
+      stage: "downloading",
+      message: "Finalising your render…",
+    });
     const media = await persistArtifacts(artifacts, request.aspect, request.resolution, log);
     const elapsedMs = Date.now() - started;
     log.info("generation completed", {

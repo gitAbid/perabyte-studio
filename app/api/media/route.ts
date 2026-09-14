@@ -6,6 +6,7 @@ import {
 } from "@/lib/repositories/media.repository";
 import { logger } from "@/lib/logging/logger";
 import { isAllowedMediaUrl } from "@/lib/renderer";
+import { isPlausibleMp4 } from "@/lib/media/mp4";
 
 export const runtime = "nodejs";
 
@@ -54,6 +55,15 @@ export async function GET(request: Request) {
       log.warn("media cache miss", { ref: ref.slice(0, 12) });
       return NextResponse.json(
         { error: "That render is no longer cached. Regenerate it.", retryable: false },
+        { status: 404 },
+      );
+    }
+    if (ref.endsWith(".mp4") && !isPlausibleMp4(stored.bytes)) {
+      // A cached placeholder mp4 (provider answered "done" before its storage
+      // did) would only ever render as a silent black player.
+      log.warn("media cache hit is not a playable video", { ref: ref.slice(0, 12) });
+      return NextResponse.json(
+        { error: "That render is damaged. Regenerate it.", retryable: false },
         { status: 404 },
       );
     }

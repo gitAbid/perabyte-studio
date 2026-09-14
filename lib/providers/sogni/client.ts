@@ -15,11 +15,22 @@ import type { SogniImageParams, SogniVideoParams } from "@/lib/providers/sogni/r
 /** The slice of the SDK surface the provider actually consumes (ISP). */
 export interface SogniProject {
   waitForCompletion(): Promise<string[]>;
+  /** 0–100 as the provider-side jobs advance. */
+  on(event: "progress", listener: (percent: number) => void): unknown;
+}
+
+/** One entry of Sogni's live model catalog (`projects.getAvailableModels`). */
+export interface SogniAvailableModel {
+  id: string;
+  name: string;
+  workerCount: number;
+  media: "image" | "video" | "audio" | "model";
 }
 
 export interface SogniClient {
   projects: {
     create(params: SogniImageParams | SogniVideoParams): Promise<SogniProject>;
+    getAvailableModels(network: "fast"): Promise<SogniAvailableModel[]>;
   };
 }
 

@@ -11,6 +11,23 @@ import type { Logger } from "@/lib/logging/logger";
 export interface ProviderContext {
   logger: Logger;
   signal?: AbortSignal;
+  /**
+   * Optional sink for long-running renders. Providers call it opportunistically
+   * with coarse stages (and a percent when the provider reports one); the
+   * service streams the updates to the client. Absent in unit tests and any
+   * caller that does not want updates — always optional-chained.
+   */
+  onProgress?: (progress: ProviderProgress) => void;
+}
+
+/**
+ * One progress tick for a running generation. `percent` (0–100) is only set
+ * when the provider reports a real number — never fabricate one.
+ */
+export interface ProviderProgress {
+  stage: "submitted" | "rendering" | "downloading";
+  message: string;
+  percent?: number;
 }
 
 /**

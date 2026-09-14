@@ -9,6 +9,7 @@ import type { ModelDescriptor, NormalizedGenerationRequest } from "@/lib/domain/
 import type { Logger } from "@/lib/logging/logger";
 import { getStudioEnv } from "@/lib/config/env";
 import { randomSeed } from "@/lib/renderer";
+import { isPlausibleMp4 } from "@/lib/media/mp4";
 import { createApiKeyFanClient } from "@/lib/providers/apikey-fan/client";
 import {
   APIKEY_FAN_IMAGE_MODELS,
@@ -139,12 +140,16 @@ export const apiKeyFanProvider: ImageProvider & VideoProvider = {
         });
       }
 
-      const done = await pollVideo(client, requestId, log, ctx.signal);
+      const done = await pollVideo(client, requestId, log, ctx.signal, ctx.onProgress);
       log.info("video job completed", { requestId, index, total: request.count });
 
+      ctx.onProgress?.({
+        stage: "downloading",
+        message: index === 0 ? "Downloading your video…" : `Downloading video ${index + 1} of ${request.count}…`,
+      });
       // Download the mp4 immediately: relay URLs are short-lived.
       artifacts.push(
-        await downloadVideo(done.video.url, request, index, log, ctx.signal),
+        await downloadVideo(done.video.url, env.apiKeyFanBaseUrl, request, index, apiKey, log, ctx.signal),
       );
     }
     return artifacts;
@@ -199,8 +204,10 @@ async function pollVideo(
   requestId: string,
   log: Logger,
   signal?: AbortSignal,
+  onProgress?: (progress: { stage: "rendering"; message: string }) => void,
 ): Promise<{ video: { url: string } }> {
   const deadline = Date.now() + POLL_DEADLINE_MS;
+  const startedAt = Date.now();
   let ticks = 0;
 
   while (Date.now() < deadline) {
@@ -211,6 +218,13 @@ async function pollVideo(
     );
 
     ticks += 1;
+    if (ticks % 2 === 0) {
+      const seconds = Math.round((Date.now() - startedAt) / 1000);
+      onProgress?.({
+        stage: "rendering",
+        message: `The relay is rendering your video — ${seconds}s`,
+      });
+    }
     if (ticks % 5 === 0) {
       log.debug("video job still running", { requestId, status: status.status, ticks });
     }
@@ -232,27 +246,68 @@ async function pollVideo(
   });
 }
 
+/**
+ * Content endpoint quirks (both verified against the live relay):
+ * - `video.url` can be a path relative to the relay base (`/v1/videos/<id>/content`),
+ *   so it must be resolved before fetching — a relative path handed to the
+ *   browser would resolve against our own origin and 404.
+ * - The endpoint requires the Bearer key; an unauthenticated fetch 401s, and a
+ *   raw URL is therefore useless to the client — download here or not at all.
+ * - A job can report "done" while object storage still serves a placeholder,
+ *   so bytes are validated and re-fetched once before failing loudly.
+ */
+const PROPAGATION_RETRY_MS = 5_000;
+
 async function downloadVideo(
-  url: string,
+  rawUrl: string,
+  baseUrl: string,
   request: NormalizedGenerationRequest,
   index: number,
+  apiKey: string,
   log: Logger,
   signal?: AbortSignal,
 ): Promise<GeneratedArtifact> {
   const baseSeed = request.seed ?? randomSeed();
   const seed = request.count === 1 ? baseSeed : baseSeed + index;
+  // A relative path resolves against the relay base; an absolute URL is kept.
+  const url = new URL(rawUrl, baseUrl).toString();
+
+  let bytes = await fetchVideoBytes(url, apiKey, signal);
+  if (bytes && !isPlausibleMp4(bytes)) {
+    log.warn("downloaded video failed validation — re-fetching once", {
+      size: bytes.length,
+    });
+    await sleep(PROPAGATION_RETRY_MS, signal);
+    bytes = await fetchVideoBytes(url, apiKey, signal);
+  }
+
+  if (!bytes || !isPlausibleMp4(bytes)) {
+    // The client can never fetch this auth-gated URL itself, so there is no
+    // useful degraded mode: fail loudly so the UI offers a retry.
+    log.error("video download unusable", { size: bytes?.length ?? 0 });
+    throw new ProviderError(
+      "The provider finished the video but the file could not be retrieved. Please retry.",
+      { retryable: true, status: 502 },
+    );
+  }
+
+  return { bytes, url: null, ext: "mp4", seed };
+}
+
+async function fetchVideoBytes(
+  url: string,
+  apiKey: string,
+  signal?: AbortSignal,
+): Promise<Buffer | null> {
   try {
     const response = await fetch(url, {
+      headers: { authorization: `Bearer ${apiKey}` },
       cache: "no-store",
       signal: AbortSignal.timeout(60_000),
     });
     if (!response.ok) throw new Error(`status ${response.status}`);
-    const bytes = Buffer.from(await response.arrayBuffer());
-    return { bytes, url: null, ext: "mp4", seed };
-  } catch (error) {
-    // Serving the expiring URL directly is still better than losing the
-    // render; log it so the degradation is visible.
-    log.warn("video download failed — returning provider url", { error });
-    return { bytes: null, url, ext: "mp4", seed };
+    return Buffer.from(await response.arrayBuffer());
+  } catch {
+    return null;
   }
 }

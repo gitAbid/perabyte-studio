@@ -86,6 +86,11 @@ async function generate(request: NormalizedGenerationRequest, ctx: ProviderConte
   const artifacts = buildArtifacts(request);
   const [primary, ...extras] = artifacts;
 
+  ctx.onProgress?.({
+    stage: "rendering",
+    message: "Rendering on the free demo provider — this can take a few seconds…",
+  });
+
   // The provider renders on first request and then serves from cache. Warming
   // the primary inline means the browser's own request is a cache hit; extras
   // are warmed after the response (the provider 429s parallel renders).

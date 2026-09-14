@@ -40,27 +40,7 @@ export function MediaFrame({
   const video = isVideoSource(src);
 
   if (video) {
-    return (
-      <div
-        className={`relative overflow-hidden bg-ink ${
-          fit
-            ? "flex h-full w-full items-center justify-center"
-            : "bg-surface-2"
-        } ${rounded} ${className}`}
-        style={fit ? undefined : { aspectRatio: ratio }}
-      >
-        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-        <video
-          src={src ?? undefined}
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          aria-label={alt}
-          className="size-full object-cover"
-        />
-      </div>
-    );
+    return <VideoFrame src={src} alt={alt} fit={fit} ratio={ratio} rounded={rounded} className={className} />;
   }
 
   return <ImageFrame
@@ -73,6 +53,61 @@ export function MediaFrame({
     priority={priority}
     fit={fit}
   />;
+}
+
+/** Overlay shown when a <video> source fails to load or decode. */
+function VideoUnavailable({ hint }: { hint?: string }) {
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-surface px-4 text-center">
+      <Icon name="alert" size={20} className="text-warning" />
+      <p className="text-[12px] font-medium text-ink-soft">
+        {hint ?? "This video could not be loaded."}
+      </p>
+    </div>
+  );
+}
+
+/** Compact looping video frame (thumbnails, history) with a load-error state. */
+function VideoFrame({
+  src,
+  alt,
+  fit,
+  ratio,
+  rounded,
+  className,
+}: {
+  src: string | null;
+  alt: string;
+  fit?: boolean;
+  ratio: string;
+  rounded: string;
+  className: string;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => setFailed(false), [src]);
+
+  return (
+    <div
+      className={`relative overflow-hidden bg-ink ${
+        fit ? "flex h-full w-full items-center justify-center" : "bg-surface-2"
+      } ${rounded} ${className}`}
+      style={fit ? undefined : { aspectRatio: ratio }}
+    >
+      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+      <video
+        src={src ?? undefined}
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        aria-label={alt}
+        onError={() => setFailed(true)}
+        className="size-full object-cover"
+      />
+      {failed && <VideoUnavailable />}
+    </div>
+  );
 }
 
 function ImageFrame({
@@ -119,6 +154,12 @@ function ImageFrame({
     );
     return () => clearTimeout(timer);
   }, [failed, autoTries]);
+
+  const retry = useCallback(() => {
+    setAutoTries(0);
+    setFailed(false);
+    setAttempt((a) => a + 1);
+  }, []);
 
   const url = src ? withRetryParam(displaySrc(src) as string, attempt) : null;
   const autoRetrying = failed && autoTries < AUTO_RETRIES;
@@ -169,18 +210,29 @@ function ImageFrame({
               : "This render could not be loaded."}
           </p>
           {!autoRetrying && (
-            <button
-              type="button"
-              onClick={() => {
-                setAutoTries(0);
-                setFailed(false);
-                setAttempt((a) => a + 1);
+            // MediaFrame is embedded inside selectable <button> cards
+            // (thumbnails, variant pickers), so the retry control must not be
+            // a native <button> — nested buttons are invalid HTML and break
+            // hydration. A click here must also not select the outer card.
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(event) => {
+                event.stopPropagation();
+                retry();
               }}
-              className="inline-flex items-center gap-1 rounded-lg border border-border-strong bg-white px-2.5 py-1 text-[12px] font-semibold text-ink hover:border-muted"
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  retry();
+                }
+              }}
+              className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-border-strong bg-white px-2.5 py-1 text-[12px] font-semibold text-ink hover:border-muted"
             >
               <Icon name="refresh" size={13} />
               Retry
-            </button>
+            </span>
           )}
         </div>
       )}
@@ -231,9 +283,12 @@ export function VideoStage({
   const [playing, setPlaying] = useState(true);
   const [elapsed, setElapsed] = useState(0);
   const [muted, setMuted] = useState(true);
+  const [videoFailed, setVideoFailed] = useState(false);
   const shellRef = useRef<HTMLDivElement>(null);
 
   const duration = Math.max(1, Math.round(durationSeconds * 15)) / 10;
+
+  useEffect(() => setVideoFailed(false), [videoUrl]);
 
   useEffect(() => {
     if (!playing || videoUrl) return;
@@ -275,8 +330,10 @@ export function VideoStage({
           playsInline
           preload="metadata"
           aria-label={title}
+          onError={() => setVideoFailed(true)}
           className="size-full bg-ink object-contain"
         />
+        {videoFailed && <VideoUnavailable hint="This video could not be loaded — regenerate it." />}
       </div>
     );
   }

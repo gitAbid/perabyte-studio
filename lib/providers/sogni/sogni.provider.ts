@@ -9,10 +9,9 @@ import type { ModelDescriptor, NormalizedGenerationRequest } from "@/lib/domain/
 import { getStudioEnv } from "@/lib/config/env";
 import { randomSeed } from "@/lib/renderer";
 import { getSogniClient } from "@/lib/providers/sogni/client";
+import { getSogniCatalog } from "@/lib/providers/sogni/catalog";
 import {
   PROVIDER_ID,
-  SOGNI_IMAGE_MODELS,
-  SOGNI_VIDEO_MODELS,
   toImageParams,
   toVideoParams,
 } from "@/lib/providers/sogni/request-maps";
@@ -33,8 +32,10 @@ export const sogniProvider: ImageProvider & VideoProvider = {
     return getStudioEnv().sogniApiKey !== null;
   },
 
-  listImageModels: () => SOGNI_IMAGE_MODELS,
-  listVideoModels: () => SOGNI_VIDEO_MODELS,
+  // The live Sogni catalog, stale-while-revalidate (curated set until the
+  // first refresh lands) — see catalog.ts.
+  listImageModels: () => getSogniCatalog().images,
+  listVideoModels: () => getSogniCatalog().videos,
 
   async generateImage(
     request: NormalizedGenerationRequest,
@@ -89,6 +90,22 @@ async function createProject(
   const started = Date.now();
   const project = await client.projects.create(params);
   log.debug("sogni project created", { count: request.count });
+
+  let lastPercent = -1;
+  project.on("progress", (percent) => {
+    const rounded = Math.max(0, Math.min(100, Math.round(percent)));
+    if (rounded === lastPercent) return;
+    lastPercent = rounded;
+    ctx.onProgress?.({
+      stage: "rendering",
+      message: `Sogni AI is rendering — ${rounded}%`,
+      percent: rounded,
+    });
+  });
+  ctx.onProgress?.({
+    stage: "submitted",
+    message: "Sogni AI accepted the render — waiting for a free GPU…",
+  });
 
   try {
     const urls = await withDeadline(project.waitForCompletion(), deadlineMs, ctx.signal);

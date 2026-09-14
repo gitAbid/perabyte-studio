@@ -105,3 +105,47 @@ apikey.fan (`SOGNI_API_KEY`, `SOGNI_APP_ID`, optional `SOGNI_REST_URL`,
 - `relaxed` network (cost lever) and `tokenType` selection — both omitted,
   server defaults apply; revisit after live pricing data.
 - Audio/LLM/3D-model capabilities of Sogni.
+
+---
+
+# Addendum (2026-09-15, same day): live progress + full catalog
+
+Approved follow-ups while smoke-testing:
+
+## Live render progress in the preview
+
+- `ProviderContext.onProgress?: (p: ProviderProgress) => void` — optional sink
+  (`stage: submitted|rendering|downloading`, `message`, `percent?` when the
+  provider really reports one; never fabricated).
+- `POST /api/generate` streams NDJSON when the client sends
+  `accept: application/x-ndjson`: `{"type":"progress",…}` lines, then
+  `{"type":"result",…}` or `{"type":"error",…}`. Plain-JSON replies unchanged
+  for other callers. EventSource can't POST; polling would need a job store —
+  streaming was the only clean channel.
+- Sogni: submitted line on project create + live 0–100% from the SDK's
+  `project.on('progress')` (deduped, clamped). apikey.fan video: coarse
+  elapsed-time ticks from its poll loop + downloading stage. Pollinations:
+  one rendering line. Service: "Finalising your render…" before caching.
+- Client: `requestGeneration` parses the stream (buffering partial lines,
+  ignoring garbage), `useGeneration` keeps `progress` on the generating
+  phase; preview shows the live message plus a thin percent bar (pulse when
+  indeterminate).
+
+## Full Sogni model catalog (dynamic)
+
+- `projects.getAvailableModels('fast')` → `{id, name, workerCount, media}`.
+- `lib/providers/sogni/catalog.ts` maps it to ModelDescriptors, filtered to
+  prompt-driven media: excludes edit/segment/3D/upscale/i2v/s2v/v2v/animate
+  id markers and `workerCount === 0`; curated 7 keep hand-written labels and
+  sort first; the rest use the API's name (fallback: prettified id) and a
+  derived fast/quality/standard hint.
+- Stale-while-revalidate: `listImageModels/listVideoModels` stay synchronous
+  and return the last good list (curated on cold start); `warmSogniCatalog`
+  refreshes in the background (single-flight, 10 min TTL). `/api/models`
+  gives the refresh a 2.5 s bounded window when configured, so a fresh page
+  load usually sees the full lineup without blocking on a slow network.
+- Rationale: Sogni's lineup changes often; a static list went stale the day
+  it shipped. Unknown families are skipped until verified (no broken
+  features) — extend the exclusion list rather than the allowlist if a model
+  needs reference media.
+
