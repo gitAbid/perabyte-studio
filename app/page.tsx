@@ -23,6 +23,14 @@ const MODES = [
     href: "/story",
     variant: "secondary" as const,
   },
+  {
+    icon: "character" as const,
+    title: "Character Studio",
+    body: "Design a reusable AI character in a guided wizard.",
+    cta: "Create a Character",
+    href: "/character",
+    variant: "secondary" as const,
+  },
 ];
 
 export default function HomePage() {
@@ -45,7 +53,7 @@ export default function HomePage() {
             Create, explore, and bring your imagination to life — in seconds.
           </p>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
             {MODES.map((mode) => (
               <Link
                 key={mode.title}

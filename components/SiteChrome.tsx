@@ -6,9 +6,10 @@ import { useState } from "react";
 import { Icon, Logo } from "./Icon";
 import { useToast } from "./ui";
 
-const NAV = [
+const NAV: { href: string; label: string; icon?: "character" }[] = [
   { href: "/", label: "Home" },
   { href: "/generate/image", label: "Generate" },
+  { href: "/character", label: "Character", icon: "character" as const },
   { href: "/history", label: "History" },
 ];
 
@@ -39,12 +40,13 @@ export function SiteHeader() {
                 key={item.href}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={`rounded-[10px] px-3.5 py-2 text-[13.5px] font-semibold transition-colors ${
+                className={`inline-flex items-center gap-1.5 rounded-[10px] px-3.5 py-2 text-[13.5px] font-semibold transition-colors ${
                   active
                     ? "bg-primary-soft text-primary"
                     : "text-ink-soft hover:bg-surface-2 hover:text-ink"
                 }`}
               >
+                {item.icon && <Icon name={item.icon} size={15} />}
                 {item.label}
               </Link>
             );
@@ -116,12 +118,13 @@ export function SiteHeader() {
               key={item.href}
               href={item.href}
               onClick={() => setMenuOpen(false)}
-              className={`block rounded-[10px] px-3 py-2.5 text-sm font-semibold ${
+              className={`flex items-center gap-2 rounded-[10px] px-3 py-2.5 text-sm font-semibold ${
                 isActive(pathname, item.href)
                   ? "bg-primary-soft text-primary"
                   : "text-ink-soft"
               }`}
             >
+              {item.icon && <Icon name={item.icon} size={16} />}
               {item.label}
             </Link>
           ))}
@@ -137,6 +140,7 @@ const FOOTER_GROUPS = [
     links: [
       { href: "/generate/image", label: "Solo Mode" },
       { href: "/story", label: "Story Mode" },
+      { href: "/character", label: "Character Studio" },
     ],
   },
   {
@@ -198,12 +202,16 @@ export function SiteFooter() {
 }
 
 /**
- * The generator and story screens are full-height workspaces, so the footer is
- * suppressed there and rendered on every content page.
+ * The generator, story and character screens are full-height workspaces, so
+ * the footer is suppressed there and rendered on every content page.
  */
 export function ConditionalFooter() {
   const pathname = usePathname();
-  if (pathname?.startsWith("/generate") || pathname?.startsWith("/story")) {
+  if (
+    pathname?.startsWith("/generate") ||
+    pathname?.startsWith("/story") ||
+    pathname?.startsWith("/character")
+  ) {
     return null;
   }
   return <SiteFooter />;
