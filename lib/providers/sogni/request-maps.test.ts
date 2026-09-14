@@ -1,0 +1,127 @@
+import { describe, expect, it } from "vitest";
+import type { NormalizedGenerationRequest } from "@/lib/domain/models";
+import {
+  PROVIDER_ID,
+  SOGNI_IMAGE_MODELS,
+  SOGNI_VIDEO_MODELS,
+  toImageParams,
+  toVideoParams,
+} from "@/lib/providers/sogni/request-maps";
+
+function imageRequest(overrides: Partial<NormalizedGenerationRequest> = {}) {
+  return {
+    kind: "image" as const,
+    prompt: "a fox in a garden",
+    negativePrompt: "",
+    aspect: "16:9" as const,
+    resolution: "1080p" as const,
+    durationSeconds: 0,
+    count: 1,
+    seed: 42,
+    safe: true,
+    enhance: false,
+    ...overrides,
+  };
+}
+
+function videoRequest(overrides: Partial<NormalizedGenerationRequest> = {}) {
+  return imageRequest({ kind: "video", durationSeconds: 5, ...overrides });
+}
+
+describe("sogni request maps", () => {
+  it("exposes the curated model catalog", () => {
+    expect(SOGNI_IMAGE_MODELS.map((m) => m.id)).toEqual([
+      `${PROVIDER_ID}:krea2_turbo_fp8_scaled`,
+      `${PROVIDER_ID}:flux1-schnell-fp8`,
+      `${PROVIDER_ID}:z_image_turbo_bf16`,
+      `${PROVIDER_ID}:chroma1-hd_fp8_scaled`,
+    ]);
+    expect(SOGNI_VIDEO_MODELS.map((m) => m.id)).toEqual([
+      `${PROVIDER_ID}:wan_v2.2-14b-fp8_t2v_lightx2v`,
+      `${PROVIDER_ID}:ltx25-22b-int8_t2v_distilled`,
+      `${PROVIDER_ID}:seedance-2-0-mini`,
+    ]);
+  });
+
+  describe("toImageParams", () => {
+    it("maps the neutral request onto Sogni's project params", () => {
+      const model = SOGNI_IMAGE_MODELS[0];
+      const params = toImageParams(model.model, imageRequest({ count: 2, safe: false }));
+
+      expect(params).toEqual({
+        type: "image",
+        modelId: "krea2_turbo_fp8_scaled",
+        positivePrompt: "a fox in a garden",
+        negativePrompt: undefined,
+        numberOfMedia: 2,
+        seed: 42,
+        disableNSFWFilter: true,
+        sizePreset: "custom",
+        width: 1280,
+        height: 720,
+        outputFormat: "png",
+      });
+    });
+
+    it("derives 8-aligned pixel sizes from aspect × resolution", () => {
+      const model = SOGNI_IMAGE_MODELS[1];
+      // 16:9 base 1280×720 at 0.75 scale → 960×540 → snapped to 960×544.
+      const params = toImageParams(
+        model.model,
+        imageRequest({ resolution: "720p" }),
+      );
+      expect(params.width).toBe(960);
+      expect(params.height).toBe(544);
+      expect(params.width! % 8).toBe(0);
+      expect(params.height! % 8).toBe(0);
+    });
+
+    it("clamps the seed into Uint32 range", () => {
+      const model = SOGNI_IMAGE_MODELS[2];
+      const params = toImageParams(model.model, imageRequest({ seed: 5_000_000_000 }));
+      expect(params.seed).toBeGreaterThanOrEqual(0);
+      expect(params.seed).toBeLessThanOrEqual(0xffffffff);
+    });
+  });
+
+  describe("toVideoParams", () => {
+    it("passes the negative prompt through for models that accept one", () => {
+      const model = SOGNI_VIDEO_MODELS[0];
+      const params = toVideoParams(
+        model.model,
+        videoRequest({ negativePrompt: "blurry", aspect: "9:16" }),
+      );
+      expect(params.negativePrompt).toBe("blurry");
+      expect(params.ratio).toBe("9:16");
+      expect(params.duration).toBe(5);
+      expect(params.outputFormat).toBe("mp4");
+    });
+
+    it("folds the negative prompt into the prompt for Seedance", () => {
+      const model = SOGNI_VIDEO_MODELS[2];
+      const params = toVideoParams(
+        model.model,
+        videoRequest({ prompt: "a slow pan", negativePrompt: "text overlay" }),
+      );
+      expect(params.negativePrompt).toBeUndefined();
+      expect(params.positivePrompt).toContain("a slow pan");
+      expect(params.positivePrompt).toContain("Avoid: text overlay");
+    });
+
+    it("clamps duration to each model family's range and maps aspect to ratios", () => {
+      const wan = SOGNI_VIDEO_MODELS[0].model;
+      expect(toVideoParams(wan, videoRequest({ durationSeconds: 0 })).duration).toBe(1);
+      expect(toVideoParams(wan, videoRequest({ durationSeconds: 30 })).duration).toBe(10);
+
+      const ltx = SOGNI_VIDEO_MODELS[1].model;
+      expect(toVideoParams(ltx, videoRequest({ durationSeconds: 1 })).duration).toBe(2);
+      expect(toVideoParams(ltx, videoRequest({ durationSeconds: 30 })).duration).toBe(20);
+
+      const seedance = SOGNI_VIDEO_MODELS[2].model;
+      expect(toVideoParams(seedance, videoRequest({ durationSeconds: 3 })).duration).toBe(4);
+
+      expect(toVideoParams(wan, videoRequest({ aspect: "4:5" })).ratio).toBe("3:4");
+      expect(toVideoParams(wan, videoRequest({ aspect: "3:2" })).ratio).toBe("4:3");
+    });
+  });
+});

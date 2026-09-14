@@ -259,7 +259,7 @@ export async function runGeneration(
     }
     if (!found.provider.isConfigured()) {
       throw new GenerationServiceError(
-        "That model needs the apikey.fan API key, which is not configured yet. Pick the free demo model or set APIKEY_FAN_API_KEY.",
+        `That model needs ${found.provider.label} set up first. Pick the free demo model or add its API key.`,
         { field: "model" },
       );
     }

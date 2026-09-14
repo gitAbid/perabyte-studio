@@ -11,6 +11,14 @@ export interface StudioEnv {
   apiKeyFanBaseUrl: string;
   /** Relay key (`sk-…`). `null` when unset — provider disabled. */
   apiKeyFanApiKey: string | null;
+  /** Sogni AI API key. `null` when unset — provider disabled. */
+  sogniApiKey: string | null;
+  /** Stable per-installation connection id. `null` → generated and persisted. */
+  sogniAppId: string | null;
+  /** Sogni REST endpoint (generation rides the companion WebSocket). */
+  sogniRestUrl: string;
+  /** Sogni WebSocket endpoint. */
+  sogniSocketUrl: string;
   /** Minimum log level: debug | info | warn | error. */
   logLevel: string;
   /** Directory used by the media cache repository. */
@@ -34,10 +42,15 @@ function parseEnv(): StudioEnv {
   }
 
   const apiKey = process.env.APIKEY_FAN_API_KEY?.trim() ?? "";
+  const sogniApiKey = process.env.SOGNI_API_KEY?.trim() ?? "";
 
   return {
     apiKeyFanBaseUrl,
     apiKeyFanApiKey: apiKey ? apiKey : null,
+    sogniApiKey: sogniApiKey ? sogniApiKey : null,
+    sogniAppId: process.env.SOGNI_APP_ID?.trim() || null,
+    sogniRestUrl: process.env.SOGNI_REST_URL?.trim() || "https://api.sogni.ai",
+    sogniSocketUrl: process.env.SOGNI_SOCKET_URL?.trim() || "wss://socket.sogni.ai",
     logLevel: (process.env.LOG_LEVEL?.trim() || "info").toLowerCase(),
     mediaCacheDir: process.env.MEDIA_CACHE_DIR?.trim() || ".media-cache",
   };

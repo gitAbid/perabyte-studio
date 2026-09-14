@@ -2,6 +2,7 @@ import type { ModelKind, ModelDescriptor } from "@/lib/domain/models";
 import type { ImageProvider, VideoProvider } from "@/lib/providers/types";
 import { ProviderError } from "@/lib/providers/types";
 import { apiKeyFanProvider } from "@/lib/providers/apikey-fan/apikey-fan.provider";
+import { sogniProvider } from "@/lib/providers/sogni/sogni.provider";
 import { pollinationsProvider } from "@/lib/providers/pollinations/pollinations.provider";
 
 /**
@@ -74,7 +75,7 @@ export function createRegistry(providers: AnyProvider[]): ProviderRegistry {
 let registry: ProviderRegistry | null = null;
 
 export function getGenerationRegistry(): ProviderRegistry {
-  registry ??= createRegistry([apiKeyFanProvider, pollinationsProvider]);
+  registry ??= createRegistry([apiKeyFanProvider, sogniProvider, pollinationsProvider]);
   return registry;
 }
 
