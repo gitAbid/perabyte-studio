@@ -23,12 +23,16 @@ interface PoseDef {
 }
 
 const POSES: Record<PreviewPoseId, PoseDef> = {
-  standing: {
+  // Neutral poses keep the arms at the bind stance: the garment meshes are
+  // static and fitted to that exact pose, so moving the arms detaches the
+  // sleeves. Only the expressive poses (action/dynamic/dance) move arms,
+  // accepting the loose-sleeve approximation.
+  standing: { bones: {} },
+  portrait: {
     bones: {
-      upperarm_l: [-0.06, 0, 0.05], upperarm_r: [-0.06, 0, -0.05],
+      head: [0, 0.16, 0.05],
     },
   },
-  portrait: { bones: { head: [0, 0.12, 0.05] } },
   sitting: {
     bones: {
       thigh_l: [-1.45, 0, 0.06], calf_l: [1.45, 0, 0],
@@ -41,51 +45,48 @@ const POSES: Record<PreviewPoseId, PoseDef> = {
     bones: {
       thigh_l: [-0.55, 0, 0], calf_l: [0.5, 0, 0],
       thigh_r: [0.3, 0, 0], calf_r: [0.15, 0, 0],
-      upperarm_l: [0.45, 0, 0.08], upperarm_r: [-0.45, 0, -0.08],
-      lowerarm_l: [-0.5, 0, 0], lowerarm_r: [-0.5, 0, 0],
       spine_02: [0, 0.06, 0],
     },
   },
   action: {
     bones: {
-      upperarm_l: [-1.9, 0, 0.5], upperarm_r: [-1.9, 0, -0.5],
-      lowerarm_l: [-0.7, 0, 0], lowerarm_r: [-0.7, 0, 0],
+      upperarm_l: [-1.6, 0, -0.35], upperarm_r: [-1.6, 0, 0.35],
+      lowerarm_l: [-0.6, 0, 0], lowerarm_r: [-0.6, 0, 0],
+      hand_l: [0.06, 0, 0], hand_r: [0.06, 0, 0],
       thigh_l: [-0.35, 0, 0.18], thigh_r: [0, 0, -0.18],
       calf_l: [0.35, 0, 0], spine_02: [-0.1, 0, 0],
     },
   },
   relaxed: {
     bones: {
-      upperarm_l: [0, 0, 0.25], upperarm_r: [0, 0, -0.25],
-      lowerarm_l: [-1.15, 0.35, 0], lowerarm_r: [-1.15, -0.35, 0],
       spine_02: [0.05, 0, 0], head: [0.04, 0, 0],
     },
   },
   dynamic: {
     bones: {
-      upperarm_r: [-2.5, 0, -0.4], lowerarm_r: [-0.3, 0, 0],
-      upperarm_l: [0, 0, 0.9], lowerarm_l: [-1.0, 0, 0],
+      upperarm_r: [-2.2, 0, 0.25], lowerarm_r: [-0.3, 0, 0],
+      upperarm_l: [0.1, 0, -0.15], lowerarm_l: [0.5, 0, -0.06],
       thigh_l: [-0.5, 0, 0], calf_l: [0.4, 0, 0],
       spine_01: [0, -0.18, 0], head: [0, 0.1, 0],
     },
   },
   dance: {
     bones: {
-      upperarm_l: [-2.6, 0, 0.6], upperarm_r: [-2.6, 0, -0.6],
-      lowerarm_l: [-0.5, 0, 0.6], lowerarm_r: [-0.5, 0, -0.6],
+      upperarm_l: [-2.3, 0, -0.15], upperarm_r: [-2.3, 0, 0.15],
+      lowerarm_l: [-0.4, 0, 0.55], lowerarm_r: [-0.4, 0, -0.55],
       thigh_r: [0.35, 0, 0], calf_r: [0.3, 0, 0],
       spine_02: [-0.08, 0, 0], head: [-0.1, 0, 0],
     },
   },
   lying: {
-    bones: { upperarm_l: [0, 0, 0.2], upperarm_r: [0, 0, -0.2] },
+    bones: {
+    },
     root: { rotX: -Math.PI / 2, posY: 0.32, posZ: 0.55 },
   },
   arched: {
     bones: {
       spine_01: [0.22, 0, 0], spine_02: [0.22, 0, 0], spine_03: [0.18, 0, 0],
       head: [-0.35, 0, 0],
-      upperarm_l: [0.4, 0, 0.3], upperarm_r: [0.4, 0, -0.3],
       thigh_l: [0.1, 0, 0.08], thigh_r: [0.1, 0, -0.08],
     },
   },
@@ -93,15 +94,15 @@ const POSES: Record<PreviewPoseId, PoseDef> = {
     bones: {
       thigh_l: [-1.35, 0, 0.1], calf_l: [1.3, 0, 0],
       thigh_r: [-1.35, 0, -0.1], calf_r: [1.3, 0, 0],
-      upperarm_l: [-1.5, 0, 0.15], upperarm_r: [-1.5, 0, -0.15],
+      upperarm_l: [-1.45, 0, -0.1], upperarm_r: [-1.45, 0, 0.1],
       lowerarm_l: [-0.2, 0, 0], lowerarm_r: [-0.2, 0, 0],
+      hand_l: [0.06, 0, 0], hand_r: [0.06, 0, 0],
       spine_01: [0.35, 0, 0], head: [-0.5, 0, 0],
     },
     root: { rotX: -1.35, posY: 0.28, posZ: 0.4 },
   },
   spreading: {
     bones: {
-      upperarm_l: [0, 0, 1.35], upperarm_r: [0, 0, -1.35],
       thigh_l: [0, 0, 0.32], thigh_r: [0, 0, -0.32],
       spine_02: [-0.06, 0, 0],
     },
@@ -110,16 +111,12 @@ const POSES: Record<PreviewPoseId, PoseDef> = {
     bones: {
       thigh_l: [0.45, 0, 0.06], calf_l: [1.75, 0, 0],
       thigh_r: [0.45, 0, -0.06], calf_r: [1.75, 0, 0],
-      upperarm_l: [-0.25, 0, 0.12], lowerarm_l: [-0.35, 0, 0],
-      upperarm_r: [-0.25, 0, -0.12], lowerarm_r: [-0.35, 0, 0],
       head: [0.18, 0, 0],
     },
     root: { posY: -0.42 },
   },
   dominant: {
     bones: {
-      upperarm_l: [0, 0, 0.4], upperarm_r: [0, 0, -0.4],
-      lowerarm_l: [-1.3, 0.4, 0], lowerarm_r: [-1.3, -0.4, 0],
       head: [-0.14, 0, 0], spine_03: [-0.05, 0, 0],
       thigh_l: [0, 0, 0.1], thigh_r: [0, 0, -0.1],
     },
@@ -137,6 +134,25 @@ const POSE_BONE_NAMES = [
 
 const DAMP = 7; // smoothing speed for morphs and bones
 
+// Per-garment "one size up" factors. Tight suits need more headroom than
+// loose dresses so the morphed body never pokes through the shell.
+const GARMENT_INFLATE: Record<string, number> = {
+  "Clothes__female_casualsuit01": 1.08,
+  "Clothes__female_casualsuit02": 1.09,
+  "Clothes__female_elegantsuit01": 1.15,
+  "Clothes__female_sportsuit01": 1.12,
+  "Clothes__male_casualsuit01": 1.08,
+  "Clothes__male_elegantsuit01": 1.1,
+  "Clothes__male_worksuit01": 1.09,
+};
+const DEFAULT_INFLATE = 1.1;
+
+// Scratch objects for the per-frame pose update (avoids allocation).
+const tmpEuler = new THREE.Euler();
+const tmpQuat = new THREE.Quaternion();
+const tmpQuat2 = new THREE.Quaternion();
+
+
 export function AvatarFigure({ params }: { params: AvatarParams }) {
   const { scene } = useGLTF(GLB_URL);
   const eyeTexture = useTexture(params.eyeTexture);
@@ -144,11 +160,22 @@ export function AvatarFigure({ params }: { params: AvatarParams }) {
 
   const model = useMemo(() => skeletonClone(scene), [scene]);
 
+  // NOTE: do not "restore" the bind pose from the inverse-bind matrices —
+  // this export's IBMs and node transforms disagree (the skeleton root
+  // carries Blender's Y-up rotation), and only the file transforms render
+  // the skin consistent with the static garment/hair shells. Poses are
+  // therefore offsets from the loaded file transforms.
+
   const refs = useMemo(() => {
     const body = model.getObjectByName("Body") as THREE.Mesh | undefined;
     const bones = new Map<string, THREE.Bone>();
+    const rest = new Map<string, { q: THREE.Quaternion }>();
     model.traverse((o) => {
-      if ((o as THREE.Bone).isBone) bones.set(o.name, o as THREE.Bone);
+      if ((o as THREE.Bone).isBone) {
+        bones.set(o.name, o as THREE.Bone);
+        // Rest = the restored bind pose — poses are offsets from this.
+        rest.set(o.name, { q: (o as THREE.Bone).quaternion.clone() });
+      }
     });
     const meshes = new Map<string, THREE.Mesh>();
     model.traverse((o) => {
@@ -160,21 +187,56 @@ export function AvatarFigure({ params }: { params: AvatarParams }) {
         morphIndex.set(name, index);
       }
     }
-    return { body, bones, meshes, morphIndex };
+    // Shared inflate pivot: the body's bounding-box centre in model space.
+    // Garment meshes have arbitrary local origins, so scaling them directly
+    // would also translate them; compensating the position keeps the shell
+    // centred on the body while growing it outward.
+    const pivot = new THREE.Vector3();
+    if (body) {
+      body.geometry.computeBoundingBox();
+      body.geometry.boundingBox?.getCenter(pivot);
+    }
+    return { body, bones, rest, meshes, morphIndex, pivot };
   }, [model]);
 
-  /* -------- visibility: hair / garment / shoes / hat -------- */
+  /** Inflate a static shell by s about the shared pivot. */
+  const inflateShell = (mesh: THREE.Object3D, s: number, pivot: THREE.Vector3) => {
+    mesh.scale.setScalar(s);
+    mesh.position.copy(pivot).multiplyScalar(1 - s);
+  };
+
+  /* -------- visibility: hair / garment / shoes / hat --------
+     Garments and hair are static shells fitted to the base body; the spec
+     morphs grow the skin past them, so every garment is inflated slightly
+     ("one size up") to keep the morphed body inside its outfit. */
   useEffect(() => {
     for (const mesh of refs.meshes.values()) {
       const name = mesh.name;
-      if (name.startsWith("Hair__")) mesh.visible = name === params.hairMesh;
-      else if (name.startsWith("Clothes__")) {
-        if (name === "Clothes__shoes01") mesh.visible = params.shoes;
-        else if (name === "Clothes__fedora01") mesh.visible = params.hat;
-        else mesh.visible = name === params.garmentMesh;
+      if (name.startsWith("Hair__")) {
+        mesh.visible = name === params.hairMesh;
+        if (name === params.hairMesh) inflateShell(mesh, 1.03, refs.pivot);
+      } else if (name.startsWith("Clothes__")) {
+        if (name === "Clothes__shoes01") {
+          mesh.visible = params.shoes;
+          if (params.shoes) inflateShell(mesh, 1.03, refs.pivot);
+        } else if (name === "Clothes__fedora01") {
+          mesh.visible = params.hat;
+        } else {
+          mesh.visible = name === params.garmentMesh;
+          if (name === params.garmentMesh) {
+            inflateShell(mesh, GARMENT_INFLATE[name] ?? DEFAULT_INFLATE, refs.pivot);
+          }
+        }
+      }
+      // Mouth interior and eyeballs render with artifacts in the exported
+      // bind pose (and no expression in our set opens the jaw) — keep them
+      // hidden; the base-mesh face reads better without them.
+      else if (name === "Teeth" || name === "Tongue" || name === "Eyes") {
+        mesh.visible = false;
       }
     }
   }, [refs, params.hairMesh, params.garmentMesh, params.shoes, params.hat]);
+
 
   /* -------- materials: skin / hair / eyes / garment -------- */
   useEffect(() => {
@@ -311,7 +373,9 @@ export function AvatarFigure({ params }: { params: AvatarParams }) {
 
   /* -------- per-frame: damp morphs and bone rotations -------- */
   const rootGroup = useRef<THREE.Group>(null);
+  const POSE_LOOP_DISABLED = true; // diagnostic bisect
   useFrame((state, delta) => {
+    if (POSE_LOOP_DISABLED) return;
     const t = state.clock.elapsedTime;
     const k = Math.min(1, DAMP * delta);
 
@@ -336,12 +400,15 @@ export function AvatarFigure({ params }: { params: AvatarParams }) {
     const idle = {
       spine_02: Math.sin(t * 1.5) * 0.02,
       head: Math.sin(t * 0.7) * 0.02,
-      "head_z": Math.sin(t * 0.55) * 0.018,
+      head_z: Math.sin(t * 0.55) * 0.018,
     };
 
+    const euler = tmpEuler;
+    const offset = tmpQuat;
     for (const name of POSE_BONE_NAMES) {
       const bone = refs.bones.get(name);
-      if (!bone) continue;
+      const restQ = refs.rest.get(name)?.q;
+      if (!bone || !restQ) continue;
       const target = pose.bones[name] ?? [0, 0, 0];
       let [rx, ry, rz] = target;
       if (name === "spine_02") rx += idle.spine_02;
@@ -349,9 +416,13 @@ export function AvatarFigure({ params }: { params: AvatarParams }) {
         rx += idle.head;
         rz += idle.head_z;
       }
-      bone.rotation.x += (rx - bone.rotation.x) * k;
-      bone.rotation.y += (ry - bone.rotation.y) * k;
-      bone.rotation.z += (rz - bone.rotation.z) * k;
+      // Offset from the bone's rest stance: rest * delta, never absolute.
+      euler.set(rx, ry, rz);
+      offset.setFromEuler(euler);
+      bone.quaternion.slerp(
+        tmpQuat2.copy(restQ).multiply(offset),
+        k,
+      );
     }
 
     if (rootGroup.current) {

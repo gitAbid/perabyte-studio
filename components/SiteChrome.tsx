@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Icon, Logo } from "./Icon";
-import { useToast } from "./ui";
+import { SettingsDialog } from "./settings/SettingsDialog";
 
 const NAV: { href: string; label: string; icon?: "character" }[] = [
   { href: "/", label: "Home" },
@@ -23,10 +23,11 @@ export function SiteHeader() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
-  const toast = useToast();
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-white/90 backdrop-blur-md">
+    <>
+      <header className="sticky top-0 z-40 border-b border-border bg-white/90 backdrop-blur-md">
       <div className="mx-auto flex h-16 w-full max-w-[1280px] items-center gap-4 px-4 sm:px-6">
         <Link href="/" aria-label="PeraByte home" className="shrink-0">
           <Logo />
@@ -86,11 +87,11 @@ export function SiteHeader() {
                   role="menuitem"
                   onClick={() => {
                     setAccountOpen(false);
-                    toast.push("Account, billing and team settings arrive after the MVP.");
+                    setSettingsOpen(true);
                   }}
                   className="block w-full rounded-[10px] px-2.5 py-2 text-left text-[13px] font-medium text-ink-soft hover:bg-surface-2"
                 >
-                  Account settings
+                  Settings
                 </button>
               </div>
             )}
@@ -130,7 +131,12 @@ export function SiteHeader() {
           ))}
         </nav>
       )}
-    </header>
+      </header>
+
+      {/* Rendered outside the header: the header's backdrop-blur creates a
+          containing block that would trap the dialog's fixed positioning. */}
+      <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+    </>
   );
 }
 

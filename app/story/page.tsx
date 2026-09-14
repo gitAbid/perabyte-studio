@@ -16,7 +16,12 @@ import {
   VIDEO_STYLES,
 } from "@/lib/constants";
 import { downloadMedia, requestGeneration } from "@/lib/generation";
-import { enhancePromptText } from "@/lib/renderer";
+import { useModelCatalog } from "@/lib/model-catalog";
+import {
+  setSelectedModel,
+  useSettings,
+} from "@/lib/repositories/settings.repository";
+import { enhancePromptText, isVideoSource } from "@/lib/renderer";
 import { addAsset } from "@/lib/store";
 import type { Asset, GenerationSettings, StoryScene } from "@/lib/types";
 
@@ -45,8 +50,19 @@ export default function StoryPage() {
   const [busy, setBusy] = useState(false);
   const [storyId, setStoryId] = useState<string | null>(null);
 
+  const { settings: userSettings } = useSettings();
+  const catalog = useModelCatalog(kind);
+  const modelId =
+    (kind === "video" ? userSettings.videoModel : userSettings.imageModel) ??
+    catalog.defaultModelId;
+
   function currentSettings(): GenerationSettings {
-    return { ...settings, kind };
+    return {
+      ...settings,
+      kind,
+      modelId: modelId ?? undefined,
+      safe: !userSettings.uncensoredEnabled,
+    };
   }
 
   async function generateScene(index: number, draft: StoryScene[]) {
@@ -55,6 +71,7 @@ export default function StoryPage() {
     const response = await requestGeneration({
       settings: settingsValue,
       prompt: scene.prompt,
+      uncensored: userSettings.uncensoredEnabled,
     });
     const url = response.media[0]?.url ?? null;
     const next = draft.map((s, i) =>
@@ -236,6 +253,12 @@ export default function StoryPage() {
               promptError={promptError}
               settings={currentSettings()}
               onSettingsChange={(patch) => setSettings((s) => ({ ...s, ...patch }))}
+              models={catalog.models}
+              modelId={modelId}
+              onModelChange={(nextModel) => {
+                setSelectedModel(kind, nextModel);
+                setSettings((s) => ({ ...s, modelId: nextModel }));
+              }}
               busy={busy}
               onGenerate={handleGenerateAll}
               onCancel={() => setBusy(false)}
@@ -280,6 +303,7 @@ export default function StoryPage() {
                     kind === "video" ? (
                       <VideoStage
                         posterUrl={typed.url}
+                        videoUrl={isVideoSource(typed.url) ? typed.url : undefined}
                         title={typed.prompt}
                         durationSeconds={5}
                       />

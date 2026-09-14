@@ -197,6 +197,31 @@ function buildMorphs(spec: CharacterSpec): Record<string, number> {
   // Female silhouettes read better with a base breast volume.
   if (spec.gender === "Female" && !("breast_up" in morphs)) add({ breast_up: 0.3 });
 
+  // Relaxed eyelids: softens the wide-eyed socket look of the base face.
+  if (!("eye_hooded__l" in morphs)) {
+    morphs.eye_hooded__l = 0.45;
+    morphs.eye_hooded__r = 0.45;
+  }
+
+  // Torso-volume morphs grow the skin past the static garment shells —
+  // keep every body-volume influence inside what the inflated outfits cover.
+  const VOLUME_CAP: Record<string, number> = {
+    breast_up: 0.45,
+    breast_down: 0.6,
+    hip_wide: 0.5,
+    hip_narrow: 0.6,
+    waist_thin: 0.6,
+    waist_thick: 0.5,
+    m_weight_up: 0.5,
+    m_weight_down: 0.6,
+    m_muscle_up: 0.7,
+    shoulder_wide: 0.3,
+    buttocks_up: 0.45,
+  };
+  for (const [key, cap] of Object.entries(VOLUME_CAP)) {
+    if (morphs[key] !== undefined) morphs[key] = Math.min(morphs[key], cap);
+  }
+
   return morphs;
 }
 

@@ -24,6 +24,11 @@ import {
   type CharacterSpec,
 } from "@/lib/character";
 import { downloadMedia, useGeneration } from "@/lib/generation";
+import { useModelCatalog } from "@/lib/model-catalog";
+import {
+  setSelectedModel,
+  useSettings,
+} from "@/lib/repositories/settings.repository";
 import { addAsset } from "@/lib/store";
 import { titleFromPrompt } from "@/lib/constants";
 import type { GenerationResponse } from "@/lib/types";
@@ -72,6 +77,20 @@ export function CharacterStudio() {
   const [previewOpen, setPreviewOpen] = useState(false);
 
   const { job, run, cancel, reset } = useGeneration();
+  const { settings: userSettings, ready: settingsReady } = useSettings();
+  const catalog = useModelCatalog("image");
+  const characterModelId = userSettings.imageModel ?? catalog.defaultModelId;
+
+  // The Settings toggle is the single gate: when Uncensored Mode is off, any
+  // uncensored spec falls back to Normal (selections are sanitized, never
+  // leaked into a safe render). Runs only after hydration so a saved spec
+  // from an enabled session is not reset on reload.
+  useEffect(() => {
+    if (!settingsReady) return;
+    if (!userSettings.uncensoredEnabled && spec.mode === "uncensored") {
+      patchSpec({ mode: "normal" });
+    }
+  }, [settingsReady, userSettings.uncensoredEnabled, spec.mode]);
 
   // Checklist progress while generating: advance one stage every ~1.6s and
   // hold on the last one until the real response resolves the wait.
@@ -127,8 +146,9 @@ export function CharacterStudio() {
     setActiveVariant(0);
 
     const response = await run({
-      settings: characterGenerationSettings(spec),
+      settings: characterGenerationSettings(spec, characterModelId ?? undefined),
       prompt: composeCharacterPrompt(spec),
+      uncensored: spec.mode === "uncensored",
     });
 
     if (!response) return; // failure is rendered from job.phase below
@@ -157,7 +177,7 @@ export function CharacterStudio() {
       url: primary.url,
       variants: result.media.map((m) => m.url),
       posterUrl: primary.url,
-      settings: characterGenerationSettings(spec),
+      settings: characterGenerationSettings(spec, characterModelId ?? undefined),
       createdAt: Date.now(),
       favorite: false,
       mode: spec.mode === "uncensored" ? "Character Studio (Uncensored)" : "Character Studio",
@@ -198,6 +218,10 @@ export function CharacterStudio() {
         mode={spec.mode}
         onModeChange={(mode) => patchSpec({ mode })}
         onStart={startWizard}
+        uncensoredEnabled={userSettings.uncensoredEnabled}
+        onLockedUncensored={() =>
+          toast.push("Enable Uncensored Mode in Settings first.")
+        }
       />
     );
   }
@@ -408,9 +432,7 @@ export function CharacterStudio() {
                 <div className="mt-2 space-y-1.5">
                   {[
                     ["Mode", spec.mode === "normal" ? "Normal" : "Uncensored"],
-                    ["Age", `${spec.age} years old`],
-                    ["Ethnicity", spec.ethnicity],
-                    ["Country", spec.country],
+                    ["Age", spec.age],
                     ["Aspect Ratio", spec.aspect],
                     ["Resolution", spec.resolution],
                     ["Style", spec.style],
@@ -507,6 +529,9 @@ export function CharacterStudio() {
               <StepReview
                 spec={spec}
                 reference={reference}
+                models={catalog.models}
+                modelId={characterModelId}
+                onModelChange={(nextModel) => setSelectedModel("image", nextModel)}
                 onBack={() => goToStep(3)}
                 onGenerate={handleGenerate}
               />

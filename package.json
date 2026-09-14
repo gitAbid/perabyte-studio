@@ -11,7 +11,8 @@
     "prerender:examples": "python3 scripts/prerender_examples.py",
     "verify": "node scripts/verify.mjs",
     "deploy:vercel": "bash scripts/deploy-vercel.sh",
-    "verify:generator": "node scripts/verify-generator.mjs"
+    "verify:generator": "node scripts/verify-generator.mjs",
+    "verify:provider": "node scripts/verify-provider-ui.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.8",

@@ -27,6 +27,8 @@ export interface GenerationSettings {
   enhance: boolean;
   /** Provider safety checker. Regular Mode forces this on; Uncensored Mode turns it off. */
   safe?: boolean;
+  /** Selected model id (`<provider>:<model>`). Falls back to the kind's default. */
+  modelId?: string;
 }
 
 export interface GeneratedMedia {
@@ -35,6 +37,8 @@ export interface GeneratedMedia {
   width: number;
   height: number;
   seed: number;
+  /** Real content type when known — lets the UI pick a true video player. */
+  mime?: string;
 }
 
 export interface GenerationResponse {

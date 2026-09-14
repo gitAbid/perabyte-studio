@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
+import {
+  contentTypeForRef,
+  getMediaRepository,
+  isValidMediaRef,
+} from "@/lib/repositories/media.repository";
+import { logger } from "@/lib/logging/logger";
 import { isAllowedMediaUrl } from "@/lib/renderer";
 
 export const runtime = "nodejs";
+
+const log = logger.child({ route: "api/media" });
 
 function safeFilename(name: string | null, fallback: string) {
   const cleaned = (name ?? "")
@@ -20,19 +28,53 @@ const ATTEMPTS = [
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * Streams a render through our own origin.
+ * Serves media from our own origin.
  *
- * - Same-origin media avoids Chrome's opaque response blocking and makes the
- *   `download` attribute work.
- * - The render provider rate-limits hard (HTTP 429) when asked for several
- *   images at once, so we retry with backoff before giving up.
- * - Successful responses are immutable, so the CDN caches them and the
- *   provider is only ever hit once per render.
+ * - `?f=<ref>` — a content-addressed file from the media cache (generated
+ *   images/videos persisted server-side). Immutable once written.
+ * - `?u=<url>` — pass-through proxy for deterministic provider URLs
+ *   (Pollinations). Same-origin avoids Chrome's opaque response blocking and
+ *   makes the `download` attribute work; provider 429s are retried with
+ *   backoff before giving up.
  */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const target = searchParams.get("u");
 
+  const ref = searchParams.get("f");
+  if (ref) {
+    if (!isValidMediaRef(ref)) {
+      return NextResponse.json(
+        { error: "That media reference is not allowed.", retryable: false },
+        { status: 400 },
+      );
+    }
+    const stored = await getMediaRepository().get(ref);
+    if (!stored) {
+      // Ephemeral serverless disks lose the cache; the browser can retry.
+      log.warn("media cache miss", { ref: ref.slice(0, 12) });
+      return NextResponse.json(
+        { error: "That render is no longer cached. Regenerate it.", retryable: false },
+        { status: 404 },
+      );
+    }
+
+    const contentType = contentTypeForRef(ref);
+    const ext = ref.split(".").pop() ?? "jpg";
+    const headers = new Headers({
+      "content-type": contentType,
+      "content-length": String(stored.bytes.length),
+      "cache-control": "public, max-age=31536000, immutable",
+    });
+    if (searchParams.get("download") === "1") {
+      headers.set(
+        "content-disposition",
+        `attachment; filename="${safeFilename(searchParams.get("filename"), `perabyte-${Date.now()}`)}.${ext}"`,
+      );
+    }
+    return new NextResponse(new Uint8Array(stored.bytes), { status: 200, headers });
+  }
+
+  const target = searchParams.get("u");
   if (!target || !isAllowedMediaUrl(target)) {
     return NextResponse.json(
       { error: "That media URL is not allowed.", retryable: false },

@@ -212,6 +212,25 @@ for sk in dead:
 print("REMOVED dead keys:", len(dead))
 print("SHAPE KEYS:", shape_keys)
 
+# ---------------------------------------------------------------- rest pose
+# The armature must be exported in its rest pose: runtime posing in three.js
+# offsets from the bind pose, so the bind (inverse bind matrices) and the
+# exported node transforms have to describe the same stance. Any leftover
+# pose from the MPFB session breaks skinned posing in the browser.
+posed = 0
+for pb in rig.pose.bones:
+    mb = pb.matrix_basis
+    if abs(mb.to_euler().x) + abs(mb.to_euler().y) + abs(mb.to_euler().z) > 1e-5 or \
+       any(abs(v) > 1e-5 for v in mb.to_translation()) or \
+       any(abs(v - 1.0) > 1e-5 for v in mb.to_scale()):
+        posed += 1
+    pb.location = (0.0, 0.0, 0.0)
+    pb.rotation_mode = "XYZ"
+    pb.rotation_euler = (0.0, 0.0, 0.0)
+    pb.scale = (1.0, 1.0, 1.0)
+bpy.context.view_layer.update()
+print("REST POSE applied; bones with non-identity pose before clear:", posed)
+
 # ---------------------------------------------------------------- export
 os.makedirs(OUT_DIR, exist_ok=True)
 

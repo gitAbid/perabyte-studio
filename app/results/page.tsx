@@ -16,6 +16,7 @@ import {
 } from "@/components/ui";
 import { ASPECTS } from "@/lib/constants";
 import { downloadMedia } from "@/lib/generation";
+import { isVideoSource } from "@/lib/renderer";
 import { getAsset, removeAsset, toggleFavorite, useAssets } from "@/lib/store";
 import type { Asset } from "@/lib/types";
 
@@ -142,6 +143,7 @@ export default function ResultsPage() {
         {isVideo ? (
           <VideoStage
             posterUrl={currentUrl}
+            videoUrl={isVideoSource(currentUrl) ? currentUrl : undefined}
             title={asset.title}
             durationSeconds={Number(String(asset.settings.duration).replace("s", "")) || 5}
           />
