@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Icon } from "@/components/Icon";
 import { MediaFrame, VideoStage } from "@/components/Media";
 import { PromptComposer } from "@/components/PromptComposer";
-import { Badge, Button, Card, Segmented, useToast } from "@/components/ui";
+import { Badge, Button, Segmented, useToast } from "@/components/ui";
 import {
   ASPECTS,
   DEFAULT_IMAGE_SETTINGS,
@@ -15,14 +16,9 @@ import {
   VIDEO_STYLES,
 } from "@/lib/constants";
 import { downloadMedia, requestGeneration } from "@/lib/generation";
+import { enhancePromptText } from "@/lib/renderer";
 import { addAsset } from "@/lib/store";
 import type { Asset, GenerationSettings, StoryScene } from "@/lib/types";
-
-const STEPS = [
-  { n: 1, title: "First Scene", body: "Describe your starting point" },
-  { n: 2, title: "Continue", body: "Add the next scene" },
-  { n: 3, title: "Generate", body: "Build your story" },
-];
 
 const CONTINUATIONS = [
   "an establishing wide shot that sets the scene",
@@ -31,8 +27,12 @@ const CONTINUATIONS = [
   "the closing resolve shot, warm and hopeful",
 ];
 
+/** Placeholder copy for empty scene slots (after the first). */
+const PLACEHOLDERS = ["Continue the story", "Add an end…", "Add another scene"];
+
 export default function StoryPage() {
   const toast = useToast();
+  const router = useRouter();
   const [kind, setKind] = useState<"image" | "video">("image");
   const [prompt, setPrompt] = useState("");
   const [promptError, setPromptError] = useState<string | undefined>();
@@ -44,8 +44,6 @@ export default function StoryPage() {
   const [scenes, setScenes] = useState<StoryScene[]>([]);
   const [busy, setBusy] = useState(false);
   const [storyId, setStoryId] = useState<string | null>(null);
-
-  const activeStep = scenes.length === 0 ? 1 : scenes.length < 3 ? 2 : 3;
 
   function currentSettings(): GenerationSettings {
     return { ...settings, kind };
@@ -153,29 +151,34 @@ export default function StoryPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1240px] px-4 pb-10 pt-5 sm:px-6 sm:pt-8">
-      <Link
-        href="/"
-        className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted transition-colors hover:text-ink"
-      >
-        <Icon name="arrow-left" size={15} />
-        Back
-      </Link>
+    // Same workspace contract as the solo generator: on desktop the two panels
+    // stretch to fill the viewport; on mobile the stack flows and the page
+    // scrolls when scenes grow beyond it.
+    <div className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-4 py-4 sm:px-6 sm:py-5 lg:min-h-0">
+      <div className="relative flex shrink-0 flex-col gap-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <Link
+              href="/"
+              aria-label="Back to home"
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-white text-ink-soft transition-colors hover:border-border-strong hover:text-ink"
+            >
+              <Icon name="arrow-left" size={16} />
+            </Link>
+            <div className="min-w-0">
+              <h1 className="truncate text-[18px] font-extrabold tracking-[-0.02em] text-ink sm:text-[21px]">
+                Generate a Story
+              </h1>
+            <p className="mt-0.5 hidden truncate text-[12px] text-muted lg:block">
+              A sequence of scenes that tell one story.
+            </p>
+            </div>
+          </div>
 
-      <div className="mt-3 flex flex-col gap-3 sm:mt-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-[26px] font-extrabold tracking-[-0.03em] text-ink sm:text-[34px]">
-            Generate a Story
-          </h1>
-          <p className="mt-1.5 max-w-xl text-[13px] leading-relaxed text-muted sm:mt-2 sm:text-sm">
-            Create a sequence of images and videos that tell a story. Add your
-            first scene and let the AI continue the journey.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 self-start sm:self-auto">
           <Segmented
             ariaLabel="Story media type"
             size="sm"
+            collapseOnMobile
             value={kind}
             onChange={(next) => {
               setKind(next);
@@ -186,84 +189,67 @@ export default function StoryPage() {
               { value: "video", label: "Video", icon: "video" },
             ]}
           />
-          <Badge tone="primary">
-            <Icon name="story" size={13} /> Story Mode
-          </Badge>
+        </div>
+
+        {/* Centered Solo ⇄ Story mode switch */}
+        <div className="flex justify-center sm:absolute sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2">
+          <Segmented
+            ariaLabel="Studio mode"
+            size="sm"
+            value="story"
+            onChange={(next) => {
+              if (next === "solo") router.push("/generate/image");
+            }}
+            options={[
+              { value: "solo", label: "Solo Mode", icon: "user" },
+              { value: "story", label: "Story Mode", icon: "story" },
+            ]}
+          />
         </div>
       </div>
 
-      {/* Stepper */}
-      <ol className="mt-5 flex gap-2 overflow-x-auto pb-1 no-scrollbar sm:mt-8 sm:grid sm:grid-cols-3 sm:gap-3">
-        {STEPS.map((step) => {
-          const active = step.n === activeStep;
-          const done = step.n < activeStep;
-          return (
-            <li
-              key={step.n}
-              className={`flex min-w-[156px] flex-1 items-center gap-2 rounded-[14px] border p-2.5 sm:gap-3 sm:rounded-[16px] sm:p-4 ${
-                active
-                  ? "border-primary bg-primary-soft"
-                  : "border-border bg-white"
-              }`}
-            >
-              <span
-                className={`inline-flex size-7 shrink-0 items-center justify-center rounded-full text-[12px] font-bold sm:size-8 sm:text-[13px] ${
-                  done
-                    ? "bg-success text-white"
-                    : active
-                      ? "bg-primary text-white"
-                      : "bg-surface-2 text-muted"
-                }`}
-              >
-                {done ? <Icon name="check" size={15} /> : step.n}
-              </span>
-              <span>
-                <span className="block text-[12px] font-bold text-ink sm:text-[13.5px]">
-                  {step.title}
-                </span>
-                <span className="hidden text-[12px] text-muted sm:block">{step.body}</span>
-              </span>
-            </li>
-          );
-        })}
-      </ol>
-
-      <div className="mt-5 grid gap-4 sm:mt-7 sm:gap-6 lg:grid-cols-[minmax(0,460px)_minmax(0,1fr)] lg:items-start lg:gap-8">
-        <Card className="min-w-0 h-fit overflow-hidden p-4 sm:p-6 lg:sticky lg:top-24">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-[15px] font-bold text-ink">Story composer</h2>
-              <p className="mt-1 text-[12px] text-muted">
-                Prompt and scene settings stay together.
-              </p>
-            </div>
-            <Badge tone="primary">
-              <Icon name="story" size={12} /> {scenes.length || 1} scene{scenes.length === 1 ? "" : "s"}
-            </Badge>
-          </div>
-
-          <div className="mt-5 min-w-0">
+      {/* ---------------------------- Workspace ---------------------------- */}
+      <div className="mt-3 grid min-w-0 gap-4 sm:mt-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(330px,400px)_minmax(0,1fr)] lg:items-stretch">
+        {/* Composer column */}
+        <div className="order-1 flex min-h-0 min-w-0 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col">
             <PromptComposer
               kind={kind}
+              title="Story composer"
+              headerBadge={
+                <Badge tone="primary">
+                  <Icon name="story" size={12} /> {scenes.length || 1} scene
+                  {scenes.length === 1 ? "" : "s"}
+                </Badge>
+              }
               prompt={prompt}
               onPromptChange={(value) => {
                 setPrompt(value);
                 if (promptError) setPromptError(undefined);
               }}
               promptError={promptError}
-              large
               settings={currentSettings()}
               onSettingsChange={(patch) => setSettings((s) => ({ ...s, ...patch }))}
               busy={busy}
               onGenerate={handleGenerateAll}
               onCancel={() => setBusy(false)}
               onCopyPrompt={() => {
-                void navigator.clipboard?.writeText(prompt).then(() => toast.push("Prompt copied.", "success"));
+                void navigator.clipboard
+                  ?.writeText(prompt)
+                  .then(() => toast.push("Prompt copied.", "success"));
               }}
+              onEnhancePrompt={() =>
+                setPrompt((p) =>
+                  enhancePromptText(p, currentSettings().style).slice(
+                    0,
+                    PROMPT_MAX,
+                  ),
+                )
+              }
             />
           </div>
 
-          <div className="mt-3 flex min-w-0 items-center gap-2">
+          <div className="mt-3 flex shrink-0 items-center gap-2">
             <Button
               variant="secondary"
               size="sm"
@@ -276,15 +262,20 @@ export default function StoryPage() {
             </Button>
             <span className="shrink-0 text-[11px] text-muted">Max 6</span>
           </div>
-        </Card>
+        </div>
 
-        <div className="min-w-0 space-y-3 sm:space-y-4">
-          <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar sm:grid sm:grid-cols-3 sm:overflow-visible">
-            {(scenes.length ? scenes : Array.from({ length: 3 })).map((scene, index) => {
-              const typed = scene as StoryScene | undefined;
-              const label = typed?.id ? `Scene ${index + 1}` : `Scene ${index + 1}`;
+        {/* Scenes column */}
+        <div className="order-2 flex min-h-[300px] min-w-0 flex-col rounded-[20px] border border-border bg-surface p-4 sm:min-h-[360px] lg:min-h-0">
+          {/* Story starts with Scene 1 in the top-left slot; the remaining
+              slots stay as placeholders (three are always visible). */}
+          <div className="grid flex-1 content-start gap-4 sm:grid-cols-3 sm:content-center">
+            {Array.from({ length: Math.max(3, scenes.length) }, (_, index) => {
+              const typed = scenes[index] as StoryScene | undefined;
+              const ratioStyle = {
+                aspectRatio: `${ASPECTS[settings.aspect].width}/${ASPECTS[settings.aspect].height}`,
+              };
               return (
-                <div key={typed?.id ?? `placeholder-${index}`} className="w-[164px] shrink-0 space-y-1.5 sm:w-auto sm:shrink">
+                <div key={typed?.id ?? `slot-${index}`} className="min-w-0">
                   {typed?.url ? (
                     kind === "video" ? (
                       <VideoStage
@@ -300,30 +291,39 @@ export default function StoryPage() {
                       />
                     )
                   ) : typed && (typed.status === "generating" || typed.status === "queued") ? (
+                    <div className="skeleton w-full rounded-[14px]" style={ratioStyle} />
+                  ) : index === 0 ? (
+                    // Scene 1: an active starting point, not a dashed slot.
                     <div
-                      className="skeleton aspect-[16/10] w-full rounded-[14px] sm:aspect-auto"
-                      style={{
-                        aspectRatio: `${ASPECTS[settings.aspect].width}/${ASPECTS[settings.aspect].height}`,
-                      }}
-                    />
+                      className="flex flex-col items-center justify-center rounded-[16px] border border-border bg-white px-3 text-center shadow-card"
+                      style={ratioStyle}
+                    >
+                      <span className="inline-flex size-10 items-center justify-center rounded-full bg-primary-soft text-primary">
+                        <Icon name="sparkle" size={18} />
+                      </span>
+                      <p className="mt-2 text-[12.5px] font-bold text-ink">
+                        Your first scene
+                      </p>
+                      <p className="mt-0.5 text-[11.5px] text-muted">
+                        Describe it in the composer
+                      </p>
+                    </div>
                   ) : (
                     <div
-                      className="flex flex-col items-center justify-center rounded-[16px] border border-dashed border-border-strong bg-surface px-3 text-center"
-                      style={{
-                        aspectRatio: `${ASPECTS[settings.aspect].width}/${ASPECTS[settings.aspect].height}`,
-                      }}
+                      className="flex flex-col items-center justify-center rounded-[16px] border border-dashed border-border-strong bg-white px-3 text-center"
+                      style={ratioStyle}
                     >
                       <Icon name="image" size={20} className="text-muted" />
                       <p className="mt-2 text-[12px] font-semibold text-muted">
-                        {index === 0 ? "Your first scene" : index === 1 ? "Continue the story" : "Add an end…"}
+                        {PLACEHOLDERS[Math.min(index - 1, PLACEHOLDERS.length - 1)]}
                       </p>
                     </div>
                   )}
-                  <p className="text-[11.5px] font-semibold uppercase tracking-wide text-muted">
-                    {label}
+                  <p className="mt-2 text-[11.5px] font-semibold uppercase tracking-wide text-muted">
+                    Scene {index + 1}
                   </p>
                   {typed?.prompt && (
-                    <p className="hidden line-clamp-2 text-[12px] leading-snug text-ink-soft sm:block">
+                    <p className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-ink-soft">
                       {typed.prompt}
                     </p>
                   )}
@@ -332,38 +332,41 @@ export default function StoryPage() {
             })}
           </div>
 
-          {scenes.some((s) => s.url) && (
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                icon="download"
-                onClick={() => {
-                  const first = scenes.find((s) => s.url);
-                  if (first?.url) {
-                    downloadMedia(first.url, `perabyte-story-${Date.now()}`);
-                    toast.push("Your download has started.", "success");
-                  }
-                }}
-              >
-                Download first scene
-              </Button>
-              {storyId && (
-                <Link
-                  href={`/results?id=${storyId}`}
-                  className="inline-flex h-11 items-center gap-2 rounded-[12px] border border-border-strong bg-white px-4 text-sm font-semibold text-ink transition-colors hover:border-muted hover:bg-surface"
+          <div className="mt-4 flex shrink-0 flex-wrap items-center gap-2 border-t border-border pt-3.5">
+            {scenes.some((s) => s.url) ? (
+              <>
+                <Button
+                  size="sm"
+                  icon="download"
+                  onClick={() => {
+                    const first = scenes.find((s) => s.url);
+                    if (first?.url) {
+                      downloadMedia(first.url, `perabyte-story-${Date.now()}`);
+                      toast.push("Your download has started.", "success");
+                    }
+                  }}
                 >
-                  Open in Results
-                  <Icon name="arrow-right" size={16} />
-                </Link>
-              )}
-              <Button variant="ghost" icon="refresh" onClick={reset}>
-                Start over
-              </Button>
-            </div>
-          )}
-
-          <p className="hidden text-[11.5px] leading-relaxed text-muted sm:block sm:text-[12px]">
-            Scenes render one at a time. Every completed scene is stored in History.
-          </p>
+                  Download first scene
+                </Button>
+                {storyId && (
+                  <Link
+                    href={`/results?id=${storyId}`}
+                    className="inline-flex h-9 items-center gap-2 rounded-[12px] border border-border-strong bg-white px-3.5 text-[13px] font-semibold text-ink transition-colors hover:border-muted hover:bg-surface"
+                  >
+                    Open in Results
+                    <Icon name="arrow-right" size={15} />
+                  </Link>
+                )}
+                <Button variant="ghost" size="sm" icon="refresh" onClick={reset}>
+                  Start over
+                </Button>
+              </>
+            ) : (
+              <p className="text-[11.5px] text-muted">
+                Scenes render one at a time. Every completed scene is stored in History.
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>

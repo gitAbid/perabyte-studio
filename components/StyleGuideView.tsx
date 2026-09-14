@@ -38,7 +38,7 @@ const ICONS: IconName[] = [
 
 export function StyleGuideView() {
   return (
-    <div className="mx-auto w-full max-w-[1240px] px-4 pb-12 pt-8 sm:px-6">
+    <div className="mx-auto w-full max-w-[1280px] px-4 pb-12 pt-8 sm:px-6">
       <h1 className="text-[28px] font-extrabold tracking-[-0.03em] text-ink sm:text-[34px]">
         UI Elements &amp; Style Guide
       </h1>

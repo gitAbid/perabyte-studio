@@ -117,6 +117,23 @@ body {
   scrollbar-width: none;
 }
 
+/* Subtle overlay-style scrollbar for dropdown lists. */
+.thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+.thin-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 999px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

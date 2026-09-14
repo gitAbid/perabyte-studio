@@ -17,17 +17,21 @@ import {
   type AspectKey,
 } from "@/lib/constants";
 import { downloadMedia, useGeneration } from "@/lib/generation";
-import { addAsset, assetFromResponse, toggleFavorite } from "@/lib/store";
+import { enhancePromptText } from "@/lib/renderer";
+import { addAsset, assetFromResponse, DEMO_SPECS, toggleFavorite } from "@/lib/store";
+import type { DemoSpec } from "@/lib/store";
 import type { GenerationSettings } from "@/lib/types";
 
 const COPY = {
   image: {
     title: "Generate Image",
-    previewBody: "Describe a scene below and press Generate.",
+    subtitle: "Turn your idea into a stunning image.",
+    emptyTitle: "Your image will appear here",
   },
   video: {
     title: "Generate Video",
-    previewBody: "Describe a scene below and press Generate.",
+    subtitle: "Bring your idea to life with motion.",
+    emptyTitle: "Your video will appear here",
   },
 } as const;
 
@@ -72,17 +76,16 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
 
   useEffect(() => setActiveVariant(0), [result?.requestId]);
 
-  const aspectRatio = (() => {
-    const [w, h] = settings.aspect.split(":").map(Number);
-    return `${w} / ${h}`;
-  })();
-  const aspectClass = {
-    "16:9": "aspect-video",
-    "9:16": "aspect-[9/16]",
-    "1:1": "aspect-square",
-    "4:5": "aspect-[4/5]",
-    "3:2": "aspect-[3/2]",
-  }[settings.aspect] ?? "aspect-video";
+  const [aspectW, aspectH] = settings.aspect.split(":").map(Number);
+  const aspectRatio = `${aspectW} / ${aspectH}`;
+  // object-contain behaviour for the ratio box: sized with container-query
+  // units so a portrait selection (e.g. the video default 9:16) can never
+  // overflow the preview panel on any aspect ratio or viewport.
+  const fitBox = {
+    aspectRatio: aspectRatio,
+    width: `min(100cqw, calc(100cqh * ${aspectW} / ${aspectH}))`,
+    height: `min(100cqh, calc(100cqw * ${aspectH} / ${aspectW}))`,
+  } as const;
 
   function patchSettings(patch: Partial<GenerationSettings>) {
     setSettings((s) => ({ ...s, ...patch }));
@@ -139,60 +142,79 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
       .catch(() => toast.push("Could not copy the prompt.", "error"));
   }
 
+  function handleExamplePick(demo: DemoSpec) {
+    setPrompt(demo.prompt.slice(0, PROMPT_MAX));
+    if (promptError) setPromptError(undefined);
+    toast.push(`“${demo.title}” example loaded — tweak it and press Generate.`);
+  }
+
   return (
-    // `main` is a flex column, so flex-1 + min-h-0 makes this fill the viewport
-    // under the header exactly — no calc, no rounding gap, no page scrolling.
-    <div className="mx-auto flex min-h-0 w-full max-w-[1240px] flex-1 flex-col gap-3 overflow-hidden px-4 py-4 sm:px-6">
-      <div className="flex shrink-0 items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <Link
-            href="/"
-            aria-label="Back to home"
-            className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-white text-ink-soft transition-colors hover:border-border-strong hover:text-ink"
-          >
-            <Icon name="arrow-left" size={16} />
-          </Link>
-          <div className="min-w-0">
-            <h1 className="truncate text-[18px] font-extrabold tracking-[-0.02em] text-ink sm:text-[22px]">
-            <span className="sm:hidden">{kind === "video" ? "Video" : "Image"}</span>
-            <span className="hidden sm:inline">{copy.title}</span>
-            </h1>
-            <p className="mt-0.5 hidden text-[12px] text-muted lg:block">
-              Configure your scene on the left and preview it on the right.
-            </p>
+    // `main` is a flex column: on desktop the workspace stretches to fill the
+    // viewport under the header; on mobile the stack flows naturally and the
+    // page scrolls instead of crushing the panels.
+    <div className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-4 py-4 sm:px-6 sm:py-5 lg:min-h-0">
+      <div className="relative flex shrink-0 flex-col gap-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <Link
+              href="/"
+              aria-label="Back to home"
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-white text-ink-soft transition-colors hover:border-border-strong hover:text-ink"
+            >
+              <Icon name="arrow-left" size={16} />
+            </Link>
+            <div className="min-w-0">
+              <h1 className="truncate text-[18px] font-extrabold tracking-[-0.02em] text-ink sm:text-[21px]">
+                {copy.title}
+              </h1>
+              <p className="mt-0.5 hidden truncate text-[12px] text-muted lg:block">
+                {copy.subtitle}
+              </p>
+            </div>
+            {result && (
+              <span className="hidden shrink-0 sm:inline-flex">
+                <Badge tone="primary">
+                  <Icon name="check" size={11} /> Ready
+                </Badge>
+              </span>
+            )}
           </div>
-          {result && (
-            <span className="hidden sm:inline-flex">
-              <Badge tone="primary">
-                <Icon name="check" size={11} /> Ready
-              </Badge>
-            </span>
-          )}
+
+          <Segmented
+            ariaLabel="Generation type"
+            size="sm"
+            collapseOnMobile
+            value={kind}
+            onChange={(next) => router.push(`/generate/${next}`)}
+            options={[
+              { value: "image", label: "Image", icon: "image" },
+              { value: "video", label: "Video", icon: "video" },
+            ]}
+          />
         </div>
 
-        <Segmented
-          ariaLabel="Generation type"
-          size="sm"
-          collapseOnMobile
-          value={kind}
-          onChange={(next) => router.push(`/generate/${next}`)}
-          options={[
-            { value: "image", label: "Image", icon: "image" },
-            { value: "video", label: "Video", icon: "video" },
-          ]}
-        />
+        {/* Centered Solo ⇄ Story mode switch */}
+        <div className="flex justify-center sm:absolute sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2">
+          <Segmented
+            ariaLabel="Studio mode"
+            size="sm"
+            value="solo"
+            onChange={(next) => {
+              if (next === "story") router.push("/story");
+            }}
+            options={[
+              { value: "solo", label: "Solo Mode", icon: "user" },
+              { value: "story", label: "Story Mode", icon: "story" },
+            ]}
+          />
+        </div>
       </div>
 
-      {/* ------------------------------ Preview ------------------------------ */}
-      <div className="grid min-h-0 flex-1 gap-4 overflow-hidden lg:grid-cols-[minmax(320px,390px)_minmax(0,1fr)] lg:items-stretch">
-        <div className="order-2 min-h-0 overflow-y-auto rounded-[20px] border border-border bg-white p-3 lg:order-1 lg:p-5">
-          <div className="mb-3 flex items-center justify-between">
-            <div>
-              <p className="text-[13px] font-bold text-ink">Prompt composer</p>
-              <p className="mt-0.5 text-[11.5px] text-muted">Your settings stay attached to the prompt.</p>
-            </div>
-            <Badge tone="primary"><Icon name="sparkle" size={12} /> Solo</Badge>
-          </div>
+      {/* ---------------------------- Workspace ---------------------------- */}
+      <div className="mt-3 grid min-w-0 gap-4 lg:mt-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(330px,400px)_minmax(0,1fr)] lg:items-stretch">
+        {/* Composer — first in the stack on every size; it fills its column
+            on desktop so no space is wasted above or below it. */}
+        <div className="order-1 flex min-h-0 min-w-0 flex-col">
           <PromptComposer
             kind={kind}
             prompt={prompt}
@@ -202,38 +224,52 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
             }}
             promptError={promptError}
             settings={settings}
-            large
+            headerBadge={
+              <Badge tone="primary">
+                <Icon name="sparkle" size={12} /> Solo
+              </Badge>
+            }
             onSettingsChange={patchSettings}
             busy={busy}
             onGenerate={handleGenerate}
             onCancel={cancel}
             onCopyPrompt={handleCopyPrompt}
+            onEnhancePrompt={() =>
+              setPrompt((p) =>
+                enhancePromptText(p, settings.style).slice(0, PROMPT_MAX),
+              )
+            }
           />
         </div>
-        <div className="relative order-1 flex min-h-0 items-center justify-center overflow-hidden rounded-[20px] border border-border bg-surface p-3 lg:order-2">
-        {job.phase === "idle" && (
-          <div className={`flex ${aspectClass} max-h-full w-full max-w-full flex-col items-center justify-center rounded-[16px] border border-dashed border-border-strong px-6 text-center`}>
-            <span className="inline-flex size-12 items-center justify-center rounded-full bg-white text-muted shadow-card">
-              <Icon name={kind === "video" ? "video" : "image"} size={22} />
-            </span>
-            <p className="mt-3.5 text-[15px] font-bold text-ink">
-              {kind === "video"
-                ? "Your video will appear here"
-                : "Your image will appear here"}
-            </p>
-            <p className="mt-1 max-w-xs text-[13px] text-muted">
-              {copy.previewBody}
-            </p>
-          </div>
-        )}
 
-        {busy && (
-          <div className="flex h-full w-full items-center justify-center">
-            <div className="flex max-h-full flex-col items-center gap-3">
-              <div
-                className="skeleton max-h-[60vh] w-[min(100%,640px)] rounded-[16px]"
-                style={{ aspectRatio: aspectRatio }}
-              />
+        {/* Preview — a size container so the ratio boxes fit-contain inside it */}
+        <div className="relative order-2 flex min-h-[300px] items-center justify-center overflow-hidden rounded-[20px] border border-border bg-surface p-3 [container-type:size] sm:min-h-[360px] lg:min-h-0">
+          {job.phase === "idle" && (
+            // The placeholder fills the panel and an example strip sits below,
+            // so no viewport space is wasted before the first render.
+            <div className="flex h-full w-full flex-col gap-3">
+              <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center rounded-[16px] border border-dashed border-border-strong px-6 text-center">
+                <span className="inline-flex size-12 items-center justify-center rounded-full bg-white text-muted shadow-card">
+                  <Icon name={kind === "video" ? "video" : "image"} size={22} />
+                </span>
+                <p className="mt-3.5 text-[15px] font-bold text-ink">
+                  {copy.emptyTitle}
+                </p>
+                <p className="mt-1 max-w-xs text-[13px] text-muted">
+                  Add a prompt and configure your settings to get started.
+                </p>
+                <span className="absolute bottom-3 right-3 rounded-full bg-white px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-wide text-muted shadow-card">
+                  {settings.aspect} · {settings.resolution}
+                </span>
+              </div>
+
+              <ExampleStrip onPick={handleExamplePick} />
+            </div>
+          )}
+
+          {busy && (
+            <div className="flex h-full w-full flex-col items-center justify-center gap-3">
+              <div className="skeleton rounded-[16px]" style={fitBox} />
               <p className="flex items-center gap-2 text-[12.5px] font-medium text-muted">
                 <Icon name="clock" size={14} />
                 {job.phase === "queued"
@@ -241,119 +277,118 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
                   : "Generating your render…"}
               </p>
             </div>
-          </div>
-        )}
+          )}
 
-        {job.phase === "failed" && (
-          <div className="flex flex-col items-center px-6 text-center">
-            <span className="inline-flex size-11 items-center justify-center rounded-full bg-white text-danger shadow-card">
-              <Icon name="alert" size={20} />
-            </span>
-            <p className="mt-3 text-[14px] font-bold text-ink">
-              Generation failed
-            </p>
-            <p className="mt-1 max-w-sm text-[12.5px] text-ink-soft">
-              {job.message}
-            </p>
-            {job.retryable && (
-              <Button
-                size="sm"
-                className="mt-4"
-                icon="refresh"
-                onClick={handleGenerate}
-              >
-                Retry with same settings
-              </Button>
-            )}
-          </div>
-        )}
-
-        {job.phase === "completed" && result && (
-          <>
-            {kind === "video" ? (
-              <VideoStage
-                fit
-                posterUrl={shownUrl}
-                title={prompt || "Generated video"}
-                durationSeconds={Number(settings.duration.replace("s", ""))}
-              />
-            ) : (
-              <MediaFrame
-                fit
-                src={shownUrl}
-                alt={prompt || "Generated image"}
-                rounded="rounded-[14px]"
-                priority
-              />
-            )}
-
-            {/* Floating actions, so no space is spent on a toolbar row. */}
-            <div className="pointer-events-auto absolute right-3 top-3 flex items-center gap-1.5">
-              <OverlayButton
-                icon="download"
-                label="Download"
-                onClick={handleDownload}
-              />
-              <OverlayButton
-                icon="heart"
-                label={favorite ? "Saved to favourites" : "Save to favourites"}
-                active={favorite}
-                disabled={!assetId}
-                onClick={handleFavorite}
-              />
-              <OverlayButton
-                icon="copy"
-                label="Copy prompt"
-                onClick={handleCopyPrompt}
-              />
-              {assetId ? (
-                <Link
-                  href={`/results?id=${assetId}`}
-                  aria-label="Open in Results"
-                  title="Open in Results"
-                  className="inline-flex size-8 items-center justify-center rounded-full border border-border bg-white/90 text-ink-soft backdrop-blur transition-colors hover:text-ink"
+          {job.phase === "failed" && (
+            <div className="flex flex-col items-center px-6 text-center">
+              <span className="inline-flex size-11 items-center justify-center rounded-full bg-white text-danger shadow-card">
+                <Icon name="alert" size={20} />
+              </span>
+              <p className="mt-3 text-[14px] font-bold text-ink">
+                Generation failed
+              </p>
+              <p className="mt-1 max-w-sm text-[12.5px] text-ink-soft">
+                {job.message}
+              </p>
+              {job.retryable && (
+                <Button
+                  size="sm"
+                  className="mt-4"
+                  icon="refresh"
+                  onClick={handleGenerate}
                 >
-                  <Icon name="arrow-right" size={15} />
-                </Link>
-              ) : null}
-              <OverlayButton
-                icon="refresh"
-                label="Generate another"
-                onClick={reset}
-              />
+                  Retry with same settings
+                </Button>
+              )}
             </div>
+          )}
 
-            {result.media.length > 1 && (
-              <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2 rounded-full border border-border bg-white/90 p-1.5 backdrop-blur">
-                {result.media.map((media, index) => (
-                  <button
-                    key={media.id}
-                    type="button"
-                    onClick={() => setActiveVariant(index)}
-                    aria-label={`Show variation ${index + 1}`}
-                    aria-pressed={index === activeVariant}
-                    className={`overflow-hidden rounded-full border-2 transition-all ${
-                      index === activeVariant
-                        ? "border-primary"
-                        : "border-transparent hover:border-border-strong"
-                    }`}
+          {job.phase === "completed" && result && (
+            <>
+              {kind === "video" ? (
+                <VideoStage
+                  fit
+                  fitStyle={fitBox}
+                  posterUrl={shownUrl}
+                  title={prompt || "Generated video"}
+                  durationSeconds={Number(settings.duration.replace("s", ""))}
+                />
+              ) : (
+                <MediaFrame
+                  fit
+                  src={shownUrl}
+                  alt={prompt || "Generated image"}
+                  rounded="rounded-[14px]"
+                  priority
+                />
+              )}
+
+              {/* Floating actions, so no space is spent on a toolbar row. */}
+              <div className="pointer-events-auto absolute right-3 top-3 flex items-center gap-1.5">
+                <OverlayButton
+                  icon="download"
+                  label="Download"
+                  onClick={handleDownload}
+                />
+                <OverlayButton
+                  icon="heart"
+                  label={favorite ? "Saved to favourites" : "Save to favourites"}
+                  active={favorite}
+                  disabled={!assetId}
+                  onClick={handleFavorite}
+                />
+                <OverlayButton
+                  icon="copy"
+                  label="Copy prompt"
+                  onClick={handleCopyPrompt}
+                />
+                {assetId ? (
+                  <Link
+                    href={`/results?id=${assetId}`}
+                    aria-label="Open in Results"
+                    title="Open in Results"
+                    className="inline-flex size-8 items-center justify-center rounded-full border border-border bg-white/90 text-ink-soft backdrop-blur transition-colors hover:text-ink"
                   >
-                    <MediaFrame
-                      src={media.url}
-                      alt=""
-                      ratio="1/1"
-                      rounded="rounded-full"
-                      className="w-9"
-                    />
-                  </button>
-                ))}
+                    <Icon name="arrow-right" size={15} />
+                  </Link>
+                ) : null}
+                <OverlayButton
+                  icon="refresh"
+                  label="Generate another"
+                  onClick={reset}
+                />
               </div>
-            )}
-          </>
-        )}
+
+              {result.media.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2 rounded-full border border-border bg-white/90 p-1.5 backdrop-blur">
+                  {result.media.map((media, index) => (
+                    <button
+                      key={media.id}
+                      type="button"
+                      onClick={() => setActiveVariant(index)}
+                      aria-label={`Show variation ${index + 1}`}
+                      aria-pressed={index === activeVariant}
+                      className={`overflow-hidden rounded-full border-2 transition-all ${
+                        index === activeVariant
+                          ? "border-primary"
+                          : "border-transparent hover:border-border-strong"
+                      }`}
+                    >
+                      <MediaFrame
+                        src={media.url}
+                        alt=""
+                        ratio="1/1"
+                        rounded="rounded-full"
+                        className="w-9"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
-
     </div>
   );
 }
@@ -386,5 +421,35 @@ function OverlayButton({
     >
       <Icon name={icon} size={15} />
     </button>
+  );
+}
+
+/** Pre-rendered examples under the empty preview; clicking loads the prompt. */
+function ExampleStrip({ onPick }: { onPick: (demo: DemoSpec) => void }) {
+  return (
+    <div className="shrink-0">
+      <p className="text-[11px] font-bold uppercase tracking-wide text-muted">
+        Try an example
+      </p>
+      <div className="no-scrollbar mt-2 flex gap-2 overflow-x-auto">
+        {DEMO_SPECS.map((demo) => (
+          <button
+            key={demo.seed}
+            type="button"
+            onClick={() => onPick(demo)}
+            aria-label={`Load example prompt: ${demo.title}`}
+            title={demo.prompt}
+            className="group shrink-0 overflow-hidden rounded-[12px] border border-border transition-colors hover:border-primary"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={demo.file}
+              alt=""
+              className="h-16 w-24 object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
