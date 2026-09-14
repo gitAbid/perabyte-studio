@@ -27,11 +27,9 @@ export default function AvatarPreview({ spec }: { spec: CharacterSpec }) {
             <p className="text-[11px] text-muted">Drag to rotate · scroll to zoom</p>
           </div>
         </div>
-        {params.silhouetteOnly && (
-          <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-warning">
-            Silhouette
-          </span>
-        )}
+        <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-soft">
+          Body
+        </span>
       </div>
 
       <div className="relative aspect-[4/5] w-full overflow-hidden bg-surface-2">
@@ -53,8 +51,9 @@ export default function AvatarPreview({ spec }: { spec: CharacterSpec }) {
       )}
 
       <p className="border-t border-border px-4 py-2.5 text-[10.5px] leading-snug text-muted">
-        Stylized CG preview of your configuration — the final AI render applies
-        your style, scene and photoreal detail.
+        Body-configuration preview — outfit rendering is being reworked and
+        arrives in the next update. Your selections are all captured for the
+        final AI render.
       </p>
     </div>
   );

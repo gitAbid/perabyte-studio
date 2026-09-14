@@ -160,37 +160,72 @@ load_pair("eye_upturned", "eyes/l-eye-eyefold-angle-up", "eyes/r-eye-eyefold-ang
 load_pair("expr_cheeks", "cheek/l-cheek-volume-incr", "cheek/r-cheek-volume-incr")
 
 # ---------------------------------------------------------------- macro bakes
+# MPFB applies macro details (gender/age/muscle/weight/height) through its
+# internal $md-* shape keys; the deformation is only visible on the
+# EVALUATED mesh. The "Hide helpers" mask modifier must be disabled during
+# capture or the evaluated vertex count/order mismatches our base. Each
+# axis extreme is captured as ONE shape key; the browser blends them
+# linearly, mirroring MPFB's own axis interpolation. Bakes assert a real
+# delta so an empty capture fails loudly instead of shipping a stiff body.
+import numpy as np
+
 def bake_macro(name, props):
-    """Create a variant human with different macro values and capture its mesh
-    as a shape key on the base (join-as-shapes). Topology is identical."""
     var = HumanService.create_human()
-    var.name = "mk_" + name
+    var.name = "ax_" + name
     var.location = (5.0, 0.0, 0.0)
     for k, v in props.items():
         HumanObjectProperties.set_value(k, v, entity_reference=var)
-    TargetService.reapply_macro_details(var)
-    bpy.ops.object.select_all(action="DESELECT")
-    var.select_set(True)
-    base.select_set(True)
-    bpy.context.view_layer.objects.active = base
-    bpy.ops.object.join_shapes()
-    bpy.data.objects.remove(var, do_unlink=True)
-    print("MACRO BAKE", name)
+    TargetService.reapply_macro_details(var, remove_zero_weight_targets=False)
 
-BAKES = {
-    "m_gender_m":     {"gender": 0.0},
-    "m_gender_f":     {"gender": 1.0},
-    "m_age_old":      {"age": 1.0},
-    "m_age_young":    {"age": 0.0},
-    "m_weight_up":    {"weight": 1.0},
-    "m_weight_down":  {"weight": 0.0},
-    "m_height_up":    {"height": 1.0},
-    "m_height_down":  {"height": 0.0},
-    "m_muscle_up":    {"muscle": 1.0},
-    "m_muscle_down":  {"muscle": 0.0},
-}
-for name, props in BAKES.items():
-    bake_macro(name, props)
+    mask = var.modifiers.get("Hide helpers")
+    if mask:
+        mask.show_viewport = False
+
+    def evaluated_coords():
+        # to_mesh() returns LOCAL coordinates (object transform excluded), so
+        # the variant's +5m workspace offset never leaks into the capture.
+        bpy.context.view_layer.update()
+        dg = bpy.context.evaluated_depsgraph_get()
+        me = var.evaluated_get(dg).to_mesh()
+        arr = np.array([v.co[:] for v in me.vertices])
+        var.evaluated_get(dg).to_mesh_clear()
+        return arr
+
+    ev = evaluated_coords()
+    keys = var.data.shape_keys.key_blocks
+    saved = [sk.value for sk in keys]
+    for sk in keys:
+        sk.value = 0.0
+    basis = evaluated_coords()
+    for sk, v in zip(keys, saved):
+        sk.value = v
+    delta = ev - basis  # true deformation offsets in the shared local frame
+    max_delta = float(np.abs(delta).max())
+    assert max_delta > 0.005, f"{name}: macro bake captured no deformation (max delta {max_delta})"
+
+    sk = base.shape_key_add(name="ax_" + name, from_mix=False)
+    base_basis = np.array([v.co[:] for v in base.data.vertices])
+    out = base_basis + delta
+    for i, co in enumerate(out):
+        sk.data[i].co = co
+    bpy.data.objects.remove(var, do_unlink=True)
+    print(f"AXIS BAKE {name}: verts {len(ev)} max delta {max_delta:.4f}")
+
+# Only the INTERACTING axes are baked as a cross grid (2x3x3 = 18 keys).
+# Height is applied as a runtime root scale (composes exactly outside
+# skinning) and muscle as accent targets — per-axis full-body deltas do NOT
+# compose additively, so every extra baked axis would multiply the grid.
+NEUTRAL = {"gender": 0.5, "age": 0.5, "muscle": 0.5, "weight": 0.5, "height": 0.5}
+# MPFB age axis: 0=baby, 0.5=young adult, 1.0=old. The wizard is 18+ only,
+# so the age grid spans young -> old exclusively.
+for g_name, g_val in [("m", 0.0), ("f", 1.0)]:
+    for a_name, a_val in [("young", 0.5), ("old", 1.0)]:
+        for w_name, w_val in [("light", 0.0), ("average", 0.5), ("heavy", 1.0)]:
+            props = dict(NEUTRAL)
+            props["gender"] = g_val
+            props["age"] = a_val
+            props["weight"] = w_val
+            bake_macro(f"gaw_{g_name}_{a_name}_{w_name}", props)
 
 # ---------------------------------------------------------------- normalize keys
 shape_keys = []
@@ -211,6 +246,21 @@ for sk in dead:
         print("could not remove key", sk.name, e)
 print("REMOVED dead keys:", len(dead))
 print("SHAPE KEYS:", shape_keys)
+
+# ---------------------------------------------------------------- skin assets
+# Parent every fitted asset (hair/clothes/face parts) to the rig with
+# automatic weights. At the rest pose the render is unchanged, but the
+# meshes now follow the same skeleton as the body — runtime bind handling
+# and poses stay consistent between body and assets.
+asset_objects = [o for o in bpy.data.objects
+                 if o.name.startswith(("Hair__", "Clothes__", "Eyes", "Eyelashes", "Eyebrows", "Teeth", "Tongue"))]
+bpy.ops.object.select_all(action="DESELECT")
+for o in asset_objects:
+    o.select_set(True)
+rig.select_set(True)
+bpy.context.view_layer.objects.active = rig
+bpy.ops.object.parent_set(type="ARMATURE_AUTO")
+print("SKINNED assets:", len(asset_objects))
 
 # ---------------------------------------------------------------- rest pose
 # The armature must be exported in its rest pose: runtime posing in three.js

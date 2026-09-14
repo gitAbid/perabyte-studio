@@ -47,6 +47,8 @@ export interface AvatarParams {
   eyeTexture: string;
   /** Morph target name → influence 0..1. */
   morphs: Record<string, number>;
+  /** Non-uniform root scale for the height axis (applied outside skinning). */
+  heightScale: { y: number; xz: number };
   pose: PreviewPoseId;
   /** Garment mesh name in the GLB (null when body-only). */
   garmentMesh: string | null;
@@ -94,20 +96,13 @@ function skinHex(id: string): string {
 
 /* ------------------------------ morphs ------------------------------ */
 
-/** Axis index (0..5) → signed influence; index 2/3 ≈ neutral midpoint. */
-function axisInfluence(index: number): { down: number; up: number } {
-  // 6 stops, neutral between 2 and 3.
-  const t = index <= 2 ? (2 - index) / 2 : 0; // below neutral
-  const u = index >= 3 ? (index - 3) / 2 : 0; // above neutral
-  return { down: t, up: u };
-}
-
-const AGE_MORPHS: Record<string, Record<string, number>> = {
-  "Adult (18+)": {},
-  "Young Adult (18–24)": { m_age_young: 0.7 },
-  "Adult (25–39)": { m_age_young: 0.25 },
-  "Mature (40–59)": { m_age_old: 0.55 },
-  "Senior (60+)": { m_age_old: 1 },
+/** Age-axis positions for our buckets over young(0) -> old(1). */
+const AGE_POSITION: Record<string, number> = {
+  "Young Adult (18–24)": 0,
+  "Adult (18+)": 0.35,
+  "Adult (25–39)": 0.45,
+  "Mature (40–59)": 0.75,
+  "Senior (60+)": 1,
 };
 
 const FACE_SHAPE_MORPHS: Record<string, Record<string, number>> = {
@@ -145,21 +140,21 @@ const EXPRESSION_MORPHS: Record<string, Record<string, number>> = {
   Coy: { expr_smile: 0.5, eye_hooded__l: 0.3, eye_hooded__r: 0.3 },
 };
 
-const BUILD_MORPHS: Record<string, Record<string, number>> = {
-  Slim: { waist_thin: 0.5, m_muscle_down: 0.3, m_weight_down: 0.25 },
-  Athletic: { m_muscle_up: 0.8, shoulder_wide: 0.3, waist_thin: 0.25 },
-  Average: {},
-  Muscular: { m_muscle_up: 1, shoulder_wide: 0.45, m_weight_up: 0.15 },
-  Curvy: { hip_wide: 0.6, breast_up: 0.55, waist_thin: 0.3 },
-  "Plus-size": { m_weight_up: 0.55, hip_wide: 0.45, waist_thick: 0.35 },
-};
-
-const BODY_TYPE_MORPHS: Record<string, Record<string, number>> = {
-  Slim: { waist_thin: 0.4, m_muscle_down: 0.25 },
-  Athletic: { m_muscle_up: 0.6, shoulder_wide: 0.2 },
+const BODY_TYPE_ACCENTS: Record<string, Record<string, number>> = {
+  Slim: { waist_thin: 0.4 },
+  Athletic: { shoulder_wide: 0.2, waist_thin: 0.2 },
   Average: {},
   Curvy: { hip_wide: 0.5, breast_up: 0.45 },
-  "Plus-size": { m_weight_up: 0.45, hip_wide: 0.35 },
+  "Plus-size": { hip_wide: 0.35, waist_thick: 0.3 },
+};
+
+const BUILD_ACCENTS: Record<string, Record<string, number>> = {
+  Slim: { waist_thin: 0.25 },
+  Athletic: { shoulder_wide: 0.3, waist_thin: 0.25 },
+  Average: {},
+  Muscular: { shoulder_wide: 0.45 },
+  Curvy: { hip_wide: 0.6, breast_up: 0.55, waist_thin: 0.3 },
+  "Plus-size": { hip_wide: 0.45, waist_thick: 0.35 },
 };
 
 const HEIGHT_INDEX = [`5'0" (152 cm)`, `5'3" (160 cm)`, `5'6" (168 cm)`, `5'9" (175 cm)`, `6'0" (183 cm)`, `6'3" (190 cm)`];
@@ -175,21 +170,31 @@ function buildMorphs(spec: CharacterSpec): Record<string, number> {
     }
   };
 
-  if (spec.gender === "Female") add({ m_gender_f: 1 });
-  else if (spec.gender === "Male") add({ m_gender_m: 1 });
+  // Gender / age / weight blend over the baked cross grid (multilinear):
+  // each axis contributes 1-2 nonzero component weights; only the products
+  // above a cutoff are emitted (≈4-8 morph influences per state).
+  const gWeights = spec.gender === "Female" ? { m: 0, f: 1 }
+    : spec.gender === "Male" ? { m: 1, f: 0 } : { m: 0.5, f: 0.5 };
+  const aT = AGE_POSITION[spec.age] ?? 0.5;
+  const aWeights = { young: 1 - aT, old: aT };
+  const wT = Math.max(0, WEIGHT_INDEX.indexOf(spec.weight)) / (WEIGHT_INDEX.length - 1);
+  const wWeights = wT <= 0.5
+    ? { light: 1 - wT * 2, average: wT * 2, heavy: 0 }
+    : { light: 0, average: 2 - wT * 2, heavy: (wT - 0.5) * 2 };
 
-  add(AGE_MORPHS[spec.age]);
+  for (const [g, wg] of Object.entries(gWeights)) {
+    if (wg < 0.01) continue;
+    for (const [a, wa] of Object.entries(aWeights)) {
+      if (wa < 0.01) continue;
+      for (const [w, ww] of Object.entries(wWeights)) {
+        if (ww < 0.01) continue;
+        add({ [`ax_gaw_${g}_${a}_${w}`]: wg * wa * ww });
+      }
+    }
+  }
 
-  const height = axisInfluence(Math.max(0, HEIGHT_INDEX.indexOf(spec.height)));
-  if (height.down) add({ m_height_down: height.down });
-  if (height.up) add({ m_height_up: height.up });
-
-  const weight = axisInfluence(Math.max(0, WEIGHT_INDEX.indexOf(spec.weight)));
-  if (weight.down) add({ m_weight_down: weight.down * 0.8 });
-  if (weight.up) add({ m_weight_up: weight.up * 0.8 });
-
-  add(BODY_TYPE_MORPHS[spec.bodyType]);
-  add(BUILD_MORPHS[spec.build]);
+  add(BODY_TYPE_ACCENTS[spec.bodyType]);
+  add(BUILD_ACCENTS[spec.build]);
   add(FACE_SHAPE_MORPHS[spec.faceShape]);
   add(EYE_SHAPE_MORPHS[spec.eyeShape]);
   add(EXPRESSION_MORPHS[spec.expression]);
@@ -201,25 +206,6 @@ function buildMorphs(spec: CharacterSpec): Record<string, number> {
   if (!("eye_hooded__l" in morphs)) {
     morphs.eye_hooded__l = 0.45;
     morphs.eye_hooded__r = 0.45;
-  }
-
-  // Torso-volume morphs grow the skin past the static garment shells —
-  // keep every body-volume influence inside what the inflated outfits cover.
-  const VOLUME_CAP: Record<string, number> = {
-    breast_up: 0.45,
-    breast_down: 0.6,
-    hip_wide: 0.5,
-    hip_narrow: 0.6,
-    waist_thin: 0.6,
-    waist_thick: 0.5,
-    m_weight_up: 0.5,
-    m_weight_down: 0.6,
-    m_muscle_up: 0.7,
-    shoulder_wide: 0.3,
-    buttocks_up: 0.45,
-  };
-  for (const [key, cap] of Object.entries(VOLUME_CAP)) {
-    if (morphs[key] !== undefined) morphs[key] = Math.min(morphs[key], cap);
   }
 
   return morphs;
@@ -398,6 +384,12 @@ export function mapSpecToAvatar(spec: CharacterSpec): AvatarParams {
     hairMesh: HAIR_MESH[spec.hairStyle] ?? "Hair__long01",
     eyeTexture: EYE_TEXTURE[spec.eyeColor] ?? EYE_TEXTURE.Brown,
     morphs: buildMorphs(spec),
+    // 6-stop height slider -> ~7% shorter .. ~7% taller than neutral; the
+    // figure applies it as a root scale so it composes with the morph grid.
+    heightScale: {
+      y: 0.94 + 0.12 * (Math.max(0, HEIGHT_INDEX.indexOf(spec.height)) / (HEIGHT_INDEX.length - 1)),
+      xz: 1 - 0.05 * (Math.max(0, HEIGHT_INDEX.indexOf(spec.height)) / (HEIGHT_INDEX.length - 1) - 0.5),
+    },
     pose: poseTable[spec.pose] ?? "standing",
     garmentMesh: coverage === "full" || coverage === "partial" ? garment.mesh : null,
     garmentTint: garment.tint,
