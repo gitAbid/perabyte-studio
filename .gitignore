@@ -35,6 +35,10 @@ yarn-error.log*
 # local verification artifacts
 /shots
 .env*
+!.env.example
+
+# generated media cache (server-side)
+/.media-cache
 
 # git worktrees
 /.worktrees

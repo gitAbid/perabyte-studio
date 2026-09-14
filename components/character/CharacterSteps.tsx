@@ -10,13 +10,10 @@ import {
   RESOLUTIONS,
 } from "@/lib/constants";
 import {
-  AGE_MAX,
-  AGE_MIN,
+  AGES,
   BODY_TYPES,
   BUILDS,
   CHARACTER_STYLES,
-  COUNTRIES,
-  ETHNICITIES,
   EYE_COLORS,
   EYE_SHAPES,
   FACE_SHAPES,
@@ -32,9 +29,7 @@ import {
   SKIN_TONES,
   WEIGHTS,
   accessoryGroups,
-  ageBucketLabel,
   bodyDetailOptions,
-  clampAge,
   clothingGroups,
   expressionOptions,
   lookById,
@@ -302,42 +297,6 @@ function NsfwSlider({
   );
 }
 
-/** Whole-year age picker — precise steps with the classic buckets as a hint. */
-function AgeSlider({
-  value,
-  onChange,
-}: {
-  value: number;
-  onChange: (age: number) => void;
-}) {
-  return (
-    <div>
-      <div className="flex items-baseline justify-between gap-3">
-        <label htmlFor="character-age" className="text-[13px] font-semibold text-ink-soft">
-          Age
-        </label>
-        <span className="text-[12px] font-semibold text-ink">{value} years old</span>
-      </div>
-      <input
-        id="character-age"
-        type="range"
-        min={AGE_MIN}
-        max={AGE_MAX}
-        step={1}
-        value={value}
-        aria-valuetext={`${value} years old`}
-        onChange={(e) => onChange(clampAge(Number(e.target.value)))}
-        className="mt-2 w-full accent-primary"
-      />
-      <div className="mt-1 flex justify-between text-[10.5px] font-medium text-muted">
-        <span>{AGE_MIN}</span>
-        <span>{AGE_MAX}</span>
-      </div>
-      <p className="mt-1.5 text-[12px] text-muted">{ageBucketLabel(value)}</p>
-    </div>
-  );
-}
-
 function TemplateChips({
   templates,
   activeText,
@@ -526,7 +485,17 @@ export function StepAppearance({
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <AgeSlider value={spec.age} onChange={(age) => patch({ age })} />
+            <SelectField
+              label="Age"
+              value={spec.age}
+              onChange={(e) => patch({ age: e.target.value })}
+            >
+              {AGES.map((age) => (
+                <option key={age} value={age}>
+                  {age}
+                </option>
+              ))}
+            </SelectField>
             <SelectField
               label="Body Type"
               value={spec.bodyType}
@@ -535,28 +504,6 @@ export function StepAppearance({
               {BODY_TYPES.map((type) => (
                 <option key={type} value={type}>
                   {type}
-                </option>
-              ))}
-            </SelectField>
-            <SelectField
-              label="Ethnicity"
-              value={spec.ethnicity}
-              onChange={(e) => patch({ ethnicity: e.target.value })}
-            >
-              {ETHNICITIES.map((value) => (
-                <option key={value} value={value}>
-                  {value}
-                </option>
-              ))}
-            </SelectField>
-            <SelectField
-              label="Country"
-              value={spec.country}
-              onChange={(e) => patch({ country: e.target.value })}
-            >
-              {COUNTRIES.map((value) => (
-                <option key={value} value={value}>
-                  {value}
                 </option>
               ))}
             </SelectField>
@@ -1167,11 +1114,18 @@ export function StepAdvanced({
 export function StepReview({
   spec,
   reference,
+  models,
+  modelId,
+  onModelChange,
   onBack,
   onGenerate,
 }: {
   spec: CharacterSpec;
   reference: ReferenceImage | null;
+  /** Image model catalog for the picker; row hidden while empty. */
+  models?: { id: string; label: string; hint?: string; providerLabel: string }[];
+  modelId?: string | null;
+  onModelChange?: (modelId: string) => void;
   onBack: () => void;
   onGenerate: () => void;
 }) {
@@ -1185,116 +1139,109 @@ export function StepReview({
         subtitle="Check your settings before generating your character."
       />
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(240px,300px)]">
-        <div className="min-w-0 space-y-4">
-          <ReviewCard title="Character Details">
-            <ReviewRow label="Mode">{spec.mode === "normal" ? "Normal" : "Uncensored"}</ReviewRow>
-            <ReviewRow label="Prompt">
-              <span className="line-clamp-3 whitespace-pre-wrap font-normal text-ink-soft">
-                {spec.prompt.trim() || "—"}
-              </span>
+      <div className="space-y-4">
+        <ReviewCard title="Character Details">
+          <ReviewRow label="Mode">{spec.mode === "normal" ? "Normal" : "Uncensored"}</ReviewRow>
+          <ReviewRow label="Prompt">
+            <span className="line-clamp-3 whitespace-pre-wrap font-normal text-ink-soft">
+              {spec.prompt.trim() || "—"}
+            </span>
+          </ReviewRow>
+          <ReviewRow label="Aspect Ratio">{spec.aspect}</ReviewRow>
+          <ReviewRow label="Resolution">{spec.resolution}</ReviewRow>
+          <ReviewRow label="Style">{spec.style}</ReviewRow>
+          {models && models.length > 0 && onModelChange && (
+            <ReviewRow label="Model">
+              <select
+                aria-label="Image model"
+                value={modelId ?? models[0].id}
+                onChange={(event) => onModelChange(event.target.value)}
+                className="h-8 max-w-[220px] appearance-none rounded-[9px] border border-border-strong bg-white pl-2.5 pr-6 text-[12px] font-semibold text-ink transition-colors hover:border-muted focus:border-primary focus:outline-none"
+                style={{
+                  backgroundImage:
+                    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9.5l6 6 6-6'/%3E%3C/svg%3E\")",
+                  backgroundRepeat: "no-repeat",
+                  backgroundPosition: "right 8px center",
+                }}
+              >
+                {models.map((model) => (
+                  <option key={model.id} value={model.id}>
+                    {model.label}
+                    {model.hint ? ` — ${model.hint}` : ""} · {model.providerLabel}
+                  </option>
+                ))}
+              </select>
             </ReviewRow>
-            <ReviewRow label="Aspect Ratio">{spec.aspect}</ReviewRow>
-            <ReviewRow label="Resolution">{spec.resolution}</ReviewRow>
-            <ReviewRow label="Style">{spec.style}</ReviewRow>
-          </ReviewCard>
-
-          <ReviewCard title="Appearance">
-            <ReviewRow label="Gender">{spec.gender}</ReviewRow>
-            <ReviewRow label="Age">{spec.age} years old</ReviewRow>
-            <ReviewRow label="Ethnicity">{spec.ethnicity}</ReviewRow>
-            <ReviewRow label="Country">{spec.country}</ReviewRow>
-            <ReviewRow label="Body Type">{spec.bodyType}</ReviewRow>
-            <ReviewRow label="Skin Tone">
-              <span className="inline-flex items-center justify-end gap-1.5">
-                {tone && (
-                  <span
-                    aria-hidden
-                    className="inline-block size-3.5 rounded-full border border-black/10"
-                    style={{ backgroundColor: tone.hex }}
-                  />
-                )}
-                {tone?.prompt ?? "—"}
-              </span>
-            </ReviewRow>
-            <ReviewRow label="Inspiration">{look ? look.label : "None"}</ReviewRow>
-          </ReviewCard>
-
-          <ReviewCard title="Advanced Settings">
-            <ReviewRow label="Hair">
-              {spec.hairColor} · {spec.hairStyle}
-            </ReviewRow>
-            <ReviewRow label="Eyes">
-              {spec.eyeColor} · {spec.eyeShape}
-            </ReviewRow>
-            <ReviewRow label="Clothing">{spec.outfit}</ReviewRow>
-            <ReviewRow label="Pose">{spec.pose}</ReviewRow>
-            <ReviewRow label="Body Details">{spec.bodyDetails}</ReviewRow>
-            <ReviewRow label="Height">{spec.height}</ReviewRow>
-            <ReviewRow label="Weight">{spec.weight}</ReviewRow>
-            <ReviewRow label="Build">{spec.build}</ReviewRow>
-            {spec.mode === "uncensored" && (
-              <>
-                <ReviewRow label="Nudity">{spec.nudity}</ReviewRow>
-                <ReviewRow label="Sexual Content">{spec.sexualContent}</ReviewRow>
-                <ReviewRow label="NSFW Level">
-                  {spec.nsfwLevel} · {NSFW_LEVELS.find((l) => l.value === spec.nsfwLevel)?.label}
-                </ReviewRow>
-              </>
-            )}
-            <ReviewRow label="Violence">{spec.violence}</ReviewRow>
-            <ReviewRow label="Extras">
-              {[
-                spec.tattoos && "Tattoos",
-                spec.piercings && "Piercings",
-                spec.facialHair && "Facial hair",
-                reference && "Reference photo",
-              ]
-                .filter(Boolean)
-                .join(", ") || "None"}
-            </ReviewRow>
-          </ReviewCard>
-        </div>
-
-        <aside className="min-w-0">
-          <p className="text-[13px] font-semibold text-ink-soft">Preview</p>
-          <div className="mt-2.5">
-            {look ? (
-              <MediaFrame
-                src={look.src}
-                alt={`${look.label} look preview`}
-                ratio="4/5"
-                rounded="rounded-[14px]"
-                className="w-full border border-border"
-              />
-            ) : (
-              <div className="flex aspect-[4/5] w-full flex-col items-center justify-center gap-2 rounded-[14px] border border-dashed border-border-strong bg-surface px-4 text-center">
-                <Icon name="sparkle" size={20} className="text-muted" />
-                <p className="text-[12px] text-muted">
-                  Pick an inspiration look on the Appearance step to see a style
-                  preview here.
-                </p>
-              </div>
-            )}
-          </div>
-          <p className="mt-2.5 text-[11.5px] leading-snug text-muted">
-            This is just a style preview. The final result may vary based on the
-            AI model.
-          </p>
-          {reference && (
-            <div className="mt-3 flex items-center gap-2.5 rounded-[12px] border border-border bg-surface p-2.5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={reference.dataUrl}
-                alt="Reference thumbnail"
-                className="size-10 rounded-lg border border-border object-cover"
-              />
-              <p className="min-w-0 truncate text-[12px] font-medium text-ink-soft">
-                {reference.name}
-              </p>
-            </div>
           )}
-        </aside>
+        </ReviewCard>
+
+        <ReviewCard title="Appearance">
+          <ReviewRow label="Gender">{spec.gender}</ReviewRow>
+          <ReviewRow label="Age">{spec.age}</ReviewRow>
+          <ReviewRow label="Body Type">{spec.bodyType}</ReviewRow>
+          <ReviewRow label="Skin Tone">
+            <span className="inline-flex items-center justify-end gap-1.5">
+              {tone && (
+                <span
+                  aria-hidden
+                  className="inline-block size-3.5 rounded-full border border-black/10"
+                  style={{ backgroundColor: tone.hex }}
+                />
+              )}
+              {tone?.prompt ?? "—"}
+            </span>
+          </ReviewRow>
+          <ReviewRow label="Inspiration">{look ? look.label : "None"}</ReviewRow>
+        </ReviewCard>
+
+        <ReviewCard title="Advanced Settings">
+          <ReviewRow label="Hair">
+            {spec.hairColor} · {spec.hairStyle}
+          </ReviewRow>
+          <ReviewRow label="Eyes">
+            {spec.eyeColor} · {spec.eyeShape}
+          </ReviewRow>
+          <ReviewRow label="Clothing">{spec.outfit}</ReviewRow>
+          <ReviewRow label="Pose">{spec.pose}</ReviewRow>
+          <ReviewRow label="Body Details">{spec.bodyDetails}</ReviewRow>
+          <ReviewRow label="Height">{spec.height}</ReviewRow>
+          <ReviewRow label="Weight">{spec.weight}</ReviewRow>
+          <ReviewRow label="Build">{spec.build}</ReviewRow>
+          {spec.mode === "uncensored" && (
+            <>
+              <ReviewRow label="Nudity">{spec.nudity}</ReviewRow>
+              <ReviewRow label="Sexual Content">{spec.sexualContent}</ReviewRow>
+              <ReviewRow label="NSFW Level">
+                {spec.nsfwLevel} · {NSFW_LEVELS.find((l) => l.value === spec.nsfwLevel)?.label}
+              </ReviewRow>
+            </>
+          )}
+          <ReviewRow label="Violence">{spec.violence}</ReviewRow>
+          <ReviewRow label="Extras">
+            {[
+              spec.tattoos && "Tattoos",
+              spec.piercings && "Piercings",
+              spec.facialHair && "Facial hair",
+              reference && "Reference photo",
+            ]
+              .filter(Boolean)
+              .join(", ") || "None"}
+          </ReviewRow>
+        </ReviewCard>
+
+        {reference && (
+          <div className="flex items-center gap-2.5 rounded-[12px] border border-border bg-surface p-2.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={reference.dataUrl}
+              alt="Reference thumbnail"
+              className="size-10 rounded-lg border border-border object-cover"
+            />
+            <p className="min-w-0 truncate text-[12px] font-medium text-ink-soft">
+              {reference.name}
+            </p>
+          </div>
+        )}
       </div>
 
       <StepNav

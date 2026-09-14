@@ -36,7 +36,8 @@ export type IconName =
   | "lock"
   | "refresh"
   | "upload"
-  | "sliders";
+  | "sliders"
+  | "chip";
 
 const PATHS: Record<IconName, string> = {
   logo: "M4 15.5V8.5l6-4.2 6 4.2v7l-6 4.2-6-4.2Z M16 6.5l4 2.8v6.4l-4 2.8",
@@ -79,6 +80,7 @@ const PATHS: Record<IconName, string> = {
   refresh: "M20 11a8 8 0 0 0-13.7-4.6L4 8.5M4 13a8 8 0 0 0 13.7 4.6L20 15.5M4 4.5v4h4M20 19.5v-4h-4",
   upload: "M12 16V5m0 0-4 4m4-4 4 4M4.5 19.5h15",
   sliders: "M5 8h9m3 0h2M5 12h3m3 0h8M5 16h9m3 0h2M14 6v4M8 10v4M14 14v4",
+  chip: "M9 3.5v2m6-2v2M9 18.5v2m6-2v2M3.5 9h2m-2 6h2m13-6h2m-2 6h2M7.5 7.5h9v9h-9Zm3 3h3v3h-3Z",
 };
 
 interface IconProps extends Omit<SVGProps<SVGSVGElement>, "name"> {

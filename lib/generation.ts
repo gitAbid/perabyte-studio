@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { logClientEvent } from "@/lib/logging/logger";
 import type { GenerationResponse, GenerationSettings } from "./types";
 
 export class GenerationError extends Error {
@@ -17,6 +18,8 @@ export class GenerationError extends Error {
 export interface GenerateInput {
   settings: GenerationSettings;
   prompt: string;
+  /** True when Uncensored Mode is enabled in Settings (safe flag follows it). */
+  uncensored?: boolean;
   signal?: AbortSignal;
 }
 
@@ -24,6 +27,7 @@ export interface GenerateInput {
 export async function requestGeneration({
   settings,
   prompt,
+  uncensored,
   signal,
 }: GenerateInput): Promise<GenerationResponse> {
   let response: Response;
@@ -37,16 +41,20 @@ export async function requestGeneration({
         aspect: settings.aspect,
         resolution: settings.resolution,
         style: settings.style,
+        duration: settings.duration,
         count: settings.count,
         seed: settings.seed,
         negativePrompt: settings.negativePrompt,
         enhance: settings.enhance,
         safe: settings.safe,
+        modelId: settings.modelId,
+        uncensored: uncensored ?? false,
       }),
       signal,
     });
   } catch (error) {
     if ((error as Error)?.name === "AbortError") throw error;
+    logClientEvent("generation request failed", { kind: settings.kind });
     throw new GenerationError(
       "We could not reach the studio service. Check your connection and retry.",
       undefined,
@@ -112,6 +120,10 @@ export function useGeneration() {
           return null;
         }
         const err = error as GenerationError;
+        logClientEvent("generation failed", {
+          kind: input.settings.kind,
+          message: err.message,
+        });
         setJob({
           phase: "failed",
           message: err.message ?? "Generation failed.",
@@ -126,9 +138,12 @@ export function useGeneration() {
   return { job, run, cancel, reset: () => setJob({ phase: "idle" }) };
 }
 
-/** Trigger a browser download through our media proxy. */
+/** Trigger a browser download through our media proxy. Handles both cached
+ * files (`/api/media?f=…`) and provider URLs (`?u=…`). */
 export function downloadMedia(url: string, filename: string) {
-  const href = `/api/media?u=${encodeURIComponent(url)}&download=1&filename=${encodeURIComponent(filename)}`;
+  const href = url.startsWith("/api/media")
+    ? `${url}${url.includes("?") ? "&" : "?"}download=1&filename=${encodeURIComponent(filename)}`
+    : `/api/media?u=${encodeURIComponent(url)}&download=1&filename=${encodeURIComponent(filename)}`;
   const a = document.createElement("a");
   a.href = href;
   a.rel = "noopener";

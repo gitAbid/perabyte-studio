@@ -120,6 +120,20 @@ export function isAllowedMediaUrl(raw: string): boolean {
 }
 
 /**
+ * True when a media URL points at video bytes (our cached mp4 refs).
+ * Images and Pollinations keyframes return false. Used by render components
+ * to pick a <video> element instead of an <img>, which cannot decode mp4.
+ *
+ * The `.mp4` extension may sit in the path (`…/v.mp4?token=x`) or inside the
+ * query of our cache route (`/api/media?f=<hash>.mp4&download=1`), so it is
+ * matched wherever it appears as a complete extension (delimited or final).
+ */
+export function isVideoSource(url: string | null | undefined): boolean {
+  if (!url) return false;
+  return /\.mp4(?=$|[?#&])/i.test(url);
+}
+
+/**
  * Every render is displayed through our own origin.
  *
  * Two reasons this is not optional:

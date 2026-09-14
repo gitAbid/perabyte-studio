@@ -28,16 +28,22 @@ const MODE_CARDS: {
 
 /**
  * Entry screen for the Character studio: the pitch, the mode choice and a
- * collage of sample characters. Picking a mode here pre-fills step 1.
+ * collage of sample characters. Picking a mode here pre-fills step 1. The
+ * Uncensored card is locked unless Uncensored Mode is enabled in Settings.
  */
 export function CharacterLanding({
   mode,
   onModeChange,
   onStart,
+  uncensoredEnabled,
+  onLockedUncensored,
 }: {
   mode: CharacterMode;
   onModeChange: (mode: CharacterMode) => void;
   onStart: () => void;
+  /** Global gate from Settings — disabled by default. */
+  uncensoredEnabled: boolean;
+  onLockedUncensored: () => void;
 }) {
   return (
     <div className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-4 py-6 sm:px-6 lg:min-h-0 lg:justify-center lg:py-8">
@@ -57,7 +63,34 @@ export function CharacterLanding({
           <div className="mt-6 grid max-w-xl gap-3 sm:grid-cols-2">
             {MODE_CARDS.map((card) => {
               const active = mode === card.id;
-              return (
+              const locked = card.id === "uncensored" && !uncensoredEnabled;
+              return locked ? (
+                <button
+                  key={card.id}
+                  type="button"
+                  aria-disabled="true"
+                  onClick={onLockedUncensored}
+                  className="group flex flex-col items-start gap-2.5 rounded-[16px] border border-border bg-white/70 p-4 text-left"
+                >
+                  <span className="flex w-full items-center gap-2">
+                    <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-surface-2 text-muted">
+                      <Icon name="lock" size={15} />
+                    </span>
+                    <span className="flex-1 text-[13.5px] font-bold text-ink-soft">
+                      {card.title}
+                    </span>
+                    <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-muted">
+                      Locked
+                    </span>
+                  </span>
+                  <span className="text-[12.5px] leading-snug text-muted">
+                    {card.body}{" "}
+                    <span className="font-semibold text-ink-soft">
+                      Enable Uncensored Mode in Settings.
+                    </span>
+                  </span>
+                </button>
+              ) : (
                 <button
                   key={card.id}
                   type="button"

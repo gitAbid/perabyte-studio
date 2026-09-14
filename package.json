@@ -7,25 +7,33 @@
     "build": "next build",
     "start": "next start -p 3000",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "prerender:examples": "python3 scripts/prerender_examples.py",
     "verify": "node scripts/verify.mjs",
     "deploy:vercel": "bash scripts/deploy-vercel.sh",
-    "verify:generator": "node scripts/verify-generator.mjs"
+    "verify:generator": "node scripts/verify-generator.mjs",
+    "verify:provider": "node scripts/verify-provider-ui.mjs"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.8",
+    "@react-three/fiber": "^9.7.0",
     "next": "^16.3.5",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "three": "^0.186.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "26.5.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.186.0",
     "playwright": "^1.63.0",
     "tailwindcss": "^4.3.3",
     "typescript": "5.9.3",
-    "vercel": "^59.16.0"
+    "vercel": "^59.16.0",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.0"
   },
   "engines": {
     "node": ">=20"

@@ -17,6 +17,8 @@ import {
   type AspectKey,
 } from "@/lib/constants";
 import { downloadMedia, useGeneration } from "@/lib/generation";
+import { useModelCatalog } from "@/lib/model-catalog";
+import { setSelectedModel, useSettings } from "@/lib/repositories/settings.repository";
 import { addAsset, assetFromResponse, DEMO_SPECS, toggleFavorite, useAssets } from "@/lib/store";
 import type { DemoSpec } from "@/lib/store";
 import { enhancePromptText } from "@/lib/renderer";
@@ -53,6 +55,13 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
 
   const { job, run, cancel, reset } = useGeneration();
   const { assets } = useAssets();
+  const { settings: userSettings } = useSettings();
+  const catalog = useModelCatalog(kind);
+
+  // Active model: the user's stored pick for this kind, else the catalog default.
+  const modelId =
+    (kind === "video" ? userSettings.videoModel : userSettings.imageModel) ??
+    catalog.defaultModelId;
 
   // Prefill from History / Results "Regenerate" links.
   useEffect(() => {
@@ -73,7 +82,11 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
 
   const busy = job.phase === "queued" || job.phase === "generating";
   const result = job.phase === "completed" ? job.response : null;
-  const shownUrl = result?.media[activeVariant]?.url ?? result?.media[0]?.url ?? null;
+  const shownMedia =
+    result?.media[activeVariant] ?? result?.media[0] ?? null;
+  const shownUrl = shownMedia?.url ?? null;
+  // Real provider mp4s carry a video mime; keyframe "videos" stay images.
+  const isRealVideo = shownMedia?.mime?.startsWith("video/") ?? false;
 
   useEffect(() => setActiveVariant(0), [result?.requestId]);
 
@@ -100,13 +113,24 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
     setPromptError(undefined);
     setAssetId(null);
 
+    // Uncensored Mode is the single gate: off ⇒ the provider safety checker
+    // stays on; on ⇒ safety off for this request.
+    const uncensored = userSettings.uncensoredEnabled;
+    const nextSettings: GenerationSettings = {
+      ...settings,
+      kind,
+      modelId: modelId ?? undefined,
+      safe: !uncensored,
+    };
+
     const response = await run({
-      settings: { ...settings, kind },
+      settings: nextSettings,
       prompt: prompt.trim(),
+      uncensored,
     });
     if (!response) return;
 
-    const asset = assetFromResponse(response, { ...settings, kind }, prompt.trim());
+    const asset = assetFromResponse(response, nextSettings, prompt.trim());
     addAsset(asset);
     setAssetId(asset.id);
     setFavorite(false);
@@ -246,6 +270,12 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
                 <Icon name="sparkle" size={12} /> Solo
               </Badge>
             }
+            models={catalog.models}
+            modelId={modelId}
+            onModelChange={(nextModel) => {
+              setSelectedModel(kind, nextModel);
+              patchSettings({ modelId: nextModel });
+            }}
             onSettingsChange={patchSettings}
             busy={busy}
             onGenerate={handleGenerate}
@@ -338,6 +368,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
                       height: "100%",
                     }}
                     posterUrl={shownUrl}
+                    videoUrl={isRealVideo ? shownUrl : undefined}
                     title={prompt || "Generated video"}
                     durationSeconds={Number(settings.duration.replace("s", ""))}
                   />

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { Icon } from "./Icon";
-import { displaySrc } from "@/lib/renderer";
+import { displaySrc, isVideoSource } from "@/lib/renderer";
 
 /* ------------------------------------------------------------------ */
 /* Image frame with skeleton + recoverable error state                 */
@@ -11,6 +11,12 @@ import { displaySrc } from "@/lib/renderer";
 /** Automatic retries before the user is asked to intervene. */
 const AUTO_RETRIES = 3;
 
+/**
+ * Image frame with skeleton + recoverable error state. Sources that point at
+ * video bytes (cached provider mp4s) render as a compact muted looping
+ * <video> instead — an <img> cannot decode mp4 and would surface as a
+ * broken image with pointless retries.
+ */
 export function MediaFrame({
   src,
   alt,
@@ -29,6 +35,63 @@ export function MediaFrame({
   sizes?: string;
   priority?: boolean;
   /** Size to the container (contain) instead of a fixed aspect-ratio box. */
+  fit?: boolean;
+}) {
+  const video = isVideoSource(src);
+
+  if (video) {
+    return (
+      <div
+        className={`relative overflow-hidden bg-ink ${
+          fit
+            ? "flex h-full w-full items-center justify-center"
+            : "bg-surface-2"
+        } ${rounded} ${className}`}
+        style={fit ? undefined : { aspectRatio: ratio }}
+      >
+        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+        <video
+          src={src ?? undefined}
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-label={alt}
+          className="size-full object-cover"
+        />
+      </div>
+    );
+  }
+
+  return <ImageFrame
+    src={src}
+    alt={alt}
+    className={className}
+    ratio={ratio}
+    rounded={rounded}
+    sizes={sizes}
+    priority={priority}
+    fit={fit}
+  />;
+}
+
+function ImageFrame({
+  src,
+  alt,
+  className = "",
+  ratio = "16/9",
+  rounded = "rounded-[16px]",
+  sizes,
+  priority,
+  fit,
+}: {
+  src: string | null;
+  alt: string;
+  className?: string;
+  ratio?: string;
+  rounded?: string;
+  sizes?: string;
+  priority?: boolean;
   fit?: boolean;
 }) {
   const [attempt, setAttempt] = useState(0);
@@ -140,9 +203,13 @@ function withRetryParam(url: string, attempt: number) {
  * returns still frames, so we present the rendered keyframe as an animated
  * preview with real transport controls. The bar is labelled in the UI so
  * nobody mistakes it for an exported MP4.
+ *
+ * When `videoUrl` is provided (a real provider mp4), a native <video> player
+ * takes over instead — the simulated stage remains for legacy/demo assets.
  */
 export function VideoStage({
   posterUrl,
+  videoUrl,
   title,
   durationSeconds = 5,
   className = "",
@@ -150,6 +217,8 @@ export function VideoStage({
   fitStyle,
 }: {
   posterUrl: string | null;
+  /** Real mp4 URL — when set, a native player replaces the simulated stage. */
+  videoUrl?: string | null;
   title: string;
   durationSeconds?: number;
   className?: string;
@@ -167,12 +236,12 @@ export function VideoStage({
   const duration = Math.max(1, Math.round(durationSeconds * 15)) / 10;
 
   useEffect(() => {
-    if (!playing) return;
+    if (!playing || videoUrl) return;
     const id = window.setInterval(() => {
       setElapsed((prev) => (prev + 0.1 >= duration ? 0 : prev + 0.1));
     }, 100);
     return () => window.clearInterval(id);
-  }, [playing, duration]);
+  }, [playing, duration, videoUrl]);
 
   const toggleFullscreen = useCallback(() => {
     const node = shellRef.current;
@@ -180,6 +249,37 @@ export function VideoStage({
     if (document.fullscreenElement) void document.exitFullscreen();
     else void node.requestFullscreen?.();
   }, []);
+
+  if (videoUrl) {
+    return (
+      <div
+        ref={shellRef}
+        className={`relative overflow-hidden rounded-[20px] bg-ink ${className}`}
+        style={
+          fit
+            ? (fitStyle ?? {
+                aspectRatio: "16 / 9",
+                height: "100%",
+                width: "auto",
+                maxWidth: "100%",
+                maxHeight: "100%",
+              })
+            : { aspectRatio: "16/9" }
+        }
+      >
+        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+        <video
+          src={videoUrl}
+          poster={posterUrl ? (displaySrc(posterUrl) ?? undefined) : undefined}
+          controls
+          playsInline
+          preload="metadata"
+          aria-label={title}
+          className="size-full bg-ink object-contain"
+        />
+      </div>
+    );
+  }
 
   const progress = Math.min(100, (elapsed / duration) * 100);
 
