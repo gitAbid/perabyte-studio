@@ -90,7 +90,7 @@ function PillSelect({
         <div
           role="listbox"
           aria-label={label}
-          className={`absolute bottom-10 z-30 max-h-64 w-56 overflow-y-auto rounded-[14px] border border-border bg-white p-1.5 shadow-lift ${
+          className={`absolute bottom-[calc(100%+8px)] z-30 max-h-64 w-56 overflow-y-auto rounded-[14px] border border-border bg-white p-1.5 shadow-lift ${
             align === "right" ? "right-0" : "left-0"
           }`}
         >
@@ -304,7 +304,7 @@ export function PromptComposer({
 
   return (
     <div
-      className={`shrink-0 rounded-[18px] border bg-white p-2.5 shadow-card transition-colors ${
+      className={`shrink-0 rounded-[20px] border bg-white p-3 shadow-card transition-colors ${
         promptError ? "border-danger" : "border-border-strong focus-within:border-primary"
       }`}
     >
@@ -330,10 +330,10 @@ export function PromptComposer({
             if (!busy) onGenerate();
           }
         }}
-        className="block max-h-[120px] w-full resize-none bg-transparent px-2 pt-1.5 text-[14px] leading-relaxed text-ink placeholder:text-muted focus:outline-none"
+        className="block max-h-[120px] w-full resize-none bg-transparent px-2 pt-1.5 text-[14px] leading-relaxed text-ink placeholder:text-muted focus:outline-none sm:text-[14.5px]"
       />
 
-      <div className="mt-1.5 flex items-center gap-2">
+      <div className="mt-2 flex flex-wrap items-center gap-2">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
           <PillSelect
             icon="grid"
