@@ -25,7 +25,12 @@ export interface CharacterSpec {
 
   // Step 2 — Appearance
   gender: string;
-  age: string;
+  /** Exact age in years (AGE_MIN–AGE_MAX). Characters are always adults. */
+  age: number;
+  /** From ETHNICITIES. "Not specified" is never folded into the prompt. */
+  ethnicity: string;
+  /** From COUNTRIES. "Not specified" is never folded into the prompt. */
+  country: string;
   bodyType: string;
   skinTone: string;
   faceShape: string;
@@ -68,7 +73,9 @@ export const DEFAULT_CHARACTER_SPEC: CharacterSpec = {
   style: "Realistic",
 
   gender: "Female",
-  age: "Adult (18+)",
+  age: 25,
+  ethnicity: "Not specified",
+  country: "Not specified",
   bodyType: "Slim",
   skinTone: "medium",
   faceShape: "Oval",
@@ -114,13 +121,241 @@ export const CHARACTER_STYLES = [
   "South Asian",
 ] as const;
 
-/** Characters are strictly adults: every option is 18+ by definition. */
-export const AGES = [
-  "Adult (18+)",
-  "Young Adult (18–24)",
-  "Adult (25–39)",
-  "Mature (40–59)",
-  "Senior (60+)",
+/** Characters are strictly adults: the age slider spans adult years only. */
+export const AGE_MIN = 18;
+export const AGE_MAX = 80;
+const DEFAULT_AGE = 25;
+
+/** Keep a value a whole adult year, whatever a stale form or store hands in. */
+export function clampAge(age: number): number {
+  const n = Math.trunc(Number(age));
+  if (!Number.isFinite(n)) return DEFAULT_AGE;
+  return Math.min(AGE_MAX, Math.max(AGE_MIN, n));
+}
+
+/** Coarse bucket for the current age, shown as a hint under the slider. */
+export function ageBucketLabel(age: number): string {
+  if (age < 25) return "Young adult (18–24)";
+  if (age < 40) return "Adult (25–39)";
+  if (age < 60) return "Mature (40–59)";
+  return "Senior (60+)";
+}
+
+export const ETHNICITIES = [
+  "Not specified",
+  "South Asian",
+  "East Asian",
+  "Southeast Asian",
+  "Middle Eastern",
+  "Central Asian",
+  "White / European",
+  "Black / African",
+  "Afro-Caribbean",
+  "Latino / Hispanic",
+  "Mixed",
+  "Pacific Islander",
+  "Indigenous",
+] as const;
+
+export const COUNTRIES = [
+  "Not specified",
+  "Afghanistan",
+  "Albania",
+  "Algeria",
+  "Andorra",
+  "Angola",
+  "Antigua and Barbuda",
+  "Argentina",
+  "Armenia",
+  "Australia",
+  "Austria",
+  "Azerbaijan",
+  "Bahamas",
+  "Bahrain",
+  "Bangladesh",
+  "Barbados",
+  "Belarus",
+  "Belgium",
+  "Belize",
+  "Benin",
+  "Bhutan",
+  "Bolivia",
+  "Bosnia and Herzegovina",
+  "Botswana",
+  "Brazil",
+  "Brunei",
+  "Bulgaria",
+  "Burkina Faso",
+  "Burundi",
+  "Cabo Verde",
+  "Cambodia",
+  "Cameroon",
+  "Canada",
+  "Central African Republic",
+  "Chad",
+  "Chile",
+  "China",
+  "Colombia",
+  "Comoros",
+  "Congo (Republic)",
+  "Congo (Democratic Republic)",
+  "Costa Rica",
+  "Côte d'Ivoire",
+  "Croatia",
+  "Cuba",
+  "Cyprus",
+  "Czechia",
+  "Denmark",
+  "Djibouti",
+  "Dominica",
+  "Dominican Republic",
+  "Ecuador",
+  "Egypt",
+  "El Salvador",
+  "Equatorial Guinea",
+  "Eritrea",
+  "Estonia",
+  "Eswatini",
+  "Ethiopia",
+  "Fiji",
+  "Finland",
+  "France",
+  "Gabon",
+  "Gambia",
+  "Georgia",
+  "Germany",
+  "Ghana",
+  "Greece",
+  "Grenada",
+  "Guatemala",
+  "Guinea",
+  "Guinea-Bissau",
+  "Guyana",
+  "Haiti",
+  "Honduras",
+  "Hungary",
+  "Iceland",
+  "India",
+  "Indonesia",
+  "Iran",
+  "Iraq",
+  "Ireland",
+  "Israel",
+  "Italy",
+  "Jamaica",
+  "Japan",
+  "Jordan",
+  "Kazakhstan",
+  "Kenya",
+  "Kiribati",
+  "Korea (North)",
+  "Korea (South)",
+  "Kosovo",
+  "Kuwait",
+  "Kyrgyzstan",
+  "Laos",
+  "Latvia",
+  "Lebanon",
+  "Lesotho",
+  "Liberia",
+  "Libya",
+  "Liechtenstein",
+  "Lithuania",
+  "Luxembourg",
+  "Madagascar",
+  "Malawi",
+  "Malaysia",
+  "Maldives",
+  "Mali",
+  "Malta",
+  "Marshall Islands",
+  "Mauritania",
+  "Mauritius",
+  "Mexico",
+  "Micronesia",
+  "Moldova",
+  "Monaco",
+  "Mongolia",
+  "Montenegro",
+  "Morocco",
+  "Mozambique",
+  "Myanmar",
+  "Namibia",
+  "Nauru",
+  "Nepal",
+  "Netherlands",
+  "New Zealand",
+  "Nicaragua",
+  "Niger",
+  "Nigeria",
+  "North Macedonia",
+  "Norway",
+  "Oman",
+  "Pakistan",
+  "Palau",
+  "Palestine",
+  "Panama",
+  "Papua New Guinea",
+  "Paraguay",
+  "Peru",
+  "Philippines",
+  "Poland",
+  "Portugal",
+  "Qatar",
+  "Romania",
+  "Russia",
+  "Rwanda",
+  "Saint Kitts and Nevis",
+  "Saint Lucia",
+  "Saint Vincent and the Grenadines",
+  "Samoa",
+  "San Marino",
+  "Sao Tome and Principe",
+  "Saudi Arabia",
+  "Senegal",
+  "Serbia",
+  "Seychelles",
+  "Sierra Leone",
+  "Singapore",
+  "Slovakia",
+  "Slovenia",
+  "Solomon Islands",
+  "Somalia",
+  "South Africa",
+  "South Sudan",
+  "Spain",
+  "Sri Lanka",
+  "Sudan",
+  "Suriname",
+  "Sweden",
+  "Switzerland",
+  "Syria",
+  "Taiwan",
+  "Tajikistan",
+  "Tanzania",
+  "Thailand",
+  "Timor-Leste",
+  "Togo",
+  "Tonga",
+  "Trinidad and Tobago",
+  "Tunisia",
+  "Turkey",
+  "Turkmenistan",
+  "Tuvalu",
+  "Uganda",
+  "Ukraine",
+  "United Arab Emirates",
+  "United Kingdom",
+  "United States",
+  "Uruguay",
+  "Uzbekistan",
+  "Vanuatu",
+  "Vatican City",
+  "Venezuela",
+  "Vietnam",
+  "Yemen",
+  "Zambia",
+  "Zimbabwe",
 ] as const;
 
 export const GENDERS = ["Female", "Male", "Non-binary"] as const;
@@ -691,14 +926,6 @@ const GENDER_NOUN: Record<string, string> = {
   "Non-binary": "person",
 };
 
-const AGE_PROMPT: Record<string, string> = {
-  "Adult (18+)": "adult",
-  "Young Adult (18–24)": "young adult",
-  "Adult (25–39)": "adult",
-  "Mature (40–59)": "middle-aged adult",
-  "Senior (60+)": "senior adult",
-};
-
 const NSFW_LEVEL_PROMPT: Record<number, string> = {
   0: "fully clothed, safe for work",
   1: "suggestive, revealing clothing",
@@ -717,7 +944,9 @@ const NUDE_OUTFITS = new Set([
  * Fold every wizard choice into one descriptive prompt for the render
  * provider. The user's own prompt always leads; the attribute selections
  * read like a character sheet after it. Characters are always framed as
- * adults — age options contain no minors and "adult" is stated explicitly.
+ * adults — age is a whole number of years (18+) and "adult" is stated
+ * explicitly. Ethnicity and country stay out of the prompt while they are
+ * left on "Not specified".
  */
 export function composeCharacterPrompt(spec: CharacterSpec): string {
   const parts: string[] = [];
@@ -727,8 +956,14 @@ export function composeCharacterPrompt(spec: CharacterSpec): string {
   if (base) parts.push(base);
 
   const noun = GENDER_NOUN[spec.gender] ?? "person";
-  const age = AGE_PROMPT[spec.age] ?? "adult";
-  parts.push(`portrait of an adult ${age} ${noun}, 18+`);
+  const age = clampAge(spec.age);
+  const ethnicity =
+    spec.ethnicity && spec.ethnicity !== "Not specified"
+      ? ` ${spec.ethnicity.toLowerCase()}`
+      : "";
+  const origin =
+    spec.country && spec.country !== "Not specified" ? ` from ${spec.country}` : "";
+  parts.push(`portrait of an adult ${age}-year-old${ethnicity} ${noun}${origin}, 18+`);
 
   const tone = SKIN_TONES.find((t) => t.id === spec.skinTone);
   if (tone) parts.push(`${tone.prompt} skin`);
