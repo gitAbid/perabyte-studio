@@ -122,11 +122,11 @@ export function getProviderConfig(): ProviderConfig {
 
   const target = resolveConfigPath();
   try {
-    if (!fs.existsSync(target)) {
+    if (!fs.existsSync(/*turbopackIgnore: true*/ target)) {
       cachedConfig = cloneDefault();
       return cachedConfig;
     }
-    const rawText = fs.readFileSync(target, "utf-8");
+    const rawText = fs.readFileSync(/*turbopackIgnore: true*/ target, "utf-8");
     const parsed = JSON.parse(rawText);
     cachedConfig = sanitizeLoadedConfig(parsed);
   } catch {
@@ -189,7 +189,7 @@ export function updateProviderConfig(patch: ProviderConfigPatch): ProviderConfig
 
   const target = resolveConfigPath();
   const dir = path.dirname(target);
-  if (!fs.existsSync(dir)) {
+  if (!fs.existsSync(/*turbopackIgnore: true*/ dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
 
