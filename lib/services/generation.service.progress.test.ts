@@ -75,6 +75,7 @@ function fakeProgressProvider(
     requests,
     registry: {
       listModels: (kind) => (kind === "image" ? [resolvedModel] : []),
+      listAllModels: (kind) => (kind === "image" ? [resolvedModel] : []),
       defaultModel: (kind) => (kind === "image" ? resolvedModel : ({} as ModelDescriptor)),
       resolve: (id) => (id === resolvedModel.id ? { provider, model: resolvedModel } : null),
       findAnywhere: (id) =>

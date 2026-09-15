@@ -7,6 +7,7 @@ import {
 import { logger } from "@/lib/logging/logger";
 import { isAllowedMediaUrl } from "@/lib/renderer";
 import { isPlausibleMp4 } from "@/lib/media/mp4";
+import { MediaUploadError, storeImageUpload } from "@/lib/services/media.service";
 
 export const runtime = "nodejs";
 
@@ -148,4 +149,36 @@ export async function GET(request: Request) {
     },
     { status: lastStatus },
   );
+}
+
+/**
+ * Accepts a raw image body as a continuity/reference frame and stores it in
+ * the content-addressed cache. Returns `{ ref, url, contentType }`.
+ */
+export async function POST(request: Request) {
+  let bytes: Buffer;
+  try {
+    bytes = Buffer.from(await request.arrayBuffer());
+  } catch {
+    return NextResponse.json(
+      { error: "We could not read that upload. Please try again.", retryable: true },
+      { status: 400 },
+    );
+  }
+  try {
+    const stored = await storeImageUpload(bytes);
+    return NextResponse.json(stored, { headers: { "cache-control": "no-store" } });
+  } catch (error) {
+    if (error instanceof MediaUploadError) {
+      return NextResponse.json(
+        { error: error.message, retryable: error.retryable },
+        { status: error.status },
+      );
+    }
+    log.error("frame upload failed", { error });
+    return NextResponse.json(
+      { error: "That image could not be stored. Please retry.", retryable: true },
+      { status: 503 },
+    );
+  }
 }

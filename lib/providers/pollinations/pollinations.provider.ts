@@ -81,7 +81,14 @@ function buildArtifacts(request: NormalizedGenerationRequest): GeneratedArtifact
   return Array.from({ length: request.count }, (_, index) => {
     const seed = request.count === 1 ? base : base + index * 977;
     const url = buildMediaUrl(toRenderRequest(request), seed);
-    return { bytes: null, url, ext: "jpg", seed };
+    return {
+      bytes: null,
+      url,
+      ext: "jpg",
+      seed,
+      // No image input exists on this provider — frames are always dropped.
+      ...(request.startImage ? { frameDropped: true } : {}),
+    };
   });
 }
 

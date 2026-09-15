@@ -49,8 +49,13 @@ function fakeClient(completion: Promise<string[]>) {
         created.push({ params: params as unknown as Record<string, unknown>, completion });
         return Promise.resolve({
           waitForCompletion: () => completion,
-          on: (_event: "progress", listener: (percent: number) => void) => {
-            progressListeners.push(listener);
+          on: (
+            event: "progress" | "jobCompleted",
+            listener:
+              | ((percent: number) => void)
+              | ((job: { lastFrameUrl?: string }) => void),
+          ) => {
+            if (event === "progress") progressListeners.push(listener as (percent: number) => void);
           },
         });
       },
@@ -219,5 +224,91 @@ describe("sogni provider", () => {
     expect(created[0].params.type).toBe("video");
     expect((created[0].params as unknown as SogniVideoParams).duration).toBe(5);
     expect(artifacts[0]).toMatchObject({ url: "https://cdn.sogni.ai/v.mp4", ext: "mp4", seed: 42 });
+  });
+});
+
+describe("continuity frames + last frame export", () => {
+  const FRAME = Buffer.from("frame-bytes");
+
+  function frameAwareClient(
+    completion: Promise<string[]>,
+    onWait?: () => void,
+  ) {
+    const created: { params: Record<string, unknown>; project: Record<string, unknown> }[] = [];
+    let jobListener: ((job: { lastFrameUrl?: string }) => void) | null = null;
+    const client: SogniClient = {
+      projects: {
+        create(params) {
+          const project = {
+            // The provider registers its jobCompleted listener before calling
+            // waitForCompletion — fire the hook there, like the SDK order.
+            waitForCompletion: () => {
+              onWait?.();
+              return completion;
+            },
+            on: (event: string, listener: (arg: never) => void) => {
+              if (event === "jobCompleted") {
+                jobListener = listener as (job: { lastFrameUrl?: string }) => void;
+              }
+            },
+          };
+          created.push({ params: params as unknown as Record<string, unknown>, project });
+          return Promise.resolve(project as never);
+        },
+        getAvailableModels: async () => [],
+      },
+    };
+    return {
+      client,
+      created,
+      emitJobCompleted(job: { lastFrameUrl?: string }) {
+        jobListener?.(job);
+      },
+    };
+  }
+
+  it("sends referenceImage when a start frame is present", async () => {
+    const fake = frameAwareClient(Promise.resolve(["https://cdn.test/v.mp4"]));
+    setSogniClientForTests(fake.client);
+
+    await sogniProvider.generateVideo(
+      videoRequest({ startImage: { bytes: FRAME, contentType: "image/png" } }),
+      videoModel,
+      { logger },
+    );
+
+    expect(fake.created[0]?.params.referenceImage).toBe(FRAME);
+  });
+
+  it("sends both frames when start and end are present", async () => {
+    const fake = frameAwareClient(Promise.resolve(["https://cdn.test/v.mp4"]));
+    setSogniClientForTests(fake.client);
+
+    await sogniProvider.generateVideo(
+      videoRequest({
+        startImage: { bytes: FRAME, contentType: "image/png" },
+        endImage: { bytes: FRAME, contentType: "image/png" },
+      }),
+      videoModel,
+      { logger },
+    );
+
+    expect(fake.created[0]?.params.referenceImage).toBe(FRAME);
+    expect(fake.created[0]?.params.referenceImageEnd).toBe(FRAME);
+  });
+
+  it("attaches the exported last frame to the first artifact", async () => {
+    const fake = frameAwareClient(Promise.resolve(["https://cdn.test/v.mp4"]), () =>
+      fake.emitJobCompleted({ lastFrameUrl: "https://cdn.test/last.png" }),
+    );
+    setSogniClientForTests(fake.client);
+
+    const artifacts = await sogniProvider.generateVideo(
+      videoRequest(),
+      SOGNI_VIDEO_MODELS.find((m) => m.model.startsWith("seedance")) ?? videoModel,
+      { logger },
+    );
+
+    expect(artifacts[0]?.companionFrameUrl).toBe("https://cdn.test/last.png");
   });
 });

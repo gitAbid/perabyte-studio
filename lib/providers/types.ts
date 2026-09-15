@@ -44,6 +44,12 @@ export interface GeneratedArtifact {
   /** True when this artifact was already produced before the provider call
    * resolved (Pollinations inline warming) — surfaced as `prewarmed`. */
   prewarmed?: boolean;
+  /** Provider accepted the request but dropped/refused the continuity frame;
+   * surfaced as `frameUsed: false` so the UI can degrade gracefully. */
+  frameDropped?: boolean;
+  /** Provider-exported companion image (e.g. Sogni's exact last frame);
+   * a hosted URL the service materializes into the media cache. */
+  companionFrameUrl?: string | null;
 }
 
 export interface ImageProvider {
@@ -51,6 +57,9 @@ export interface ImageProvider {
   readonly label: string;
   isConfigured(): boolean;
   listImageModels(): ModelDescriptor[];
+  /** Models that resolve but never appear in the picker — i2v siblings and
+   * flf2v keyframe models auto-selected for frame-chained renders. */
+  listHiddenModels?(): ModelDescriptor[];
   generateImage(
     request: NormalizedGenerationRequest,
     model: ModelDescriptor,
@@ -63,6 +72,8 @@ export interface VideoProvider {
   readonly label: string;
   isConfigured(): boolean;
   listVideoModels(): ModelDescriptor[];
+  /** Models that resolve but never appear in the picker — see ImageProvider. */
+  listHiddenModels?(): ModelDescriptor[];
   generateVideo(
     request: NormalizedGenerationRequest,
     model: ModelDescriptor,

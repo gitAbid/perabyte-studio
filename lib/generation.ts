@@ -20,6 +20,9 @@ export interface GenerateInput {
   prompt: string;
   /** True when Uncensored Mode is enabled in Settings (safe flag follows it). */
   uncensored?: boolean;
+  /** Media-cache refs for continuity frames (story mode). */
+  startImageRef?: string;
+  endImageRef?: string;
   signal?: AbortSignal;
 }
 
@@ -40,6 +43,8 @@ export async function requestGeneration(
     settings,
     prompt,
     uncensored,
+    startImageRef,
+    endImageRef,
     signal,
     onProgress,
   }: GenerateInput & { onProgress?: (progress: GenerationProgress) => void },
@@ -66,6 +71,8 @@ export async function requestGeneration(
         safe: settings.safe,
         modelId: settings.modelId,
         uncensored: uncensored ?? false,
+        ...(startImageRef ? { startImageRef } : {}),
+        ...(endImageRef ? { endImageRef } : {}),
       }),
       signal,
     });

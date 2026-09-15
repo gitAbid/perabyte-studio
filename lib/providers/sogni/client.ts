@@ -17,6 +17,8 @@ export interface SogniProject {
   waitForCompletion(): Promise<string[]>;
   /** 0–100 as the provider-side jobs advance. */
   on(event: "progress", listener: (percent: number) => void): unknown;
+  /** Per-job completion; `lastFrameUrl` is set when returnLastFrame was used. */
+  on(event: "jobCompleted", listener: (job: { lastFrameUrl?: string }) => void): unknown;
 }
 
 /** One entry of Sogni's live model catalog (`projects.getAvailableModels`). */

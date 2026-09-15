@@ -16,12 +16,13 @@ import {
   VIDEO_STYLES,
 } from "@/lib/constants";
 import { downloadMedia, requestGeneration } from "@/lib/generation";
+import { requestPromptEnhancement } from "@/lib/enhancement";
 import { useModelCatalog } from "@/lib/model-catalog";
 import {
   setSelectedModel,
   useSettings,
 } from "@/lib/repositories/settings.repository";
-import { enhancePromptText, isVideoSource } from "@/lib/renderer";
+import { isVideoSource } from "@/lib/renderer";
 import { addAsset } from "@/lib/store";
 import type { Asset, GenerationSettings, StoryScene } from "@/lib/types";
 import { StoryPlayer } from "@/components/StoryPlayer";
@@ -42,6 +43,7 @@ export default function StoryPage() {
   const [kind, setKind] = useState<"image" | "video">("image");
   const [prompt, setPrompt] = useState("");
   const [promptError, setPromptError] = useState<string | undefined>();
+  const [enhancing, setEnhancing] = useState(false);
   const [settings, setSettings] = useState<GenerationSettings>({
     ...DEFAULT_IMAGE_SETTINGS,
     kind: "image",
@@ -57,6 +59,10 @@ export default function StoryPage() {
   const modelId =
     (kind === "video" ? userSettings.videoModel : userSettings.imageModel) ??
     catalog.defaultModelId;
+  // Style presets are per-model: provider-workflow models take only the raw
+  // prompt, so both the picker and enhancement skip the style context.
+  const stylesSupported =
+    catalog.models.find((model) => model.id === modelId)?.stylesSupported ?? true;
 
   function currentSettings(): GenerationSettings {
     return {
@@ -191,10 +197,41 @@ export default function StoryPage() {
     .filter((scene): scene is StoryScene & { url: string } => Boolean(scene.url))
     .map((scene) => ({ url: scene.url, mime: scene.mime, label: scene.prompt }));
 
-  function handleEnhancePrompt() {
-    if (!prompt.trim() || busy) return;
-    setPrompt(enhancePromptText(prompt, settings.style).slice(0, PROMPT_MAX));
-    toast.push("Prompt enhanced — review it and press Generate.", "success");
+  // Enhancement carries the story configuration too: the scene position tells
+  // the enhancer to keep characters and environment consistent across scenes.
+  async function handleEnhancePrompt() {
+    const current = prompt.trim();
+    if (!current || busy || enhancing) return;
+    setEnhancing(true);
+    try {
+      const sceneCount = Math.max(1, scenes.length);
+      const result = await requestPromptEnhancement({
+        prompt: current,
+        kind,
+        style: stylesSupported ? settings.style : null,
+        stylesSupported,
+        aspect: settings.aspect,
+        duration: kind === "video" ? settings.duration : null,
+        sceneIndex: 1,
+        sceneCount,
+        negativePrompt: settings.negativePrompt,
+      });
+      setPrompt(result.enhanced.slice(0, PROMPT_MAX));
+      toast.push(
+        result.source === "ai"
+          ? "Prompt enhanced with AI — review it and press Generate."
+          : "Prompt enriched with style and lighting cues — AI enhancement is unavailable right now.",
+        "success",
+      );
+    } catch (error) {
+      if ((error as Error)?.name === "AbortError") return;
+      toast.push(
+        (error as Error).message || "Could not enhance the prompt.",
+        "error",
+      );
+    } finally {
+      setEnhancing(false);
+    }
   }
 
   return (
@@ -288,9 +325,7 @@ export default function StoryPage() {
               onSettingsChange={(patch) => setSettings((s) => ({ ...s, ...patch }))}
               models={catalog.models}
               modelId={modelId}
-              stylesSupported={
-                catalog.models.find((model) => model.id === modelId)?.stylesSupported ?? true
-              }
+              stylesSupported={stylesSupported}
               onModelChange={(nextModel) => {
                 setSelectedModel(kind, nextModel);
                 setSettings((s) => ({ ...s, modelId: nextModel }));
@@ -298,7 +333,8 @@ export default function StoryPage() {
               busy={busy}
               onGenerate={handleGenerateAll}
               onCancel={() => setBusy(false)}
-              onEnhancePrompt={handleEnhancePrompt}
+              onEnhancePrompt={() => void handleEnhancePrompt()}
+              enhancing={enhancing}
               onCopyPrompt={() => {
                 void navigator.clipboard
                   ?.writeText(prompt)

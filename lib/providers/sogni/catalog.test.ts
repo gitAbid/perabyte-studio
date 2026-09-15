@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { resetStudioEnvForTests } from "@/lib/config/env";
 import {
+  frameCapability,
   getSogniCatalog,
+  i2vSiblingId,
   setCatalogFetcherForTests,
   toDescriptors,
   warmSogniCatalog,
@@ -123,5 +125,78 @@ describe("sogni catalog", () => {
     setCatalogFetcherForTests(async () => []);
     await warmSogniCatalog();
     expect(getSogniCatalog().images.map((m) => m.model)).toContain("krea2_turbo_fp8_scaled");
+  });
+});
+
+describe("frame capability rules", () => {
+  it("marks ltx23 i2v as start+end (keyframe interpolation)", () => {
+    expect(frameCapability("ltx23-22b-fp8_i2v_distilled")).toEqual({ start: true, end: true });
+  });
+
+  it("marks minimax h3 i2v as start+end", () => {
+    expect(frameCapability("minimax-h3-fl2va-fp8_i2v")).toEqual({ start: true, end: true });
+  });
+
+  it("marks flf2v as start+end", () => {
+    expect(frameCapability("minimax-h3-fl2va-fp8_flf2v")).toEqual({ start: true, end: true });
+  });
+
+  it("marks seedance 2.5 as start+end and 2.0 as start-only", () => {
+    expect(frameCapability("seedance-2-5")).toEqual({ start: true, end: true });
+    expect(frameCapability("seedance-2-0-mini")).toEqual({ start: true, end: false });
+  });
+
+  it("leaves t2v-only families prompt-only", () => {
+    expect(frameCapability("wan_v2.2-14b-fp8_t2v_lightx2v")).toBeUndefined();
+    expect(frameCapability("ltx25-22b-int8_t2v_distilled")).toBeUndefined();
+    expect(frameCapability("happyhorse-1.1-t2v")).toBeUndefined();
+  });
+
+  it("rewrites t2v to i2v within the family", () => {
+    expect(i2vSiblingId("wan_v2.2-14b-fp8_t2v_lightx2v")).toBe("wan_v2.2-14b-fp8_i2v_lightx2v");
+    expect(i2vSiblingId("ltx25-22b-int8_t2v_distilled")).toBe("ltx25-22b-int8_i2v_distilled");
+  });
+
+  it("returns null for models without a t2v workflow suffix", () => {
+    expect(i2vSiblingId("seedance-2-0-mini")).toBeNull();
+    expect(i2vSiblingId("ltx23-22b-fp8_i2v_dev")).toBeNull();
+  });
+});
+
+describe("hidden frame models", () => {
+  it("links t2v models to registered i2v siblings and hides frame models", async () => {
+    setCatalogFetcherForTests(async () => LIVE_CATALOG);
+    await warmSogniCatalog();
+    const catalog = getSogniCatalog();
+
+    const wan = catalog.videos.find((m) => m.model === "wan_v2.2-14b-fp8_t2v_lightx2v");
+    expect(wan?.i2vModelId).toBe("sogni:wan_v2.2-14b-fp8_i2v_lightx2v");
+    expect(wan?.frameInput).toBeUndefined(); // t2v itself stays prompt-only
+
+    // i2v/flf2v are registered but never listed in the picker
+    expect(catalog.videos.some((m) => m.model.includes("_i2v"))).toBe(false);
+    expect(catalog.videos.some((m) => m.model.includes("_flf2v"))).toBe(false);
+    expect(catalog.hidden.map((m) => m.model)).toContain("wan_v2.2-14b-fp8_i2v_lightx2v");
+    expect(catalog.hidden.every((m) => m.frameInput?.start)).toBe(true);
+
+    // every Sogni image model takes a startingImage
+    expect(catalog.images.every((m) => m.frameInput?.start === true)).toBe(true);
+  });
+
+  it("exposes hidden models through the provider for the registry", async () => {
+    setCatalogFetcherForTests(async () => LIVE_CATALOG);
+    await warmSogniCatalog();
+    const hidden = sogniProvider.listHiddenModels?.() ?? [];
+    expect(hidden.map((m) => m.model)).toContain("wan_v2.2-14b-fp8_i2v_lightx2v");
+  });
+
+  it("keeps curated cold-start hidden siblings before any refresh", () => {
+    const catalog = getSogniCatalog();
+    expect(catalog.hidden.map((m) => m.model)).toEqual(
+      expect.arrayContaining([
+        "wan_v2.2-14b-fp8_i2v_lightx2v",
+        "ltx25-22b-int8_i2v_distilled",
+      ]),
+    );
   });
 });

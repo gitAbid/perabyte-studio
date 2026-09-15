@@ -96,6 +96,8 @@ export interface SogniImageParams {
   width?: number;
   height?: number;
   outputFormat: "png";
+  /** Img2img source (Buffer → SDK presigns an upload automatically). */
+  startingImage?: Buffer;
 }
 
 export interface SogniVideoParams {
@@ -109,6 +111,12 @@ export interface SogniVideoParams {
   ratio: string;
   duration: number;
   outputFormat: "mp4";
+  /** Start frame — the SDK presigns and uploads Buffers automatically. */
+  referenceImage?: Buffer;
+  /** End frame — only sent to models with `frameInput.end` (gated upstream). */
+  referenceImageEnd?: Buffer;
+  /** Seedance 2.5: export the exact final frame (job.lastFrameUrl). */
+  returnLastFrame?: boolean;
 }
 
 /** Snap to the 8px grid most diffusion UNets expect. */
@@ -134,6 +142,7 @@ export function toImageParams(
     width: snap8(base.width * scale),
     height: snap8(base.height * scale),
     outputFormat: "png",
+    ...(request.startImage ? { startingImage: request.startImage.bytes } : {}),
   };
 }
 
@@ -196,5 +205,8 @@ export function toVideoParams(
     ratio: VIDEO_RATIOS[request.aspect] ?? "16:9",
     duration: Math.min(limits.max, Math.max(limits.min, Math.round(request.durationSeconds))),
     outputFormat: "mp4",
+    ...(request.startImage ? { referenceImage: request.startImage.bytes } : {}),
+    ...(request.endImage ? { referenceImageEnd: request.endImage.bytes } : {}),
+    ...(model.startsWith("seedance-2-5") ? { returnLastFrame: true } : {}),
   };
 }

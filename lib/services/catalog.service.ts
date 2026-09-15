@@ -12,9 +12,18 @@ export interface ModelCatalog {
   defaultModelId: string;
 }
 
-export function getModelCatalog(kind: ModelKind): ModelCatalog {
+export interface CatalogFilter {
+  /** Only models with this frame capability — `end` powers the
+   * story-conversion picker (hidden capability models included). */
+  frame?: "start" | "end";
+}
+
+export function getModelCatalog(kind: ModelKind, filter?: CatalogFilter): ModelCatalog {
   const registry = getGenerationRegistry();
-  const models = registry.listModels(kind);
-  logger.debug("catalog assembled", { kind, count: models.length });
+  const source = filter?.frame ? registry.listAllModels(kind) : registry.listModels(kind);
+  const models = source.filter((model) =>
+    filter?.frame ? model.frameInput?.[filter.frame] === true : true,
+  );
+  logger.debug("catalog assembled", { kind, frame: filter?.frame, count: models.length });
   return { models, defaultModelId: registry.defaultModel(kind).id };
 }

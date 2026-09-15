@@ -18,6 +18,8 @@ export interface ResolvedModel {
 export interface ProviderRegistry {
   /** Configured models for a kind, in default-preference order. */
   listModels(kind: ModelKind): ModelDescriptor[];
+  /** Picker models plus hidden capability models, configured providers only. */
+  listAllModels(kind: ModelKind): ModelDescriptor[];
   /** The model selected when the user has not chosen one. */
   defaultModel(kind: ModelKind): ModelDescriptor;
   /** Look up a model id across *configured* providers. */
@@ -35,12 +37,23 @@ function modelsOf(provider: AnyProvider, kind: ModelKind): ModelDescriptor[] {
     : (provider as VideoProvider).listVideoModels?.() ?? [];
 }
 
+function hiddenModelsOf(provider: AnyProvider): ModelDescriptor[] {
+  return provider.listHiddenModels?.() ?? [];
+}
+
 export function createRegistry(providers: AnyProvider[]): ProviderRegistry {
   return {
     listModels(kind) {
       return providers
         .filter((provider) => provider.isConfigured())
         .flatMap((provider) => modelsOf(provider, kind));
+    },
+
+    /** Picker models plus hidden capability models (i2v siblings, flf2v). */
+    listAllModels(kind) {
+      return providers
+        .filter((provider) => provider.isConfigured())
+        .flatMap((provider) => [...modelsOf(provider, kind), ...hiddenModelsOf(provider)]);
     },
 
     defaultModel(kind) {
@@ -62,9 +75,11 @@ export function createRegistry(providers: AnyProvider[]): ProviderRegistry {
 
     findAnywhere(modelId) {
       for (const provider of providers) {
-        const model = [...modelsOf(provider, "image"), ...modelsOf(provider, "video")].find(
-          (candidate) => candidate.id === modelId,
-        );
+        const model = [
+          ...modelsOf(provider, "image"),
+          ...modelsOf(provider, "video"),
+          ...hiddenModelsOf(provider),
+        ].find((candidate) => candidate.id === modelId);
         if (model) return { provider, model };
       }
       return null;

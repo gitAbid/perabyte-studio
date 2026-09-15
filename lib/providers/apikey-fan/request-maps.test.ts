@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
+import type { FrameImage } from "@/lib/domain/models";
 import {
   APIKEY_FAN_IMAGE_MODELS,
   APIKEY_FAN_VIDEO_MODELS,
   MAX_VIDEO_SECONDS,
   foldNegativePrompt,
+  frameToDataUri,
+  toImageEditsPayload,
   toImagePayload,
   toVideoPayload,
 } from "@/lib/providers/apikey-fan/request-maps";
@@ -100,5 +103,50 @@ describe("model catalogs", () => {
     for (const model of [...APIKEY_FAN_IMAGE_MODELS, ...APIKEY_FAN_VIDEO_MODELS]) {
       expect(model.id.startsWith("apikey-fan:")).toBe(true);
     }
+  });
+});
+
+describe("frame capability flags", () => {
+  it("advertises start-frame capability on every grok model", () => {
+    for (const model of [...APIKEY_FAN_IMAGE_MODELS, ...APIKEY_FAN_VIDEO_MODELS]) {
+      expect(model.frameInput).toEqual({ start: true, end: false });
+      expect(model.i2vModelId).toBeUndefined(); // same model takes frames
+    }
+  });
+});
+
+describe("continuity frame payloads", () => {
+  const FRAME: FrameImage = { bytes: Buffer.from("abc"), contentType: "image/png" };
+
+  it("video payload embeds the start frame as a data URI", () => {
+    const payload = toVideoPayload("grok-imagine-video", {
+      prompt: "p", durationSeconds: 5, image: FRAME,
+    });
+    expect(payload.image).toEqual({
+      url: `data:image/png;base64,${FRAME.bytes.toString("base64")}`,
+    });
+  });
+
+  it("video payload omits image when absent", () => {
+    expect(
+      toVideoPayload("grok-imagine-video", { prompt: "p", durationSeconds: 5 }).image,
+    ).toBeUndefined();
+  });
+
+  it("edits payload references the source image", () => {
+    const payload = toImageEditsPayload("grok-imagine-image-2.0", {
+      prompt: "p", image: FRAME, count: 1,
+    });
+    expect(payload.image).toEqual({
+      url: `data:image/png;base64,${FRAME.bytes.toString("base64")}`,
+      type: "image_url",
+    });
+    expect(payload.n).toBe(1);
+  });
+
+  it("frameToDataUri builds a mime-correct data URI", () => {
+    expect(frameToDataUri({ bytes: Buffer.from("x"), contentType: "image/webp" })).toBe(
+      `data:image/webp;base64,${Buffer.from("x").toString("base64")}`,
+    );
   });
 });

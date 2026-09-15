@@ -10,7 +10,7 @@ import {
   type GenerationKind,
   type ResolutionKey,
 } from "@/lib/constants";
-import { durationToSeconds, type NormalizedGenerationRequest } from "@/lib/domain/models";
+import { durationToSeconds, type FrameImage, type NormalizedGenerationRequest } from "@/lib/domain/models";
 import type { Logger } from "@/lib/logging/logger";
 import { logger as rootLogger } from "@/lib/logging/logger";
 import { getGenerationRegistry } from "@/lib/providers/registry";
@@ -21,7 +21,7 @@ import {
   type ProviderProgress,
   type VideoProvider,
 } from "@/lib/providers/types";
-import { getMediaRepository } from "@/lib/repositories/media.repository";
+import { getMediaRepository, isValidMediaRef } from "@/lib/repositories/media.repository";
 import { isPlausibleMp4 } from "@/lib/media/mp4";
 import {
   isAllowedMediaUrl,
@@ -80,6 +80,17 @@ export interface ValidatedRequest {
   enhance: boolean;
   safe: boolean;
   modelId: string | null;
+  startImageRef: string | null;
+  endImageRef: string | null;
+}
+
+/** Continuity-frame cache refs must be real image refs from our media cache. */
+function validateFrameRef(value: unknown, field: "startImage" | "endImage"): string | null {
+  if (typeof value !== "string" || value === "") return null;
+  if (!isValidMediaRef(value) || value.endsWith(".mp4")) {
+    throw new GenerationServiceError("That continuity frame reference is not valid.", { field });
+  }
+  return value;
 }
 
 export function validateGenerationRequest(body: Record<string, unknown>): ValidatedRequest {
@@ -159,11 +170,31 @@ export function validateGenerationRequest(body: Record<string, unknown>): Valida
     // Uncensored Mode sends safe:false explicitly; everything else stays safe.
     safe: body.safe !== false,
     modelId,
+    startImageRef: validateFrameRef(body.startImageRef, "startImage"),
+    endImageRef: validateFrameRef(body.endImageRef, "endImage"),
   };
 }
 
 /* ------------------------------------------------------------------ */
-/* Orchestration                                                       */
+/* Continuity frames                                                    */
+/* ------------------------------------------------------------------ */
+
+/** Load a continuity frame's bytes from the content-addressed media cache. */
+async function loadFrame(ref: string, field: "startImage" | "endImage"): Promise<FrameImage> {
+  const stored = await getMediaRepository().get(ref);
+  if (!stored) {
+    throw new GenerationServiceError(
+      field === "startImage"
+        ? "Continuity frame missing. Re-generate the previous scene or turn Continuity off."
+        : "That end frame is no longer cached. Upload it again.",
+      { field },
+    );
+  }
+  return { bytes: stored.bytes, contentType: stored.contentType };
+}
+
+/* ------------------------------------------------------------------ */
+/* Orchestration                                                        */
 /* ------------------------------------------------------------------ */
 
 function mimeForExt(ext: string): string {
@@ -218,6 +249,29 @@ async function materializeArtifact(
   }
 }
 
+/**
+ * Fetch + cache a provider-exported companion image (the exact final frame,
+ * Seedance 2.5 `returnLastFrame`). Failure never fails the clip — chaining
+ * falls back to client-side frame extraction.
+ */
+async function materializeCompanionFrame(
+  artifact: GeneratedArtifact,
+  log: Logger,
+): Promise<string | undefined> {
+  const url = artifact.companionFrameUrl;
+  if (!url) return undefined;
+  try {
+    const response = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(60_000) });
+    if (!response.ok) throw new Error(`status ${response.status}`);
+    const bytes = Buffer.from(await response.arrayBuffer());
+    const stored = await getMediaRepository().put(bytes);
+    return `/api/media?f=${stored.ref}`;
+  } catch (error) {
+    log.warn("companion frame could not be cached", { error });
+    return undefined;
+  }
+}
+
 /** Persist artifacts and convert them to the client-facing media contract. */
 async function persistArtifacts(
   artifacts: GeneratedArtifact[],
@@ -231,6 +285,7 @@ async function persistArtifacts(
   return Promise.all(
     artifacts.map(async (artifact, index) => {
       const materialized = await materializeArtifact(artifact, log);
+      const endFrameUrl = await materializeCompanionFrame(materialized, log);
       if (materialized.bytes) {
         const stored = await repository.put(materialized.bytes, materialized.ext);
         return {
@@ -240,6 +295,7 @@ async function persistArtifacts(
           height,
           seed: materialized.seed,
           mime: stored.contentType,
+          ...(endFrameUrl ? { endFrameUrl } : {}),
         } satisfies GeneratedMedia;
       }
       // URL-only artifacts (Pollinations) keep their deterministic provider
@@ -251,6 +307,7 @@ async function persistArtifacts(
         height,
         seed: materialized.seed,
         mime: mimeForExt(materialized.ext),
+        ...(endFrameUrl ? { endFrameUrl } : {}),
       } satisfies GeneratedMedia;
     }),
   );
@@ -299,12 +356,44 @@ export async function runGeneration(
   });
   log.info("generation started", { count: request.count, aspect: request.aspect });
 
+  // Continuity frames: load refs first so a missing frame fails before any
+  // provider call, then swap to a frame-capable model when needed.
+  const startImage = request.startImageRef
+    ? await loadFrame(request.startImageRef, "startImage")
+    : undefined;
+  const endImageRaw = request.endImageRef
+    ? await loadFrame(request.endImageRef, "endImage")
+    : undefined;
+
+  let effective = resolved;
+  let swapped = false;
+  if (startImage && !resolved.model.frameInput?.start) {
+    const swapId = resolved.model.i2vModelId;
+    const swappedModel = swapId ? registry.resolve(swapId) : null;
+    if (swappedModel?.model.frameInput?.start) {
+      effective = swappedModel;
+      swapped = true;
+      log.info("frame capability swap", { from: resolved.model.id, to: effective.model.id });
+    } else {
+      log.warn("start frame provided but no capable model available — dropping frames", {
+        model: resolved.model.id,
+      });
+    }
+  }
+  const endImage = endImageRaw && effective.model.frameInput?.end ? endImageRaw : undefined;
+  if (endImageRaw && !endImage) {
+    log.warn("end frame dropped — model cannot condition on a final frame", {
+      model: effective.model.id,
+    });
+  }
+  const framesActive = Boolean(startImage) && effective.model.frameInput?.start === true;
+
   const normalized: NormalizedGenerationRequest = {
     kind: request.kind,
     // Style presets are folded into the prompt only when the model supports
     // them (provider-workflow video models take just the raw prompt).
     prompt:
-      resolved.model.stylesSupported === false
+      effective.model.stylesSupported === false
         ? request.rawPrompt
         : styleWithPrompt(request.rawPrompt, request.style),
     negativePrompt: request.negativePrompt,
@@ -315,21 +404,23 @@ export async function runGeneration(
     seed: request.seed ?? randomSeed(),
     // Sensored models (no uncensored capability) always keep the safety
     // checker on, whatever the Uncensored Mode toggle says.
-    safe: resolved.model.uncensored === false ? true : request.safe,
+    safe: effective.model.uncensored === false ? true : request.safe,
     enhance: request.enhance,
+    startImage: framesActive ? startImage : undefined,
+    endImage,
   };
 
   try {
     const artifacts =
       request.kind === "video"
-        ? await (resolved.provider as VideoProvider).generateVideo(
+        ? await (effective.provider as VideoProvider).generateVideo(
             normalized,
-            resolved.model,
+            effective.model,
             { logger: log, signal: options.signal, onProgress: options.onProgress },
           )
-        : await (resolved.provider as ImageProvider).generateImage(
+        : await (effective.provider as ImageProvider).generateImage(
             normalized,
-            resolved.model,
+            effective.model,
             { logger: log, signal: options.signal, onProgress: options.onProgress },
           );
 
@@ -351,6 +442,13 @@ export async function runGeneration(
       kind: request.kind,
       elapsedMs,
       ...(artifacts[0]?.prewarmed === undefined ? {} : { prewarmed: artifacts[0].prewarmed }),
+      ...(swapped
+        ? {
+            effectiveModelId: effective.model.id,
+            effectiveModelLabel: effective.model.label,
+          }
+        : {}),
+      ...(startImage ? { frameUsed: framesActive && artifacts[0]?.frameDropped !== true } : {}),
       media,
     };
   } catch (error) {

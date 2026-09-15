@@ -190,3 +190,135 @@ describe("apikey-fan provider", () => {
     vi.useRealTimers();
   }, 20_000);
 });
+
+describe("continuity frame adaptive fallback", () => {
+  const FRAME = { bytes: Buffer.from("frame"), contentType: "image/png" };
+
+  const imageModel = {
+    id: "apikey-fan:grok-imagine-image-2.0",
+    providerId: "apikey-fan",
+    kind: "image" as const,
+    model: "grok-imagine-image-2.0",
+    label: "Grok Imagine 2.0",
+  };
+
+  function imageReq(): NormalizedGenerationRequest {
+    return {
+      kind: "image",
+      prompt: "a fox",
+      negativePrompt: "",
+      aspect: "16:9",
+      resolution: "1080p",
+      durationSeconds: 0,
+      count: 1,
+      seed: 42,
+      safe: true,
+      enhance: false,
+    };
+  }
+
+  function frameVideoRequest(): NormalizedGenerationRequest {
+    return { ...videoRequest(1), startImage: FRAME };
+  }
+
+  it("retries prompt-only when the relay rejects the video image field", async () => {
+    const createBodies: Record<string, unknown>[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+        const url = String(input);
+        if (url.endsWith("/videos/generations")) {
+          const body = JSON.parse(String(init?.body ?? "{}")) as Record<string, unknown>;
+          createBodies.push(body);
+          // First call (with the image) is rejected as malformed.
+          if (createBodies.length === 1) return new Response("bad request", { status: 400 });
+          return new Response(JSON.stringify({ request_id: "job_fb" }), { status: 200 });
+        }
+        if (url.includes("/videos/job_fb")) {
+          return new Response(
+            JSON.stringify({ status: "done", video: { url: "https://cdn.example/v.mp4" } }),
+            { status: 200 },
+          );
+        }
+        if (url === "https://cdn.example/v.mp4") {
+          return new Response(new Uint8Array(MP4_BYTES), { status: 200 });
+        }
+        return new Response("not found", { status: 404 });
+      }),
+    );
+
+    const artifacts = await apiKeyFanProvider.generateVideo(frameVideoRequest(), videoModel, {
+      logger,
+    });
+
+    expect(createBodies).toHaveLength(2);
+    expect(createBodies[0]?.image).toBeDefined();
+    expect(createBodies[1]?.image).toBeUndefined();
+    expect(artifacts[0]?.frameDropped).toBe(true);
+  }, 20_000);
+
+  it("keeps frameDropped unset when the image field is accepted", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+        const url = String(input);
+        if (url.endsWith("/videos/generations")) {
+          const body = JSON.parse(String(init?.body ?? "{}")) as Record<string, unknown>;
+          expect(body.image).toEqual({
+            url: `data:image/png;base64,${FRAME.bytes.toString("base64")}`,
+          });
+          return new Response(JSON.stringify({ request_id: "job_ok" }), { status: 200 });
+        }
+        if (url.includes("/videos/job_ok")) {
+          return new Response(
+            JSON.stringify({ status: "done", video: { url: "https://cdn.example/v.mp4" } }),
+            { status: 200 },
+          );
+        }
+        if (url === "https://cdn.example/v.mp4") {
+          return new Response(new Uint8Array(MP4_BYTES), { status: 200 });
+        }
+        return new Response("not found", { status: 404 });
+      }),
+    );
+
+    const artifacts = await apiKeyFanProvider.generateVideo(frameVideoRequest(), videoModel, {
+      logger,
+    });
+    expect(artifacts[0]?.frameDropped).toBeUndefined();
+  }, 20_000);
+
+  it("falls back to plain generations when edits rejects the frame", async () => {
+    const imageCalls: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request) => {
+        const url = String(input);
+        if (url.endsWith("/images/edits")) {
+          imageCalls.push(url);
+          return new Response("bad request", { status: 400 });
+        }
+        if (url.endsWith("/images/generations")) {
+          imageCalls.push(url);
+          return new Response(
+            JSON.stringify({ data: [{ b64_json: PNG_BYTES.toString("base64") }] }),
+            { status: 200 },
+          );
+        }
+        return new Response("not found", { status: 404 });
+      }),
+    );
+
+    const artifacts = await apiKeyFanProvider.generateImage(
+      { ...imageReq(), startImage: FRAME },
+      imageModel,
+      { logger },
+    );
+
+    expect(imageCalls).toEqual([
+      expect.stringContaining("/images/edits"),
+      expect.stringContaining("/images/generations"),
+    ]);
+    expect(artifacts[0]?.frameDropped).toBe(true);
+  });
+});
