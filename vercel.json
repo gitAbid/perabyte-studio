@@ -5,7 +5,7 @@
   "buildCommand": "npm run build",
   "functions": {
     "app/api/generate/route.ts": {
-      "maxDuration": 60
+      "maxDuration": 300
     },
     "app/api/media/route.ts": {
       "maxDuration": 60

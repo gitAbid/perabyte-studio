@@ -6,8 +6,12 @@ import {
 } from "@/lib/services/generation.service";
 
 export const runtime = "nodejs";
-/** Video generation polls a provider job for several minutes. */
-export const maxDuration = 300;
+/**
+ * Render budgets are configurable (Settings → Render timeouts, default
+ * 10 min per video clip); self-hosted runtimes have no hard cap, and hosted
+ * platforms clamp this to the plan maximum.
+ */
+export const maxDuration = 600;
 
 const log = logger.child({ route: "api/generate" });
 

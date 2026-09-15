@@ -53,6 +53,30 @@ describe("env config", () => {
     expect(env.sogniApiKey).toBeNull();
     expect(env.logLevel).toBe("info");
     expect(env.mediaCacheDir).toBe(".media-cache");
+    // Render timeout defaults: 5 min images / 10 min videos, with the
+    // provider deadline keeping 1 min of download headroom.
+    expect(env.imageRenderTimeoutMs).toBe(300_000);
+    expect(env.videoRenderTimeoutMs).toBe(600_000);
+    expect(env.imageRenderDeadlineMs).toBe(240_000);
+    expect(env.videoRenderDeadlineMs).toBe(540_000);
+  });
+
+  it("maps configured render timeouts into ms budgets and deadlines", () => {
+    updateProviderConfig({ renderTimeouts: { image: 150, video: 300 } });
+    resetStudioEnvForTests();
+    const env = getStudioEnv();
+    expect(env.imageRenderTimeoutMs).toBe(150_000);
+    expect(env.videoRenderTimeoutMs).toBe(300_000);
+    expect(env.imageRenderDeadlineMs).toBe(90_000);
+    expect(env.videoRenderDeadlineMs).toBe(240_000);
+  });
+
+  it("floors the render deadline when the budget is tight", () => {
+    updateProviderConfig({ renderTimeouts: { image: 30, video: 30 } });
+    resetStudioEnvForTests();
+    const env = getStudioEnv();
+    expect(env.imageRenderDeadlineMs).toBe(30_000);
+    expect(env.videoRenderDeadlineMs).toBe(30_000);
   });
 
   it("reads and trims the api key", () => {

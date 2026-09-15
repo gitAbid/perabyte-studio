@@ -1,4 +1,13 @@
-import { getProviderConfig } from "@/lib/repositories/provider-config.repository";
+import {
+  getProviderConfig,
+  RENDER_TIMEOUT_DEFAULTS,
+} from "@/lib/repositories/provider-config.repository";
+
+/**
+ * Kept back from every render budget so the service layer can still download
+ * and cache the finished files before the route's runtime expires.
+ */
+const RENDER_DEADLINE_HEADROOM_MS = 60_000;
 
 /**
  * Server-side environment configuration, parsed once and cached.
@@ -29,6 +38,14 @@ export interface StudioEnv {
   logLevel: string;
   /** Directory used by the media cache repository. */
   mediaCacheDir: string;
+  /** Overall image render budget in ms (Settings → Render timeouts). */
+  imageRenderTimeoutMs: number;
+  /** Overall video render budget in ms (Settings → Render timeouts). */
+  videoRenderTimeoutMs: number;
+  /** Image budget minus download headroom — the provider-side deadline. */
+  imageRenderDeadlineMs: number;
+  /** Video budget minus download headroom — the provider-side deadline. */
+  videoRenderDeadlineMs: number;
 }
 
 let cached: StudioEnv | null = null;
@@ -65,6 +82,15 @@ function parseEnv(): StudioEnv {
   const apiKeyFanApiKey = settingsApiKeyFan ?? envApiKeyFan;
   const sogniApiKey = settingsSogni ?? envSogni;
 
+  // Render timeouts: seconds in the settings file, ms here. The deadline
+  // keeps headroom back from the budget so the service can still download
+  // and cache the finished files before the route's runtime expires.
+  const imageTimeoutMs =
+    (settingsConfig?.renderTimeouts.image ?? RENDER_TIMEOUT_DEFAULTS.image) * 1000;
+  const videoTimeoutMs =
+    (settingsConfig?.renderTimeouts.video ?? RENDER_TIMEOUT_DEFAULTS.video) * 1000;
+  const headroom = RENDER_DEADLINE_HEADROOM_MS;
+
   return {
     apiKeyFanBaseUrl,
     apiKeyFanApiKey,
@@ -74,6 +100,10 @@ function parseEnv(): StudioEnv {
     sogniSocketUrl: process.env.SOGNI_SOCKET_URL?.trim() || "wss://socket.sogni.ai",
     logLevel: (process.env.LOG_LEVEL?.trim() || "info").toLowerCase(),
     mediaCacheDir: process.env.MEDIA_CACHE_DIR?.trim() || ".media-cache",
+    imageRenderTimeoutMs: imageTimeoutMs,
+    videoRenderTimeoutMs: videoTimeoutMs,
+    imageRenderDeadlineMs: Math.max(30_000, imageTimeoutMs - headroom),
+    videoRenderDeadlineMs: Math.max(30_000, videoTimeoutMs - headroom),
   };
 }
 

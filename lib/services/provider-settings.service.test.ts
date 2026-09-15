@@ -206,4 +206,39 @@ describe("provider settings service", () => {
     });
     expect(payload.providers[1].textModels[0].enabled).toBe(false);
   });
+
+  it("exposes render timeouts and persists updates in seconds", () => {
+    wireRegistry();
+    // Defaults: 5 minutes images, 10 minutes videos.
+    expect(getProviderSettings().renderTimeouts).toEqual({ image: 300, video: 600 });
+
+    const payload = applyProviderSettingsUpdate({
+      renderTimeouts: { image: 480, video: 900 },
+    });
+    expect(payload.renderTimeouts).toEqual({ image: 480, video: 900 });
+    expect(getProviderSettings().renderTimeouts).toEqual({ image: 480, video: 900 });
+  });
+
+  it("clamps render timeouts into the safe range", () => {
+    wireRegistry();
+    const payload = applyProviderSettingsUpdate({ renderTimeouts: { image: 1, video: 100000 } });
+    expect(payload.renderTimeouts.image).toBe(30); // 30 s floor
+    expect(payload.renderTimeouts.video).toBe(3600); // 1 h ceiling
+  });
+
+  it("rejects non-numeric render timeouts", () => {
+    wireRegistry();
+    expect(() =>
+      applyProviderSettingsUpdate({
+        renderTimeouts: { video: "ten" as unknown as number },
+      }),
+    ).toThrow(/render timeout/i);
+  });
+
+  it("leaves render timeouts untouched on unrelated updates", () => {
+    wireRegistry();
+    applyProviderSettingsUpdate({ renderTimeouts: { video: 900 } });
+    applyProviderSettingsUpdate({ tasks: { enhance: "sogni:qwen-b" } });
+    expect(getProviderSettings().renderTimeouts).toEqual({ image: 300, video: 900 });
+  });
 });
