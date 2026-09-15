@@ -69,6 +69,10 @@ export default function StoryPage() {
     count: 1,
   });
   const [storyId, setStoryIdState] = useState<string | null>(null);
+  // Frame refs for the scene being authored in the composer. They attach to
+  // the scene when it is committed (Generate or Add scene), then reset for
+  // the next draft.
+  const [draftRefs, setDraftRefs] = useState<{ startImageRef?: string; endImageRef?: string }>({});
 
   function setStoryId(id: string | null) {
     setStoryIdState(id);
@@ -186,8 +190,10 @@ export default function StoryPage() {
             url: null,
             status: "queued",
             kind,
+            ...draftRefs,
           },
         ];
+    setDraftRefs({});
     const id =
       storyId ?? `s_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
     const asset: Asset = {
@@ -328,7 +334,9 @@ export default function StoryPage() {
       url: null,
       status: "queued",
       kind,
+      ...draftRefs,
     };
+    setDraftRefs({});
     if (storyId && story) {
       updateStoryScenes(storyId, (list) => [...list, draft]);
       setStoryRunning(true);
@@ -516,6 +524,25 @@ export default function StoryPage() {
             />
           </div>
 
+          {/* Optional start/end frames for the scene being authored. They are
+              committed with the next Generate / Add scene, not per-tile — the
+              composer is where a scene is composed. */}
+          <div className="mt-3 shrink-0">
+            <p className="mb-1.5 text-[11.5px] font-semibold text-muted">
+              Scene frames{" "}
+              <span className="font-normal">
+                — optional; a start frame overrides chaining
+              </span>
+            </p>
+            <SceneRefChips
+              startRef={draftRefs.startImageRef}
+              endRef={draftRefs.endImageRef}
+              endSupported={endSupported}
+              onChange={(patch) => setDraftRefs((r) => ({ ...r, ...patch }))}
+              onError={(message) => toast.push(message, "error")}
+            />
+          </div>
+
           <div className="mt-3 flex shrink-0 items-center gap-2">
             <Button
               variant="secondary"
@@ -671,6 +698,22 @@ export default function StoryPage() {
                         <Icon name="link" size={9} /> i2v
                       </span>
                     )}
+                    {typed?.startImageRef && (
+                      <span
+                        className="inline-flex items-center gap-0.5 rounded-full bg-surface-2 px-1.5 py-0.5 text-[10px] font-bold text-muted"
+                        title="This scene has a manual start frame"
+                      >
+                        <Icon name="upload" size={9} /> start
+                      </span>
+                    )}
+                    {typed?.endImageRef && (
+                      <span
+                        className="inline-flex items-center gap-0.5 rounded-full bg-surface-2 px-1.5 py-0.5 text-[10px] font-bold text-muted"
+                        title="This scene has a manual end frame"
+                      >
+                        <Icon name="upload" size={9} /> end
+                      </span>
+                    )}
                     {typed?.status === "completed" &&
                       scenes[index + 1]?.status === "queued" &&
                       continuityOn &&
@@ -682,20 +725,6 @@ export default function StoryPage() {
                     <p className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-ink-soft">
                       {typed.prompt}
                     </p>
-                  )}
-                  {typed && typed.status !== "generating" && (
-                    <SceneRefChips
-                      scene={typed}
-                      endSupported={endSupported}
-                      disabled={running}
-                      onChange={(patch) => {
-                        if (!storyId) return;
-                        updateStoryScenes(storyId, (list) =>
-                          list.map((s) => (s.id === typed.id ? { ...s, ...patch } : s)),
-                        );
-                      }}
-                      onError={(message) => toast.push(message, "error")}
-                    />
                   )}
                 </div>
               );

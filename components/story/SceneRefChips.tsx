@@ -3,25 +3,32 @@
 import { useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { uploadFrameRef } from "@/lib/media/frame";
-import type { StoryScene } from "@/lib/types";
+
+export interface SceneRefs {
+  startImageRef?: string;
+  endImageRef?: string;
+}
 
 /**
- * Manual start/end frame chips under a scene card (spec §6). The end-frame
- * slot renders only when the selected model can condition on a final frame.
- * A manual start frame overrides auto-chaining for that scene.
+ * Manual start/end frame upload slots for the scene being authored in the
+ * story composer. The end-frame slot renders only when the selected model can
+ * condition on a final frame. A manual start frame overrides auto-chaining
+ * for that scene.
  */
 export function SceneRefChips({
-  scene,
+  startRef,
+  endRef,
   endSupported,
   disabled,
   onChange,
   onError,
 }: {
-  scene: StoryScene;
+  startRef?: string;
+  endRef?: string;
   /** The selected model can take an end frame — show the slot. */
   endSupported: boolean;
   disabled?: boolean;
-  onChange: (patch: Partial<StoryScene>) => void;
+  onChange: (patch: SceneRefs) => void;
   onError?: (message: string) => void;
 }) {
   const startInput = useRef<HTMLInputElement>(null);
@@ -98,9 +105,9 @@ export function SceneRefChips({
   }
 
   return (
-    <div className={`mt-1 gap-2 ${endSupported ? "grid grid-cols-2" : "flex max-w-[140px]"}`}>
-      {chip("start", "Start frame", scene.startImageRef, startInput)}
-      {endSupported ? chip("end", "End frame", scene.endImageRef, endInput) : null}
+    <div className={`gap-2 ${endSupported ? "grid grid-cols-2" : "flex max-w-[140px]"}`}>
+      {chip("start", "Start frame", startRef, startInput)}
+      {endSupported ? chip("end", "End frame", endRef, endInput) : null}
     </div>
   );
 }
