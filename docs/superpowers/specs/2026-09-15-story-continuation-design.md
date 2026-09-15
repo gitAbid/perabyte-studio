@@ -20,6 +20,9 @@ generation queue — chained scenes render one-by-one, independent scenes render
 5. **Queue**: with Continuity ON, scenes render **sequentially** through a persistent queue, each
    chained to the previous scene's end frame; with Continuity OFF, all queued scenes render **in
    parallel**. Queue state survives reload.
+6. **One-click conversion**: a completed image story can be converted into a video story where
+   consecutive images become first/last-frame pairs — clip *i* animates image *i* (first frame) into
+   image *i*+1 (last frame); N images yield N−1 clips, rendered in parallel.
 
 ## Research basis (verified)
 
@@ -75,6 +78,9 @@ Population:
   - `end: true`: `ltx23-*_i2v`, `minimax-h3-*_i2v` and `*_flf2v`, `seedance-2-5`.
   - `end: false`: `wan_*`, `ltx25-*`, `seedance-2-0*`, `happyhorse-*`.
   Sogni image models: `frameInput: { start: true, end: false }` (via `startingImage`).
+  **Picker hygiene**: `*_flf2v` models (they *require* both frames and reject prompt-only renders)
+  are also excluded from the picker list and registered as hidden descriptors with
+  `frameInput: { start: true, end: true }` — they become conversion targets, never stray picks.
 - **apikey.fan**: video and image models get `frameInput: { start: true, end: false }`, no
   `i2vModelId` (same model id takes frames: video `image.url`, images via `/images/edits`).
 - **Pollinations**: no flags → prompt-only.
@@ -206,12 +212,47 @@ completed scene), `effectiveModelId?`, `frameUsed?`.
 - **Unit (vitest)**: request-maps payload shapes (±frames, per provider); service validation (ref
   checks, auto-swap precedence, end-frame gating, `frameUsed`/`effectiveModelId` surfacing); catalog
   sibling map + family rules; apikey-fan adaptive retry; `/api/media` upload route; runner scheduling
-  (sequential vs parallel, toggle flips, blocked dependents, rehydration) with a fake store.
+  (sequential vs parallel, toggle flips, blocked dependents, rehydration) with a fake store;
+  conversion (ref normalization incl. provider-URL scenes, N−1 clip derivation, end-capable model
+  preference, source story untouched).
 - **Live smoke** (keys present in `.env.local`): Sogni WAN i2v chained pair; `seedance-2-5`
   `lastFrameUrl` (credits permitting); Grok video `image.url` relay check (documented fallback if
   rejected).
 - **GUI pass** (playwright, existing verify-script habits): toggle off/on mid-run, manual ref
   upload/clear, i2v badge, blocked-tile note, reload-resume.
+
+## 9. One-click image story → video story
+
+Converts a completed image story into a video story whose clips animate consecutive images into
+each other: clip *i* gets `startImageRef` = image *i*'s ref and `endImageRef` = image *i*+1's ref
+(N images → N−1 clips).
+
+- **Entry point**: a `Convert to video` button in the story footer, visible when `kind === "image"`
+  and ≥ 2 scenes have completed media.
+- **Ref normalization**: every source image must be a cache ref before conversion. Scenes rendered
+  by Pollinations carry provider URLs — the client fetches them through the existing
+  `/api/media?u=…` proxy (same-origin) and uploads via `uploadFrameRef()`. Cached scenes parse their
+  ref with `refFromMediaUrl()`.
+- **New sibling asset**: the converted story is a **new** asset (title `"<title> (video)"`,
+  `kind: "video"`, same aspect/settings, `mode: "Story Mode"`, `meta.convertedFrom = <image story
+  id>`); the image story is preserved untouched. The page switches to the new story, kind flips to
+  video, and the clip queue appears on the board immediately.
+- **Clip scenes**: `status: "queued"`, prompt = the source images' prompts joined
+  (`"image i prompt → image i+1 prompt"` condensed by the same continuation copy used elsewhere —
+  final wording at implementation), each with explicit `startImageRef` + `endImageRef`. Prompts stay
+  short — the frames carry the look; the prompt carries the motion.
+- **Parallel by rule**: because every clip has an explicit start ref, the §5 scheduling rule
+  ("manual refs make a scene runnable") already renders all clips **in parallel** — no chaining
+  needed between clips. Continuity toggle stays meaningful for scenes *added later* to the converted
+  story.
+- **Model resolution (end-capable)**: the user's selected video model is used when it has
+  `frameInput.end`; otherwise the runner auto-picks the first available entry from a preference
+  list of registered end-capable models — `ltx23-22b-fp8_i2v_distilled` (Sogni-native, fast,
+  popular) → `minimax-h3-fl2va-fp8_i2v_turbo` → `seedance-2-5` → `minimax-h3-fl2va-fp8_flf2v_turbo`
+  — recorded per story as `effectiveModelId`, with the same small model note on clip cards as
+  auto-swapped scenes. Duration: the story's video duration setting, clamped per model as today.
+- **Failure**: a failed clip retries standalone (its refs are explicit, so nothing upstream to
+  re-run). The conversion never mutates the source story, so "Convert" can be re-run at any time.
 
 ## Out of scope (this iteration)
 
