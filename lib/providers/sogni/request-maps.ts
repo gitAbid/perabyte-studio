@@ -1,6 +1,7 @@
 import { ASPECTS, type AspectKey, type ResolutionKey } from "@/lib/constants";
 import type { ModelDescriptor, NormalizedGenerationRequest } from "@/lib/domain/models";
 import { buildModelId } from "@/lib/domain/models";
+import { isMinimaxH3, minimaxH3Dimensions, sogniVideoLimits } from "@/lib/providers/sogni/video-limits";
 
 /**
  * Adapter: neutral generation settings → Sogni Supernet project params.
@@ -111,6 +112,9 @@ export interface SogniVideoParams {
   ratio: string;
   duration: number;
   outputFormat: "mp4";
+  /** MiniMax H3 only: canvas on its 32px grid within its pixel caps. */
+  width?: number;
+  height?: number;
   /** Start frame — the SDK presigns and uploads Buffers automatically. */
   referenceImage?: Buffer;
   /** End frame — only sent to models with `frameInput.end` (gated upstream). */
@@ -165,14 +169,21 @@ function toUint32Seed(seed: number | null): number {
  * Seedance workflows reject `negativePrompt`; exclusions are folded into the
  * prompt as an explicit avoidance clause instead (same trick as apikey.fan).
  */
-const FOLD_NEGATIVE_MODELS = new Set(["seedance-2-0-mini"]);
+/** MiniMax H3 has no negative-prompt input — fold exclusions into the positive. */
+function foldsNegative(model: string): boolean {
+  return model === "seedance-2-0-mini" || isMinimaxH3(model);
+}
 
-/** Duration ranges per model family, from the SDK's `VideoProjectParams` docs. */
-const VIDEO_DURATION_LIMITS: Record<string, { min: number; max: number }> = {
-  "wan_v2.2-14b-fp8_t2v_lightx2v": { min: 1, max: 10 },
-  "ltx25-22b-int8_t2v_distilled": { min: 2, max: 20 },
-  "seedance-2-0-mini": { min: 4, max: 15 },
-};
+/**
+ * Duration ranges per model family, from the SDK's `VideoProjectParams` docs.
+ * The server rejects durations outside the family range (MiniMax H3 frames
+ * must land on its `124 + n*17` grid, so its floor is 124/24 ≈ 5.167s) —
+ * clamping here keeps a mismatched request renderable instead of dead.
+ */
+export function clampVideoDuration(model: string, seconds: number): number {
+  const { min, max } = sogniVideoLimits(model).duration;
+  return Math.min(max, Math.max(min, Math.round(seconds)));
+}
 
 /** Sogni video ratios; our 4:5 / 3:2 snap to the nearest supported box. */
 const VIDEO_RATIOS: Partial<Record<AspectKey, string>> = {
@@ -187,9 +198,9 @@ export function toVideoParams(
   model: string,
   request: NormalizedGenerationRequest,
 ): SogniVideoParams {
-  const limits = VIDEO_DURATION_LIMITS[model] ?? { min: 1, max: 10 };
+  const limits = sogniVideoLimits(model);
   const negative = request.negativePrompt.trim();
-  const fold = FOLD_NEGATIVE_MODELS.has(model);
+  const fold = foldsNegative(model);
   const positive = fold && negative
     ? `${request.prompt}. Avoid: ${negative}.`
     : request.prompt;
@@ -203,8 +214,13 @@ export function toVideoParams(
     seed: toUint32Seed(request.seed),
     disableNSFWFilter: !request.safe,
     ratio: VIDEO_RATIOS[request.aspect] ?? "16:9",
-    duration: Math.min(limits.max, Math.max(limits.min, Math.round(request.durationSeconds))),
+    duration: clampVideoDuration(model, request.durationSeconds),
     outputFormat: "mp4",
+    // Only MiniMax H3 accepts explicit dimensions (32px grid, ≤1344px/axis,
+    // ≤1,032,192 px) — other families render at their server-side default.
+    ...(isMinimaxH3(model)
+      ? minimaxH3Dimensions(request.aspect, request.resolution)
+      : {}),
     ...(request.startImage ? { referenceImage: request.startImage.bytes } : {}),
     ...(request.endImage ? { referenceImageEnd: request.endImage.bytes } : {}),
     ...(model.startsWith("seedance-2-5") ? { returnLastFrame: true } : {}),

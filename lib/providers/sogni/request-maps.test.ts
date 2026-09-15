@@ -130,6 +130,54 @@ describe("sogni request maps", () => {
       expect(toVideoParams(wan, videoRequest({ aspect: "4:5" })).ratio).toBe("3:4");
       expect(toVideoParams(wan, videoRequest({ aspect: "3:2" })).ratio).toBe("4:3");
     });
+
+    it("lifts a MiniMax H3 request to its 124-frame floor (regression: 5s was rejected)", () => {
+      // Server rule: frames must land on `124 + n*17` at 24fps, so anything
+      // under 124/24 ≈ 5.167s dies with "Video duration must greater or
+      // equal 5.166…" / an off-grid frame count.
+      const minimax = "minimax-h3-fl2va-fp8_t2v";
+      const params = toVideoParams(minimax, videoRequest({ durationSeconds: 5 }));
+      expect(params.duration).toBeCloseTo(124 / 24, 10);
+      expect(toVideoParams(minimax, videoRequest({ durationSeconds: 20 })).duration).toBeCloseTo(
+        362 / 24,
+        10,
+      );
+    });
+
+    it("clamps HappyHorse to its 3–15s window and Seedance 2.5 to 30s", () => {
+      expect(toVideoParams("happyhorse-1.1-t2v", videoRequest({ durationSeconds: 2 })).duration).toBe(3);
+      expect(toVideoParams("happyhorse-1.1-t2v", videoRequest({ durationSeconds: 20 })).duration).toBe(15);
+      expect(toVideoParams("seedance-2-5", videoRequest({ durationSeconds: 40 })).duration).toBe(30);
+    });
+
+    it("folds the negative prompt for MiniMax H3 (no negative input)", () => {
+      const params = toVideoParams(
+        "minimax-h3-fl2va-fp8_t2v",
+        videoRequest({ prompt: "a slow pan", negativePrompt: "text overlay" }),
+      );
+      expect(params.negativePrompt).toBeUndefined();
+      expect(params.positivePrompt).toContain("Avoid: text overlay");
+    });
+
+    it("sends MiniMax H3 dimensions on the 32px grid within its pixel caps", () => {
+      const params = toVideoParams(
+        "minimax-h3-fl2va-fp8_t2v",
+        videoRequest({ aspect: "16:9", resolution: "1080p" }),
+      );
+      expect(params.width).toBeDefined();
+      expect(params.height).toBeDefined();
+      expect(params.width! % 32).toBe(0);
+      expect(params.height! % 32).toBe(0);
+      expect(params.width! * params.height!).toBeLessThanOrEqual(1_032_192);
+      expect(Math.max(params.width!, params.height!)).toBeLessThanOrEqual(1344);
+      // Other families take no explicit dimensions.
+      const wan = toVideoParams(
+        SOGNI_VIDEO_MODELS[0].model,
+        videoRequest({ aspect: "16:9", resolution: "1080p" }),
+      );
+      expect(wan.width).toBeUndefined();
+      expect(wan.height).toBeUndefined();
+    });
   });
 });
 

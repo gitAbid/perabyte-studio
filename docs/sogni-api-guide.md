@@ -121,6 +121,28 @@ Naming is systematic — **the i2v sibling of a t2v model is the same id with `t
 `returnLastFrame: true` on Seedance 2.5 exports the final frame as `job.lastFrameUrl` (SDK `Job` getter),
 and `trimEndFrame: true` drops the duplicated end frame for seamless stitching of chained clips.
 
+### Per-family render limits (SDK-validated, encoded in `lib/providers/sogni/video-limits.ts`)
+
+The SDK (5.49+) rejects out-of-range params client-side and the server rejects off-grid ones mid-project —
+send only these (verified against `VideoProjectParams` docs + `createJobRequestMessage.js`):
+
+| Family | duration (s) | fps | Extra rules |
+| --- | --- | --- | --- |
+| WAN 2.2 | 1–10 | 16 gen (32 = post interpolation) | frames = `duration*16+1` |
+| LTX 2.5 | 2–20 | 1–60 (free) | frames snap to `1 + n*8` |
+| LTX 2.3 | 4–20 | 1–60 (free) | frames snap to `1 + n*8` |
+| Seedance 2.0 / Mini | 4–15 | 24 | no negative prompt on `-mini` (fold it) |
+| Seedance 2.5 | 4–30 | 24 | `returnLastFrame` supported |
+| HappyHorse 1.1 | 3–15 | 24 | |
+| MiniMax H3 | **124/24 ≈ 5.167 – 362/24 ≈ 15.083** | 24 fixed | frames snap to `124 + n*17`; width/height on a **32px grid, ≤1344px/axis, ≤1,032,192 px**; **no negative-prompt input** (fold it); guidance fixed 1 |
+
+A 5s request on MiniMax H3 computes 121 frames — off-grid and below the 124 minimum — so the server
+kills the project seconds after creation (symptom: `Sogni AI could not finish this render: [object Object]`,
+or the SDK 5.49 sync error `Video duration must greater or equal 5.166666666666667, got 5`).
+`toVideoParams` clamps duration into the family range and derives H3 dimensions, so any stored
+setting renders. Vendor models (MiniMax/Seedance/HappyHorse) can take minutes; the route gives up at
+`VIDEO_DEADLINE_MS` (180s) with a retryable timeout while Sogni keeps rendering.
+
 ## 6. What PeraByte uses today vs. what this unlocks
 
 Current provider (`lib/providers/sogni/`): SDK `projects.create` with `type/modelId/positivePrompt/

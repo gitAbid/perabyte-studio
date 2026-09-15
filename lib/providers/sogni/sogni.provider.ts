@@ -14,6 +14,7 @@ import { getStudioEnv } from "@/lib/config/env";
 import { randomSeed } from "@/lib/renderer";
 import { getSogniClient } from "@/lib/providers/sogni/client";
 import { getSogniCatalog } from "@/lib/providers/sogni/catalog";
+import { sogniVideoLimits } from "@/lib/providers/sogni/video-limits";
 import { SOGNI_TEXT_MODELS, sogniTextComplete } from "@/lib/providers/sogni/sogni.text";
 import {
   PROVIDER_ID,
@@ -33,8 +34,16 @@ export const sogniProvider: ImageProvider & VideoProvider & TextProvider = {
   },
 
   listImageModels: () => getSogniCatalog().images,
-  listVideoModels: () => getSogniCatalog().videos,
-  listHiddenModels: () => getSogniCatalog().hidden,
+  listVideoModels: () =>
+    getSogniCatalog().videos.map((model) => ({
+      ...model,
+      videoLimits: sogniVideoLimits(model.model),
+    })),
+  listHiddenModels: () =>
+    getSogniCatalog().hidden.map((model) => ({
+      ...model,
+      videoLimits: sogniVideoLimits(model.model),
+    })),
   listTextModels: (): TextModelDescriptor[] => SOGNI_TEXT_MODELS,
 
   async generateText(request: TextGenerationRequest): Promise<TextGenerationResult> {
@@ -139,9 +148,25 @@ async function createProject(
   }
 }
 
+/** Best-effort reason extraction — Sogni rejections arrive as Error objects,
+ * plain objects ({status, message, ...}) and occasionally strings. */
 function describe(error: unknown): string {
-  const message = error instanceof Error ? error.message : String(error);
-  return message || "unknown provider error";
+  if (error instanceof Error) return error.message || "unknown provider error";
+  if (typeof error === "string") return error;
+  if (error && typeof error === "object") {
+    const record = error as Record<string, unknown>;
+    for (const key of ["message", "detail", "description", "error", "reason"]) {
+      const value = record[key];
+      if (typeof value === "string" && value.trim()) return value;
+    }
+    try {
+      const json = JSON.stringify(error);
+      if (json && json !== "{}") return json;
+    } catch {
+      // Circular structure — fall through to the generic below.
+    }
+  }
+  return "unknown provider error";
 }
 
 /**
