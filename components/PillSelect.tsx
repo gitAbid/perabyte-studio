@@ -7,6 +7,9 @@ export interface PillOption {
   value: string;
   label: string;
   hint?: string;
+  /** When any option carries one, the dropdown renders grouped sections
+   * ordered by first appearance (e.g. Sensored / Uncensored models). */
+  group?: string;
 }
 
 const PILL_BASE =
@@ -60,6 +63,68 @@ export function PillSelect({
 
   const current = options.find((o) => o.value === value);
 
+  const renderOption = (option: PillOption) => {
+    const active = option.value === value;
+    return (
+      <button
+        key={option.value}
+        type="button"
+        role="option"
+        aria-selected={active}
+        onClick={() => {
+          onChange(option.value);
+          setOpen(false);
+        }}
+        className={`flex w-full items-center gap-2 rounded-[10px] px-2.5 py-1.5 text-left text-[13px] transition-colors ${
+          active
+            ? "bg-primary-soft font-semibold text-primary"
+            : "text-ink-soft hover:bg-surface-2"
+        }`}
+      >
+        <span className="flex-1 truncate">
+          {option.label}
+          {option.hint && (
+            <span className="ml-1.5 text-[11.5px] font-normal text-muted">
+              {option.hint}
+            </span>
+          )}
+        </span>
+        {active && <Icon name="check" size={14} />}
+      </button>
+    );
+  };
+
+  /** Flat list when no groups are set; grouped sections (first-appearance
+   * order, hairline separators) when any option carries a group label. */
+  const renderSections = () => {
+    if (!options.some((option) => option.group)) {
+      return options.map(renderOption);
+    }
+    const sections: { name: string; options: PillOption[] }[] = [];
+    for (const option of options) {
+      const name = option.group ?? "";
+      let section = sections.find((candidate) => candidate.name === name);
+      if (!section) {
+        section = { name, options: [] };
+        sections.push(section);
+      }
+      section.options.push(option);
+    }
+    return sections.map((section, index) => (
+      <div
+        key={section.name || "__all"}
+        className={index > 0 ? "mt-1 border-t border-border pt-1" : undefined}
+      >
+        {section.name && (
+          <p className="px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wide text-muted">
+            {section.name}
+          </p>
+        )}
+        {section.options.map(renderOption)}
+      </div>
+    ));
+  };
+
   return (
     <div ref={shellRef} className="relative">
       <button
@@ -96,36 +161,7 @@ export function PillSelect({
           <p className="px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wide text-muted">
             {label}
           </p>
-          {options.map((option) => {
-            const active = option.value === value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                role="option"
-                aria-selected={active}
-                onClick={() => {
-                  onChange(option.value);
-                  setOpen(false);
-                }}
-                className={`flex w-full items-center gap-2 rounded-[10px] px-2.5 py-1.5 text-left text-[13px] transition-colors ${
-                  active
-                    ? "bg-primary-soft font-semibold text-primary"
-                    : "text-ink-soft hover:bg-surface-2"
-                }`}
-              >
-                <span className="flex-1 truncate">
-                  {option.label}
-                  {option.hint && (
-                    <span className="ml-1.5 text-[11.5px] font-normal text-muted">
-                      {option.hint}
-                    </span>
-                  )}
-                </span>
-                {active && <Icon name="check" size={14} />}
-              </button>
-            );
-          })}
+          {renderSections()}
         </div>
       )}
     </div>

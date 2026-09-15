@@ -143,4 +143,18 @@ describe("runGeneration progress forwarding", () => {
     await runGeneration(body());
     expect(requests[0].prompt).toBe("a lighthouse");
   });
+
+  it("keeps sensored models safe even when uncensored mode is requested", async () => {
+    const uncensoredBody = { ...body(), safe: false };
+    const { registry, requests } = fakeProgressProvider([], { uncensored: false });
+    setRegistryForTests(registry);
+
+    await runGeneration(uncensoredBody);
+    expect(requests[0].safe).toBe(true);
+
+    const capable = fakeProgressProvider([], { uncensored: true });
+    setRegistryForTests(capable.registry);
+    await runGeneration(uncensoredBody);
+    expect(capable.requests[0].safe).toBe(false);
+  });
 });

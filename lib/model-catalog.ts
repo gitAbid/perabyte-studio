@@ -17,6 +17,8 @@ export interface ModelOption {
   providerLabel: string;
   /** False when the model can't honour style presets (picker disabled). */
   stylesSupported?: boolean;
+  /** False when the model always runs behind a safety checker ("Sensored"). */
+  uncensored?: boolean;
 }
 
 export interface ModelCatalog {

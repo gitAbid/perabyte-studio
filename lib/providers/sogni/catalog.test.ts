@@ -85,6 +85,19 @@ describe("sogni catalog", () => {
     expect(byId.get("wan3.0-video")).toBe(true);
   });
 
+  it("groups closed commercial models as sensored, diffusion models as uncensored", () => {
+    const images = toDescriptors(
+      [
+        model({ id: "gpt-image-2.5", name: "GPT Image 2.5", media: "image" }),
+        model({ id: "flux1-dev-fp8", name: "Flux Dev", media: "image" }),
+      ],
+      "image",
+    );
+    const byId = new Map(images.map((m) => [m.model, m.uncensored]));
+    expect(byId.get("gpt-image-2.5")).toBe(false);
+    expect(byId.get("flux1-dev-fp8")).toBe(true);
+  });
+
   it("refreshes in the background and the provider serves the warmed list", async () => {
     setCatalogFetcherForTests(async () => LIVE_CATALOG);
     await warmSogniCatalog();

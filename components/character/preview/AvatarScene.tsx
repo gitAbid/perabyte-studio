@@ -64,6 +64,9 @@ const LIGHTING: Record<LookLightingId, LightingRig> = {
 
 function Rig({ look }: { look: LookLightingId }) {
   const rig = LIGHTING[look] ?? LIGHTING.studio;
+  if (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("nolights")) {
+    return <color attach="background" args={[rig.background]} />;
+  }
   return (
     <>
       <color attach="background" args={[rig.background]} />

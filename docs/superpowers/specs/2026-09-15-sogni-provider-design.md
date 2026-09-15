@@ -161,3 +161,16 @@ catalog and the dynamic family map. `/api/models` forwards the flag;
 Style picker disables itself for such models; the service skips folding the
 preset into the prompt so the flag and the wire payload always agree.
 
+## Sensored / Uncensored model categories
+
+`ModelDescriptor.uncensored` (absent = can render safety-off; `false` =
+always behind a checker). Assignments from verified behaviour: apikey.fan
+Grok + Sogni diffusion models = uncensored-capable (`disableNSFWFilter`
+param); Pollinations = sensored (no separate uncensored mode, per the
+provider's verified note); Sogni `gpt-image*` = sensored (closed commercial
+checker). `/api/models` forwards the flag; the model picker renders grouped
+"Sensored" / "Uncensored" sections (`PillOption.group`, first-appearance
+order so the Grok flagship stays on top); and the service forces
+`safe: true` for sensored models even when Uncensored Mode is on, so the
+category is enforced on the wire, not just displayed.
+

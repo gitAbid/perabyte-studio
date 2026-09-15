@@ -28,6 +28,9 @@ const FLUX_IMAGE: ModelDescriptor = {
   model: "flux",
   label: "Flux",
   hint: "free demo",
+  // No separate uncensored mode: safe=true merely keeps the provider's
+  // checker on, so this model always renders behind it.
+  uncensored: false,
 };
 
 const FLUX_VIDEO: ModelDescriptor = {
@@ -37,6 +40,7 @@ const FLUX_VIDEO: ModelDescriptor = {
   model: "flux",
   label: "Flux keyframe",
   hint: "free demo · still frame",
+  uncensored: false,
 };
 
 function toRenderRequest(request: NormalizedGenerationRequest): RenderRequest {

@@ -37,6 +37,7 @@ export async function GET(request: Request) {
     providerId: model.providerId,
     providerLabel: registry.findAnywhere(model.id)?.provider.label ?? model.providerId,
     stylesSupported: model.stylesSupported,
+    uncensored: model.uncensored,
   }));
 
   log.debug("catalog served", { kind, count: models.length });

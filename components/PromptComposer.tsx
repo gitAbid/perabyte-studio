@@ -270,6 +270,9 @@ export function PromptComposer({
               hint: entry.hint
                 ? `${entry.hint} · ${entry.providerLabel}`
                 : entry.providerLabel,
+              // Capability groups: models that can run safety-off vs models
+              // that always stay behind a checker.
+              group: entry.uncensored === false ? "Sensored" : "Uncensored",
             }))}
             onChange={onModelChange}
           />

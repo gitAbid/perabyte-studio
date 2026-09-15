@@ -312,7 +312,9 @@ export async function runGeneration(
     durationSeconds: durationToSeconds(request.duration),
     count: request.count,
     seed: request.seed ?? randomSeed(),
-    safe: request.safe,
+    // Sensored models (no uncensored capability) always keep the safety
+    // checker on, whatever the Uncensored Mode toggle says.
+    safe: resolved.model.uncensored === false ? true : request.safe,
     enhance: request.enhance,
   };
 

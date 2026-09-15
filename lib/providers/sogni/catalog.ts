@@ -47,6 +47,16 @@ function supportsStyles(modelId: string): boolean {
   return !STYLELESS_ID_PATTERNS.some((pattern) => pattern.test(modelId));
 }
 
+/**
+ * Closed commercial models whose safety checker is always on — no account
+ * flag changes that, so they sit in the picker's "Sensored" group.
+ */
+const SENSORLESS_ID_PATTERNS = [/^gpt-image/i];
+
+function supportsUncensored(modelId: string): boolean {
+  return !SENSORLESS_ID_PATTERNS.some((pattern) => pattern.test(modelId));
+}
+
 /** Curated entries keep their hand-written labels, hints and order. */
 const CURATED = new Map(
   [...SOGNI_IMAGE_MODELS, ...SOGNI_VIDEO_MODELS].map((model) => [model.model, model]),
@@ -140,6 +150,7 @@ export function toDescriptors(
         label: curated?.label ?? (model.name?.trim() || prettifyModelId(model.id)),
         hint: curated?.hint ?? speedHint(model.id),
         stylesSupported: curated ? curated.stylesSupported : supportsStyles(model.id),
+        uncensored: curated ? curated.uncensored : supportsUncensored(model.id),
       } satisfies ModelDescriptor;
     });
 

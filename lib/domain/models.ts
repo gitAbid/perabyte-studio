@@ -21,6 +21,10 @@ export interface ModelDescriptor {
    * style picker and the service skips folding the preset into the prompt.
    * Absent means supported. */
   stylesSupported?: boolean;
+  /** `false` when the model always runs behind a safety checker — such models
+   * are grouped under "Sensored" in the picker and ignore Uncensored Mode.
+   * Absent means the model can render with the safety checker off. */
+  uncensored?: boolean;
 }
 
 export function buildModelId(providerId: string, model: string): string {
