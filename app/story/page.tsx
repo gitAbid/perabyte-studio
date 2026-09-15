@@ -181,33 +181,38 @@ export default function StoryPage() {
   /* ------------------------- queue integration ------------------------- */
 
   async function handleGenerateAll() {
-    if (!prompt.trim()) {
+    // A blank composer is fine when scenes are already queued — but a typed
+    // draft joins the queue as one more scene instead of being dropped.
+    const draftPrompt = prompt.trim();
+    if (!draftPrompt && !scenes.length) {
       setPromptError("Describe the first scene of your story before generating.");
       return;
     }
     setPromptError(undefined);
 
-    // The persisted story asset IS the queue; the runner executes it.
-    const draft: StoryScene[] = scenes.length
-      ? [...scenes]
-      : [
-          {
-            id: "sc_1",
-            prompt: prompt.trim(),
-            url: null,
-            status: "queued",
-            kind,
-            ...draftRefs,
-          },
-        ];
+    // The persisted story asset IS the queue; the runner executes it. Nothing
+    // renders until this press — scenes run one after another, chaining from
+    // the previous scene's final frame while Continuity is on.
+    const draft: StoryScene[] = [...scenes];
+    if (draftPrompt) {
+      draft.push({
+        id: `sc_${draft.length + 1}_${Math.random().toString(36).slice(2, 5)}`,
+        prompt: draftPrompt,
+        url: null,
+        status: "queued",
+        kind,
+        ...draftRefs,
+      });
+    }
+    if (!draft.length) return;
     setDraftRefs({});
     const id =
       storyId ?? `s_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
     const asset: Asset = {
       id,
       kind: "story",
-      title: prompt.slice(0, 40) || "Untitled story",
-      prompt,
+      title: story?.title ?? (draftPrompt.slice(0, 40) || "Untitled story"),
+      prompt: story?.prompt ?? prompt,
       url: draft.find((s) => s.url)?.url ?? "",
       variants: [],
       settings: currentSettings(),
@@ -225,7 +230,9 @@ export default function StoryPage() {
     addAsset(asset);
     setStoryId(id);
     appRunner.start(id);
-    toast.push("Rendering your story — scenes appear as they finish.");
+    toast.push(
+      `Rendering ${draft.length} scene${draft.length === 1 ? "" : "s"} — one after another.`,
+    );
   }
 
   function setStoryRunning(running: boolean) {
@@ -241,15 +248,30 @@ export default function StoryPage() {
     }
   }
 
+  /** Stop one scene: aborts it if rendering, parks it as canceled otherwise.
+   * A mid-run queue skips forward; canceled scenes are transparent to the
+   * chain (successors continue from the last completed scene). */
+  function handleCancelScene(sceneId: string) {
+    if (!storyId) return;
+    appRunner.cancelScene(storyId, sceneId);
+  }
+
+  /** Take a queued/canceled scene back out of the queue. */
+  function handleRemoveScene(sceneId: string) {
+    if (!storyId) return;
+    appRunner.removeScene(storyId, sceneId);
+  }
+
   function toggleContinuity() {
     const next = !continuityOn;
     setContinuityOn(next);
     if (storyId) {
       // Re-schedule under the new rule: ON chains the rest from the latest
-      // completed frame; OFF releases every queued scene in parallel.
-      const meta = { ...(story?.meta ?? {}), continuity: next, running: true };
+      // completed frame; OFF releases every queued scene in parallel. A
+      // paused queue keeps waiting — only a run in flight continues.
+      const meta = { ...(story?.meta ?? {}), continuity: next };
       updateAsset(storyId, { meta });
-      appRunner.start(storyId);
+      if (scenes.some((s) => s.status === "generating")) appRunner.start(storyId);
     }
   }
 
@@ -335,6 +357,12 @@ export default function StoryPage() {
   /* ------------------------------ helpers ------------------------------ */
 
   function addScene() {
+    // Validation: a scene without a prompt can never render, so it can't be
+    // queued — blank prompts produce garbage like ", an establishing shot".
+    if (!prompt.trim()) {
+      setPromptError("Write a prompt for the scene before adding it.");
+      return;
+    }
     const index = scenes.length;
     const continuation = CONTINUATIONS[Math.min(index, CONTINUATIONS.length - 1)];
     const draft: StoryScene = {
@@ -346,10 +374,10 @@ export default function StoryPage() {
       ...draftRefs,
     };
     setDraftRefs({});
+    setPrompt("");
     if (storyId && story) {
+      // Queued only — nothing renders until Generate is pressed.
       updateStoryScenes(storyId, (list) => [...list, draft]);
-      setStoryRunning(true);
-      appRunner.start(storyId);
     } else {
       // No story yet — create the queue asset with just this scene.
       const id = `s_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
@@ -375,13 +403,18 @@ export default function StoryPage() {
       addAsset(asset);
       setStoryId(id);
     }
-    toast.push("Scene added to the queue.");
+    toast.push("Scene added — press Generate to render the whole story.");
   }
 
+  /** Start a fresh story: stops any run and clears the queue from the UI. */
   function reset() {
     if (storyId) appRunner.cancel(storyId);
     setStoryId(null);
     setPlayOpen(false);
+    setPrompt("");
+    setPromptError(undefined);
+    setDraftRefs({});
+    setSceneProgress({});
   }
 
   async function handleEnhancePrompt() {
@@ -464,20 +497,29 @@ export default function StoryPage() {
             </div>
           </div>
 
-          <Segmented
-            ariaLabel="Story media type"
-            size="sm"
-            collapseOnMobile
-            value={kind}
-            onChange={(next) => {
-              setKind(next);
-              setSettings((s) => ({ ...s, kind: next }));
-            }}
-            options={[
-              { value: "image", label: "Image", icon: "image" },
-              { value: "video", label: "Video", icon: "video" },
-            ]}
-          />
+          {/* New story clears the queue from the UI (and stops any run);
+              hidden while the workspace is empty. */}
+          <div className="flex items-center gap-2">
+            {(storyId || scenes.length > 0) && (
+              <Button variant="ghost" size="sm" icon="refresh" onClick={reset}>
+                New story
+              </Button>
+            )}
+            <Segmented
+              ariaLabel="Story media type"
+              size="sm"
+              collapseOnMobile
+              value={kind}
+              onChange={(next) => {
+                setKind(next);
+                setSettings((s) => ({ ...s, kind: next }));
+              }}
+              options={[
+                { value: "image", label: "Image", icon: "image" },
+                { value: "video", label: "Video", icon: "video" },
+              ]}
+            />
+          </div>
         </div>
 
         {/* Centered Solo ⇄ Story mode switch */}
@@ -611,14 +653,24 @@ export default function StoryPage() {
               const ratioStyle = {
                 aspectRatio: `${ASPECTS[settings.aspect].width}/${ASPECTS[settings.aspect].height}`,
               };
-              // A queued chain scene whose predecessor hasn't finished.
+              // The nearest non-canceled scene before this one — canceled
+              // scenes are transparent to the chain (mirrors the runner).
+              let chainPredIndex = -1;
+              for (let i = index - 1; i >= 0; i -= 1) {
+                if (scenes[i]?.status !== "canceled") {
+                  chainPredIndex = i;
+                  break;
+                }
+              }
+              // A queued chain scene whose effective predecessor hasn't finished.
               const waitingFor =
                 typed &&
                 typed.status === "queued" &&
                 continuityOn &&
                 index > 0 &&
                 !typed.startImageRef &&
-                scenes[index - 1]?.status !== "completed";
+                chainPredIndex >= 0 &&
+                scenes[chainPredIndex].status !== "completed";
               return (
                 <div key={typed?.id ?? `slot-${index}`} className="min-w-0">
                   {typed?.url ? (
@@ -643,16 +695,27 @@ export default function StoryPage() {
                       />
                     )
                   ) : typed && typed.status === "generating" ? (
-                    <div
-                      className="skeleton relative w-full overflow-hidden rounded-[14px]"
-                      style={ratioStyle}
-                    >
-                      <div className="absolute inset-0 flex items-center justify-center p-3">
-                        <RenderProgress
-                          message={sceneProgress[typed.id]?.message || "Rendering your scene…"}
-                          percent={sceneProgress[typed.id]?.percent}
-                        />
+                    <div className="relative">
+                      <div
+                        className="skeleton relative w-full overflow-hidden rounded-[14px]"
+                        style={ratioStyle}
+                      >
+                        <div className="absolute inset-0 flex items-center justify-center p-3">
+                          <RenderProgress
+                            message={sceneProgress[typed.id]?.message || "Rendering your scene…"}
+                            percent={sceneProgress[typed.id]?.percent}
+                          />
+                        </div>
                       </div>
+                      <button
+                        type="button"
+                        aria-label={`Cancel scene ${index + 1}`}
+                        title="Cancel this scene"
+                        onClick={() => handleCancelScene(typed.id)}
+                        className="absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-full bg-white/95 text-ink-soft shadow-card transition-colors hover:text-ink"
+                      >
+                        <Icon name="close" size={13} />
+                      </button>
                     </div>
                   ) : typed && typed.status === "queued" ? (
                     <div className="relative">
@@ -660,7 +723,7 @@ export default function StoryPage() {
                       <div className="absolute inset-0 flex items-center justify-center">
                         {waitingFor ? (
                           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-[11px] font-semibold text-ink shadow-card">
-                            <Icon name="link" size={12} /> Waiting for Scene {index}
+                            <Icon name="link" size={12} /> Waiting for Scene {chainPredIndex + 1}
                           </span>
                         ) : (
                           <span className="rounded-full bg-white px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-wide text-muted shadow-card">
@@ -668,6 +731,38 @@ export default function StoryPage() {
                           </span>
                         )}
                       </div>
+                      <button
+                        type="button"
+                        aria-label={`Remove scene ${index + 1} from the queue`}
+                        title="Remove from queue"
+                        onClick={() => handleRemoveScene(typed.id)}
+                        className="absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-full bg-white/95 text-ink-soft shadow-card transition-colors hover:text-ink"
+                      >
+                        <Icon name="close" size={13} />
+                      </button>
+                    </div>
+                  ) : typed && typed.status === "canceled" ? (
+                    <div className="relative">
+                      <div
+                        className="flex w-full flex-col items-center justify-center rounded-[14px] border border-dashed border-border-strong bg-surface px-3 text-center"
+                        style={ratioStyle}
+                      >
+                        <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-wide text-muted shadow-card">
+                          <Icon name="close" size={10} /> Canceled
+                        </span>
+                        <p className="mt-2 text-[11px] text-muted">
+                          Press Generate to re-queue it
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        aria-label={`Remove scene ${index + 1}`}
+                        title="Remove scene"
+                        onClick={() => handleRemoveScene(typed.id)}
+                        className="absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-full bg-white/95 text-ink-soft shadow-card transition-colors hover:text-ink"
+                      >
+                        <Icon name="close" size={13} />
+                      </button>
                     </div>
                   ) : index === 0 && !typed ? (
                     // Scene 1: an active starting point, not a dashed slot.
@@ -811,9 +906,6 @@ export default function StoryPage() {
                     <Icon name="arrow-right" size={15} />
                   </Link>
                 )}
-                <Button variant="ghost" size="sm" icon="refresh" onClick={reset}>
-                  Start over
-                </Button>
               </>
             ) : (
               <p className="text-[11.5px] text-muted">
