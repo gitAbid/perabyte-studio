@@ -60,11 +60,17 @@ export function modelPickerSections(models: ModelOption[]): ModelPickerSections 
 
 function toOption(model: ModelOption, group?: string): ModelPickerOption {
   const badges = modelBadges(model);
+  // The qualifier rides the description line — the label line carries only
+  // label + badges, which keeps rows readable at dropdown width.
+  const description = model.useCase
+    ? model.hint
+      ? `${model.useCase} · ${model.hint}`
+      : model.useCase
+    : model.hint;
   return {
     value: model.id,
     label: model.label,
-    ...(model.hint ? { hint: model.hint } : {}),
-    ...(model.useCase ? { description: model.useCase } : {}),
+    ...(description ? { description } : {}),
     ...(group ? { group } : {}),
     ...(badges.length ? { badges } : {}),
   };

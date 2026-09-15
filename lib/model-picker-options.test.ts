@@ -57,12 +57,15 @@ describe("model picker sections", () => {
     expect(groups).toEqual(["Sogni AI", "Pollinations"]); // first-appearance order
   });
 
-  it("carries hint/description and never duplicates the provider into the hint", () => {
+  it("folds the hint into the description so labels never compete with badges", () => {
     const sections = modelPickerSections(models);
     const krea = sections.recommended[0];
-    expect(krea.hint).toBe("premium credits");
-    expect(krea.description).toBe("Flagship");
-    expect(krea.hint).not.toContain("Sogni");
+    expect(krea.hint).toBeUndefined();
+    expect(krea.description).toBe("Flagship · premium credits");
+    expect(krea.description).not.toContain("Sogni");
+    // No use case → the hint alone becomes the description.
+    const dev = sections.tail.find((o) => o.label === "Flux Dev");
+    expect(dev?.description).toBeUndefined(); // no hint, no use case → clean row
   });
 
   it("builds capability badges", () => {
