@@ -16,6 +16,7 @@ import {
   APIKEY_FAN_VIDEO_MODELS,
   foldNegativePrompt,
   PROVIDER_ID,
+  toImageEditsPayload,
   toImagePayload,
   toVideoPayload,
 } from "@/lib/providers/apikey-fan/request-maps";
@@ -56,33 +57,62 @@ export const apiKeyFanProvider: ImageProvider & VideoProvider = {
     }
     const client = createApiKeyFanClient({ baseUrl: env.apiKeyFanBaseUrl, apiKey });
 
-    const { payload, fallbackPayload } = toImagePayload(model.model, {
-      prompt: foldNegativePrompt(request.prompt, request.negativePrompt),
-      count: request.count,
-      aspect: request.aspect,
-      resolution: request.resolution,
-    });
-
-    let data: ImageResponse;
-    try {
-      data = await client.postJson<ImageResponse>("/images/generations", payload, {
-        logger: ctx.logger,
-        signal: ctx.signal,
+    const prompt = foldNegativePrompt(request.prompt, request.negativePrompt);
+    const generatePlain = async (): Promise<ImageResponse> => {
+      const { payload, fallbackPayload } = toImagePayload(model.model, {
+        prompt,
+        count: request.count,
+        aspect: request.aspect,
+        resolution: request.resolution,
       });
-    } catch (error) {
-      // The exact aspect-ratio field name is the one part of the relay's API
-      // we could not verify without a key. If the strict payload is rejected
-      // as malformed, retry once without image_config — the prompt still
-      // carries the full composition.
-      if (error instanceof ProviderError && error.status === 400) {
-        ctx.logger.warn("image_config rejected — retrying without it", { model: model.model });
-        data = await client.postJson<ImageResponse>("/images/generations", fallbackPayload, {
+      try {
+        return await client.postJson<ImageResponse>("/images/generations", payload, {
           logger: ctx.logger,
           signal: ctx.signal,
         });
-      } else {
+      } catch (error) {
+        // The exact aspect-ratio field name is the one part of the relay's API
+        // we could not verify without a key. If the strict payload is rejected
+        // as malformed, retry once without image_config — the prompt still
+        // carries the full composition.
+        if (error instanceof ProviderError && error.status === 400) {
+          ctx.logger.warn("image_config rejected — retrying without it", { model: model.model });
+          return client.postJson<ImageResponse>("/images/generations", fallbackPayload, {
+            logger: ctx.logger,
+            signal: ctx.signal,
+          });
+        }
         throw error;
       }
+    };
+
+    let data: ImageResponse;
+    let frameDropped = false;
+    if (request.startImage) {
+      // Img2img: Grok takes source images only on /images/edits (data URI or
+      // public URL in image.url). A relay that refuses the flow degrades to a
+      // plain prompt render rather than failing the scene.
+      try {
+        data = await client.postJson<ImageResponse>(
+          "/images/edits",
+          toImageEditsPayload(model.model, {
+            prompt,
+            image: request.startImage,
+            count: request.count,
+          }),
+          { logger: ctx.logger, signal: ctx.signal },
+        );
+      } catch (error) {
+        if (error instanceof ProviderError && error.status === 400) {
+          ctx.logger.warn("images/edits rejected the frame — retrying prompt-only");
+          frameDropped = true;
+          data = await generatePlain();
+        } else {
+          throw error;
+        }
+      }
+    } else {
+      data = await generatePlain();
     }
 
     const items = data.data ?? [];
@@ -99,6 +129,7 @@ export const apiKeyFanProvider: ImageProvider & VideoProvider = {
       ext: "png",
       seed: baseSeed + index,
       revisedPrompt: item.revised_prompt,
+      ...(frameDropped ? { frameDropped: true } : {}),
     }));
   },
 
@@ -123,15 +154,37 @@ export const apiKeyFanProvider: ImageProvider & VideoProvider = {
     // One job per requested variation, run sequentially: parallel creates
     // would double-bill on retry and the relay serialises media anyway.
     const artifacts: GeneratedArtifact[] = [];
+    const prompt = foldNegativePrompt(request.prompt, request.negativePrompt);
     for (let index = 0; index < request.count; index += 1) {
-      const created = await client.postJson<VideoCreateResponse>(
-        "/videos/generations",
+      let frameDropped = false;
+      const buildPayload = (withImage: boolean) =>
         toVideoPayload(model.model, {
-          prompt: foldNegativePrompt(request.prompt, request.negativePrompt),
+          prompt,
           durationSeconds: request.durationSeconds,
-        }),
-        { logger: log, signal: ctx.signal, timeoutMs: 90_000, retries: 1 },
-      );
+          ...(withImage && request.startImage ? { image: request.startImage } : {}),
+        });
+      let created: VideoCreateResponse;
+      try {
+        created = await client.postJson<VideoCreateResponse>(
+          "/videos/generations",
+          buildPayload(true),
+          { logger: log, signal: ctx.signal, timeoutMs: 90_000, retries: 1 },
+        );
+      } catch (error) {
+        if (request.startImage && error instanceof ProviderError && error.status === 400) {
+          // The relay may not forward Grok's image field (unverified) —
+          // degrade to a prompt-only clip instead of failing the scene.
+          log.warn("video create rejected the image field — retrying prompt-only");
+          frameDropped = true;
+          created = await client.postJson<VideoCreateResponse>(
+            "/videos/generations",
+            buildPayload(false),
+            { logger: log, signal: ctx.signal, timeoutMs: 90_000, retries: 1 },
+          );
+        } else {
+          throw error;
+        }
+      }
 
       const requestId = created.request_id;
       if (!requestId) {
@@ -148,9 +201,10 @@ export const apiKeyFanProvider: ImageProvider & VideoProvider = {
         message: index === 0 ? "Downloading your video…" : `Downloading video ${index + 1} of ${request.count}…`,
       });
       // Download the mp4 immediately: relay URLs are short-lived.
-      artifacts.push(
-        await downloadVideo(done.video.url, env.apiKeyFanBaseUrl, request, index, apiKey, log, ctx.signal),
+      const artifact = await downloadVideo(
+        done.video.url, env.apiKeyFanBaseUrl, request, index, apiKey, log, ctx.signal,
       );
+      artifacts.push(frameDropped ? { ...artifact, frameDropped: true } : artifact);
     }
     return artifacts;
   },

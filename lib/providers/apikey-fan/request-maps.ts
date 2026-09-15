@@ -1,4 +1,4 @@
-import type { ModelDescriptor } from "@/lib/domain/models";
+import type { FrameImage, ModelDescriptor } from "@/lib/domain/models";
 import { buildModelId } from "@/lib/domain/models";
 import type { NormalizedGenerationRequest } from "@/lib/domain/models";
 import type { ResolutionKey } from "@/lib/constants";
@@ -123,15 +123,40 @@ export function toImagePayload(model: string, request: ImagePayloadRequest) {
 export interface VideoPayloadRequest {
   prompt: string;
   durationSeconds: number;
+  /** Start frame (image-to-video); sent as `image: { url }`. */
+  image?: FrameImage;
 }
 
 /** Video generation is capped at 15 seconds by the provider. */
 export const MAX_VIDEO_SECONDS = 15;
+
+/** Grok's first-frame input is a URL — a data URI carries our cached bytes. */
+export function frameToDataUri(image: FrameImage): string {
+  return `data:${image.contentType};base64,${image.bytes.toString("base64")}`;
+}
 
 export function toVideoPayload(model: string, request: VideoPayloadRequest) {
   return {
     model,
     prompt: request.prompt,
     duration: Math.min(MAX_VIDEO_SECONDS, Math.max(1, Math.round(request.durationSeconds))),
+    ...(request.image ? { image: { url: frameToDataUri(request.image) } } : {}),
+  };
+}
+
+/**
+ * Grok img2img — `/v1/images/edits` accepts a public URL or data URI in
+ * `image.url` (verified: docs.x.ai, see docs/sogni-api-guide.md §7).
+ */
+export function toImageEditsPayload(
+  model: string,
+  request: { prompt: string; image: FrameImage; count: number },
+) {
+  return {
+    model,
+    prompt: request.prompt,
+    n: Math.min(10, Math.max(1, request.count)),
+    response_format: "b64_json",
+    image: { url: frameToDataUri(request.image), type: "image_url" },
   };
 }
