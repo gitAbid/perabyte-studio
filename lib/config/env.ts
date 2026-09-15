@@ -1,3 +1,5 @@
+import { getProviderConfig } from "@/lib/repositories/provider-config.repository";
+
 /**
  * Server-side environment configuration, parsed once and cached.
  *
@@ -5,6 +7,10 @@
  * API key simply disables the apikey-fan provider (the registry then falls
  * back to the keyless Pollinations provider), so no env var is ever a hard
  * startup requirement.
+ *
+ * When an API key is configured via Settings (stored in `.studio/settings.json`),
+ * it takes precedence over the environment variable. Clearing the key in
+ * Settings falls back to the environment variable.
  */
 export interface StudioEnv {
   /** OpenAI-compatible base URL of the apikey.fan relay. */
@@ -41,13 +47,28 @@ function parseEnv(): StudioEnv {
     // time via the provider instead of crashing module load.
   }
 
-  const apiKey = process.env.APIKEY_FAN_API_KEY?.trim() ?? "";
-  const sogniApiKey = process.env.SOGNI_API_KEY?.trim() ?? "";
+  const envApiKeyFan = process.env.APIKEY_FAN_API_KEY?.trim() || null;
+  const envSogni = process.env.SOGNI_API_KEY?.trim() || null;
+
+  let settingsConfig: ReturnType<typeof getProviderConfig> | null = null;
+  try {
+    settingsConfig = getProviderConfig();
+  } catch {
+    // Fallback gracefully if filesystem fails at early boot.
+  }
+
+  const settingsApiKeyFan =
+    settingsConfig?.providers["apikey-fan"]?.apiKey?.trim() || null;
+  const settingsSogni =
+    settingsConfig?.providers.sogni?.apiKey?.trim() || null;
+
+  const apiKeyFanApiKey = settingsApiKeyFan ?? envApiKeyFan;
+  const sogniApiKey = settingsSogni ?? envSogni;
 
   return {
     apiKeyFanBaseUrl,
-    apiKeyFanApiKey: apiKey ? apiKey : null,
-    sogniApiKey: sogniApiKey ? sogniApiKey : null,
+    apiKeyFanApiKey,
+    sogniApiKey,
     sogniAppId: process.env.SOGNI_APP_ID?.trim() || null,
     sogniRestUrl: process.env.SOGNI_REST_URL?.trim() || "https://api.sogni.ai",
     sogniSocketUrl: process.env.SOGNI_SOCKET_URL?.trim() || "wss://socket.sogni.ai",
@@ -61,7 +82,12 @@ export function getStudioEnv(): StudioEnv {
   return cached;
 }
 
-/** Test hook: force a re-read of process.env. */
+/** Invalidate cached env so changes from Settings take effect instantly. */
+export function invalidateStudioEnv(): void {
+  cached = null;
+}
+
+/** Test hook: force a re-read of process.env / settings. */
 export function resetStudioEnvForTests(): void {
   cached = null;
 }

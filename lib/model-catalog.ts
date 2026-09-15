@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { GenerationKind } from "@/lib/constants";
+import { useCatalogVersion } from "@/lib/repositories/settings.repository";
 
 /**
  * Client-side model catalog: fetches `/api/models?kind=…` and caches the
@@ -58,10 +59,17 @@ function fetchCatalog(kind: GenerationKind, frame?: "start" | "end"): Promise<Mo
   return pending;
 }
 
+/** Drop cached catalog promises so the next useModelCatalog call re-fetches.
+ * Called after provider settings change. */
+export function invalidateModelCatalog(): void {
+  catalogCache.clear();
+}
+
 export function useModelCatalog(
   kind: GenerationKind,
   frame?: "start" | "end",
 ): CatalogState {
+  const version = useCatalogVersion();
   const [state, setState] = useState<CatalogState>({
     models: [],
     defaultModelId: null,
@@ -89,7 +97,7 @@ export function useModelCatalog(
     return () => {
       active = false;
     };
-  }, [kind, frame]);
+  }, [kind, frame, version]);
 
   return state;
 }
