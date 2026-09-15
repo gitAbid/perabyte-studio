@@ -22,6 +22,7 @@ import { downloadMedia, useGeneration } from "@/lib/generation";
 import { requestPromptEnhancement } from "@/lib/enhancement";
 import { useModelCatalog } from "@/lib/model-catalog";
 import { snapSettingsForModel } from "@/lib/render-options";
+import { snapLorasForModel } from "@/lib/lora-options";
 import { composeSceneWithCharacter } from "@/lib/character";
 import {
   setSelectedModel,
@@ -135,9 +136,24 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
   // Settings restored from storage may predate the active model's limits
   // (e.g. a 5s clip under MiniMax H3) — snap them once the catalog lands.
   // The effect settles after one pass: snapSettingsForModel returns an empty
-  // patch once the settings already fit.
+  // patch once the settings already fit. LoRA selections snap too: entries
+  // the new model doesn't accept drop, and an unavailable catalog (no loras
+  // served) leaves selections untouched rather than wiping them.
   useEffect(() => {
-    setSettings((s) => ({ ...s, ...snapSettingsForModel(activeModel?.videoLimits, s) }));
+    setSettings((s) => ({
+      ...s,
+      ...snapSettingsForModel(activeModel?.videoLimits, s),
+      ...(catalog.loras.length && activeModel
+        ? {
+            loras: snapLorasForModel(
+              s.loras ?? [],
+              catalog.loras,
+              activeModel.model,
+              catalog.loraMaxPerRequest,
+            ),
+          }
+        : {}),
+    }));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only when the active model's identity changes
   }, [catalog.models, modelId]);
 
@@ -409,6 +425,11 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
             }}
             stylesSupported={stylesSupported}
             videoLimits={activeModel?.videoLimits}
+            loraCatalog={catalog.loras}
+            loraMaxPerRequest={catalog.loraMaxPerRequest}
+            loraCapable={activeModel?.loraCapable === true}
+            loraModel={activeModel?.model}
+            allowNsfwLoras={settings.safe === false}
             onSettingsChange={patchSettings}
             characters={characters}
             characterId={userSettings.soloCharacterId}

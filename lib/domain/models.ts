@@ -1,4 +1,5 @@
 import type { AspectKey, DurationKey, ResolutionKey } from "@/lib/constants";
+import type { LoraSelection } from "@/lib/types";
 
 /**
  * Provider-agnostic model + request contracts shared by the service layer
@@ -55,6 +56,10 @@ export interface ModelDescriptor {
   /** Video render limits (duration range, accepted aspects, resolutions).
    * Absent on video models = no known constraint; UI shows everything. */
   videoLimits?: ModelVideoLimits;
+  /** `true` when the provider exposes LoRA adapters for this model — the UI
+   * shows the LoRA picker and the service keeps `loras` on the request.
+   * Absent means prompt-only. */
+  loraCapable?: boolean;
 }
 
 export function buildModelId(providerId: string, model: string): string {
@@ -86,6 +91,9 @@ export interface NormalizedGenerationRequest {
   safe: boolean;
   /** Ask the provider to expand the prompt (where supported). */
   enhance: boolean;
+  /** LoRA adapters in application order. Present only when the resolved
+   * model is `loraCapable`; providers without LoRA support never see it. */
+  loras?: LoraSelection[];
   /** Continuity frames resolved by the service layer (media-cache bytes). */
   startImage?: FrameImage;
   endImage?: FrameImage;

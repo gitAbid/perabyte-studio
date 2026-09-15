@@ -99,6 +99,10 @@ export interface SogniImageParams {
   outputFormat: "png";
   /** Img2img source (Buffer → SDK presigns an upload automatically). */
   startingImage?: Buffer;
+  /** LoRA adapter ids in application order (max 8, server-enforced). */
+  loras?: string[];
+  /** Strength per `loras` entry, positionally matched — bipolar, not 0–1. */
+  loraStrengths?: number[];
 }
 
 export interface SogniVideoParams {
@@ -121,6 +125,29 @@ export interface SogniVideoParams {
   referenceImageEnd?: Buffer;
   /** Seedance 2.5: export the exact final frame (job.lastFrameUrl). */
   returnLastFrame?: boolean;
+  /** LoRA adapter ids in application order (MiniMax H3 families only). */
+  loras?: string[];
+  /** Strength per `loras` entry, positionally matched — bipolar, not 0–1. */
+  loraStrengths?: number[];
+}
+
+/** Sogni's render pipeline rejects requests over this cap at submit. */
+const MAX_LORAS = 8;
+
+/**
+ * Split the normalized selections into the SDK's positionally-matched pair.
+ * Strengths are always sent explicitly: omitting the array means 1.0 for
+ * every LoRA, which is NOT the same as each LoRA's own `ui.default`.
+ */
+function loraFields(
+  request: NormalizedGenerationRequest,
+): Pick<SogniImageParams, "loras" | "loraStrengths"> {
+  const selections = (request.loras ?? []).slice(0, MAX_LORAS);
+  if (!selections.length) return {};
+  return {
+    loras: selections.map((l) => l.loraId),
+    loraStrengths: selections.map((l) => l.strength),
+  };
 }
 
 /** Snap to the 8px grid most diffusion UNets expect. */
@@ -147,6 +174,7 @@ export function toImageParams(
     height: snap8(base.height * scale),
     outputFormat: "png",
     ...(request.startImage ? { startingImage: request.startImage.bytes } : {}),
+    ...loraFields(request),
   };
 }
 
@@ -224,5 +252,6 @@ export function toVideoParams(
     ...(request.startImage ? { referenceImage: request.startImage.bytes } : {}),
     ...(request.endImage ? { referenceImageEnd: request.endImage.bytes } : {}),
     ...(model.startsWith("seedance-2-5") ? { returnLastFrame: true } : {}),
+    ...loraFields(request),
   };
 }

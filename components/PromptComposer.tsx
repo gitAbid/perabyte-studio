@@ -17,6 +17,9 @@ import {
 } from "@/lib/constants";
 import type { ModelOption } from "@/lib/model-catalog";
 import { allowedOptions } from "@/lib/render-options";
+import { lorasForModel, visibleLoras } from "@/lib/lora-options";
+import type { LoraOption } from "@/lib/providers/sogni/lora-catalog";
+import { LoraPicker } from "./LoraPicker";
 import type { ModelVideoLimits } from "@/lib/domain/models";
 import type { SavedCharacter } from "@/lib/repositories/characters.repository";
 import type { GenerationSettings } from "@/lib/types";
@@ -176,6 +179,13 @@ export function PromptComposer({
   stylesSupported,
   /** Render limits of the active model — pickers constrain to these. */
   videoLimits,
+  /** LoRA catalog (all entries) + the active model's raw id; the picker
+   * renders only when the model is LoRA-capable. */
+  loraCatalog,
+  loraMaxPerRequest = 8,
+  loraCapable = false,
+  loraModel,
+  allowNsfwLoras = false,
   title = "Prompt composer",
   headerBadge,
   characters,
@@ -204,6 +214,15 @@ export function PromptComposer({
   stylesSupported?: boolean;
   /** Render limits of the active model — pickers constrain to these. */
   videoLimits?: ModelVideoLimits;
+  /** Full LoRA catalog from `/api/models` (entries joined by raw model id). */
+  loraCatalog?: LoraOption[];
+  loraMaxPerRequest?: number;
+  /** True when the active model accepts LoRA adapters. */
+  loraCapable?: boolean;
+  /** Active model's raw provider id — the LoRA catalog join key. */
+  loraModel?: string;
+  /** Uncensored Mode — unhides nsfw/sexual LoRA entries. */
+  allowNsfwLoras?: boolean;
   title?: string;
   headerBadge?: ReactNode;
   /** Saved characters for the attach pill; wired by Solo and Story. */
@@ -215,6 +234,12 @@ export function PromptComposer({
   // Presets the active model can render (unknown limits = show everything);
   // an empty list means the model takes no such input, so the pill hides.
   const allowed = allowedOptions(videoLimits);
+  // LoRA entries for the active model under the current content gate; the
+  // pill renders only when the model is capable AND entries exist.
+  const loraEntries =
+    loraCapable && loraModel && loraCatalog?.length
+      ? visibleLoras(lorasForModel(loraCatalog, loraModel), allowNsfwLoras)
+      : [];
   const attachedCharacter =
     characters?.find((character) => character.id === characterId) ?? null;
 
@@ -341,6 +366,14 @@ export function PromptComposer({
               })),
             ]}
             onChange={(value) => onCharacterChange(value || null)}
+          />
+        )}
+        {loraEntries.length > 0 && (
+          <LoraPicker
+            entries={loraEntries}
+            selection={settings.loras ?? []}
+            onChange={(loras) => onSettingsChange({ loras })}
+            maxPerRequest={loraMaxPerRequest}
           />
         )}
         {allowed.aspects.length > 0 && (

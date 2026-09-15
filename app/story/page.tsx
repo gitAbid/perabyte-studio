@@ -27,6 +27,7 @@ import {
   requestPromptEnhancement,
 } from "@/lib/enhancement";
 import { useModelCatalog, type ModelOption } from "@/lib/model-catalog";
+import { snapLorasForModel } from "@/lib/lora-options";
 import { refFromMediaUrl, uploadFrameRef } from "@/lib/media/frame";
 import {
   addAsset,
@@ -612,9 +613,29 @@ export default function StoryPage() {
               onSettingsChange={(patch) => setSettings((s) => ({ ...s, ...patch }))}
               models={catalog.models}
               modelId={modelId}
+              loraCatalog={catalog.loras}
+              loraMaxPerRequest={catalog.loraMaxPerRequest}
+              loraCapable={selectedModel?.loraCapable === true}
+              loraModel={selectedModel?.model}
+              allowNsfwLoras={userSettings.uncensoredEnabled}
               onModelChange={(nextModel) => {
                 setSelectedModel(kind, nextModel);
-                setSettings((s) => ({ ...s, modelId: nextModel }));
+                // Drop LoRA selections the new model doesn't accept so the
+                // queued scenes never render with a dead adapter set.
+                setSettings((s) => ({
+                  ...s,
+                  modelId: nextModel,
+                  ...(catalog.loras.length
+                    ? {
+                        loras: snapLorasForModel(
+                          s.loras ?? [],
+                          catalog.loras,
+                          catalog.models.find((m) => m.id === nextModel)?.model ?? "",
+                          catalog.loraMaxPerRequest,
+                        ),
+                      }
+                    : {}),
+                }));
               }}
               characters={characters}
               characterId={userSettings.storyCharacterId}
