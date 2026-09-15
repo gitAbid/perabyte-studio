@@ -38,7 +38,8 @@ export type IconName =
   | "upload"
   | "sliders"
   | "chip"
-  | "eye";
+  | "eye"
+  | "link";
 
 const PATHS: Record<IconName, string> = {
   logo: "M4 15.5V8.5l6-4.2 6 4.2v7l-6 4.2-6-4.2Z M16 6.5l4 2.8v6.4l-4 2.8",
@@ -83,6 +84,8 @@ const PATHS: Record<IconName, string> = {
   sliders: "M5 8h9m3 0h2M5 12h3m3 0h8M5 16h9m3 0h2M14 6v4M8 10v4M14 14v4",
   chip: "M9 3.5v2m6-2v2M9 18.5v2m6-2v2M3.5 9h2m-2 6h2m13-6h2m-2 6h2M7.5 7.5h9v9h-9Zm3 3h3v3h-3Z",
   eye: "M3 12s3-5.8 9-5.8S21 12 21 12s-3 5.8-9 5.8S3 12 3 12Zm9-2.6a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 0 0 0-5.2Z",
+  link:
+    "M9.5 14.5 14.5 9.5M8 11 5.5 13.5a3.5 3.5 0 0 0 5 5L13 16m3-3 2.5-2.5a3.5 3.5 0 0 0-5-5L11 8",
 };
 
 interface IconProps extends Omit<SVGProps<SVGSVGElement>, "name"> {

@@ -18,7 +18,10 @@ import {
 
 /** Model ids that need reference media or aren't prompt-to-media — skipped
  * until the studio can drive them (edit models, segmentation, 3D, upscalers,
- * image/video-to-video variants). Matched case-insensitively. */
+ * image/video-to-video variants). Matched case-insensitively. `flf2v` models
+ * REQUIRE both frame anchors and reject prompt-only renders — they are
+ * registered as hidden capability models (see buildHiddenModels), never
+ * offered in the picker. */
 const EXCLUDED_ID_PATTERNS = [
   "edit",
   "kontext",
@@ -34,6 +37,7 @@ const EXCLUDED_ID_PATTERNS = [
   "inpaint",
   "outpaint",
   "identity",
+  "flf2v",
 ];
 
 /**

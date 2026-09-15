@@ -19,11 +19,11 @@ import {
 } from "@/lib/constants";
 import { isSensitiveAsset } from "@/lib/domain/models";
 import { downloadMedia, useGeneration } from "@/lib/generation";
+import { requestPromptEnhancement } from "@/lib/enhancement";
 import { useModelCatalog } from "@/lib/model-catalog";
 import { setSelectedModel, useSettings } from "@/lib/repositories/settings.repository";
 import { addAsset, assetFromResponse, DEMO_SPECS, toggleFavorite, useAssets } from "@/lib/store";
 import type { DemoSpec } from "@/lib/store";
-import { requestPromptEnhancement } from "@/lib/enhancement";
 import type { GenerationSettings } from "@/lib/types";
 
 const COPY = {
@@ -51,10 +51,10 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
   );
   const [prompt, setPrompt] = useState("");
   const [promptError, setPromptError] = useState<string | undefined>();
+  const [enhancing, setEnhancing] = useState(false);
   const [assetId, setAssetId] = useState<string | null>(null);
   const [favorite, setFavorite] = useState(false);
   const [activeVariant, setActiveVariant] = useState(0);
-  const [enhancing, setEnhancing] = useState(false);
 
   const { job, run, cancel, reset } = useGeneration();
   const { assets } = useAssets();
@@ -186,6 +186,8 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
     toast.push(`“${demo.title}” example loaded — tweak it and press Generate.`);
   }
 
+  // Enhancement considers the live studio configuration: kind, style (only
+  // when the model honours presets), aspect, clip length and negative prompt.
   async function handleEnhancePrompt() {
     const current = prompt.trim();
     if (!current || busy || enhancing) return;

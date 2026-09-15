@@ -167,7 +167,7 @@ export function PromptComposer({
   onCancel,
   onCopyPrompt,
   onEnhancePrompt,
-  enhancing,
+  enhancing = false,
   models,
   modelId,
   onModelChange,
@@ -185,9 +185,9 @@ export function PromptComposer({
   onGenerate: () => void;
   onCancel: () => void;
   onCopyPrompt: () => void;
-  /** Rewrites the prompt in place with richer detail (one click, no flag). */
+  /** Rewrites the prompt in place, aware of the current settings (async). */
   onEnhancePrompt: () => void;
-  /** True while an async enhancement request is in flight. */
+  /** True while the enhancement request is in flight. */
   enhancing?: boolean;
   /** Model catalog for the picker; the pill is hidden while empty. */
   models?: ModelOption[];
@@ -251,9 +251,13 @@ export function PromptComposer({
             onClick={onEnhancePrompt}
             disabled={busy || enhancing || !prompt.trim()}
             title="Expand the prompt with richer, style-aware detail"
-            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-semibold text-muted transition-colors hover:bg-surface-2 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-semibold text-muted transition-colors hover:bg-surface-2 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-muted"
           >
-            <Icon name="sparkle" size={13} />
+            <Icon
+              name="sparkle"
+              size={13}
+              className={enhancing ? "animate-pulse" : undefined}
+            />
             {enhancing ? "Enhancing…" : "Enhance prompt"}
           </button>
         </div>
