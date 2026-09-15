@@ -7,6 +7,18 @@ import type { AspectKey, DurationKey, ResolutionKey } from "@/lib/constants";
  */
 export type ModelKind = "image" | "video";
 
+/** Frame conditioning a model accepts. Absent = prompt-only. */
+export interface ModelFrameInput {
+  start: boolean;
+  end: boolean;
+}
+
+/** A continuity frame loaded from the media cache. */
+export interface FrameImage {
+  bytes: Buffer;
+  contentType: string;
+}
+
 export interface ModelDescriptor {
   /** Stable app-wide id: `<providerId>:<providerModelId>`. */
   id: string;
@@ -25,6 +37,11 @@ export interface ModelDescriptor {
    * are grouped under "Sensored" in the picker and ignore Uncensored Mode.
    * Absent means the model can render with the safety checker off. */
   uncensored?: boolean;
+  /** Frame conditioning this model accepts. Absent = prompt-only. */
+  frameInput?: ModelFrameInput;
+  /** Model id (`<provider>:<model>`) to swap to when a start frame is present.
+   * Absent when the model itself already takes frames. */
+  i2vModelId?: string;
 }
 
 export function buildModelId(providerId: string, model: string): string {
@@ -56,6 +73,9 @@ export interface NormalizedGenerationRequest {
   safe: boolean;
   /** Ask the provider to expand the prompt (where supported). */
   enhance: boolean;
+  /** Continuity frames resolved by the service layer (media-cache bytes). */
+  startImage?: FrameImage;
+  endImage?: FrameImage;
 }
 
 export function durationToSeconds(duration: DurationKey): number {

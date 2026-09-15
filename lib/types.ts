@@ -39,6 +39,8 @@ export interface GeneratedMedia {
   seed: number;
   /** Real content type when known — lets the UI pick a true video player. */
   mime?: string;
+  /** Exact final-frame image (Seedance 2.5 `returnLastFrame`), cache-backed. */
+  endFrameUrl?: string;
 }
 
 export interface GenerationResponse {
@@ -49,6 +51,11 @@ export interface GenerationResponse {
   /** True when the primary render was already produced before we answered. */
   prewarmed?: boolean;
   media: GeneratedMedia[];
+  /** Set when the service swapped the model for frame capability. */
+  effectiveModelId?: string;
+  effectiveModelLabel?: string;
+  /** True when a provided start frame actually conditioned the render. */
+  frameUsed?: boolean;
 }
 
 export interface StoryScene {
@@ -58,6 +65,14 @@ export interface StoryScene {
   status: JobStatus;
   kind: GenerationKind;
   error?: string;
+  /** Manual reference frame uploaded by the user (media-cache ref). */
+  startImageRef?: string;
+  endImageRef?: string;
+  /** Derived final frame of this scene, chaining to the next scene. */
+  endFrameRef?: string;
+  /** Model actually used when the service swapped for frame capability. */
+  effectiveModelId?: string;
+  frameUsed?: boolean;
 }
 
 export interface Asset {
