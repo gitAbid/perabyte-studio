@@ -12,6 +12,12 @@ export interface ProviderContext {
   logger: Logger;
   signal?: AbortSignal;
   /**
+   * Opaque client association for detached-render recovery (e.g.
+   * `s_<story>:<sceneId>`). Providers record it when a render outlives the
+   * request so the studio can attach the finished media later.
+   */
+  clientTag?: string;
+  /**
    * Optional sink for long-running renders. Providers call it opportunistically
    * with coarse stages (and a percent when the provider reports one); the
    * service streams the updates to the client. Absent in unit tests and any

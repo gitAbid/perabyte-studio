@@ -141,6 +141,66 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only when the active model's identity changes
   }, [catalog.models, modelId]);
 
+  // Detached-render recovery: a solo render that outlived its timeout keeps
+  // going on the provider; when the pending-renders registry reports it
+  // recovered, land it in History from here. (Story scenes attach via the
+  // story page instead — their records carry a clientTag.)
+  useEffect(() => {
+    async function absorb() {
+      try {
+        const response = await fetch("/api/renders/pending", { cache: "no-store" });
+        if (!response.ok) return;
+        const payload = (await response.json()) as {
+          renders?: {
+            id: string;
+            kind: "image" | "video";
+            modelId: string;
+            prompt: string;
+            clientTag?: string;
+            status: string;
+            media?: { url: string; mime: string };
+          }[];
+        };
+        for (const render of payload.renders ?? []) {
+          if (render.status !== "recovered" || !render.media?.url) continue;
+          if (render.clientTag) continue;
+          addAsset({
+            id: `a_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
+            kind: render.kind,
+            title: render.prompt.slice(0, 60),
+            prompt: render.prompt,
+            url: render.media.url,
+            variants: [render.media.url],
+            posterUrl: render.media.url,
+            settings: {
+              ...(render.kind === "video"
+                ? { ...DEFAULT_VIDEO_SETTINGS }
+                : { ...DEFAULT_IMAGE_SETTINGS }),
+              kind: render.kind,
+              modelId: render.modelId || undefined,
+            },
+            createdAt: Date.now(),
+            favorite: false,
+            mode: render.kind === "video" ? "Solo Mode (Video)" : "Solo Mode (Image)",
+            meta: { example: false },
+          });
+          await fetch(`/api/renders/pending?id=${encodeURIComponent(render.id)}`, {
+            method: "DELETE",
+          });
+          toast.push(
+            "A render that kept going on the provider finished — added to History.",
+            "success",
+          );
+        }
+      } catch {
+        // Server unavailable — the next tick retries.
+      }
+    }
+    void absorb();
+    const timer = setInterval(absorb, 30_000);
+    return () => clearInterval(timer);
+  }, [toast]);
+
   async function handleGenerate() {
     if (!prompt.trim()) {
       setPromptError("Describe what you want to create before generating.");

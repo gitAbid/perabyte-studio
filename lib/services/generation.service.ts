@@ -51,16 +51,20 @@ export class GenerationServiceError extends Error {
   readonly field?: string;
   readonly retryable: boolean;
   readonly status: number;
+  /** True when the render was detached and is still recoverable — the UI
+   * should tell the user it will be attached automatically. */
+  readonly pending?: boolean;
 
   constructor(
     message: string,
-    options?: { field?: string; retryable?: boolean; status?: number },
+    options?: { field?: string; retryable?: boolean; status?: number; pending?: boolean },
   ) {
     super(message);
     this.name = "GenerationServiceError";
     this.field = options?.field;
     this.retryable = options?.retryable ?? false;
     this.status = options?.status ?? 400;
+    this.pending = options?.pending;
   }
 }
 
@@ -423,6 +427,8 @@ export async function runGeneration(
   const renderSignal = options.signal
     ? AbortSignal.any([options.signal, budgetSignal])
     : budgetSignal;
+  // Opaque client association for detached-render recovery (story scene id).
+  const clientTag = sanitizeClientTag(body.clientTag);
 
   try {
     const artifacts =
@@ -430,12 +436,12 @@ export async function runGeneration(
         ? await (effective.provider as VideoProvider).generateVideo(
             normalized,
             effective.model,
-            { logger: log, signal: renderSignal, onProgress: options.onProgress },
+            { logger: log, signal: renderSignal, onProgress: options.onProgress, clientTag },
           )
         : await (effective.provider as ImageProvider).generateImage(
             normalized,
             effective.model,
-            { logger: log, signal: renderSignal, onProgress: options.onProgress },
+            { logger: log, signal: renderSignal, onProgress: options.onProgress, clientTag },
           );
 
     options.onProgress?.({
@@ -470,8 +476,8 @@ export async function runGeneration(
       const minutes = Math.round(budgetMs / 60_000);
       log.warn("generation hit the render timeout", { budgetMs });
       throw new GenerationServiceError(
-        `Your ${request.kind} render hit the ${minutes}-minute time limit — raise it in Settings → Render timeouts and try again.`,
-        { retryable: true, status: 504 },
+        `Your ${request.kind} render hit the ${minutes}-minute time limit. It is still rendering on ${resolved.provider.label} — we detached it, and it will be attached automatically when it finishes. You can also raise the limit in Settings → Render timeouts.`,
+        { retryable: true, status: 504, pending: true },
       );
     }
     if (error instanceof ProviderError) {
@@ -480,8 +486,18 @@ export async function runGeneration(
         field: error.field,
         retryable: error.retryable,
         status: error.retryable ? 502 : 400,
+        // A provider message announcing a detached render keeps the flag so
+        // the UI can tell the user the render is not lost.
+        pending: /detach/i.test(error.message),
       });
     }
     throw error;
   }
+}
+
+/** Opaque story-scene association (`s_x:sc_y`), sanitized for echo-only use. */
+function sanitizeClientTag(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const cleaned = value.replace(/[^\w:-]/g, "").slice(0, 120);
+  return cleaned || undefined;
 }

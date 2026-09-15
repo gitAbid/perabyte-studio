@@ -525,4 +525,69 @@ describe("story queue controls", () => {
     expect(deps.requestGeneration).not.toHaveBeenCalled();
     expect(deps.assets.get("story1")!.scenes![0].status).toBe("queued");
   });
+
+  it("absorbs a recovered detached render and re-chains its successor", async () => {
+    const deps = makeDeps();
+    const runner = createStoryRunner(deps);
+    deps.assets.set(
+      "story1",
+      story(
+        [
+          scene({ id: "s1", status: "failed", error: "render timeout" }),
+          scene({ id: "s2" }),
+        ],
+        { continuity: true },
+      ),
+    );
+
+    const absorbed = await runner.absorbRecovered("story1", "s1", {
+      url: "/api/media?f=late.png",
+      mime: "image/png",
+    });
+
+    expect(absorbed).toBe(true);
+    const scenes = deps.assets.get("story1")!.scenes!;
+    expect(scenes[0].status).toBe("completed");
+    expect(scenes[0].url).toBe("/api/media?f=late.png");
+    // The successor was stuck behind the failed predecessor; absorbing it
+    // schedules the queue, and s2 chains from the recovered frame.
+    await vi.waitFor(() => expect(deps.requestGeneration).toHaveBeenCalledTimes(1));
+    const calls = deps.requestGeneration.mock.calls as unknown as [
+      { startImageRef?: string; clientTag?: string },
+    ][];
+    expect(calls[0][0].startImageRef).toBe("late.png");
+    expect(calls[0][0].clientTag).toBe("story1:s2");
+  });
+
+  it("absorbRecovered no-ops for completed or missing scenes", async () => {
+    const deps = makeDeps();
+    const runner = createStoryRunner(deps);
+    deps.assets.set(
+      "story1",
+      story([
+        scene({ id: "s1", status: "completed", url: "/api/media?f=a.png" }),
+        scene({ id: "s2" }),
+      ]),
+    );
+
+    expect(await runner.absorbRecovered("story1", "s1", { url: "/api/media?f=late.png" })).toBe(
+      false,
+    );
+    expect(await runner.absorbRecovered("story1", "sc_missing", { url: "/api/media?f=x.png" })).toBe(
+      false,
+    );
+    expect(deps.assets.get("story1")!.scenes![0].url).toBe("/api/media?f=a.png");
+    expect(deps.requestGeneration).not.toHaveBeenCalled();
+  });
+
+  it("tags every scene render with a story:scene clientTag for recovery", async () => {
+    const deps = makeDeps();
+    const runner = createStoryRunner(deps);
+    deps.assets.set("story1", story([scene({ id: "s1" })], { continuity: true }));
+
+    runner.start("story1");
+    await vi.waitFor(() => expect(deps.requestGeneration).toHaveBeenCalledTimes(1));
+    const calls = deps.requestGeneration.mock.calls as unknown as [{ clientTag?: string }][];
+    expect(calls[0][0].clientTag).toBe("story1:s1");
+  });
 });

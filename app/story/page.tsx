@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ConvertDialog } from "@/components/story/ConvertDialog";
 import { SceneRefChips } from "@/components/story/SceneRefChips";
 import { Icon } from "@/components/Icon";
@@ -129,6 +129,55 @@ export default function StoryPage() {
         }),
     });
   }, []);
+
+  // Detached-render recovery: a scene whose provider render outlived our
+  // timeout keeps going on their side; the pending-renders registry reports
+  // it as recovered and we attach it to the waiting scene. Polled while the
+  // story page is open.
+  const recoveredRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!storyId) return;
+    const activeStoryId = storyId;
+    const prefix = `${activeStoryId}:`;
+    async function absorb() {
+      try {
+        const response = await fetch("/api/renders/pending", { cache: "no-store" });
+        if (!response.ok) return;
+        const payload = (await response.json()) as {
+          renders?: {
+            id: string;
+            provider: string;
+            status: string;
+            clientTag?: string;
+            media?: { url: string; mime?: string };
+          }[];
+        };
+        for (const render of payload.renders ?? []) {
+          if (recoveredRef.current.has(render.id)) continue;
+          const tag = typeof render.clientTag === "string" ? render.clientTag : "";
+          if (!tag.startsWith(prefix)) continue;
+          recoveredRef.current.add(render.id);
+          if (render.status !== "recovered" || !render.media?.url) continue;
+          const sceneId = tag.slice(prefix.length);
+          const attached = await appRunner.absorbRecovered(activeStoryId, sceneId, render.media);
+          if (attached) {
+            await fetch(`/api/renders/pending?id=${encodeURIComponent(render.id)}`, {
+              method: "DELETE",
+            });
+            toast.push(
+              "A scene that kept rendering on the provider just finished — attached.",
+              "success",
+            );
+          }
+        }
+      } catch {
+        // Offline or server restarting — the next tick retries.
+      }
+    }
+    void absorb();
+    const timer = setInterval(absorb, 20_000);
+    return () => clearInterval(timer);
+  }, [storyId, toast]);
 
   // Sync continuity, prompt and media kind when the active story loads.
   useEffect(() => {

@@ -16,11 +16,32 @@ import {
   setProviderConfigPathForTests,
   updateProviderConfig,
 } from "@/lib/repositories/provider-config.repository";
+import {
+  listPendingRenders,
+  resetPendingRendersForTests,
+  setPendingRendersPathForTests,
+} from "@/lib/repositories/pending-renders.repository";
+import {
+  setMediaRepositoryForTests,
+  type MediaRepository,
+} from "@/lib/repositories/media.repository";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 let configDir = "";
+
+const PNG_BYTES = Buffer.from([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13,
+]);
+const mediaFake: MediaRepository = {
+  put: async (bytes, ext) => ({
+    ref: `fake.${ext ?? "bin"}`,
+    contentType: ext === "mp4" ? "video/mp4" : "image/png",
+    bytes,
+  }),
+  get: async () => null,
+};
 
 const imageModel = SOGNI_IMAGE_MODELS[0];
 const videoModel = SOGNI_VIDEO_MODELS[0];
@@ -79,6 +100,9 @@ beforeEach(() => {
   configDir = mkdtempSync(join(tmpdir(), "sogni-provider-test-"));
   setProviderConfigPathForTests(join(configDir, "settings.json"));
   resetProviderConfigForTests();
+  setPendingRendersPathForTests(join(configDir, "pending.json"));
+  resetPendingRendersForTests();
+  setMediaRepositoryForTests(mediaFake);
   process.env.SOGNI_API_KEY = "test-sogni-key";
   resetStudioEnvForTests();
 });
@@ -89,6 +113,9 @@ afterEach(() => {
   delete process.env.SOGNI_APP_ID;
   setProviderConfigPathForTests(null);
   resetProviderConfigForTests();
+  setPendingRendersPathForTests(null);
+  resetPendingRendersForTests();
+  setMediaRepositoryForTests(null);
   resetStudioEnvForTests();
   if (configDir) {
     try {
@@ -96,6 +123,7 @@ afterEach(() => {
     } catch {}
   }
   vi.useRealTimers();
+  vi.unstubAllGlobals();
 });
 
 describe("sogni provider", () => {
@@ -141,41 +169,46 @@ describe("sogni provider", () => {
     expect(created[1].params.disableNSFWFilter).toBe(false);
   });
 
-  it("streams submitted + rendering progress, deduplicated and clamped", async () => {
-    const { client, progressListeners } = fakeClient(
-      new Promise<string[]>((resolve) =>
-        setTimeout(() => resolve(["https://cdn.sogni.ai/a.png"]), 10),
-      ),
-    );
-    setSogniClientForTests(client);
+  it("keeps the studio in sync by polling the project's live state", async () => {
+    vi.useFakeTimers();
+    const completion = new Promise<string[]>(() => {});
+    const project = {
+      waitForCompletion: () => completion,
+      on: () => undefined,
+      status: "queued" as const,
+      queueStatus: "waiting" as const,
+      estimatedStartAt: new Date(Date.now() + 5 * 60_000),
+    };
+    setSogniClientForTests({
+      projects: { create: async () => project, getAvailableModels: async () => [] },
+    });
 
     const ticks: ProviderProgress[] = [];
-    const pending = sogniProvider.generateImage(imageRequest(), imageModel, {
+    sogniProvider.generateVideo(videoRequest(), videoModel, {
       logger,
       onProgress: (progress) => ticks.push(progress),
     });
-    await vi.waitFor(() => expect(progressListeners.length).toBe(1));
 
-    progressListeners[0](37.2);
-    progressListeners[0](37.2); // duplicate percent — dropped
-    progressListeners[0](140); // clamped to 100
-    await pending;
+    await vi.advanceTimersByTimeAsync(2_100); // one readout tick
+    expect(ticks.at(-1)?.stage).toBe("submitted");
+    expect(ticks.at(-1)?.message).toContain("Queued on Sogni AI");
 
-    expect(ticks[0]).toEqual({
-      stage: "submitted",
-      message: "Sogni AI accepted the render — waiting for a free GPU…",
+    // A worker picks the project up: state flips to processing with progress.
+    Object.assign(project, {
+      status: "processing",
+      progress: 45.4,
+      estimatedStartAt: undefined,
+      eta: new Date(Date.now() + 2 * 60_000),
     });
-    expect(ticks).toContainEqual({
-      stage: "rendering",
-      message: "Sogni AI is rendering — 37%",
-      percent: 37,
-    });
-    expect(ticks).toContainEqual({
-      stage: "rendering",
-      message: "Sogni AI is rendering — 100%",
-      percent: 100,
-    });
-    expect(ticks.filter((tick) => tick.message.includes("37%"))).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(2_100);
+    expect(ticks.at(-1)).toMatchObject({ stage: "rendering", percent: 45 });
+    expect(ticks.at(-1)?.message).toContain("45%");
+    expect(ticks.at(-1)?.message).toContain("about 2 min left");
+
+    // Unchanged state is suppressed — no tick spam while nothing moves.
+    const count = ticks.length;
+    await vi.advanceTimersByTimeAsync(2_100);
+    expect(ticks.length).toBe(count);
   });
 
   it("fails loudly and non-retryably when unconfigured", async () => {
@@ -205,15 +238,40 @@ describe("sogni provider", () => {
     expect((error as ProviderError).message).toContain("worker ran out of memory");
   });
 
-  it("surfaces a retryable timeout when the project never completes", async () => {
+  it("detaches a deadline-hit render and recovers it when Sogni finishes", async () => {
     vi.useFakeTimers();
-    const { client } = fakeClient(new Promise<string[]>(() => {}));
-    setSogniClientForTests(client);
+    let resolveCompletion: (urls: string[]) => void = () => {};
+    const completion = new Promise<string[]>((resolve) => {
+      resolveCompletion = resolve;
+    });
+    setSogniClientForTests(fakeClient(completion).client);
 
     const pending = sogniProvider.generateImage(imageRequest(), imageModel, { logger });
-    const assertion = expect(pending).rejects.toMatchObject({ retryable: true });
+    const assertion = expect(pending).rejects.toMatchObject({
+      retryable: true,
+      message: expect.stringContaining("detached"),
+    });
     await vi.advanceTimersByTimeAsync(imageDeadlineMs() + 1);
     await assertion;
+
+    // The abandoned render is registered as detached.
+    const records = listPendingRenders();
+    expect(records).toHaveLength(1);
+    expect(records[0].provider).toBe("sogni");
+    expect(records[0].status).toBe("detached");
+
+    // Sogni finishes anyway: the detached continuation caches the media and
+    // flips the record to recovered for the studio to attach.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(PNG_BYTES, { status: 200 })),
+    );
+    resolveCompletion(["https://cdn.sogni.ai/late.png"]);
+    await vi.advanceTimersByTimeAsync(1);
+    const recovered = listPendingRenders()[0];
+    expect(recovered.status).toBe("recovered");
+    expect(recovered.media?.url).toBe("/api/media?f=fake.png");
+    expect(recovered.media?.mime).toBe("image/png");
   });
 
   it("aborts promptly when the caller cancels", async () => {

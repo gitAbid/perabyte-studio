@@ -109,4 +109,6 @@ export interface ApiError {
   error: string;
   field?: string;
   retryable?: boolean;
+  /** True when the render was detached, not lost — it will be attached later. */
+  pending?: boolean;
 }
