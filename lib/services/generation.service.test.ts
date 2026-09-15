@@ -85,3 +85,61 @@ describe("validateGenerationRequest", () => {
     expect(request.modelId).toBe("apikey-fan:grok-imagine-image-2.0");
   });
 });
+
+describe("validateGenerationRequest — loras", () => {
+  it("keeps well-formed selections in order", () => {
+    const request = validateGenerationRequest({
+      ...baseBody(),
+      loras: [
+        { loraId: "krea2-warm-light", strength: 2 },
+        { loraId: "krea2-realism", strength: -1 },
+      ],
+    });
+    expect(request.loras).toEqual([
+      { loraId: "krea2-warm-light", strength: 2 },
+      { loraId: "krea2-realism", strength: -1 },
+    ]);
+  });
+
+  it("drops malformed entries instead of failing the render", () => {
+    const request = validateGenerationRequest({
+      ...baseBody(),
+      loras: [
+        { loraId: "krea2-warm-light", strength: 2 },
+        null,
+        "nope",
+        { strength: 3 },
+        { loraId: "krea2-realism", strength: "x" },
+      ],
+    });
+    expect(request.loras).toEqual([
+      { loraId: "krea2-warm-light", strength: 2 },
+      { loraId: "krea2-realism", strength: 1 },
+    ]);
+  });
+
+  it("clamps extreme strengths to the hard loader bounds", () => {
+    const request = validateGenerationRequest({
+      ...baseBody(),
+      loras: [{ loraId: "krea2-warm-light", strength: 9000 }],
+    });
+    expect(request.loras[0].strength).toBe(100);
+  });
+
+  it("caps the stack at eight and de-duplicates ids (first position wins)", () => {
+    const request = validateGenerationRequest({
+      ...baseBody(),
+      loras: [
+        ...Array.from({ length: 10 }, (_, i) => ({ loraId: `lora-${i}`, strength: 1 })),
+        { loraId: "lora-0", strength: 5 },
+      ],
+    });
+    expect(request.loras).toHaveLength(8);
+    expect(request.loras[0]).toEqual({ loraId: "lora-0", strength: 1 });
+  });
+
+  it("defaults to an empty list when loras is absent or not an array", () => {
+    expect(validateGenerationRequest(baseBody()).loras).toEqual([]);
+    expect(validateGenerationRequest({ ...baseBody(), loras: "warm" }).loras).toEqual([]);
+  });
+});

@@ -218,3 +218,44 @@ describe("continuity frames", () => {
     expect(toImageParams("krea2_turbo_fp8_scaled", imageRequest()).startingImage).toBeUndefined();
   });
 });
+
+describe("lora adapters", () => {
+  it("splits selections into positionally matched loras/loraStrengths", () => {
+    const params = toImageParams(
+      "krea2_turbo_fp8_scaled",
+      imageRequest({
+        loras: [
+          { loraId: "krea2-detail-enhancer", strength: 2 },
+          { loraId: "krea2-realism", strength: -1.5 },
+        ],
+      }),
+    );
+    expect(params.loras).toEqual(["krea2-detail-enhancer", "krea2-realism"]);
+    expect(params.loraStrengths).toEqual([2, -1.5]);
+  });
+
+  it("slices to Sogni's 8-per-render cap", () => {
+    const twelve = Array.from({ length: 12 }, (_, i) => ({
+      loraId: `lora-${i}`,
+      strength: 1,
+    }));
+    const params = toImageParams("krea2_turbo_fp8_scaled", imageRequest({ loras: twelve }));
+    expect(params.loras).toHaveLength(8);
+    expect(params.loraStrengths).toHaveLength(8);
+  });
+
+  it("omits the fields when no selections ride the request", () => {
+    const params = toImageParams("krea2_turbo_fp8_scaled", imageRequest());
+    expect(params.loras).toBeUndefined();
+    expect(params.loraStrengths).toBeUndefined();
+  });
+
+  it("video params carry them the same way (MiniMax H3 families)", () => {
+    const params = toVideoParams(
+      "minimax-h3-fl2va-fp8_t2v",
+      videoRequest({ loras: [{ loraId: "h3-better-motion", strength: 0.6 }] }),
+    );
+    expect(params.loras).toEqual(["h3-better-motion"]);
+    expect(params.loraStrengths).toEqual([0.6]);
+  });
+});

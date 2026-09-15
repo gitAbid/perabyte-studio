@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { GenerationKind } from "@/lib/constants";
 import type { ModelVideoLimits } from "@/lib/domain/models";
+import type { LoraOption } from "@/lib/providers/sogni/lora-catalog";
 import { useCatalogVersion } from "@/lib/repositories/settings.repository";
 
 /**
@@ -13,6 +14,8 @@ import { useCatalogVersion } from "@/lib/repositories/settings.repository";
 export interface ModelOption {
   id: string;
   kind: "image" | "video";
+  /** Raw provider model id (e.g. `krea2_turbo_fp8_scaled`). */
+  model: string;
   label: string;
   hint?: string;
   providerId: string;
@@ -27,16 +30,24 @@ export interface ModelOption {
   i2vModelId?: string;
   /** Video render limits — UI option pickers constrain to these. */
   videoLimits?: ModelVideoLimits;
+  /** True when the provider exposes LoRA adapters for this model. */
+  loraCapable?: boolean;
 }
 
 export interface ModelCatalog {
   models: ModelOption[];
   defaultModelId: string;
+  /** Sogni LoRA catalog entries (all models; join client-side by modelIds). */
+  loras: LoraOption[];
+  /** Max LoRAs stackable on one render (server-advertised, 8 today). */
+  loraMaxPerRequest: number;
 }
 
 interface CatalogState {
   models: ModelOption[];
   defaultModelId: string | null;
+  loras: LoraOption[];
+  loraMaxPerRequest: number;
   loading: boolean;
 }
 
@@ -53,7 +64,13 @@ function fetchCatalog(kind: GenerationKind, frame?: "start" | "end"): Promise<Mo
     pending = fetch(`/api/models?kind=${kind}${frame ? `&frame=${frame}` : ""}`).then(
       async (response) => {
         if (!response.ok) throw new Error(`catalog ${response.status}`);
-        return (await response.json()) as ModelCatalog;
+        const body = (await response.json()) as Partial<ModelCatalog>;
+        return {
+          models: body.models ?? [],
+          defaultModelId: body.defaultModelId ?? "",
+          loras: body.loras ?? [],
+          loraMaxPerRequest: body.loraMaxPerRequest ?? 8,
+        } satisfies ModelCatalog;
       },
     );
     pending.catch(() => catalogCache.delete(key));
@@ -76,6 +93,8 @@ export function useModelCatalog(
   const [state, setState] = useState<CatalogState>({
     models: [],
     defaultModelId: null,
+    loras: [],
+    loraMaxPerRequest: 8,
     loading: true,
   });
 
@@ -88,13 +107,21 @@ export function useModelCatalog(
           setState({
             models: catalog.models,
             defaultModelId: catalog.defaultModelId,
+            loras: catalog.loras,
+            loraMaxPerRequest: catalog.loraMaxPerRequest,
             loading: false,
           });
         }
       })
       .catch(() => {
         if (active) {
-          setState({ models: [], defaultModelId: null, loading: false });
+          setState({
+            models: [],
+            defaultModelId: null,
+            loras: [],
+            loraMaxPerRequest: 8,
+            loading: false,
+          });
         }
       });
     return () => {

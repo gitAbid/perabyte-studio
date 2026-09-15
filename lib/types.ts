@@ -14,6 +14,16 @@ export type JobStatus =
   | "failed"
   | "canceled";
 
+/**
+ * One attached LoRA adapter. `strength` is a bipolar slider value — negative
+ * applies the inverse effect, 0 disables — bounded by that LoRA's own
+ * `ui.min`/`ui.max` in the provider catalog.
+ */
+export interface LoraSelection {
+  loraId: string;
+  strength: number;
+}
+
 export interface GenerationSettings {
   kind: GenerationKind;
   aspect: AspectKey;
@@ -29,6 +39,9 @@ export interface GenerationSettings {
   safe?: boolean;
   /** Selected model id (`<provider>:<model>`). Falls back to the kind's default. */
   modelId?: string;
+  /** Sogni LoRA adapters (order = application order). Ignored by models
+   * without LoRA support; story scenes inherit them with the settings. */
+  loras?: LoraSelection[];
 }
 
 export interface GeneratedMedia {

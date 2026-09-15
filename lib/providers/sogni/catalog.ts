@@ -2,6 +2,7 @@ import type { ModelDescriptor, ModelFrameInput } from "@/lib/domain/models";
 import { buildModelId } from "@/lib/domain/models";
 import { getStudioEnv } from "@/lib/config/env";
 import type { SogniAvailableModel, SogniClient } from "@/lib/providers/sogni/client";
+import { fetchLoraCatalog } from "@/lib/providers/sogni/lora-catalog";
 import {
   PROVIDER_ID,
   SOGNI_IMAGE_MODELS,
@@ -162,13 +163,19 @@ export function warmSogniCatalog(boundedMs?: number): Promise<void> {
 async function refresh(): Promise<void> {
   try {
     const fetcher = catalogFetcher ?? defaultFetcher;
-    const models = await fetcher();
+    // LoRA catalog rides the same refresh (its own 5-min cache); a failure
+    // just leaves models unflagged — the picker hides, renders unaffected.
+    const [models, loraCatalog] = await Promise.all([
+      fetcher(),
+      fetchLoraCatalog().catch(() => null),
+    ]);
     if (!models.length) return; // Don't blank the picker on an empty answer.
+    const loraModels = new Set(loraCatalog?.models ?? []);
     cache = {
       catalog: {
-        images: toDescriptors(models, "image"),
-        videos: toDescriptors(models, "video"),
-        hidden: buildHiddenModels(models),
+        images: toDescriptors(models, "image", loraModels),
+        videos: toDescriptors(models, "video", loraModels),
+        hidden: buildHiddenModels(models, loraModels),
       },
       fetchedAt: Date.now(),
     };
@@ -180,6 +187,7 @@ async function refresh(): Promise<void> {
 export function toDescriptors(
   models: SogniAvailableModel[],
   kind: "image" | "video",
+  loraModels: Set<string> = new Set(),
 ): ModelDescriptor[] {
   const dynamic = models
     .filter(
@@ -207,6 +215,7 @@ export function toDescriptors(
         uncensored: curated ? curated.uncensored : supportsUncensored(model.id),
         ...(capability ? { frameInput: capability } : {}),
         ...(sibling && siblingExists ? { i2vModelId: buildModelId(PROVIDER_ID, sibling) } : {}),
+        ...(loraModels.has(model.id) ? { loraCapable: true } : {}),
       } satisfies ModelDescriptor;
     });
 
@@ -226,7 +235,10 @@ export function toDescriptors(
 
 /** Registered-but-unpickable frame models: i2v siblings and flf2v keyframe
  * variants pulled from the live fetch so the service can swap to them. */
-function buildHiddenModels(models: SogniAvailableModel[]): ModelDescriptor[] {
+function buildHiddenModels(
+  models: SogniAvailableModel[],
+  loraModels: Set<string> = new Set(),
+): ModelDescriptor[] {
   const built: ModelDescriptor[] = [];
   for (const model of models) {
     if (model.media !== "video" || model.workerCount <= 0) continue;
@@ -246,6 +258,7 @@ function buildHiddenModels(models: SogniAvailableModel[]): ModelDescriptor[] {
       stylesSupported: supportsStyles(model.id),
       uncensored: supportsUncensored(model.id),
       frameInput: capability,
+      ...(loraModels.has(model.id) ? { loraCapable: true } : {}),
     });
   }
   return built;
