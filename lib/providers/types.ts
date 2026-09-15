@@ -51,6 +51,9 @@ export interface ImageProvider {
   readonly label: string;
   isConfigured(): boolean;
   listImageModels(): ModelDescriptor[];
+  /** Models that resolve but never appear in the picker — i2v siblings and
+   * flf2v keyframe models auto-selected for frame-chained renders. */
+  listHiddenModels?(): ModelDescriptor[];
   generateImage(
     request: NormalizedGenerationRequest,
     model: ModelDescriptor,
@@ -63,6 +66,8 @@ export interface VideoProvider {
   readonly label: string;
   isConfigured(): boolean;
   listVideoModels(): ModelDescriptor[];
+  /** Models that resolve but never appear in the picker — see ImageProvider. */
+  listHiddenModels?(): ModelDescriptor[];
   generateVideo(
     request: NormalizedGenerationRequest,
     model: ModelDescriptor,

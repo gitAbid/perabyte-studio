@@ -136,4 +136,23 @@ describe("provider registry", () => {
     );
     expect(registry.findAnywhere("nope:model")).toBeNull();
   });
+
+  it("resolves hidden models without listing them", () => {
+    const hidden: ModelDescriptor = {
+      id: "sogni:wan_v2.2-14b-fp8_i2v_lightx2v",
+      providerId: "sogni",
+      kind: "video",
+      model: "wan_v2.2-14b-fp8_i2v_lightx2v",
+      label: "WAN 2.2 i2v",
+      frameInput: { start: true, end: false },
+    };
+    const provider = fakeProvider({ id: "sogni", configured: true });
+    (provider as { listHiddenModels: () => ModelDescriptor[] }).listHiddenModels = () => [hidden];
+    const registry = createRegistry([provider]);
+
+    expect(registry.listModels("video")).toEqual([]);
+    expect(registry.listAllModels("video").map((m) => m.id)).toEqual([hidden.id]);
+    expect(registry.findAnywhere(hidden.id)?.model.model).toBe(hidden.model);
+    expect(registry.resolve(hidden.id)?.model.model).toBe(hidden.model);
+  });
 });

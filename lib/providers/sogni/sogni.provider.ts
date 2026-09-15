@@ -36,6 +36,8 @@ export const sogniProvider: ImageProvider & VideoProvider = {
   // first refresh lands) — see catalog.ts.
   listImageModels: () => getSogniCatalog().images,
   listVideoModels: () => getSogniCatalog().videos,
+  // i2v siblings + flf2v keyframe models: resolvable, never in the picker.
+  listHiddenModels: () => getSogniCatalog().hidden,
 
   async generateImage(
     request: NormalizedGenerationRequest,

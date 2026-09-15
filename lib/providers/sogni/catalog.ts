@@ -1,4 +1,4 @@
-import type { ModelDescriptor } from "@/lib/domain/models";
+import type { ModelDescriptor, ModelFrameInput } from "@/lib/domain/models";
 import { buildModelId } from "@/lib/domain/models";
 import { getStudioEnv } from "@/lib/config/env";
 import type { SogniAvailableModel, SogniClient } from "@/lib/providers/sogni/client";
@@ -57,6 +57,24 @@ function supportsUncensored(modelId: string): boolean {
   return !SENSORLESS_ID_PATTERNS.some((pattern) => pattern.test(modelId));
 }
 
+/** Frame conditioning by model family (verified against the live catalog —
+ * see docs/sogni-api-guide.md §5). Undefined = prompt-only. */
+export function frameCapability(modelId: string): ModelFrameInput | undefined {
+  const id = modelId.toLowerCase();
+  if (id.includes("_flf2v")) return { start: true, end: true };
+  if (id.includes("_i2v")) {
+    return { start: true, end: id.startsWith("ltx23-") || id.startsWith("minimax-h3") };
+  }
+  if (id.startsWith("seedance-2-5")) return { start: true, end: true };
+  if (id.startsWith("seedance-2-0")) return { start: true, end: false };
+  return undefined;
+}
+
+/** The i2v sibling of a t2v workflow model, or null. */
+export function i2vSiblingId(modelId: string): string | null {
+  return modelId.includes("_t2v") ? modelId.replace("_t2v", "_i2v") : null;
+}
+
 /** Curated entries keep their hand-written labels, hints and order. */
 const CURATED = new Map(
   [...SOGNI_IMAGE_MODELS, ...SOGNI_VIDEO_MODELS].map((model) => [model.model, model]),
@@ -65,12 +83,37 @@ const CURATED = new Map(
 export interface SogniCatalog {
   images: ModelDescriptor[];
   videos: ModelDescriptor[];
+  /** Registered but unpickable: i2v siblings + flf2v keyframe models. */
+  hidden: ModelDescriptor[];
 }
 
 const CATALOG_TTL_MS = 10 * 60_000;
 
 let cache: { catalog: SogniCatalog; fetchedAt: number } | null = null;
 let inFlight: Promise<void> | null = null;
+
+/** Cold-start hidden set (ids verified against the live catalog 2026-09-15 —
+ * docs/sogni-api-guide.md §5) so frame swaps work before the first refresh. */
+const COLD_START_HIDDEN: ModelDescriptor[] = [
+  {
+    id: buildModelId(PROVIDER_ID, "wan_v2.2-14b-fp8_i2v_lightx2v"),
+    providerId: PROVIDER_ID,
+    kind: "video",
+    model: "wan_v2.2-14b-fp8_i2v_lightx2v",
+    label: "WAN 2.2 i2v",
+    hint: "Sogni · start frame",
+    frameInput: { start: true, end: false },
+  },
+  {
+    id: buildModelId(PROVIDER_ID, "ltx25-22b-int8_i2v_distilled"),
+    providerId: PROVIDER_ID,
+    kind: "video",
+    model: "ltx25-22b-int8_i2v_distilled",
+    label: "LTX 2.5 i2v",
+    hint: "Sogni · start frame",
+    frameInput: { start: true, end: false },
+  },
+];
 
 /** Swap the catalog source in tests; `null` restores the real client. */
 export function setCatalogFetcherForTests(
@@ -90,7 +133,7 @@ async function defaultFetcher(): Promise<SogniAvailableModel[]> {
 /** The catalog the provider lists right now — never blocks on the network. */
 export function getSogniCatalog(): SogniCatalog {
   if (cache) return cache.catalog;
-  return { images: SOGNI_IMAGE_MODELS, videos: SOGNI_VIDEO_MODELS };
+  return { images: SOGNI_IMAGE_MODELS, videos: SOGNI_VIDEO_MODELS, hidden: COLD_START_HIDDEN };
 }
 
 /**
@@ -121,6 +164,7 @@ async function refresh(): Promise<void> {
       catalog: {
         images: toDescriptors(models, "image"),
         videos: toDescriptors(models, "video"),
+        hidden: buildHiddenModels(models),
       },
       fetchedAt: Date.now(),
     };
@@ -142,6 +186,12 @@ export function toDescriptors(
     )
     .map((model) => {
       const curated = CURATED.get(model.id);
+      // Frame capability: video families declare their own rules; every Sogni
+      // image model takes a startingImage (img2img).
+      const capability =
+        kind === "video" ? frameCapability(model.id) : { start: true, end: false };
+      const sibling = kind === "video" ? i2vSiblingId(model.id) : null;
+      const siblingExists = sibling !== null && models.some((m) => m.id === sibling);
       return {
         id: buildModelId(PROVIDER_ID, model.id),
         providerId: PROVIDER_ID,
@@ -151,6 +201,8 @@ export function toDescriptors(
         hint: curated?.hint ?? speedHint(model.id),
         stylesSupported: curated ? curated.stylesSupported : supportsStyles(model.id),
         uncensored: curated ? curated.uncensored : supportsUncensored(model.id),
+        ...(capability ? { frameInput: capability } : {}),
+        ...(sibling && siblingExists ? { i2vModelId: buildModelId(PROVIDER_ID, sibling) } : {}),
       } satisfies ModelDescriptor;
     });
 
@@ -166,6 +218,33 @@ export function toDescriptors(
     if (rankB !== undefined) return 1;
     return a.label.localeCompare(b.label);
   });
+}
+
+/** Registered-but-unpickable frame models: i2v siblings and flf2v keyframe
+ * variants pulled from the live fetch so the service can swap to them. */
+function buildHiddenModels(models: SogniAvailableModel[]): ModelDescriptor[] {
+  const built: ModelDescriptor[] = [];
+  for (const model of models) {
+    if (model.media !== "video" || model.workerCount <= 0) continue;
+    const id = model.id.toLowerCase();
+    const isI2v = id.includes("_i2v");
+    const isFlf2v = id.includes("_flf2v");
+    if (!isI2v && !isFlf2v) continue; // picker models are built by toDescriptors
+    const capability = frameCapability(model.id);
+    if (!capability) continue;
+    built.push({
+      id: buildModelId(PROVIDER_ID, model.id),
+      providerId: PROVIDER_ID,
+      kind: "video",
+      model: model.id,
+      label: model.name?.trim() || prettifyModelId(model.id),
+      hint: isFlf2v ? "Sogni · start+end frame" : "Sogni · start frame",
+      stylesSupported: supportsStyles(model.id),
+      uncensored: supportsUncensored(model.id),
+      frameInput: capability,
+    });
+  }
+  return built;
 }
 
 function isExcluded(modelId: string): boolean {

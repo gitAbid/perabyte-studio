@@ -45,6 +45,7 @@ function fakeImageProvider(artifact: GeneratedArtifact): ProviderRegistry {
   };
   return {
     listModels: (kind) => (kind === "image" ? [model] : []),
+    listAllModels: (kind) => (kind === "image" ? [model] : []),
     defaultModel: (kind) => (kind === "image" ? model : ({} as ModelDescriptor)),
     resolve: (id) => (id === model.id ? { provider, model } : null),
     findAnywhere: (id) => (id === model.id ? { provider, model } : null),
