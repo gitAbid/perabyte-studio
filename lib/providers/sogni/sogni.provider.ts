@@ -44,9 +44,8 @@ export const sogniProvider: ImageProvider & VideoProvider = {
     model: ModelDescriptor,
     ctx: ProviderContext,
   ): Promise<GeneratedArtifact[]> {
-    const completion = await createProject(request, model, ctx, IMAGE_DEADLINE_MS, "image");
-    const urls = await completion;
-    return toArtifacts(urls, "png", request);
+    const { urls, lastFrameUrl } = await createProject(request, model, ctx, IMAGE_DEADLINE_MS, "image");
+    return toArtifacts(urls, "png", request, lastFrameUrl);
   },
 
   async generateVideo(
@@ -54,9 +53,8 @@ export const sogniProvider: ImageProvider & VideoProvider = {
     model: ModelDescriptor,
     ctx: ProviderContext,
   ): Promise<GeneratedArtifact[]> {
-    const completion = await createProject(request, model, ctx, VIDEO_DEADLINE_MS, "video");
-    const urls = await completion;
-    return toArtifacts(urls, "mp4", request);
+    const { urls, lastFrameUrl } = await createProject(request, model, ctx, VIDEO_DEADLINE_MS, "video");
+    return toArtifacts(urls, "mp4", request, lastFrameUrl);
   },
 };
 
@@ -73,7 +71,7 @@ async function createProject(
   ctx: ProviderContext,
   deadlineMs: number,
   kind: "image" | "video",
-): Promise<string[]> {
+): Promise<{ urls: string[]; lastFrameUrl: string | null }> {
   const env = getStudioEnv();
   if (!env.sogniApiKey) {
     throw new ProviderError(
@@ -91,6 +89,12 @@ async function createProject(
 
   const started = Date.now();
   const project = await client.projects.create(params);
+  // Seedance 2.5 (returnLastFrame) exports the exact final frame per job —
+  // capture it as soon as any job completes so the story chain can use it.
+  let lastFrameUrl: string | null = null;
+  project.on("jobCompleted", (job) => {
+    if (job.lastFrameUrl) lastFrameUrl = job.lastFrameUrl;
+  });
   log.debug("sogni project created", { count: request.count });
 
   let lastPercent = -1;
@@ -112,7 +116,7 @@ async function createProject(
   try {
     const urls = await withDeadline(project.waitForCompletion(), deadlineMs, ctx.signal);
     log.info("sogni project completed", { elapsedMs: Date.now() - started, urls: urls.length });
-    return urls;
+    return { urls, lastFrameUrl };
   } catch (error) {
     if (error instanceof ProviderError) throw error;
     // Caller cancellation propagates untouched so the route can unwind.
@@ -178,6 +182,7 @@ function toArtifacts(
   urls: string[],
   ext: string,
   request: NormalizedGenerationRequest,
+  companionFrameUrl: string | null = null,
 ): GeneratedArtifact[] {
   if (!urls.length) {
     throw new ProviderError("The provider returned no media for this prompt.", {
@@ -190,5 +195,6 @@ function toArtifacts(
     url,
     ext,
     seed: request.count === 1 ? baseSeed : baseSeed + index,
+    ...(index === 0 && companionFrameUrl ? { companionFrameUrl } : {}),
   }));
 }

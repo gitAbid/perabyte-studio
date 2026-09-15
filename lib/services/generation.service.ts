@@ -249,6 +249,29 @@ async function materializeArtifact(
   }
 }
 
+/**
+ * Fetch + cache a provider-exported companion image (the exact final frame,
+ * Seedance 2.5 `returnLastFrame`). Failure never fails the clip — chaining
+ * falls back to client-side frame extraction.
+ */
+async function materializeCompanionFrame(
+  artifact: GeneratedArtifact,
+  log: Logger,
+): Promise<string | undefined> {
+  const url = artifact.companionFrameUrl;
+  if (!url) return undefined;
+  try {
+    const response = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(60_000) });
+    if (!response.ok) throw new Error(`status ${response.status}`);
+    const bytes = Buffer.from(await response.arrayBuffer());
+    const stored = await getMediaRepository().put(bytes);
+    return `/api/media?f=${stored.ref}`;
+  } catch (error) {
+    log.warn("companion frame could not be cached", { error });
+    return undefined;
+  }
+}
+
 /** Persist artifacts and convert them to the client-facing media contract. */
 async function persistArtifacts(
   artifacts: GeneratedArtifact[],
@@ -262,6 +285,7 @@ async function persistArtifacts(
   return Promise.all(
     artifacts.map(async (artifact, index) => {
       const materialized = await materializeArtifact(artifact, log);
+      const endFrameUrl = await materializeCompanionFrame(materialized, log);
       if (materialized.bytes) {
         const stored = await repository.put(materialized.bytes, materialized.ext);
         return {
@@ -271,6 +295,7 @@ async function persistArtifacts(
           height,
           seed: materialized.seed,
           mime: stored.contentType,
+          ...(endFrameUrl ? { endFrameUrl } : {}),
         } satisfies GeneratedMedia;
       }
       // URL-only artifacts (Pollinations) keep their deterministic provider
@@ -282,6 +307,7 @@ async function persistArtifacts(
         height,
         seed: materialized.seed,
         mime: mimeForExt(materialized.ext),
+        ...(endFrameUrl ? { endFrameUrl } : {}),
       } satisfies GeneratedMedia;
     }),
   );

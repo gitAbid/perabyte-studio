@@ -47,6 +47,9 @@ export interface GeneratedArtifact {
   /** Provider accepted the request but dropped/refused the continuity frame;
    * surfaced as `frameUsed: false` so the UI can degrade gracefully. */
   frameDropped?: boolean;
+  /** Provider-exported companion image (e.g. Sogni's exact last frame);
+   * a hosted URL the service materializes into the media cache. */
+  companionFrameUrl?: string | null;
 }
 
 export interface ImageProvider {

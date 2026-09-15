@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { NormalizedGenerationRequest } from "@/lib/domain/models";
+import type { FrameImage, NormalizedGenerationRequest } from "@/lib/domain/models";
 import {
   PROVIDER_ID,
   SOGNI_IMAGE_MODELS,
@@ -130,5 +130,43 @@ describe("sogni request maps", () => {
       expect(toVideoParams(wan, videoRequest({ aspect: "4:5" })).ratio).toBe("3:4");
       expect(toVideoParams(wan, videoRequest({ aspect: "3:2" })).ratio).toBe("4:3");
     });
+  });
+});
+
+describe("continuity frames", () => {
+  const FRAME: FrameImage = { bytes: Buffer.from("frame-bytes"), contentType: "image/png" };
+
+  it("video params carry referenceImage and referenceImageEnd", () => {
+    const params = toVideoParams("wan_v2.2-14b-fp8_i2v_lightx2v", videoRequest({
+      startImage: FRAME,
+      endImage: FRAME,
+    }));
+    expect(params.referenceImage).toBe(FRAME.bytes);
+    expect(params.referenceImageEnd).toBe(FRAME.bytes);
+  });
+
+  it("video params omit frames when absent", () => {
+    const params = toVideoParams("wan_v2.2-14b-fp8_t2v_lightx2v", videoRequest());
+    expect(params.referenceImage).toBeUndefined();
+    expect(params.referenceImageEnd).toBeUndefined();
+    expect(params.returnLastFrame).toBeUndefined();
+  });
+
+  it("seedance 2.5 asks for the exact last frame", () => {
+    const params = toVideoParams("seedance-2-5", videoRequest());
+    expect(params.returnLastFrame).toBe(true);
+  });
+
+  it("other models never set returnLastFrame", () => {
+    expect(toVideoParams("ltx25-22b-int8_i2v_distilled", videoRequest()).returnLastFrame).toBeUndefined();
+  });
+
+  it("image params carry startingImage", () => {
+    const params = toImageParams("krea2_turbo_fp8_scaled", imageRequest({ startImage: FRAME }));
+    expect(params.startingImage).toBe(FRAME.bytes);
+  });
+
+  it("image params omit startingImage when absent", () => {
+    expect(toImageParams("krea2_turbo_fp8_scaled", imageRequest()).startingImage).toBeUndefined();
   });
 });
