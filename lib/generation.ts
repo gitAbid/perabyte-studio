@@ -23,6 +23,12 @@ export interface GenerateInput {
   /** Media-cache refs for continuity frames (story mode). */
   startImageRef?: string;
   endImageRef?: string;
+  /**
+   * Opaque association echoed back on detached-render recovery — the story
+   * runner tags scenes `s_<story>:<sceneId>` so recovered media can be
+   * attached to the right tile.
+   */
+  clientTag?: string;
   signal?: AbortSignal;
 }
 
@@ -45,6 +51,7 @@ export async function requestGeneration(
     uncensored,
     startImageRef,
     endImageRef,
+    clientTag,
     signal,
     onProgress,
   }: GenerateInput & { onProgress?: (progress: GenerationProgress) => void },
@@ -73,6 +80,7 @@ export async function requestGeneration(
         uncensored: uncensored ?? false,
         ...(startImageRef ? { startImageRef } : {}),
         ...(endImageRef ? { endImageRef } : {}),
+        ...(clientTag ? { clientTag } : {}),
       }),
       signal,
     });

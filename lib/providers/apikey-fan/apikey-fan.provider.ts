@@ -10,6 +10,12 @@ import type { Logger } from "@/lib/logging/logger";
 import { getStudioEnv } from "@/lib/config/env";
 import { randomSeed } from "@/lib/renderer";
 import { isPlausibleMp4 } from "@/lib/media/mp4";
+import { getMediaRepository } from "@/lib/repositories/media.repository";
+import {
+  markRenderFailed,
+  markRenderRecovered,
+  recordDetachedRender,
+} from "@/lib/providers/detached-renders";
 import { createApiKeyFanClient } from "@/lib/providers/apikey-fan/client";
 import {
   APIKEY_FAN_IMAGE_MODELS,
@@ -205,7 +211,11 @@ export const apiKeyFanProvider: ImageProvider & VideoProvider = {
         });
       }
 
-      const done = await pollVideo(client, requestId, log, ctx.signal, ctx.onProgress);
+      const done = await pollVideo(client, requestId, log, ctx.signal, ctx.onProgress, {
+        request,
+        model,
+        ctx,
+      });
       log.info("video job completed", { requestId, index, total: request.count });
 
       ctx.onProgress?.({
@@ -271,8 +281,9 @@ async function pollVideo(
   client: ReturnType<typeof createApiKeyFanClient>,
   requestId: string,
   log: Logger,
-  signal?: AbortSignal,
-  onProgress?: (progress: { stage: "rendering"; message: string }) => void,
+  signal: AbortSignal | undefined,
+  onProgress: ((progress: { stage: "rendering"; message: string }) => void) | undefined,
+  meta: { request: NormalizedGenerationRequest; model: ModelDescriptor; ctx: ProviderContext },
 ): Promise<{ video: { url: string } }> {
   const deadline = Date.now() + pollDeadlineMs();
   const startedAt = Date.now();
@@ -309,10 +320,81 @@ async function pollVideo(
       );
     }
   }
+  detachApiKeyFanVideo({ client, requestId, log, meta });
   throw new ProviderError(
-    "The video render hit its time limit — raise it in Settings → Render timeouts, or try a shorter duration.",
+    "The relay is still rendering this video — we detached it, and it will be attached automatically when it finishes. You can also raise the limit in Settings → Render timeouts.",
     { retryable: true },
   );
+}
+
+const DETACHED_POLL_INTERVAL_MS = 15_000;
+/** Salvage window — matches the relay's ~24 h result retention. */
+const DETACHED_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Keeps polling a relay job that outlived its request: when it finishes, the
+ * mp4 is downloaded into the media cache and the pending-renders record is
+ * marked recovered so the studio UI can attach it (story scene or History).
+ */
+function detachApiKeyFanVideo(input: {
+  client: ReturnType<typeof createApiKeyFanClient>;
+  requestId: string;
+  log: Logger;
+  meta: { request: NormalizedGenerationRequest; model: ModelDescriptor; ctx: ProviderContext };
+}): void {
+  const { client, requestId, log, meta } = input;
+  const record = recordDetachedRender({
+    provider: PROVIDER_ID,
+    kind: "video",
+    modelId: meta.model.id,
+    prompt: meta.request.prompt,
+    clientTag: meta.ctx.clientTag,
+  });
+  const apiKey = getStudioEnv().apiKeyFanApiKey ?? "";
+  const seed = meta.request.seed ?? randomSeed();
+  log.warn("poll deadline hit — detaching the still-running relay job", {
+    requestId,
+    pendingId: record.id,
+  });
+
+  void (async () => {
+    const salvageDeadline = Date.now() + DETACHED_MAX_AGE_MS;
+    while (Date.now() < salvageDeadline) {
+      await sleep(DETACHED_POLL_INTERVAL_MS);
+      let status: VideoStatusResponse;
+      try {
+        status = await client.getJson<VideoStatusResponse>(
+          `/videos/${encodeURIComponent(requestId)}`,
+          { logger: log, timeoutMs: 20_000 },
+        );
+      } catch {
+        continue; // transient relay hiccup — keep polling
+      }
+
+      if (status.status === "done" && status.video?.url) {
+        const url = new URL(status.video.url, getStudioEnv().apiKeyFanBaseUrl).toString();
+        const bytes = await fetchVideoBytes(url, apiKey, undefined);
+        if (bytes && isPlausibleMp4(bytes)) {
+          const stored = await getMediaRepository().put(bytes, "mp4");
+          markRenderRecovered(record.id, {
+            url: `/api/media?f=${stored.ref}`,
+            mime: stored.contentType,
+          });
+          log.info("detached relay render recovered", { pendingId: record.id, requestId });
+        } else {
+          markRenderFailed(record.id, "finished video could not be retrieved");
+        }
+        return;
+      }
+      if (status.status === "failed" || status.status === "expired") {
+        markRenderFailed(record.id, `relay job ${status.status}`);
+        return;
+      }
+    }
+    markRenderFailed(record.id, "salvage window expired");
+  })().catch((error) => {
+    markRenderFailed(record.id, (error as Error)?.message ?? "salvage failed");
+  });
 }
 
 /**

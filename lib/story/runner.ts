@@ -28,6 +28,8 @@ export interface StoryRunnerDeps {
     startImageRef?: string;
     endImageRef?: string;
     signal?: AbortSignal;
+    /** Associates the render with this scene for detached-render recovery. */
+    clientTag?: string;
     /** Live provider ticks for the UI (transient — never persisted). */
     onProgress?: (progress: GenerationProgress) => void;
   }): Promise<GenerationResponse>;
@@ -199,6 +201,9 @@ export function createStoryRunner(deps: StoryRunnerDeps) {
         prompt: composeSceneWithCharacter(scene.prompt, character?.spec ?? null, uncensored),
         ...(startRef ? { startImageRef: startRef } : {}),
         ...(scene.endImageRef ? { endImageRef: scene.endImageRef } : {}),
+        // Lets a detached render (provider outlived our timeout) be attached
+        // back to this exact scene when it finishes.
+        clientTag: `${storyId}:${scene.id}`,
         signal: controller.signal,
         onProgress: (progress) => hooks.onSceneProgress?.(scene.id, progress),
       });
@@ -340,10 +345,56 @@ export function createStoryRunner(deps: StoryRunnerDeps) {
       if (hasInFlight(storyId)) schedule(storyId);
     },
 
+    /** Attach a recovered detached render (a scene whose provider render
+     * finished after our timeout) to its scene: mark completed, derive the
+     * chaining end frame, and let the queue advance. No-op when the scene is
+     * already completed or gone — the caller then drops the record. */
+    async absorbRecovered(
+      storyId: string,
+      sceneId: string,
+      media: { url: string; mime?: string },
+    ): Promise<boolean> {
+      const story = deps.getStory(storyId);
+      const scene = story?.scenes?.find((s) => s.id === sceneId);
+      if (!story || !scene || scene.status === "completed") return false;
+
+      // Same preference order as a live render: provider end-frame export,
+      // then the image itself, then canvas extraction of the video's frame.
+      let endFrameRef: string | undefined;
+      try {
+        endFrameRef = await deriveEndFrameRef(
+          { media: [{ url: media.url }] } as GenerationResponse,
+          scene,
+        );
+      } catch {
+        endFrameRef = undefined; // chaining degrades to prompt-only, as elsewhere
+      }
+
+      patch(storyId, sceneId, {
+        url: media.url,
+        mime: media.mime,
+        status: "completed",
+        error: undefined,
+        ...(endFrameRef ? { endFrameRef } : {}),
+      });
+      deps.onNotice?.(
+        "A scene that kept rendering on the provider has finished — attached.",
+        "info",
+      );
+      hooks.onSceneSettled?.(sceneId);
+      // The page poller may call this without a prior start() in this session
+      // (fresh reload) — bootstrap the entry so the chain can advance. Cancel
+      // and failed scenes stay put; only queued successors run.
+      if (!active.has(storyId)) {
+        active.set(storyId, { controllers: new Map(), canceled: new Set() });
+      }
+      schedule(storyId);
+      return true;
+    },
+
     /** Boot-time resume: flip orphaned generating scenes back to queued, then
      * resume stories that were mid-run when the tab closed. */
-    rehydrate(storyIds: string[]) {
-      for (const id of storyIds) {
+    rehydrate(storyIds: string[]) {      for (const id of storyIds) {
         const story = deps.getStory(id);
         if (!story?.scenes?.length) continue;
         const orphaned = story.scenes.some((s) => s.status === "generating");

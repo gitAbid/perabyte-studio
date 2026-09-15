@@ -11,11 +11,29 @@ import {
   setProviderConfigPathForTests,
   updateProviderConfig,
 } from "@/lib/repositories/provider-config.repository";
+import {
+  listPendingRenders,
+  resetPendingRendersForTests,
+  setPendingRendersPathForTests,
+} from "@/lib/repositories/pending-renders.repository";
+import {
+  setMediaRepositoryForTests,
+  type MediaRepository,
+} from "@/lib/repositories/media.repository";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 let configDir = "";
+
+const mediaFake: MediaRepository = {
+  put: async (bytes, ext) => ({
+    ref: `fake.${ext ?? "bin"}`,
+    contentType: ext === "mp4" ? "video/mp4" : "image/png",
+    bytes,
+  }),
+  get: async () => null,
+};
 
 const PNG_BYTES = Buffer.from([
   0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13,
@@ -71,6 +89,9 @@ beforeEach(() => {
   configDir = mkdtempSync(join(tmpdir(), "apikey-fan-provider-test-"));
   setProviderConfigPathForTests(join(configDir, "settings.json"));
   resetProviderConfigForTests();
+  setPendingRendersPathForTests(join(configDir, "pending.json"));
+  resetPendingRendersForTests();
+  setMediaRepositoryForTests(mediaFake);
   process.env.APIKEY_FAN_API_KEY = "sk-test-key";
   resetStudioEnvForTests();
 });
@@ -79,12 +100,16 @@ afterEach(() => {
   delete process.env.APIKEY_FAN_API_KEY;
   setProviderConfigPathForTests(null);
   resetProviderConfigForTests();
+  setPendingRendersPathForTests(null);
+  resetPendingRendersForTests();
+  setMediaRepositoryForTests(null);
   resetStudioEnvForTests();
   if (configDir) {
     try {
       rmSync(configDir, { recursive: true, force: true });
     } catch {}
   }
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
@@ -98,6 +123,58 @@ describe("apikey-fan provider", () => {
     updateProviderConfig({ renderTimeouts: { video: 120 } });
     resetStudioEnvForTests();
     expect(pollDeadlineMs()).toBe(60_000);
+  });
+
+  it("detaches a deadline-hit relay job and recovers the finished video", async () => {
+    vi.useFakeTimers();
+    // 30 s video timeout → 30 s floored poll deadline; 3 s poll interval.
+    updateProviderConfig({ renderTimeouts: { video: 30 } });
+    resetStudioEnvForTests();
+
+    let jobState = "processing";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request) => {
+        const url = String(input);
+        if (url.endsWith("/videos/generations")) {
+          return new Response(JSON.stringify({ request_id: "job_late" }), { status: 200 });
+        }
+        if (url.includes("/videos/job_late/content")) {
+          return new Response(MP4_BYTES, { status: 200 });
+        }
+        if (url.endsWith("/videos/job_late")) {
+          return new Response(
+            JSON.stringify(
+              jobState === "done"
+                ? { status: "done", video: { url: "/v1/videos/job_late/content" } }
+                : { status: jobState },
+            ),
+            { status: 200 },
+          );
+        }
+        return new Response("not found", { status: 404 });
+      }),
+    );
+
+    const pending = apiKeyFanProvider.generateVideo(videoRequest(1), videoModel, { logger });
+    const assertion = expect(pending).rejects.toMatchObject({
+      retryable: true,
+      message: expect.stringContaining("detached"),
+    });
+    await vi.advanceTimersByTimeAsync(31_000);
+    await assertion;
+
+    // The abandoned job is registered as detached.
+    expect(listPendingRenders()).toHaveLength(1);
+    expect(listPendingRenders()[0].status).toBe("detached");
+
+    // The relay finishes later; the detached salvage pump caches the mp4.
+    jobState = "done";
+    await vi.advanceTimersByTimeAsync(15_000);
+    const recovered = listPendingRenders()[0];
+    expect(recovered.status).toBe("recovered");
+    expect(recovered.media?.mime).toBe("video/mp4");
+    expect(recovered.media?.url).toBe("/api/media?f=fake.mp4");
   });
 
   it("generates one video per requested variation (count honoured)", async () => {    const createCalls: string[] = [];

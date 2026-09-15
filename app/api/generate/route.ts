@@ -87,6 +87,7 @@ function streamGeneration(body: Record<string, unknown>, signal: AbortSignal): R
             error: error.message,
             field: error.field,
             retryable: error.retryable,
+            ...(error.pending ? { pending: true } : {}),
           });
         } else {
           log.error("generation failed unexpectedly", { error });
@@ -123,7 +124,12 @@ function errorResponse(error: unknown, signal: AbortSignal): NextResponse {
       status: error.status,
     });
     return NextResponse.json(
-      { error: error.message, field: error.field, retryable: error.retryable },
+      {
+        error: error.message,
+        field: error.field,
+        retryable: error.retryable,
+        ...(error.pending ? { pending: true } : {}),
+      },
       { status: error.status },
     );
   }

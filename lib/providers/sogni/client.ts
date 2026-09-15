@@ -19,6 +19,21 @@ export interface SogniProject {
   on(event: "progress", listener: (percent: number) => void): unknown;
   /** Per-job completion; `lastFrameUrl` is set when returnLastFrame was used. */
   on(event: "jobCompleted", listener: (job: { lastFrameUrl?: string }) => void): unknown;
+  /** Best-effort cancel — stops the render (and billing) when the caller aborts. */
+  cancel?(): Promise<void>;
+  /** Server-side project id, for detached-render logging/registry records. */
+  readonly id?: string;
+  /**
+   * Live readouts, polled by the provider so the UI stays in sync even when
+   * the SDK's event stream goes quiet during long renders. All optional so
+   * test fakes only implement what they exercise.
+   */
+  readonly status?: "pending" | "queued" | "processing" | "completed" | "failed" | "canceled";
+  readonly progress?: number;
+  readonly eta?: Date | undefined;
+  readonly queueStatus?: "waiting" | "no-workers" | undefined;
+  readonly queuePosition?: number;
+  readonly estimatedStartAt?: Date | undefined;
 }
 
 /** One entry of Sogni's live model catalog (`projects.getAvailableModels`). */
