@@ -180,6 +180,41 @@ export const LORA_PRESETS: LoraPreset[] = [
     ],
   },
   {
+    id: "analog-adult",
+    label: "Analog Adult",
+    hint: "Grainy amateur film, adult prompt follow",
+    mature: true,
+    loras: [
+      { loraId: "krea2-amateur", strength: 1.5 },
+      { loraId: "krea2-purple-grainy", strength: 1 },
+      { loraId: "krea2-mystic-x", strength: 0.8 },
+      { loraId: "krea2-filter-bypass-2", strength: 2 },
+    ],
+  },
+  {
+    id: "close-skin",
+    label: "Close Skin",
+    hint: "Tight framing, textured skin",
+    mature: true,
+    loras: [
+      { loraId: "krea2-zoom", strength: 3 },
+      { loraId: "krea2-skin-detail", strength: 2 },
+      { loraId: "krea2-mystic-x", strength: 0.8 },
+      { loraId: "krea2-filter-bypass-2", strength: 2 },
+    ],
+  },
+  {
+    id: "after-dark",
+    label: "After Dark",
+    hint: "Cool low light, adult knowledge",
+    mature: true,
+    loras: [
+      { loraId: "krea2-warm-light", strength: -2 },
+      { loraId: "krea2-mystic-x", strength: 0.8 },
+      { loraId: "krea2-filter-bypass-2", strength: 2 },
+    ],
+  },
+  {
     id: "aberrant",
     label: "Aberrant",
     hint: "Industrial body-horror grit",

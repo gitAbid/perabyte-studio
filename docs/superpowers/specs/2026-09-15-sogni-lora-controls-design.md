@@ -175,7 +175,10 @@ One-click looks over the phase-1 plumbing: a preset is a named
   Uncensored Strong (bypass-3 + mystic-x 0.8), Unlock (bypass-2 only),
   Engine Realism (realism-engine 0.8 + bypass-2; no `krea2-realism` stack),
   Mystic (mystic-x 1), Candid Adult, Raw Amateur, Glamour Nude, Wet Look,
-  Aberrant (body-horror + bypass-2). Filter-bypass is unflagged in the catalog
+  Analog Adult (amateur + grain + mystic + bypass), Close Skin (zoom +
+  skin-detail + mystic + bypass), After Dark (cool light + mystic + bypass),
+  Aberrant (body-horror + bypass-2). No incest/family/age-down labels; `krea2-age`
+  is never baked into a preset. Filter-bypass is unflagged in the catalog
   but mature-gated because it is the actual adult-prompt unlock. Body-shape
   sliders (chest/firmness/nipple/hourglass) stay in the picker, never in presets.
 - **Server**: `resolveLoras` additionally drops `nsfw`/`sexual` entries when

@@ -64,8 +64,21 @@ describe("LORA_PRESETS table", () => {
       "raw-amateur",
       "glamour-nude",
       "wet-look",
+      "analog-adult",
+      "close-skin",
+      "after-dark",
       "aberrant",
     ]);
+  });
+
+  it("never ships age-bias or family-themed labels", () => {
+    const forbidden = /incest|taboo|family|step[- ]?(mom|dad|sis|bro)|lolita|underage|child/i;
+    for (const preset of LORA_PRESETS) {
+      expect(ids(preset)).not.toContain("krea2-age");
+      expect(preset.id).not.toMatch(forbidden);
+      expect(preset.label).not.toMatch(forbidden);
+      expect(preset.hint).not.toMatch(forbidden);
+    }
   });
 
   it("Uncensored pairs filter-bypass-2 with mystic-x under 1", () => {
@@ -100,6 +113,32 @@ describe("LORA_PRESETS table", () => {
 
   it("Mystic stays a pure adult LoRA at 1", () => {
     expect(byId("mystic").loras).toEqual([{ loraId: "krea2-mystic-x", strength: 1 }]);
+  });
+
+  it("Analog Adult is grainy amateur film with mystic + bypass", () => {
+    expect(byId("analog-adult").loras).toEqual([
+      { loraId: "krea2-amateur", strength: 1.5 },
+      { loraId: "krea2-purple-grainy", strength: 1 },
+      { loraId: "krea2-mystic-x", strength: 0.8 },
+      { loraId: "krea2-filter-bypass-2", strength: 2 },
+    ]);
+  });
+
+  it("Close Skin is tight framing plus skin texture", () => {
+    expect(byId("close-skin").loras).toEqual([
+      { loraId: "krea2-zoom", strength: 3 },
+      { loraId: "krea2-skin-detail", strength: 2 },
+      { loraId: "krea2-mystic-x", strength: 0.8 },
+      { loraId: "krea2-filter-bypass-2", strength: 2 },
+    ]);
+  });
+
+  it("After Dark cools the light and unlocks adult prompts", () => {
+    expect(byId("after-dark").loras).toEqual([
+      { loraId: "krea2-warm-light", strength: -2 },
+      { loraId: "krea2-mystic-x", strength: 0.8 },
+      { loraId: "krea2-filter-bypass-2", strength: 2 },
+    ]);
   });
 
   it("Aberrant is body-horror, not an adult finetune", () => {
