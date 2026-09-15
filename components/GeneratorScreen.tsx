@@ -16,6 +16,7 @@ import {
   VIDEO_STYLES,
   type AspectKey,
 } from "@/lib/constants";
+import { isSensitiveAsset } from "@/lib/domain/models";
 import { downloadMedia, useGeneration } from "@/lib/generation";
 import { useModelCatalog } from "@/lib/model-catalog";
 import { setSelectedModel, useSettings } from "@/lib/repositories/settings.repository";
@@ -392,6 +393,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
                     videoUrl={isRealVideo ? shownUrl : undefined}
                     title={prompt || "Generated video"}
                     durationSeconds={Number(settings.duration.replace("s", ""))}
+                    sensitive={settings.safe === false}
                   />
                 ) : (
                   <MediaFrame
@@ -400,6 +402,8 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
                     alt={prompt || "Generated image"}
                     rounded="rounded-none"
                     priority
+                    sensitive={settings.safe === false}
+                    detailed
                   />
                 )}
 
@@ -451,6 +455,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
                 src: media.url,
                 title: `Show variation ${index + 1}`,
                 active: index === activeVariant,
+                sensitive: settings.safe === false,
                 onClick: () => setActiveVariant(index),
               }))}
             />
@@ -463,6 +468,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
                   key: asset.id,
                   src: asset.url,
                   title: asset.title,
+                  sensitive: isSensitiveAsset(asset),
                   onClick: () => router.push(`/results?id=${asset.id}`),
                 }))}
               />
@@ -520,6 +526,7 @@ function ThumbStrip({
     src: string;
     title: string;
     active?: boolean;
+    sensitive?: boolean;
     onClick: () => void;
   }[];
 }) {
@@ -550,6 +557,7 @@ function ThumbStrip({
               ratio="16/9"
               rounded="rounded-[10px]"
               className="w-36"
+              sensitive={thumb.sensitive}
             />
           </button>
         ))}

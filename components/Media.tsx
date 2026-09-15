@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent } from "react";
 import { Icon } from "./Icon";
 import { displaySrc, isVideoSource } from "@/lib/renderer";
+import { useSettings } from "@/lib/repositories/settings.repository";
 
 /* ------------------------------------------------------------------ */
 /* Image frame with skeleton + recoverable error state                 */
@@ -10,6 +11,79 @@ import { displaySrc, isVideoSource } from "@/lib/renderer";
 
 /** Automatic retries before the user is asked to intervene. */
 const AUTO_RETRIES = 3;
+
+/* ------------------------------------------------------------------ */
+/* Uncensored (18+) masking                                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Mask state for one media frame: the blur engages when the caller flags the
+ * source as sensitive (rendered with the safety checker off) and the
+ * "Mask 18+ content" setting is on. Revealing is per frame instance and
+ * resets whenever the source or sensitivity changes.
+ */
+function useMediaMask(sensitive: boolean | undefined, src: string | null) {
+  const { settings } = useSettings();
+  const [revealed, setRevealed] = useState(false);
+
+  useEffect(() => setRevealed(false), [src, sensitive]);
+
+  return {
+    masked: Boolean(sensitive) && settings.maskUncensored && !revealed,
+    reveal: useCallback(() => setRevealed(true), []),
+  };
+}
+
+/** Classes that blur a media element past recognition (scale hides the blur's soft edges). */
+const BLUR_CLASSES = "scale-105 blur-2xl";
+
+/**
+ * Full-cover veil over masked media: an 18+ chip and a Show control. The
+ * veil also blocks every interaction with the media beneath it. MediaFrame
+ * sits inside <button> cards and <Link>s, so the reveal control is a
+ * span-with-role (like ImageFrame's Retry) — a nested native button would be
+ * invalid HTML and break hydration, and the click must not select the outer
+ * card or follow the outer link.
+ */
+function SensitiveVeil({
+  onReveal,
+  detailed,
+}: {
+  onReveal: () => void;
+  /** Show the "Sensitive content" caption — large stages only. */
+  detailed?: boolean;
+}) {
+  function reveal(event: MouseEvent | KeyboardEvent) {
+    event.stopPropagation();
+    onReveal();
+  }
+
+  return (
+    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-ink/25 text-center">
+      <span className="rounded-full bg-ink/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white">
+        18+
+      </span>
+      {detailed && (
+        <p className="text-[12px] font-semibold text-white drop-shadow">
+          Sensitive content
+        </p>
+      )}
+      <span
+        role="button"
+        tabIndex={0}
+        aria-label="Show sensitive content"
+        onClick={reveal}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") reveal(event);
+        }}
+        className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[12px] font-semibold text-ink shadow-card transition-colors hover:bg-surface-2"
+      >
+        <Icon name="eye" size={13} />
+        Show
+      </span>
+    </div>
+  );
+}
 
 /**
  * Image frame with skeleton + recoverable error state. Sources that point at
@@ -26,6 +100,8 @@ export function MediaFrame({
   sizes,
   priority,
   fit,
+  sensitive,
+  detailed,
 }: {
   src: string | null;
   alt: string;
@@ -36,11 +112,15 @@ export function MediaFrame({
   priority?: boolean;
   /** Size to the container (contain) instead of a fixed aspect-ratio box. */
   fit?: boolean;
+  /** Source is 18+/uncensored — blur while the mask setting is on. */
+  sensitive?: boolean;
+  /** Caption under the 18+ chip (large stages). */
+  detailed?: boolean;
 }) {
   const video = isVideoSource(src);
 
   if (video) {
-    return <VideoFrame src={src} alt={alt} fit={fit} ratio={ratio} rounded={rounded} className={className} />;
+    return <VideoFrame src={src} alt={alt} fit={fit} ratio={ratio} rounded={rounded} className={className} sensitive={sensitive} detailed={detailed} />;
   }
 
   return <ImageFrame
@@ -52,6 +132,8 @@ export function MediaFrame({
     sizes={sizes}
     priority={priority}
     fit={fit}
+    sensitive={sensitive}
+    detailed={detailed}
   />;
 }
 
@@ -75,6 +157,8 @@ function VideoFrame({
   ratio,
   rounded,
   className,
+  sensitive,
+  detailed,
 }: {
   src: string | null;
   alt: string;
@@ -82,8 +166,11 @@ function VideoFrame({
   ratio: string;
   rounded: string;
   className: string;
+  sensitive?: boolean;
+  detailed?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
+  const { masked, reveal } = useMediaMask(sensitive, src);
 
   useEffect(() => setFailed(false), [src]);
 
@@ -103,9 +190,10 @@ function VideoFrame({
         preload="metadata"
         aria-label={alt}
         onError={() => setFailed(true)}
-        className="size-full object-cover"
+        className={`size-full object-cover ${masked ? BLUR_CLASSES : ""}`}
       />
       {failed && <VideoUnavailable />}
+      {masked && <SensitiveVeil onReveal={reveal} detailed={detailed} />}
     </div>
   );
 }
@@ -119,6 +207,8 @@ function ImageFrame({
   sizes,
   priority,
   fit,
+  sensitive,
+  detailed,
 }: {
   src: string | null;
   alt: string;
@@ -128,11 +218,14 @@ function ImageFrame({
   sizes?: string;
   priority?: boolean;
   fit?: boolean;
+  sensitive?: boolean;
+  detailed?: boolean;
 }) {
   const [attempt, setAttempt] = useState(0);
   const [autoTries, setAutoTries] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
+  const { masked, reveal } = useMediaMask(sensitive, src);
 
   useEffect(() => {
     setLoaded(false);
@@ -189,10 +282,10 @@ function ImageFrame({
             fit
               ? `max-h-full max-w-full rounded-[14px] object-contain transition-opacity duration-500 ${
                   loaded ? "opacity-100" : "opacity-0"
-                }`
+                } ${masked ? BLUR_CLASSES : ""}`
               : `size-full object-cover transition-opacity duration-500 ${
                   loaded ? "opacity-100" : "opacity-0"
-                }`
+                } ${masked ? BLUR_CLASSES : ""}`
           }
         />
       )}
@@ -236,6 +329,8 @@ function ImageFrame({
           )}
         </div>
       )}
+
+      {masked && <SensitiveVeil onReveal={reveal} detailed={detailed} />}
     </div>
   );
 }
@@ -267,6 +362,7 @@ export function VideoStage({
   className = "",
   fit,
   fitStyle,
+  sensitive,
 }: {
   posterUrl: string | null;
   /** Real mp4 URL — when set, a native player replaces the simulated stage. */
@@ -279,12 +375,15 @@ export function VideoStage({
   /** Exact sizing for fit mode (e.g. the render's aspect ratio), applied when
    * `fit` is set so portrait renders are not cropped into a 16:9 stage. */
   fitStyle?: CSSProperties;
+  /** Source is 18+/uncensored — blur while the mask setting is on. */
+  sensitive?: boolean;
 }) {
   const [playing, setPlaying] = useState(true);
   const [elapsed, setElapsed] = useState(0);
   const [muted, setMuted] = useState(true);
   const [videoFailed, setVideoFailed] = useState(false);
   const shellRef = useRef<HTMLDivElement>(null);
+  const { masked, reveal } = useMediaMask(sensitive, videoUrl ?? posterUrl ?? null);
 
   const duration = Math.max(1, Math.round(durationSeconds * 15)) / 10;
 
@@ -331,9 +430,10 @@ export function VideoStage({
           preload="metadata"
           aria-label={title}
           onError={() => setVideoFailed(true)}
-          className="size-full bg-ink object-contain"
+          className={`size-full bg-ink object-contain ${masked ? BLUR_CLASSES : ""}`}
         />
         {videoFailed && <VideoUnavailable hint="This video could not be loaded — regenerate it." />}
+        {masked && <SensitiveVeil onReveal={reveal} detailed />}
       </div>
     );
   }
@@ -360,7 +460,7 @@ export function VideoStage({
         <img
           src={displaySrc(posterUrl) as string}
           alt={title}
-          className={`size-full object-cover ${playing ? "kenburns" : ""}`}
+          className={`size-full object-cover ${playing && !masked ? "kenburns" : ""} ${masked ? BLUR_CLASSES : ""}`}
         />
       ) : (
         <div className="skeleton absolute inset-0 opacity-40" />
@@ -424,6 +524,8 @@ export function VideoStage({
       <span className="absolute left-3 top-3 rounded-full bg-ink/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white/90 backdrop-blur">
         Preview render · {duration}s
       </span>
+
+      {masked && <SensitiveVeil onReveal={reveal} detailed />}
     </div>
   );
 }

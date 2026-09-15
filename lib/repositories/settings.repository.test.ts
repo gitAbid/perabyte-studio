@@ -5,6 +5,7 @@ import {
   getSettings,
   resetSettingsForTests,
   setSelectedModel,
+  setMaskUncensored,
   setUncensoredEnabled,
 } from "@/lib/repositories/settings.repository";
 
@@ -42,6 +43,17 @@ describe("settings repository", () => {
     expect(getSettings().uncensoredEnabled).toBe(true);
     const raw = window.localStorage.getItem("perabyte.settings.v1");
     expect(JSON.parse(raw as string).uncensoredEnabled).toBe(true);
+  });
+
+  it("defaults to masking uncensored content", () => {
+    expect(getSettings().maskUncensored).toBe(true);
+  });
+
+  it("persists the mask toggle", () => {
+    setMaskUncensored(false);
+    expect(getSettings().maskUncensored).toBe(false);
+    const raw = window.localStorage.getItem("perabyte.settings.v1");
+    expect(JSON.parse(raw as string).maskUncensored).toBe(false);
   });
 
   it("stores model selections per kind and reports them back", () => {

@@ -15,6 +15,7 @@ import {
   useToast,
 } from "@/components/ui";
 import { ASPECTS } from "@/lib/constants";
+import { isSensitiveAsset } from "@/lib/domain/models";
 import { downloadMedia } from "@/lib/generation";
 import { isVideoSource } from "@/lib/renderer";
 import { getAsset, removeAsset, toggleFavorite, useAssets } from "@/lib/store";
@@ -146,6 +147,7 @@ export default function ResultsPage() {
             videoUrl={isVideoSource(currentUrl) ? currentUrl : undefined}
             title={asset.title}
             durationSeconds={Number(String(asset.settings.duration).replace("s", "")) || 5}
+            sensitive={isSensitiveAsset(asset)}
           />
         ) : (
           <MediaFrame
@@ -155,6 +157,8 @@ export default function ResultsPage() {
             rounded="rounded-[20px]"
             className="bg-ink"
             priority
+            sensitive={isSensitiveAsset(asset)}
+            detailed
           />
         )}
 
@@ -179,6 +183,7 @@ export default function ResultsPage() {
                   ratio="1/1"
                   rounded="rounded-[12px]"
                   className="w-[92px]"
+                  sensitive={isSensitiveAsset(asset)}
                 />
               </button>
             ))}

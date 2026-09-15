@@ -73,6 +73,8 @@ export interface StoryScene {
   /** Model actually used when the service swapped for frame capability. */
   effectiveModelId?: string;
   frameUsed?: boolean;
+  /** Provider safety-checker state used for this scene's render — drives 18+ masking. */
+  safe?: boolean;
 }
 
 export interface Asset {

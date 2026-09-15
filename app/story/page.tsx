@@ -75,7 +75,15 @@ export default function StoryPage() {
     });
     const url = response.media[0]?.url ?? null;
     const next = draft.map((s, i) =>
-      i === index ? { ...s, url, status: "completed" as const, kind } : s,
+      i === index
+        ? {
+            ...s,
+            url,
+            status: "completed" as const,
+            kind,
+            safe: settingsValue.safe,
+          }
+        : s,
     );
     setScenes([...next]);
     persistStory(next, settingsValue);
@@ -318,12 +326,14 @@ export default function StoryPage() {
                         videoUrl={isVideoSource(typed.url) ? typed.url : undefined}
                         title={typed.prompt}
                         durationSeconds={5}
+                        sensitive={typed.safe === false}
                       />
                     ) : (
                       <MediaFrame
                         src={typed.url}
                         alt={typed.prompt}
                         ratio={`${ASPECTS[settings.aspect].width}/${ASPECTS[settings.aspect].height}`}
+                        sensitive={typed.safe === false}
                       />
                     )
                   ) : typed && (typed.status === "generating" || typed.status === "queued") ? (
