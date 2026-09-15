@@ -156,3 +156,13 @@ This guide unlocks, with named parameters:
     source images). No last-frame conditioning on any Grok endpoint.
 - **Pollinations** — deterministic prompt-URL images only; no image input at all (its "video" is a still
   keyframe). Story continuation degrades to prompt-only there.
+
+## LLM surface (verified live 2026-09-15)
+
+- `GET /v1/models` → the three chat models:
+  `qwen3.5-35b-a3b-abliterated-gguf-q4km` (default Enhance model, uncensored),
+  `qwen3.6-35b-a3b-gguf-iq4xs`, `deepseek-v4-flash-vision-exp-dspark-1m`.
+- `POST /v1/chat/completions` — OpenAI-compatible; Bearer auth with the regular
+  Sogni key; rides the account subscription (no per-call charge observed).
+  Tight `max_tokens` spends on hidden reasoning → empty `content` (treated as
+  engine failure by the Enhance chain).

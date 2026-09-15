@@ -198,4 +198,12 @@ describe("provider settings service", () => {
     applyProviderSettingsUpdate({ tasks: { enhance: null } });
     expect(getProviderSettings().tasks.enhance).toBeNull();
   });
+
+  it("accepts text models in a provider's disabled list", () => {
+    wireRegistry();
+    const payload = applyProviderSettingsUpdate({
+      providers: { sogni: { disabledModels: ["sogni:qwen-a"] } },
+    });
+    expect(payload.providers[1].textModels[0].enabled).toBe(false);
+  });
 });

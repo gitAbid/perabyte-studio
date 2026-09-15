@@ -139,10 +139,11 @@ export function getProviderSettings(): ProviderSettingsPayload {
 function knownModelIds(): Map<string, Set<string>> {
   const map = new Map<string, Set<string>>();
   for (const provider of getRegisteredProviders()) {
-    map.set(
-      provider.id,
-      new Set(listableModels(provider).map((model) => model.id)),
-    );
+    const generation = listableModels(provider).map((model) => model.id);
+    const text = isTextProvider(provider)
+      ? provider.listTextModels().map((model) => model.id)
+      : [];
+    map.set(provider.id, new Set([...generation, ...text]));
   }
   return map;
 }
