@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ConvertDialog } from "@/components/story/ConvertDialog";
 import { SceneRefChips } from "@/components/story/SceneRefChips";
 import { Icon } from "@/components/Icon";
@@ -62,8 +62,30 @@ export default function StoryPage() {
     kind: "image",
     count: 1,
   });
-  const [storyId, setStoryId] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [storyId, setStoryIdState] = useState<string | null>(null);
+
+  function setStoryId(id: string | null) {
+    setStoryIdState(id);
+    if (typeof window !== "undefined") {
+      if (id) {
+        sessionStorage.setItem("perabyte.active_story", id);
+      } else {
+        sessionStorage.removeItem("perabyte.active_story");
+      }
+    }
+  }
+
+  // Restore active story on mount or reload (spec §5 — persistent queue survives reloads).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const fromUrl = new URLSearchParams(window.location.search).get("id");
+    const fromStorage = sessionStorage.getItem("perabyte.active_story");
+    const targetId = fromUrl ?? fromStorage;
+    if (targetId) {
+      setStoryIdState(targetId);
+    }
+  }, []);
+
   const [continuityOn, setContinuityOn] = useState(true);
   const [convertOpen, setConvertOpen] = useState(false);
   const [enhancing, setEnhancing] = useState(false);
@@ -71,6 +93,26 @@ export default function StoryPage() {
   const { assets } = useAssets();
   const story = storyId ? assets.find((a) => a.id === storyId) : undefined;
   const scenes: StoryScene[] = useMemo(() => story?.scenes ?? [], [story]);
+
+  // Sync continuity and prompt when the active story is loaded.
+  useEffect(() => {
+    if (!story) return;
+    if (story.meta && typeof story.meta.continuity === "boolean") {
+      setContinuityOn(story.meta.continuity);
+    }
+    if (story.prompt && !prompt) {
+      setPrompt(story.prompt);
+    }
+    const storyMediaKind = story.settings?.kind;
+    if (storyMediaKind && (storyMediaKind === "image" || storyMediaKind === "video") && storyMediaKind !== kind) {
+      setKind(storyMediaKind);
+    }
+  }, [story]);
+
+  // The runner owns execution: the page is "busy" exactly while a scene is
+  // in flight. Queued-but-blocked scenes don't count (their Generate press
+  // retries/resumes).
+  const running = scenes.some((s) => s.status === "generating");
 
   const { settings: userSettings } = useSettings();
   const catalog = useModelCatalog(kind);
@@ -136,7 +178,6 @@ export default function StoryPage() {
     };
     addAsset(asset);
     setStoryId(id);
-    setBusy(true);
     appRunner.start(id);
     toast.push("Rendering your story — scenes appear as they finish.");
   }
@@ -152,7 +193,6 @@ export default function StoryPage() {
       appRunner.cancel(storyId);
       setStoryRunning(false);
     }
-    setBusy(false);
   }
 
   function toggleContinuity() {
@@ -169,15 +209,18 @@ export default function StoryPage() {
 
   /* ------------------------------ convert ------------------------------ */
 
-  const convertSources: (ConvertSource & { url: string })[] = scenes
+  const convertSources: (Omit<ConvertSource, "ref"> & {
+    url: string;
+    ref?: string;
+  })[] = scenes
     .filter((s) => s.status === "completed" && s.url && s.kind === "image")
     .map((s) => ({
       sceneId: s.id,
       prompt: s.prompt,
       url: s.url as string,
-      ref: refFromMediaUrl(s.url),
-    }))
-    .filter((s): s is ConvertSource & { url: string } => Boolean(s.ref));
+      // Provider-URL scenes (Pollinations) normalize at confirm time.
+      ref: refFromMediaUrl(s.url) ?? undefined,
+    }));
   const canConvert = convertSources.length >= 2;
   const clipCount = Math.max(0, convertSources.length - 1);
   const conversionModelId = resolveEndCapableModel(
@@ -235,7 +278,6 @@ export default function StoryPage() {
       addAsset(asset);
       setStoryId(id);
       setKind("video");
-      setBusy(true);
       appRunner.start(id);
       toast.push(`Animating ${clips.length} clip${clips.length === 1 ? "" : "s"}…`, "success");
     } catch (error) {
@@ -285,11 +327,10 @@ export default function StoryPage() {
   function reset() {
     if (storyId) appRunner.cancel(storyId);
     setStoryId(null);
-    setBusy(false);
   }
 
   async function handleEnhancePrompt() {
-    if (!prompt.trim() || busy || enhancing) return;
+    if (!prompt.trim() || running || enhancing) return;
     setEnhancing(true);
     try {
       const result = await requestPromptEnhancement({
@@ -390,7 +431,7 @@ export default function StoryPage() {
               headerBadge={
                 <Badge tone="primary">
                   <Icon name="story" size={12} /> {scenes.length || 1} scene
-                  {scenes.length === 1 ? "" : "s"}
+                  {(scenes.length || 1) === 1 ? "" : "s"}
                 </Badge>
               }
               prompt={prompt}
@@ -407,7 +448,7 @@ export default function StoryPage() {
                 setSelectedModel(kind, nextModel);
                 setSettings((s) => ({ ...s, modelId: nextModel }));
               }}
-              busy={busy}
+              busy={running}
               onGenerate={handleGenerateAll}
               onCancel={handleCancel}
               onEnhancePrompt={handleEnhancePrompt}
@@ -426,7 +467,7 @@ export default function StoryPage() {
               size="sm"
               block
               icon="plus"
-              disabled={busy || scenes.length >= 6}
+              disabled={running || scenes.length >= 6}
               onClick={addScene}
             >
               Add scene
@@ -569,7 +610,7 @@ export default function StoryPage() {
                     <SceneRefChips
                       scene={typed}
                       endSupported={endSupported}
-                      disabled={busy}
+                      disabled={running}
                       onChange={(patch) => {
                         if (!storyId) return;
                         updateStoryScenes(storyId, (list) =>

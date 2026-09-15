@@ -58,7 +58,7 @@ export function ConvertDialog({
           </div>
           <button
             type="button"
-            aria-label="Cancel conversion"
+            aria-label="Close"
             onClick={onClose}
             className="inline-flex size-7 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-ink"
           >
