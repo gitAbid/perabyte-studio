@@ -40,7 +40,11 @@ export interface StoryRunnerDeps {
 }
 
 interface ActiveStory {
-  controllers: Set<AbortController>;
+  /** One live controller per in-flight scene, keyed by scene id. */
+  controllers: Map<string, AbortController>;
+  /** Scenes whose abort was user-requested — they settle as "canceled"
+   * instead of requeueing. */
+  canceled: Set<string>;
 }
 
 /** Optional UI hooks — the page subscribes for live render ticks. */
@@ -69,15 +73,30 @@ export function createStoryRunner(deps: StoryRunnerDeps) {
     return story.meta?.continuity !== false;
   }
 
-  /** A chain scene runs when it has an explicit ref, is first, or its
-   * predecessor is done chaining: completed with a derived frame (chain with
-   * it), still deriving (wait), or derivation failed (run prompt-only). */
+  /** The nearest non-canceled scene before `index` — a canceled scene is
+   * transparent to the chain, so its successor continues from the scene
+   * before it. Undefined means "run without a chain ref" (like scene 1). */
+  function chainPredecessor(scenes: StoryScene[], index: number): StoryScene | undefined {
+    for (let i = index - 1; i >= 0; i -= 1) {
+      if (scenes[i].status !== "canceled") return scenes[i];
+    }
+    return undefined;
+  }
+
+  /** A chain scene runs when it has an explicit ref, is first (or everything
+   * before it was canceled), or its predecessor is done chaining: completed
+   * with a derived frame (chain with it), still deriving (wait), or
+   * derivation failed (run prompt-only). */
   function isRunnable(scenes: StoryScene[], index: number, chained: boolean): boolean {
     const scene = scenes[index];
     if (scene.status !== "queued") return false;
+    // Never spend a render on an empty scene — it would also strand every
+    // successor behind a predecessor that can never complete.
+    if (!scene.prompt?.trim()) return false;
     if (scene.startImageRef) return true; // manual/converted ref: independent
     if (index === 0 || !chained) return true;
-    const predecessor = scenes[index - 1];
+    const predecessor = chainPredecessor(scenes, index);
+    if (!predecessor) return true;
     if (predecessor.status !== "completed") return false;
     if (predecessor.endFrameRef) return true;
     if (deriving.has(predecessor.id)) return false;
@@ -148,6 +167,12 @@ export function createStoryRunner(deps: StoryRunnerDeps) {
     }
   }
 
+  /** True while the story still has a render in flight — per-scene controls
+   * only re-schedule a mid-run queue, never a paused one. */
+  function hasInFlight(storyId: string): boolean {
+    return deps.getStory(storyId)?.scenes?.some((s) => s.status === "generating") ?? false;
+  }
+
   async function runScene(
     storyId: string,
     story: Asset,
@@ -156,11 +181,11 @@ export function createStoryRunner(deps: StoryRunnerDeps) {
     entry: ActiveStory,
   ) {
     const controller = new AbortController();
-    entry.controllers.add(controller);
+    entry.controllers.set(scene.id, controller);
     patch(storyId, scene.id, { status: "generating", error: undefined });
     try {
       const scenes = deps.getStory(storyId)?.scenes ?? [];
-      const predecessor = scene.startImageRef ? undefined : scenes[index - 1];
+      const predecessor = scene.startImageRef ? undefined : chainPredecessor(scenes, index);
       const startRef = scene.startImageRef ?? predecessor?.endFrameRef;
       // Attached saved character: its sanitized anchor leads every scene
       // prompt (scene prompts stay clean in the UI). safe=false marks the
@@ -193,9 +218,14 @@ export function createStoryRunner(deps: StoryRunnerDeps) {
       hooks.onSceneSettled?.(scene.id);
     } catch (error) {
       if ((error as Error)?.name === "AbortError" || controller.signal.aborted) {
-        patch(storyId, scene.id, { status: "queued" });
+        // Per-scene cancel parks the scene as canceled (Generate re-queues
+        // it) and skips the queue forward; a story-level abort just requeues
+        // it and pauses until the next explicit Generate.
+        const canceled = entry.canceled.delete(scene.id);
+        patch(storyId, scene.id, { status: canceled ? "canceled" : "queued" });
         hooks.onSceneSettled?.(scene.id);
-        entry.controllers.delete(controller);
+        entry.controllers.delete(scene.id);
+        if (canceled) schedule(storyId);
         return;
       }
       patch(storyId, scene.id, {
@@ -205,7 +235,7 @@ export function createStoryRunner(deps: StoryRunnerDeps) {
       hooks.onSceneSettled?.(scene.id);
       deps.onNotice?.((error as Error).message ?? "Scene generation failed.", "error");
     }
-    entry.controllers.delete(controller);
+    entry.controllers.delete(scene.id);
     schedule(storyId); // advance the chain / fill capacity
   }
 
@@ -236,18 +266,24 @@ export function createStoryRunner(deps: StoryRunnerDeps) {
       hooks = next ?? {};
     },
 
-    /** Idempotent: schedule (or resume) one story's queue. Failed scenes are
-     * reset to queued — pressing Generate again retries them. */
+    /** Idempotent: schedule (or resume) one story's queue. Failed and
+     * canceled scenes are reset to queued — pressing Generate again retries
+     * the whole story. */
     start(storyId: string) {
-      if (!active.has(storyId)) active.set(storyId, { controllers: new Set() });
+      if (!active.has(storyId)) {
+        active.set(storyId, { controllers: new Map(), canceled: new Set() });
+      }
       const story = deps.getStory(storyId);
-      if (story?.scenes?.some((s) => s.status === "failed")) {
+      if (story?.scenes?.some((s) => s.status === "failed" || s.status === "canceled")) {
         deps.updateStoryScenes(storyId, (scenes) =>
           scenes.map((scene) =>
-            scene.status === "failed" ? { ...scene, status: "queued" as const } : scene,
+            scene.status === "failed" || scene.status === "canceled"
+              ? { ...scene, status: "queued" as const }
+              : scene,
           ),
         );
       }
+      active.get(storyId)!.canceled.clear();
       schedule(storyId);
     },
 
@@ -255,7 +291,7 @@ export function createStoryRunner(deps: StoryRunnerDeps) {
     cancel(storyId: string) {
       const entry = active.get(storyId);
       if (!entry) return;
-      for (const controller of entry.controllers) controller.abort();
+      for (const controller of entry.controllers.values()) controller.abort();
       entry.controllers.clear();
       const story = deps.getStory(storyId);
       if (story?.scenes?.some((s) => s.status === "generating")) {
@@ -265,6 +301,43 @@ export function createStoryRunner(deps: StoryRunnerDeps) {
           ),
         );
       }
+    },
+
+    /** Stop ONE scene. An in-flight render aborts and parks the scene as
+     * "canceled"; a queued scene flips to canceled outright. Canceled scenes
+     * are never auto-scheduled and are transparent to the chain — the run
+     * skips forward and successors chain across them. Generate re-queues. */
+    cancelScene(storyId: string, sceneId: string) {
+      const entry = active.get(storyId);
+      const controller = entry?.controllers.get(sceneId);
+      if (entry && controller) {
+        entry.canceled.add(sceneId);
+        controller.abort();
+        return;
+      }
+      const scene = deps.getStory(storyId)?.scenes?.find((s) => s.id === sceneId);
+      if (scene?.status === "queued") {
+        patch(storyId, sceneId, { status: "canceled" });
+        if (hasInFlight(storyId)) schedule(storyId);
+      }
+    },
+
+    /** Drop a scene from the queue entirely (a still in-flight scene aborts
+     * first). Successors chain to the scene before it instead. Only
+     * re-schedules while a run is actually in progress — removal never
+     * starts generating on its own. */
+    removeScene(storyId: string, sceneId: string) {
+      const entry = active.get(storyId);
+      const controller = entry?.controllers.get(sceneId);
+      if (entry && controller) {
+        entry.canceled.add(sceneId); // the abort settles it, the splice drops it
+        controller.abort();
+        entry.controllers.delete(sceneId);
+      }
+      deps.updateStoryScenes(storyId, (scenes) =>
+        scenes.filter((scene) => scene.id !== sceneId),
+      );
+      if (hasInFlight(storyId)) schedule(storyId);
     },
 
     /** Boot-time resume: flip orphaned generating scenes back to queued, then
