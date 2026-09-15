@@ -65,13 +65,30 @@ export function setUncensoredEnabled(value: boolean) {
   update({ uncensoredEnabled: value });
 }
 
-export function setSelectedModel(kind: GenerationKind, modelId: string) {
+export function setSelectedModel(kind: GenerationKind, modelId: string | null) {
   update(kind === "video" ? { videoModel: modelId } : { imageModel: modelId });
 }
 
 /** Selected model for a kind, falling back to `null` (→ catalog default). */
 export function getSelectedModel(kind: GenerationKind): string | null {
   return kind === "video" ? read().videoModel : read().imageModel;
+}
+
+// Bumped after a provider-settings save so open model catalogs re-fetch.
+let catalogVersion = 0;
+
+export function bumpCatalogVersion(): void {
+  catalogVersion += 1;
+  emit();
+}
+
+export function getCatalogVersion(): number {
+  return catalogVersion;
+}
+
+/** Reactive view for hooks that must re-run when provider settings change. */
+export function useCatalogVersion(): number {
+  return useSyncExternalStore(subscribe, () => catalogVersion, () => 0);
 }
 
 function subscribe(listener: () => void) {

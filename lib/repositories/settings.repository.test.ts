@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_USER_SETTINGS,
+  bumpCatalogVersion,
+  getCatalogVersion,
   getSelectedModel,
   getSettings,
   resetSettingsForTests,
@@ -60,5 +62,19 @@ describe("settings repository", () => {
     const settings = getSettings();
     expect(settings.uncensoredEnabled).toBe(false);
     expect((settings as unknown as Record<string, unknown>).futureField).toBe(42);
+  });
+
+  it("bumps the catalog version on demand", () => {
+    const start = getCatalogVersion();
+    bumpCatalogVersion();
+    expect(getCatalogVersion()).toBe(start + 1);
+    bumpCatalogVersion();
+    expect(getCatalogVersion()).toBe(start + 2);
+  });
+
+  it("accepts null to clear a model default", () => {
+    setSelectedModel("image", "pollinations:flux");
+    setSelectedModel("image", null);
+    expect(getSelectedModel("image")).toBeNull();
   });
 });
