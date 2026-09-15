@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { Button, ConfirmDialog, Toggle, useToast } from "@/components/ui";
 import {
+  setMaskUncensored,
   setUncensoredEnabled,
   useSettings,
 } from "@/lib/repositories/settings.repository";
@@ -95,6 +96,22 @@ export function SettingsDialog({
                   adult-content generation.
                 </p>
               )}
+
+              <div className="mt-4 border-t border-border pt-4">
+                <Toggle
+                  label="Mask 18+ content"
+                  description="Blur uncensored (18+) images and videos in your library, previews and results until you choose to show each one. On by default."
+                  checked={settings.maskUncensored}
+                  onChange={(next) => {
+                    setMaskUncensored(next);
+                    toast.push(
+                      next
+                        ? "18+ content is masked again."
+                        : "Masking off — uncensored renders now show directly.",
+                    );
+                  }}
+                />
+              </div>
             </div>
           </section>
 

@@ -11,12 +11,15 @@ import type { GenerationKind } from "@/lib/constants";
  */
 export interface UserSettings {
   uncensoredEnabled: boolean;
+  /** Blur 18+/uncensored media in the UI until the user reveals it. On by default. */
+  maskUncensored: boolean;
   imageModel: string | null;
   videoModel: string | null;
 }
 
 export const DEFAULT_USER_SETTINGS: UserSettings = {
   uncensoredEnabled: false,
+  maskUncensored: true,
   imageModel: null,
   videoModel: null,
 };
@@ -63,6 +66,10 @@ export function getSettings(): UserSettings {
 
 export function setUncensoredEnabled(value: boolean) {
   update({ uncensoredEnabled: value });
+}
+
+export function setMaskUncensored(value: boolean) {
+  update({ maskUncensored: value });
 }
 
 export function setSelectedModel(kind: GenerationKind, modelId: string) {

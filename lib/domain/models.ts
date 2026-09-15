@@ -82,3 +82,15 @@ export function durationToSeconds(duration: DurationKey): number {
   const seconds = Number.parseInt(duration, 10);
   return Number.isFinite(seconds) ? seconds : 5;
 }
+
+/**
+ * True when a stored asset was rendered with the provider safety checker off
+ * (Uncensored Mode), i.e. it may be adult (18+) content and should be masked
+ * in the UI when the mask setting is on. Only an explicit `safe: false`
+ * counts — legacy assets without the flag stay unmasked.
+ */
+export function isSensitiveAsset(asset: {
+  settings?: { safe?: boolean };
+}): boolean {
+  return asset.settings?.safe === false;
+}

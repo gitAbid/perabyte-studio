@@ -98,6 +98,7 @@ export default function StoryPage() {
             status: "completed" as const,
             kind,
             progress: undefined,
+            safe: settingsValue.safe,
           }
         : s,
     );
@@ -382,12 +383,14 @@ export default function StoryPage() {
                         }
                         title={typed.prompt}
                         durationSeconds={Number(String(settings.duration).replace("s", "")) || 5}
+                        sensitive={typed.safe === false}
                       />
                     ) : (
                       <MediaFrame
                         src={typed.url}
                         alt={typed.prompt}
                         ratio={`${ASPECTS[settings.aspect].width}/${ASPECTS[settings.aspect].height}`}
+                        sensitive={typed.safe === false}
                       />
                     )
                   ) : typed && (typed.status === "generating" || typed.status === "queued") ? (
