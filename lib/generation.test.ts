@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   GenerationError,
   requestGeneration,
+  storyProgressPercent,
   type GenerationProgress,
 } from "@/lib/generation";
 import type { GenerationSettings } from "@/lib/types";
@@ -148,5 +149,25 @@ describe("requestGeneration progress stream", () => {
 
     const response = await requestGeneration({ settings, prompt: "x" });
     expect(response.requestId).toBe("req_1");
+  });
+});
+
+describe("storyProgressPercent", () => {
+  it("stays indeterminate before anything is measurable", () => {
+    expect(storyProgressPercent(0, 0)).toBeUndefined();
+    expect(storyProgressPercent(0, 4)).toBeUndefined();
+    expect(storyProgressPercent(0, 4, { stage: "rendering", message: "x" })).toBeUndefined();
+  });
+
+  it("counts finished scenes and folds in the live scene's percent", () => {
+    expect(storyProgressPercent(2, 4)).toBe(50);
+    expect(storyProgressPercent(2, 4, { stage: "rendering", message: "x", percent: 40 })).toBe(60);
+    expect(storyProgressPercent(0, 1, { stage: "rendering", message: "x", percent: 55.4 })).toBe(55);
+  });
+
+  it("caps at 100 and ignores out-of-range input", () => {
+    expect(storyProgressPercent(4, 4)).toBe(100);
+    expect(storyProgressPercent(3, 4, { stage: "rendering", message: "x", percent: 200 })).toBe(100);
+    expect(storyProgressPercent(-1, 4)).toBe(0);
   });
 });
