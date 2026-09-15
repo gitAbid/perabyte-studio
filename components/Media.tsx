@@ -54,6 +54,11 @@ function SensitiveVeil({
   detailed?: boolean;
 }) {
   function reveal(event: MouseEvent | KeyboardEvent) {
+    // stopPropagation alone is not enough: it suppresses ancestor React
+    // handlers but the native event still lands on an ancestor <Link>/<a>,
+    // whose default action then navigates. preventDefault keeps the click on
+    // the veil.
+    event.preventDefault();
     event.stopPropagation();
     onReveal();
   }
@@ -311,6 +316,9 @@ function ImageFrame({
               role="button"
               tabIndex={0}
               onClick={(event) => {
+                // preventDefault too: an ancestor <Link>'s native default
+                // action would otherwise navigate on click.
+                event.preventDefault();
                 event.stopPropagation();
                 retry();
               }}
