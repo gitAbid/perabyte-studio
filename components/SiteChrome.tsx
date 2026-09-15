@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Icon, Logo } from "./Icon";
-import { SettingsDialog } from "./settings/SettingsDialog";
 
 const NAV: { href: string; label: string; icon?: "character" }[] = [
   { href: "/", label: "Home" },
@@ -23,7 +22,6 @@ export function SiteHeader() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
     <>
@@ -55,6 +53,13 @@ export function SiteHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2 sm:ml-0">
+          <Link
+            href="/settings"
+            aria-label="Settings"
+            className="inline-flex size-9 items-center justify-center rounded-full border border-border bg-white text-ink-soft transition-colors hover:border-muted hover:text-ink"
+          >
+            <Icon name="sliders" size={16} />
+          </Link>
           <div className="relative hidden sm:block">
             <button
               type="button"
@@ -82,17 +87,14 @@ export function SiteHeader() {
                 >
                   Style guide
                 </Link>
-                <button
-                  type="button"
+                <Link
+                  href="/settings"
                   role="menuitem"
-                  onClick={() => {
-                    setAccountOpen(false);
-                    setSettingsOpen(true);
-                  }}
-                  className="block w-full rounded-[10px] px-2.5 py-2 text-left text-[13px] font-medium text-ink-soft hover:bg-surface-2"
+                  className="block rounded-[10px] px-2.5 py-2 text-[13px] font-medium text-ink-soft hover:bg-surface-2"
+                  onClick={() => setAccountOpen(false)}
                 >
                   Settings
-                </button>
+                </Link>
               </div>
             )}
           </div>
@@ -132,10 +134,6 @@ export function SiteHeader() {
         </nav>
       )}
       </header>
-
-      {/* Rendered outside the header: the header's backdrop-blur creates a
-          containing block that would trap the dialog's fixed positioning. */}
-      <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </>
   );
 }
@@ -145,6 +143,7 @@ const FOOTER_LINKS = [
   { href: "/story", label: "Story Mode" },
   { href: "/character", label: "Character Studio" },
   { href: "/history", label: "History" },
+  { href: "/settings", label: "Settings" },
   { href: "/styleguide", label: "Style guide" },
 ] as const;
 
