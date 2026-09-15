@@ -3,6 +3,7 @@ import { buildModelId } from "@/lib/domain/models";
 import { getStudioEnv } from "@/lib/config/env";
 import type { SogniAvailableModel, SogniClient } from "@/lib/providers/sogni/client";
 import { fetchLoraCatalog } from "@/lib/providers/sogni/lora-catalog";
+import { sogniCuratedLabel, sogniModelMeta } from "@/lib/providers/sogni/model-meta";
 import {
   PROVIDER_ID,
   SOGNI_IMAGE_MODELS,
@@ -19,10 +20,10 @@ import {
 
 /** Model ids that need reference media or aren't prompt-to-media — skipped
  * until the studio can drive them (edit models, segmentation, 3D, upscalers,
- * image/video-to-video variants). Matched case-insensitively. `flf2v` models
- * REQUIRE both frame anchors and reject prompt-only renders — they are
- * registered as hidden capability models (see buildHiddenModels), never
- * offered in the picker. */
+ * image/video-to-video variants, audio/reference workflows). Matched
+ * case-insensitively. `flf2v` models REQUIRE both frame anchors and reject
+ * prompt-only renders — they are registered as hidden capability models (see
+ * buildHiddenModels), never offered in the picker. */
 const EXCLUDED_ID_PATTERNS = [
   "edit",
   "kontext",
@@ -34,6 +35,9 @@ const EXCLUDED_ID_PATTERNS = [
   "i2v",
   "s2v",
   "v2v",
+  "a2v", // audio-to-video (incl. ia2v, flfa2v) — no audio input in the studio
+  "r2v", // reference-image workflows (incl. ref2va)
+  "removal", // BiRefNet-style utilities
   "animate",
   "inpaint",
   "outpaint",
@@ -80,11 +84,6 @@ export function i2vSiblingId(modelId: string): string | null {
   return modelId.includes("_t2v") ? modelId.replace("_t2v", "_i2v") : null;
 }
 
-/** Curated entries keep their hand-written labels, hints and order. */
-const CURATED = new Map(
-  [...SOGNI_IMAGE_MODELS, ...SOGNI_VIDEO_MODELS].map((model) => [model.model, model]),
-);
-
 export interface SogniCatalog {
   images: ModelDescriptor[];
   videos: ModelDescriptor[];
@@ -106,7 +105,7 @@ const COLD_START_HIDDEN: ModelDescriptor[] = [
     kind: "video",
     model: "wan_v2.2-14b-fp8_i2v_lightx2v",
     label: "WAN 2.2 i2v",
-    hint: "Sogni · start frame",
+    hint: "start frame",
     frameInput: { start: true, end: false },
   },
   {
@@ -115,7 +114,7 @@ const COLD_START_HIDDEN: ModelDescriptor[] = [
     kind: "video",
     model: "ltx25-22b-int8_i2v_distilled",
     label: "LTX 2.5 i2v",
-    hint: "Sogni · start frame",
+    hint: "start frame",
     frameInput: { start: true, end: false },
   },
 ];
@@ -197,7 +196,7 @@ export function toDescriptors(
         !isExcluded(model.id),
     )
     .map((model) => {
-      const curated = CURATED.get(model.id);
+      const meta = sogniModelMeta(model.id);
       // Frame capability: video families declare their own rules; every Sogni
       // image model takes a startingImage (img2img).
       const capability =
@@ -209,21 +208,29 @@ export function toDescriptors(
         providerId: PROVIDER_ID,
         kind,
         model: model.id,
-        label: curated?.label ?? (model.name?.trim() || prettifyModelId(model.id)),
-        hint: curated?.hint ?? speedHint(model.id),
-        stylesSupported: curated ? curated.stylesSupported : supportsStyles(model.id),
-        uncensored: curated ? curated.uncensored : supportsUncensored(model.id),
+        label: sogniCuratedLabel(model.id) ??
+          (model.name?.trim() || prettifyModelId(model.id)),
+        ...(meta?.hint ? { hint: meta.hint } : {}),
+        ...(meta?.tier ? { tier: meta.tier } : {}),
+        ...(meta?.useCase ? { useCase: meta.useCase } : {}),
+        ...(meta?.costTier ? { costTier: meta.costTier } : {}),
+        stylesSupported: meta ? meta.stylesSupported : supportsStyles(model.id),
+        uncensored: supportsUncensored(model.id),
         ...(capability ? { frameInput: capability } : {}),
         ...(sibling && siblingExists ? { i2vModelId: buildModelId(PROVIDER_ID, sibling) } : {}),
         ...(loraModels.has(model.id) ? { loraCapable: true } : {}),
       } satisfies ModelDescriptor;
     });
 
-  // Hand-curated models first (stable order), the rest alphabetically.
+  // Recommended first (stable curated order inside the tier), the rest
+  // alphabetically.
   const curatedOrder = new Map(
     (kind === "image" ? SOGNI_IMAGE_MODELS : SOGNI_VIDEO_MODELS).map((m, i) => [m.model, i]),
   );
   return dynamic.sort((a, b) => {
+    const recA = a.tier === "recommended";
+    const recB = b.tier === "recommended";
+    if (recA !== recB) return recA ? -1 : 1;
     const rankA = curatedOrder.get(a.model);
     const rankB = curatedOrder.get(b.model);
     if (rankA !== undefined && rankB !== undefined) return rankA - rankB;
@@ -254,7 +261,7 @@ function buildHiddenModels(
       kind: "video",
       model: model.id,
       label: model.name?.trim() || prettifyModelId(model.id),
-      hint: isFlf2v ? "Sogni · start+end frame" : "Sogni · start frame",
+      hint: isFlf2v ? "start + end frame" : "start frame",
       stylesSupported: supportsStyles(model.id),
       uncensored: supportsUncensored(model.id),
       frameInput: capability,
@@ -267,13 +274,6 @@ function buildHiddenModels(
 function isExcluded(modelId: string): boolean {
   const id = modelId.toLowerCase();
   return EXCLUDED_ID_PATTERNS.some((pattern) => id.includes(pattern));
-}
-
-function speedHint(modelId: string): string {
-  const id = modelId.toLowerCase();
-  if (/(turbo|schnell|lightx2v|distilled|flash|mini|fast|light)/.test(id)) return "Sogni · fast";
-  if (/(hd|pro|ultra|quality|high|max)/.test(id)) return "Sogni · quality";
-  return "Sogni · standard";
 }
 
 /** Fallback label when the API gives no usable name: `wan_v2.2-14b-fp8_t2v_lightx2v` → `Wan v2.2 14b t2v lightx2v`. */

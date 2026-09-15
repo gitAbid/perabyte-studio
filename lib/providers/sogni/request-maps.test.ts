@@ -40,6 +40,7 @@ describe("sogni request maps", () => {
       `${PROVIDER_ID}:wan_v2.2-14b-fp8_t2v_lightx2v`,
       `${PROVIDER_ID}:ltx25-22b-int8_t2v_distilled`,
       `${PROVIDER_ID}:seedance-2-0-mini`,
+      `${PROVIDER_ID}:seedance-2-0`,
     ]);
   });
 

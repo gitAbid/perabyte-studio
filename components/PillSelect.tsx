@@ -7,6 +7,10 @@ export interface PillOption {
   value: string;
   label: string;
   hint?: string;
+  /** Second row under the label (e.g. a model's use case). */
+  description?: string;
+  /** Tiny uppercase chips after the label (Sensored, Free, LoRA…). */
+  badges?: string[];
   /** When any option carries one, the dropdown renders grouped sections
    * ordered by first appearance (e.g. Sensored / Uncensored models). */
   group?: string;
@@ -31,6 +35,7 @@ export function PillSelect({
   align = "left",
   disabled = false,
   disabledHint,
+  tail,
 }: {
   icon: IconName;
   label: string;
@@ -41,17 +46,25 @@ export function PillSelect({
   /** Non-interactive pill for options the active model can't honour. */
   disabled?: boolean;
   disabledHint?: string;
+  /** Collapsed "everything else" section (provider-grouped). */
+  tail?: { label: string; options: PillOption[] };
 }) {
   const [open, setOpen] = useState(false);
+  const [tailOpen, setTailOpen] = useState(false);
   const shellRef = useRef<HTMLDivElement>(null);
+
+  const close = () => {
+    setOpen(false);
+    setTailOpen(false);
+  };
 
   useEffect(() => {
     if (!open) return;
     function onPointerDown(event: MouseEvent) {
-      if (!shellRef.current?.contains(event.target as Node)) setOpen(false);
+      if (!shellRef.current?.contains(event.target as Node)) close();
     }
     function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") close();
     }
     document.addEventListener("mousedown", onPointerDown);
     document.addEventListener("keydown", onKey);
@@ -73,7 +86,7 @@ export function PillSelect({
         aria-selected={active}
         onClick={() => {
           onChange(option.value);
-          setOpen(false);
+          close();
         }}
         className={`flex w-full items-center gap-2 rounded-[10px] px-2.5 py-1.5 text-left text-[13px] transition-colors ${
           active
@@ -81,11 +94,26 @@ export function PillSelect({
             : "text-ink-soft hover:bg-surface-2"
         }`}
       >
-        <span className="flex-1 truncate">
-          {option.label}
-          {option.hint && (
-            <span className="ml-1.5 text-[11.5px] font-normal text-muted">
-              {option.hint}
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-1.5">
+            <span className="truncate">{option.label}</span>
+            {option.hint && (
+              <span className="shrink-0 text-[11px] font-normal text-muted">
+                {option.hint}
+              </span>
+            )}
+            {option.badges?.map((badge) => (
+              <span
+                key={badge}
+                className="shrink-0 rounded-full bg-surface-2 px-1.5 py-px text-[9.5px] font-bold uppercase tracking-wide text-muted"
+              >
+                {badge}
+              </span>
+            ))}
+          </span>
+          {option.description && (
+            <span className="mt-0.5 block truncate text-[11px] font-normal leading-tight text-muted">
+              {option.description}
             </span>
           )}
         </span>
@@ -96,12 +124,12 @@ export function PillSelect({
 
   /** Flat list when no groups are set; grouped sections (first-appearance
    * order, hairline separators) when any option carries a group label. */
-  const renderSections = () => {
-    if (!options.some((option) => option.group)) {
-      return options.map(renderOption);
+  const renderSections = (list: PillOption[]) => {
+    if (!list.some((option) => option.group)) {
+      return list.map(renderOption);
     }
     const sections: { name: string; options: PillOption[] }[] = [];
-    for (const option of options) {
+    for (const option of list) {
       const name = option.group ?? "";
       let section = sections.find((candidate) => candidate.name === name);
       if (!section) {
@@ -154,14 +182,31 @@ export function PillSelect({
         <div
           role="listbox"
           aria-label={label}
-          className={`thin-scrollbar absolute bottom-[calc(100%+8px)] z-30 max-h-64 w-56 overflow-y-auto rounded-[14px] border border-border bg-white p-1.5 shadow-lift ${
+          className={`thin-scrollbar absolute bottom-[calc(100%+8px)] z-30 max-h-80 w-72 overflow-y-auto rounded-[14px] border border-border bg-white p-1.5 shadow-lift ${
             align === "right" ? "right-0" : "left-0"
           }`}
         >
           <p className="px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wide text-muted">
             {label}
           </p>
-          {renderSections()}
+          {renderSections(options)}
+          {tail && tail.options.length > 0 && (
+            <div className="mt-1 border-t border-border pt-1">
+              <button
+                type="button"
+                onClick={() => setTailOpen((v) => !v)}
+                className="flex w-full items-center gap-1.5 rounded-[10px] px-2.5 py-1.5 text-left text-[12px] font-semibold text-ink-soft transition-colors hover:bg-surface-2"
+              >
+                <Icon
+                  name="chevron-down"
+                  size={12}
+                  className={`opacity-70 transition-transform ${tailOpen ? "" : "-rotate-90"}`}
+                />
+                {tail.label}
+              </button>
+              {tailOpen && renderSections(tail.options)}
+            </div>
+          )}
         </div>
       )}
     </div>

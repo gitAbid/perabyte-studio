@@ -16,6 +16,7 @@ import {
   type ResolutionKey,
 } from "@/lib/constants";
 import type { ModelOption } from "@/lib/model-catalog";
+import { modelPickerSections } from "@/lib/model-picker-options";
 import { allowedOptions } from "@/lib/render-options";
 import { lorasForModel, visibleLoras } from "@/lib/lora-options";
 import { LORA_PRESETS, matchLoraPreset } from "@/lib/lora-presets";
@@ -335,24 +336,24 @@ export function PromptComposer({
       {/* Settings badges live inline in the prompt box. Model leads so the
           active engine is always the first thing you see. */}
       <div className="relative mt-3 flex flex-wrap items-center gap-1.5 border-t border-border pt-3">
-        {models && models.length > 0 && onModelChange && (
-          <PillSelect
-            icon="chip"
-            label="Model"
-            value={modelId ?? models[0].id}
-            options={models.map((entry) => ({
-              value: entry.id,
-              label: entry.label,
-              hint: entry.hint
-                ? `${entry.hint} · ${entry.providerLabel}`
-                : entry.providerLabel,
-              // Capability groups: models that can run safety-off vs models
-              // that always stay behind a checker.
-              group: entry.uncensored === false ? "Sensored" : "Uncensored",
-            }))}
-            onChange={onModelChange}
-          />
-          )}
+        {(() => {
+          if (!models || models.length === 0 || !onModelChange) return null;
+          const sections = modelPickerSections(models);
+          return (
+            <PillSelect
+              icon="chip"
+              label="Model"
+              value={modelId ?? models[0].id}
+              options={sections.recommended}
+              tail={
+                sections.tail.length
+                  ? { label: sections.tailLabel, options: sections.tail }
+                  : undefined
+              }
+              onChange={onModelChange}
+            />
+          );
+        })()}
         {onCharacterChange && (
           <PillSelect
             icon="user"

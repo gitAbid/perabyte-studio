@@ -24,6 +24,12 @@ export interface ModelOption {
   stylesSupported?: boolean;
   /** False when the model always runs behind a safety checker ("Sensored"). */
   uncensored?: boolean;
+  /** Curated placement — pinned to the picker's Recommended section. */
+  tier?: "recommended";
+  /** One-line "what it's good for" — the picker entry's second row. */
+  useCase?: string;
+  /** Rough cost signal for a compact badge. */
+  costTier?: "free" | "credits" | "key-credits";
   /** Frame conditioning the model accepts. */
   frameInput?: { start: boolean; end: boolean };
   /** i2v sibling the server swaps to when a start frame is present. */

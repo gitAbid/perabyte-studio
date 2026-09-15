@@ -135,7 +135,7 @@ describe("sogni provider", () => {
 
   it("lists curated models only when configured", () => {
     expect(sogniProvider.listImageModels().length).toBe(4);
-    expect(sogniProvider.listVideoModels().length).toBe(3);
+    expect(sogniProvider.listVideoModels().length).toBe(4); // + curated Seedance 2.0
   });
 
   it("maps completed project URLs to artifacts", async () => {

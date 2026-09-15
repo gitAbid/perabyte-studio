@@ -48,6 +48,12 @@ export interface ModelDescriptor {
    * are grouped under "Sensored" in the picker and ignore Uncensored Mode.
    * Absent means the model can render with the safety checker off. */
   uncensored?: boolean;
+  /** Curated placement. Set only on hand-picked models; absent = picker tail. */
+  tier?: "recommended";
+  /** One-line "what it's good for" — the picker entry's second row. */
+  useCase?: string;
+  /** Rough cost signal for a compact badge. */
+  costTier?: "free" | "credits" | "key-credits";
   /** Frame conditioning this model accepts. Absent = prompt-only. */
   frameInput?: ModelFrameInput;
   /** Model id (`<provider>:<model>`) to swap to when a start frame is present.
