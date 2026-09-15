@@ -15,6 +15,7 @@ import {
   APIKEY_FAN_IMAGE_MODELS,
   APIKEY_FAN_VIDEO_MODELS,
   foldNegativePrompt,
+  MAX_VIDEO_SECONDS,
   PROVIDER_ID,
   toImageEditsPayload,
   toImagePayload,
@@ -38,7 +39,17 @@ export const apiKeyFanProvider: ImageProvider & VideoProvider = {
   },
 
   listImageModels: () => APIKEY_FAN_IMAGE_MODELS,
-  listVideoModels: () => APIKEY_FAN_VIDEO_MODELS,
+  // Grok video takes only prompt + duration (no aspect/resolution params),
+  // so ratio and resolution lists stay empty — the UI hides those pickers.
+  listVideoModels: () =>
+    APIKEY_FAN_VIDEO_MODELS.map((model) => ({
+      ...model,
+      videoLimits: {
+        duration: { min: 1, max: MAX_VIDEO_SECONDS },
+        ratios: [],
+        resolutions: [],
+      },
+    })),
 
   /* ------------------------------- Image ------------------------------- */
 

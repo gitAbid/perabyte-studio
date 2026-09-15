@@ -42,6 +42,7 @@ export async function GET(request: Request) {
     uncensored: model.uncensored,
     frameInput: model.frameInput,
     i2vModelId: model.i2vModelId,
+    videoLimits: model.videoLimits,
   }));
 
   log.debug("catalog served", { kind, frame, count: models.length });

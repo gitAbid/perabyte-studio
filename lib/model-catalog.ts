@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { GenerationKind } from "@/lib/constants";
+import type { ModelVideoLimits } from "@/lib/domain/models";
 import { useCatalogVersion } from "@/lib/repositories/settings.repository";
 
 /**
@@ -24,6 +25,8 @@ export interface ModelOption {
   frameInput?: { start: boolean; end: boolean };
   /** i2v sibling the server swaps to when a start frame is present. */
   i2vModelId?: string;
+  /** Video render limits — UI option pickers constrain to these. */
+  videoLimits?: ModelVideoLimits;
 }
 
 export interface ModelCatalog {

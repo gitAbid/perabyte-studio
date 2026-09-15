@@ -21,6 +21,7 @@ import { isSensitiveAsset } from "@/lib/domain/models";
 import { downloadMedia, useGeneration } from "@/lib/generation";
 import { requestPromptEnhancement } from "@/lib/enhancement";
 import { useModelCatalog } from "@/lib/model-catalog";
+import { snapSettingsForModel } from "@/lib/render-options";
 import { setSelectedModel, useSettings } from "@/lib/repositories/settings.repository";
 import { addAsset, assetFromResponse, DEMO_SPECS, toggleFavorite, useAssets } from "@/lib/store";
 import type { DemoSpec } from "@/lib/store";
@@ -65,6 +66,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
   const modelId =
     (kind === "video" ? userSettings.videoModel : userSettings.imageModel) ??
     catalog.defaultModelId;
+  const activeModel = catalog.models.find((model) => model.id === modelId);
   // Style presets are per-model: provider-workflow models (e.g. Seedance)
   // take only the raw prompt, so the style picker disables itself.
   const stylesSupported =
@@ -117,6 +119,15 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
   function patchSettings(patch: Partial<GenerationSettings>) {
     setSettings((s) => ({ ...s, ...patch }));
   }
+
+  // Settings restored from storage may predate the active model's limits
+  // (e.g. a 5s clip under MiniMax H3) — snap them once the catalog lands.
+  // The effect settles after one pass: snapSettingsForModel returns an empty
+  // patch once the settings already fit.
+  useEffect(() => {
+    setSettings((s) => ({ ...s, ...snapSettingsForModel(activeModel?.videoLimits, s) }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only when the active model's identity changes
+  }, [catalog.models, modelId]);
 
   async function handleGenerate() {
     if (!prompt.trim()) {
@@ -315,9 +326,16 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
             modelId={modelId}
             onModelChange={(nextModel) => {
               setSelectedModel(kind, nextModel);
-              patchSettings({ modelId: nextModel });
+              // Keep the stored settings renderable by the NEW model: e.g.
+              // switching to MiniMax H3 moves a 5s clip to its ≥5.167s floor.
+              const next = catalog.models.find((model) => model.id === nextModel);
+              patchSettings({
+                modelId: nextModel,
+                ...snapSettingsForModel(next?.videoLimits, settings),
+              });
             }}
             stylesSupported={stylesSupported}
+            videoLimits={activeModel?.videoLimits}
             onSettingsChange={patchSettings}
             busy={busy}
             onGenerate={handleGenerate}

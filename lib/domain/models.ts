@@ -13,6 +13,16 @@ export interface ModelFrameInput {
   end: boolean;
 }
 
+/** Render limits a video model enforces — the UI constrains its option
+ * pickers to these (see `VideoLimits` for the field semantics). */
+export interface ModelVideoLimits {
+  duration: { min: number; max: number };
+  /** Aspect presets accepted; empty = the model takes no ratio input. */
+  ratios: readonly AspectKey[];
+  /** Resolution presets honored; empty = fixed server-side default. */
+  resolutions: readonly ResolutionKey[];
+}
+
 /** A continuity frame loaded from the media cache. */
 export interface FrameImage {
   bytes: Buffer;
@@ -42,6 +52,9 @@ export interface ModelDescriptor {
   /** Model id (`<provider>:<model>`) to swap to when a start frame is present.
    * Absent when the model itself already takes frames. */
   i2vModelId?: string;
+  /** Video render limits (duration range, accepted aspects, resolutions).
+   * Absent on video models = no known constraint; UI shows everything. */
+  videoLimits?: ModelVideoLimits;
 }
 
 export function buildModelId(providerId: string, model: string): string {

@@ -46,7 +46,9 @@ export const VIDEO_STYLES = {
 export type ImageStyleKey = keyof typeof IMAGE_STYLES;
 export type VideoStyleKey = keyof typeof VIDEO_STYLES;
 
-export const DURATIONS = ["3s", "5s", "8s", "10s"] as const;
+/** Clip-length presets. Every preset must be renderable by at least one
+ * provider family; pickers filter per model (see ModelVideoLimits). */
+export const DURATIONS = ["3s", "5s", "6s", "8s", "10s", "15s"] as const;
 export type DurationKey = (typeof DURATIONS)[number];
 
 export const VARIANT_COUNTS = [1, 2, 3, 4] as const;

@@ -6,7 +6,6 @@ import { Button } from "./ui";
 import { PillSelect } from "./PillSelect";
 import {
   ASPECTS,
-  DURATIONS,
   IMAGE_STYLES,
   PROMPT_MAX,
   RESOLUTIONS,
@@ -17,6 +16,8 @@ import {
   type ResolutionKey,
 } from "@/lib/constants";
 import type { ModelOption } from "@/lib/model-catalog";
+import { allowedOptions } from "@/lib/render-options";
+import type { ModelVideoLimits } from "@/lib/domain/models";
 import type { GenerationSettings } from "@/lib/types";
 
 const PILL_BASE =
@@ -172,6 +173,8 @@ export function PromptComposer({
   modelId,
   onModelChange,
   stylesSupported,
+  /** Render limits of the active model — pickers constrain to these. */
+  videoLimits,
   title = "Prompt composer",
   headerBadge,
 }: {
@@ -195,10 +198,15 @@ export function PromptComposer({
   onModelChange?: (modelId: string) => void;
   /** False when the active model can't honour style presets. */
   stylesSupported?: boolean;
+  /** Render limits of the active model — pickers constrain to these. */
+  videoLimits?: ModelVideoLimits;
   title?: string;
   headerBadge?: ReactNode;
 }) {
   const styles = kind === "video" ? VIDEO_STYLES : IMAGE_STYLES;
+  // Presets the active model can render (unknown limits = show everything);
+  // an empty list means the model takes no such input, so the pill hides.
+  const allowed = allowedOptions(videoLimits);
 
   return (
     // The composer is the panel itself and stretches with its column, so the
@@ -284,32 +292,36 @@ export function PromptComposer({
             onChange={onModelChange}
           />
           )}
-        <PillSelect
-          icon="grid"
-          label="Aspect ratio"
-          value={settings.aspect}
-          options={Object.entries(ASPECTS).map(([value, meta]) => ({
-            value,
-            label: meta.label,
-            hint: meta.hint,
-          }))}
-          onChange={(value) =>
-            onSettingsChange({ aspect: value as AspectKey })
-          }
-        />
-        <PillSelect
-          icon="sparkle"
-          label="Resolution"
-          value={settings.resolution}
-          options={Object.entries(RESOLUTIONS).map(([value, meta]) => ({
-            value,
-            label: value,
-            hint: meta.label.split("·")[1]?.trim(),
-          }))}
-          onChange={(value) =>
-            onSettingsChange({ resolution: value as ResolutionKey })
-          }
-        />
+        {allowed.aspects.length > 0 && (
+          <PillSelect
+            icon="grid"
+            label="Aspect ratio"
+            value={settings.aspect}
+            options={allowed.aspects.map((value) => ({
+              value,
+              label: ASPECTS[value].label,
+              hint: ASPECTS[value].hint,
+            }))}
+            onChange={(value) =>
+              onSettingsChange({ aspect: value as AspectKey })
+            }
+          />
+        )}
+        {allowed.resolutions.length > 0 && (
+          <PillSelect
+            icon="sparkle"
+            label="Resolution"
+            value={settings.resolution}
+            options={allowed.resolutions.map((value) => ({
+              value,
+              label: value,
+              hint: RESOLUTIONS[value].label.split("·")[1]?.trim(),
+            }))}
+            onChange={(value) =>
+              onSettingsChange({ resolution: value as ResolutionKey })
+            }
+          />
+        )}
         <PillSelect
           icon="image"
           label="Style"
@@ -329,7 +341,7 @@ export function PromptComposer({
             icon="clock"
             label="Duration"
             value={settings.duration}
-            options={DURATIONS.map((value) => ({ value, label: value }))}
+            options={allowed.durations.map((value) => ({ value, label: value }))}
             onChange={(value) =>
               onSettingsChange({ duration: value as DurationKey })
             }
