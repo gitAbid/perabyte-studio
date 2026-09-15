@@ -5,6 +5,7 @@ import { Icon } from "@/components/Icon";
 import { PillSelect } from "@/components/PillSelect";
 import { Button } from "@/components/ui";
 import type { ModelOption } from "@/lib/model-catalog";
+import { modelPickerSections } from "@/lib/model-picker-options";
 
 /**
  * Confirmation popover for image-story → video-story conversion (spec §9):
@@ -75,11 +76,13 @@ export function ConvertDialog({
             label="Model"
             value={chosen ?? models[0]?.id ?? ""}
             onChange={setChosen}
-            options={models.map((model) => ({
-              value: model.id,
-              label: model.label,
-              hint: model.providerLabel,
-            }))}
+            options={modelPickerSections(models).recommended}
+            tail={(() => {
+              const sections = modelPickerSections(models);
+              return sections.tail.length
+                ? { label: sections.tailLabel, options: sections.tail }
+                : undefined;
+            })()}
           />
         </div>
 
