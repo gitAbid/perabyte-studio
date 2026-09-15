@@ -82,7 +82,7 @@ export function createRegistry(
 
     defaultModel(kind) {
       const models = this.listModels(kind);
-      const fallback = models[0];
+      const fallback = models.find((model) => model.tier === "recommended") ?? models[0];
       if (!fallback) {
         throw new ProviderError("No render provider is available.", { retryable: false });
       }

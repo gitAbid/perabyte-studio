@@ -78,6 +78,20 @@ describe("provider registry", () => {
     ]);
   });
 
+  it("picks the first recommended model as the default, else the first model", () => {
+    const recommendedFlux = fakeProvider({
+      id: "pollinations",
+      configured: true,
+      imageModels: [{ ...flux.listImageModels()[0], tier: "recommended" as const }],
+    });
+    // grok is registered first but carries no tier — recommended wins.
+    const registry = createRegistry([grok, recommendedFlux]);
+    expect(registry.defaultModel("image").id).toBe("pollinations:flux");
+    // No tiers anywhere → first model (existing behaviour).
+    const plain = createRegistry([grok, flux]);
+    expect(plain.defaultModel("image").id).toBe("apikey-fan:grok-imagine-image-2.0");
+  });
+
   it("falls back to the keyless provider when the key is absent", () => {
     const offlineGrok = fakeProvider({ id: "apikey-fan", configured: false });
     const registry = createRegistry([
