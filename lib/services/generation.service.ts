@@ -222,19 +222,23 @@ function validateLoras(value: unknown): LoraSelection[] {
  * Validate the client's LoRA selections against the live catalog before the
  * request leaves the app. Sogni's worker fails the whole render on an unknown
  * loraId (verified live 2026-09-15), so anything the catalog doesn't list for
- * this model — stale client state, renamed ids — is stripped here. If the
- * catalog itself is unreachable the adapters are dropped entirely: a render
+ * this model — stale client state, renamed ids — is stripped here. nsfw/sexual
+ * adapters require the provider's Sensitive Content Filter off, so they're
+ * dropped from safe (non-Uncensored) requests regardless of client state. If
+ * the catalog itself is unreachable the adapters are dropped entirely: a render
  * without its LoRAs beats no render at all.
  */
 async function resolveLoras(
   selections: LoraSelection[],
   rawModelId: string,
+  safe: boolean,
   log: Logger,
 ): Promise<LoraSelection[]> {
   const catalog = await fetchLoraCatalog().catch(() => null);
   const known = new Set(
     (catalog?.loras ?? [])
       .filter((entry) => entry.modelIds.includes(rawModelId))
+      .filter((entry) => safe || (!entry.nsfw && !entry.sexual))
       .map((entry) => entry.loraId),
   );
   const kept = selections.filter((s) => known.has(s.loraId));
@@ -461,6 +465,10 @@ export async function runGeneration(
   }
   const framesActive = Boolean(startImage) && effective.model.frameInput?.start === true;
 
+  // Sensored models (no uncensored capability) always keep the safety
+  // checker on, whatever the Uncensored Mode toggle says. LoRA gating uses
+  // the same effective flag so the adapters can never outrun the filter.
+  const effectiveSafe = effective.model.uncensored === false ? true : request.safe;
   const normalized: NormalizedGenerationRequest = {
     kind: request.kind,
     // Style presets are folded into the prompt only when the model supports
@@ -475,14 +483,12 @@ export async function runGeneration(
     durationSeconds: durationToSeconds(request.duration),
     count: request.count,
     seed: request.seed ?? randomSeed(),
-    // Sensored models (no uncensored capability) always keep the safety
-    // checker on, whatever the Uncensored Mode toggle says.
-    safe: effective.model.uncensored === false ? true : request.safe,
+    safe: effectiveSafe,
     enhance: request.enhance,
     // LoRA adapters only ride along when the resolved model accepts them —
     // silently dropped otherwise (same degrade-don't-fail pattern as frames).
     ...(effective.model.loraCapable && request.loras.length
-      ? { loras: await resolveLoras(request.loras, effective.model.model, log) }
+      ? { loras: await resolveLoras(request.loras, effective.model.model, effectiveSafe, log) }
       : {}),
     startImage: framesActive ? startImage : undefined,
     endImage,

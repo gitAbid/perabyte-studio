@@ -18,6 +18,7 @@ import {
 import type { ModelOption } from "@/lib/model-catalog";
 import { allowedOptions } from "@/lib/render-options";
 import { lorasForModel, visibleLoras } from "@/lib/lora-options";
+import { LORA_PRESETS, matchLoraPreset } from "@/lib/lora-presets";
 import type { LoraOption } from "@/lib/providers/sogni/lora-catalog";
 import { LoraPicker } from "./LoraPicker";
 import type { ModelVideoLimits } from "@/lib/domain/models";
@@ -369,12 +370,39 @@ export function PromptComposer({
           />
         )}
         {loraEntries.length > 0 && (
-          <LoraPicker
-            entries={loraEntries}
-            selection={settings.loras ?? []}
-            onChange={(loras) => onSettingsChange({ loras })}
-            maxPerRequest={loraMaxPerRequest}
-          />
+          <>
+            <PillSelect
+              icon="sparkle"
+              label="Preset"
+              value={
+                matchLoraPreset(settings.loras ?? [])?.id ??
+                (settings.loras?.length ? "custom" : "none")
+              }
+              options={[
+                { value: "none", label: "None" },
+                { value: "custom", label: "Custom" },
+                ...LORA_PRESETS.filter((p) => !p.mature || allowNsfwLoras).map((preset) => ({
+                  value: preset.id,
+                  label: preset.label,
+                  hint: preset.hint,
+                  group: preset.mature ? "Mature" : "Looks",
+                })),
+              ]}
+              onChange={(value) => {
+                // "custom" is a state label only — hand-tweaks happen in the
+                // LoRA popover; picking it here changes nothing.
+                if (value === "custom") return;
+                const preset = LORA_PRESETS.find((p) => p.id === value);
+                onSettingsChange({ loras: preset ? preset.loras.map((l) => ({ ...l })) : [] });
+              }}
+            />
+            <LoraPicker
+              entries={loraEntries}
+              selection={settings.loras ?? []}
+              onChange={(loras) => onSettingsChange({ loras })}
+              maxPerRequest={loraMaxPerRequest}
+            />
+          </>
         )}
         {allowed.aspects.length > 0 && (
           <PillSelect

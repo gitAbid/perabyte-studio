@@ -429,7 +429,9 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
             loraMaxPerRequest={catalog.loraMaxPerRequest}
             loraCapable={activeModel?.loraCapable === true}
             loraModel={activeModel?.model}
-            allowNsfwLoras={settings.safe === false}
+            // The live Uncensored toggle is the gate — settings.safe is only
+            // stamped onto the request at generate time, never before.
+            allowNsfwLoras={userSettings.uncensoredEnabled}
             onSettingsChange={patchSettings}
             characters={characters}
             characterId={userSettings.soloCharacterId}

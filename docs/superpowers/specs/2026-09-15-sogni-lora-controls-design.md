@@ -154,3 +154,30 @@ Story mode needs **no new code path**: `story/runner.ts` already spreads
    (server log line confirms `loras` in the outbound params).
 3. Story: queue a 2-scene story with a LoRA selected, confirm both scenes
    render with it and cancel/regenerate still work.
+
+---
+
+# Phase 2 — LoRA Presets (added 2026-09-15, branch `feature/lora-presets`)
+
+One-click looks over the phase-1 plumbing: a preset is a named
+`{ id, label, hint, loras: LoraSelection[], mature? }` bundle in
+`lib/lora-presets.ts`. No new request fields, no provider changes.
+
+- **UI**: a "Preset" `PillSelect` beside the LoRA pill, rendered under the same
+  gate (LoRA-capable model + entries exist). Options: `None` + normal presets
+  (group "Looks") + `mature: true` presets (group "Mature") — the mature group
+  only appears under Uncensored Mode, same gate as nsfw rows. The active value
+  is **derived**, not stored: the preset whose `loras` deep-equals
+  `settings.loras`; `Custom` when a non-empty selection matches no preset;
+  `None` clears the selection. Hand-tweaking after a preset simply turns the
+  value to `Custom` — no state to keep in sync.
+- **Server**: `resolveLoras` additionally drops `nsfw`/`sexual` entries when
+  `safe === true` (airtight regardless of client state; nsfw adapters require
+  the Sensitive Content Filter off). Edge accepted: a selected mature preset
+  stays visible in the pill until re-picked after toggling Uncensored off —
+  cosmetic only, the service strips it.
+- **Scope**: image presets only (Krea 2 ids). Video presets await MiniMax H3
+  models in the picker; unknown-id stripping already degrades renamed
+  catalog entries gracefully.
+- **Tests**: preset schema sanity (unique ids, finite strengths, ≥1 entry),
+  matcher (exact / custom / none).
