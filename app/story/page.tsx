@@ -205,7 +205,16 @@ export default function StoryPage() {
             value={kind}
             onChange={(next) => {
               setKind(next);
-              setSettings((s) => ({ ...s, kind: next }));
+              // The style table is kind-specific; a stale image style on a
+              // video scene used to fail validation server-side.
+              setSettings((s) => ({
+                ...s,
+                kind: next,
+                style:
+                  next === "video"
+                    ? DEFAULT_VIDEO_SETTINGS.style
+                    : DEFAULT_IMAGE_SETTINGS.style,
+              }));
             }}
             options={[
               { value: "image", label: "Image", icon: "image" },
@@ -255,6 +264,9 @@ export default function StoryPage() {
               onSettingsChange={(patch) => setSettings((s) => ({ ...s, ...patch }))}
               models={catalog.models}
               modelId={modelId}
+              stylesSupported={
+                catalog.models.find((model) => model.id === modelId)?.stylesSupported ?? true
+              }
               onModelChange={(nextModel) => {
                 setSelectedModel(kind, nextModel);
                 setSettings((s) => ({ ...s, modelId: nextModel }));

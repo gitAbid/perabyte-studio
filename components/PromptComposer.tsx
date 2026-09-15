@@ -306,8 +306,13 @@ export function PromptComposer({
         <PillSelect
           icon="image"
           label="Style"
-          value={settings.style}
-          options={Object.keys(styles).map((name) => ({ value: name, label: name }))}
+          // Styleless models show a neutral value instead of a stale preset.
+          value={stylesSupported === false ? "none" : settings.style}
+          options={
+            stylesSupported === false
+              ? [{ value: "none", label: "None" }]
+              : Object.keys(styles).map((name) => ({ value: name, label: name }))
+          }
           onChange={(value) => onSettingsChange({ style: value })}
           disabled={stylesSupported === false}
           disabledHint="This model doesn't support style presets"

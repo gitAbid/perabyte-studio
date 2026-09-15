@@ -37,19 +37,29 @@ describe("validateGenerationRequest", () => {
     }
   });
 
-  it("rejects unknown aspect ratios, resolutions, styles and durations", () => {
+  it("rejects unknown aspect ratios, resolutions and durations", () => {
     expect(() => validateGenerationRequest({ ...baseBody(), aspect: "21:9" })).toThrowError(
       GenerationServiceError,
     );
     expect(() =>
       validateGenerationRequest({ ...baseBody(), resolution: "8K" }),
     ).toThrowError(GenerationServiceError);
-    expect(() => validateGenerationRequest({ ...baseBody(), style: "Nope" })).toThrowError(
-      GenerationServiceError,
-    );
     expect(() => validateGenerationRequest({ ...baseBody(), duration: "30s" })).toThrowError(
       GenerationServiceError,
     );
+  });
+
+  it("clamps an unknown or stale style to the kind's default instead of failing", () => {
+    // Garbage style falls back to the image default.
+    expect(validateGenerationRequest({ ...baseBody(), style: "Nope" }).style).toBe("Realistic");
+    // A stale image style must not fail a video render.
+    expect(
+      validateGenerationRequest({ ...baseBody(), kind: "video", style: "Realistic" }).style,
+    ).toBe("Cinematic");
+    // A video request without a style defaults to "Cinematic".
+    expect(
+      validateGenerationRequest({ ...baseBody(), kind: "video", style: undefined }).style,
+    ).toBe("Cinematic");
   });
 
   it("clamps the variant count and parses string seeds", () => {

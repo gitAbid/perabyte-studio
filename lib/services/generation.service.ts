@@ -113,13 +113,14 @@ export function validateGenerationRequest(body: Record<string, unknown>): Valida
     });
   }
 
+  // Style table is kind-specific; an unknown value (e.g. an image style left
+  // over after switching to video) clamps to the kind's default instead of
+  // failing the render — the pill only ever offers valid values, staleness
+  // shouldn't cost the user their generation.
   const styleTable = kind === "video" ? VIDEO_STYLES : IMAGE_STYLES;
-  const style = typeof body.style === "string" ? body.style : "Realistic";
-  if (!(style in styleTable)) {
-    throw new GenerationServiceError("That style preset is not supported.", {
-      field: "style",
-    });
-  }
+  const defaultStyle = kind === "video" ? "Cinematic" : "Realistic";
+  const rawStyle = typeof body.style === "string" ? body.style : defaultStyle;
+  const style = rawStyle in styleTable ? rawStyle : defaultStyle;
 
   const duration = typeof body.duration === "string" ? body.duration : "5s";
   if (!(DURATIONS as readonly string[]).includes(duration)) {
