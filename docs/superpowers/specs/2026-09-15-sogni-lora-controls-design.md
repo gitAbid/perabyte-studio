@@ -171,13 +171,23 @@ One-click looks over the phase-1 plumbing: a preset is a named
   `settings.loras`; `Custom` when a non-empty selection matches no preset;
   `None` clears the selection. Hand-tweaking after a preset simply turns the
   value to `Custom` — no state to keep in sync.
+- **Mature table (2026-09-16)**: Uncensored (bypass-2 + mystic-x 0.8),
+  Uncensored Strong (bypass-3 + mystic-x 0.8), Unlock (bypass-2 only),
+  Engine Realism (realism-engine 0.8 + bypass-2; no `krea2-realism` stack),
+  Mystic (mystic-x 1), Candid Adult, Raw Amateur, Glamour Nude, Wet Look,
+  Aberrant (body-horror + bypass-2). Filter-bypass is unflagged in the catalog
+  but mature-gated because it is the actual adult-prompt unlock. Body-shape
+  sliders (chest/firmness/nipple/hourglass) stay in the picker, never in presets.
 - **Server**: `resolveLoras` additionally drops `nsfw`/`sexual` entries when
   `safe === true` (airtight regardless of client state; nsfw adapters require
-  the Sensitive Content Filter off). Edge accepted: a selected mature preset
-  stays visible in the pill until re-picked after toggling Uncensored off —
-  cosmetic only, the service strips it.
+  the Sensitive Content Filter off). Filter-bypass is *not* stripped on the
+  server — Sogni does not flag it — so the Uncensored Mode UI gate is the
+  product control. Edge accepted: a selected mature preset stays visible in
+  the pill until re-picked after toggling Uncensored off — cosmetic only;
+  flagged adapters are stripped, bypass may still ride if already selected.
 - **Scope**: image presets only (Krea 2 ids). Video presets await MiniMax H3
   models in the picker; unknown-id stripping already degrades renamed
   catalog entries gracefully.
 - **Tests**: preset schema sanity (unique ids, finite strengths, ≥1 entry),
-  matcher (exact / custom / none).
+  matcher (exact / custom / none), mature table (order, bypass pairing,
+  no body sliders, Aberrant labelled as horror).

@@ -9,6 +9,10 @@ import type { LoraSelection } from "@/lib/types";
  * Ids reference Sogni's live `/v1/loras/comfy` catalog (Krea 2 image family).
  * A Sogni-side rename degrades gracefully: the entry is stripped end-to-end
  * and the preset renders minus that adapter.
+ *
+ * Mature group is Uncensored-Mode only. It includes nsfw/sexual-flagged
+ * adapters AND filter-bypass (unflagged, but it is the actual unlock for
+ * adult prompt follow). Body-shape sliders stay in the picker, never here.
  */
 
 export interface LoraPreset {
@@ -86,30 +90,104 @@ export const LORA_PRESETS: LoraPreset[] = [
       { loraId: "krea2-detail-enhancer", strength: 1 },
     ],
   },
-  // --- mature: Uncensored Mode only (nsfw/sexual-flagged adapters) ---
+  // --- mature: Uncensored Mode only ---
+  {
+    id: "uncensored",
+    label: "Uncensored",
+    hint: "Follow adult prompts, drop sanitized face",
+    mature: true,
+    loras: [
+      { loraId: "krea2-filter-bypass-2", strength: 2 },
+      { loraId: "krea2-mystic-x", strength: 0.8 },
+    ],
+  },
+  {
+    id: "uncensored-strong",
+    label: "Uncensored Strong",
+    hint: "Heavier bypass when 2-vector still sanitizes",
+    mature: true,
+    loras: [
+      { loraId: "krea2-filter-bypass-3", strength: 2 },
+      { loraId: "krea2-mystic-x", strength: 0.8 },
+    ],
+  },
+  {
+    id: "unlock",
+    label: "Unlock",
+    hint: "Prompt adherence + artistic nudity, no adult finetune",
+    mature: true,
+    loras: [{ loraId: "krea2-filter-bypass-2", strength: 2 }],
+  },
   {
     id: "engine-realism",
     label: "Engine Realism",
-    hint: "Raw community realism fine-tune",
+    hint: "Uncensored photoreal, mature knowledge",
     mature: true,
     loras: [
       { loraId: "krea2-realism-engine", strength: 0.8 },
-      { loraId: "krea2-realism", strength: 1 },
+      { loraId: "krea2-filter-bypass-2", strength: 2 },
     ],
   },
   {
     id: "mystic",
     label: "Mystic",
-    hint: "Mystic-X community look",
+    hint: "All-round adult LoRA (keep ≤ 1)",
     mature: true,
     loras: [{ loraId: "krea2-mystic-x", strength: 1 }],
   },
   {
+    id: "candid-adult",
+    label: "Candid Adult",
+    hint: "Unposed, magazine-photo adult look",
+    mature: true,
+    loras: [
+      { loraId: "krea2-candid", strength: 3 },
+      { loraId: "krea2-mystic-x", strength: 0.8 },
+      { loraId: "krea2-filter-bypass-2", strength: 2 },
+    ],
+  },
+  {
+    id: "raw-amateur",
+    label: "Raw Amateur",
+    hint: "Lo-fi snapshot, adult prompt follow",
+    mature: true,
+    loras: [
+      { loraId: "krea2-amateur", strength: 1.5 },
+      { loraId: "krea2-mystic-x", strength: 0.8 },
+      { loraId: "krea2-filter-bypass-2", strength: 2 },
+    ],
+  },
+  {
+    id: "glamour-nude",
+    label: "Glamour Nude",
+    hint: "Polished influencer look, adult knowledge",
+    mature: true,
+    loras: [
+      { loraId: "krea2-bloomgirls", strength: 0.8 },
+      { loraId: "krea2-mystic-x", strength: 0.8 },
+      { loraId: "krea2-filter-bypass-2", strength: 2 },
+    ],
+  },
+  {
+    id: "wet-look",
+    label: "Wet Look",
+    hint: "Damp skin, hair, and clothes",
+    mature: true,
+    loras: [
+      { loraId: "krea2-wetness", strength: 2 },
+      { loraId: "krea2-mystic-x", strength: 0.8 },
+      { loraId: "krea2-filter-bypass-2", strength: 2 },
+    ],
+  },
+  {
     id: "aberrant",
     label: "Aberrant",
-    hint: "Aberrant community fine-tune",
+    hint: "Industrial body-horror grit",
     mature: true,
-    loras: [{ loraId: "krea2-aberrant", strength: 0.75 }],
+    loras: [
+      { loraId: "krea2-aberrant", strength: 0.75 },
+      { loraId: "krea2-filter-bypass-2", strength: 2 },
+    ],
   },
 ];
 
