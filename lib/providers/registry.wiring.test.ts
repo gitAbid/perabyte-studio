@@ -1,5 +1,12 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { resetStudioEnvForTests } from "@/lib/config/env";
+import {
+  resetProviderConfigForTests,
+  setProviderConfigPathForTests,
+} from "@/lib/repositories/provider-config.repository";
 import { getGenerationRegistry } from "@/lib/providers/registry";
 
 /**
@@ -8,10 +15,23 @@ import { getGenerationRegistry } from "@/lib/providers/registry";
  * up once its credential is present.
  */
 describe("app registry wiring", () => {
+  let configDir: string;
+
+  beforeEach(() => {
+    // Hermetic gate: point the provider-config repository at a path with no
+    // settings file so the dynamic gate uses the all-enabled default instead
+    // of whatever the developer's real .studio/settings.json disables.
+    configDir = mkdtempSync(path.join(tmpdir(), "perabyte-registry-"));
+    setProviderConfigPathForTests(path.join(configDir, "settings.json"));
+  });
+
   afterEach(() => {
     delete process.env.APIKEY_FAN_API_KEY;
     delete process.env.SOGNI_API_KEY;
     resetStudioEnvForTests();
+    setProviderConfigPathForTests(null);
+    resetProviderConfigForTests();
+    rmSync(configDir, { recursive: true, force: true });
   });
 
   it("lists sogni models between apikey.fan and the keyless fallback", () => {
