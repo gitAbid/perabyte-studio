@@ -102,3 +102,12 @@ describe("model catalogs", () => {
     }
   });
 });
+
+describe("frame capability flags", () => {
+  it("advertises start-frame capability on every grok model", () => {
+    for (const model of [...APIKEY_FAN_IMAGE_MODELS, ...APIKEY_FAN_VIDEO_MODELS]) {
+      expect(model.frameInput).toEqual({ start: true, end: false });
+      expect(model.i2vModelId).toBeUndefined(); // same model takes frames
+    }
+  });
+});

@@ -22,6 +22,7 @@ export const APIKEY_FAN_IMAGE_MODELS: ModelDescriptor[] = [
     model: "grok-imagine-image-2.0",
     label: "Grok Imagine 2.0",
     hint: "flagship",
+    frameInput: { start: true, end: false },
   },
   {
     id: buildModelId(PROVIDER_ID, "grok-imagine-image-quality"),
@@ -30,6 +31,7 @@ export const APIKEY_FAN_IMAGE_MODELS: ModelDescriptor[] = [
     model: "grok-imagine-image-quality",
     label: "Grok Imagine Quality",
     hint: "max detail",
+    frameInput: { start: true, end: false },
   },
   {
     id: buildModelId(PROVIDER_ID, "grok-imagine-image"),
@@ -38,6 +40,7 @@ export const APIKEY_FAN_IMAGE_MODELS: ModelDescriptor[] = [
     model: "grok-imagine-image",
     label: "Grok Imagine",
     hint: "fast · budget",
+    frameInput: { start: true, end: false },
   },
 ];
 
@@ -49,6 +52,7 @@ export const APIKEY_FAN_VIDEO_MODELS: ModelDescriptor[] = [
     model: "grok-imagine-video-1.5",
     label: "Grok Video 1.5",
     hint: "flagship",
+    frameInput: { start: true, end: false },
   },
   {
     id: buildModelId(PROVIDER_ID, "grok-imagine-video"),
@@ -57,6 +61,7 @@ export const APIKEY_FAN_VIDEO_MODELS: ModelDescriptor[] = [
     model: "grok-imagine-video",
     label: "Grok Video",
     hint: "budget",
+    frameInput: { start: true, end: false },
   },
 ];
 

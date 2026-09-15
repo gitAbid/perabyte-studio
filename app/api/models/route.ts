@@ -21,13 +21,15 @@ const log = logger.child({ route: "api/models" });
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const kind: ModelKind = searchParams.get("kind") === "video" ? "video" : "image";
+  const frameParam = searchParams.get("frame");
+  const frame = frameParam === "start" || frameParam === "end" ? frameParam : undefined;
 
   if (getStudioEnv().sogniApiKey) {
     await warmSogniCatalog(2_500).catch(() => undefined);
   }
 
   const registry = getGenerationRegistry();
-  const catalog = getModelCatalog(kind);
+  const catalog = getModelCatalog(kind, frame ? { frame } : undefined);
 
   const models = catalog.models.map((model) => ({
     id: model.id,
@@ -38,9 +40,11 @@ export async function GET(request: Request) {
     providerLabel: registry.findAnywhere(model.id)?.provider.label ?? model.providerId,
     stylesSupported: model.stylesSupported,
     uncensored: model.uncensored,
+    frameInput: model.frameInput,
+    i2vModelId: model.i2vModelId,
   }));
 
-  log.debug("catalog served", { kind, count: models.length });
+  log.debug("catalog served", { kind, frame, count: models.length });
   return NextResponse.json(
     { models, defaultModelId: catalog.defaultModelId },
     { headers: { "cache-control": "no-store" } },

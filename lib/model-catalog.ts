@@ -19,6 +19,10 @@ export interface ModelOption {
   stylesSupported?: boolean;
   /** False when the model always runs behind a safety checker ("Sensored"). */
   uncensored?: boolean;
+  /** Frame conditioning the model accepts. */
+  frameInput?: { start: boolean; end: boolean };
+  /** i2v sibling the server swaps to when a start frame is present. */
+  i2vModelId?: string;
 }
 
 export interface ModelCatalog {
@@ -34,20 +38,30 @@ interface CatalogState {
 
 const catalogCache = new Map<string, Promise<ModelCatalog>>();
 
-function fetchCatalog(kind: GenerationKind): Promise<ModelCatalog> {
-  let pending = catalogCache.get(kind);
+function cacheKey(kind: GenerationKind, frame?: "start" | "end"): string {
+  return `${kind}:${frame ?? ""}`;
+}
+
+function fetchCatalog(kind: GenerationKind, frame?: "start" | "end"): Promise<ModelCatalog> {
+  const key = cacheKey(kind, frame);
+  let pending = catalogCache.get(key);
   if (!pending) {
-    pending = fetch(`/api/models?kind=${kind}`).then(async (response) => {
-      if (!response.ok) throw new Error(`catalog ${response.status}`);
-      return (await response.json()) as ModelCatalog;
-    });
-    pending.catch(() => catalogCache.delete(kind));
-    catalogCache.set(kind, pending);
+    pending = fetch(`/api/models?kind=${kind}${frame ? `&frame=${frame}` : ""}`).then(
+      async (response) => {
+        if (!response.ok) throw new Error(`catalog ${response.status}`);
+        return (await response.json()) as ModelCatalog;
+      },
+    );
+    pending.catch(() => catalogCache.delete(key));
+    catalogCache.set(key, pending);
   }
   return pending;
 }
 
-export function useModelCatalog(kind: GenerationKind): CatalogState {
+export function useModelCatalog(
+  kind: GenerationKind,
+  frame?: "start" | "end",
+): CatalogState {
   const [state, setState] = useState<CatalogState>({
     models: [],
     defaultModelId: null,
@@ -57,7 +71,7 @@ export function useModelCatalog(kind: GenerationKind): CatalogState {
   useEffect(() => {
     let active = true;
     setState((prev) => ({ ...prev, loading: true }));
-    fetchCatalog(kind)
+    fetchCatalog(kind, frame)
       .then((catalog) => {
         if (active) {
           setState({
@@ -75,7 +89,7 @@ export function useModelCatalog(kind: GenerationKind): CatalogState {
     return () => {
       active = false;
     };
-  }, [kind]);
+  }, [kind, frame]);
 
   return state;
 }
