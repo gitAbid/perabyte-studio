@@ -24,6 +24,7 @@ import {
 import { enhancePromptText, isVideoSource } from "@/lib/renderer";
 import { addAsset } from "@/lib/store";
 import type { Asset, GenerationSettings, StoryScene } from "@/lib/types";
+import { StoryPlayer } from "@/components/StoryPlayer";
 
 const CONTINUATIONS = [
   "an establishing wide shot that sets the scene",
@@ -49,6 +50,7 @@ export default function StoryPage() {
   const [scenes, setScenes] = useState<StoryScene[]>([]);
   const [busy, setBusy] = useState(false);
   const [storyId, setStoryId] = useState<string | null>(null);
+  const [playOpen, setPlayOpen] = useState(false);
 
   const { settings: userSettings } = useSettings();
   const catalog = useModelCatalog(kind);
@@ -181,7 +183,13 @@ export default function StoryPage() {
   function reset() {
     setScenes([]);
     setStoryId(null);
+    setPlayOpen(false);
   }
+
+  // Completed scenes in story order — the reel the player walks through.
+  const playableScenes = scenes
+    .filter((scene): scene is StoryScene & { url: string } => Boolean(scene.url))
+    .map((scene) => ({ url: scene.url, mime: scene.mime, label: scene.prompt }));
 
   function handleEnhancePrompt() {
     if (!prompt.trim() || busy) return;
@@ -420,6 +428,14 @@ export default function StoryPage() {
               <>
                 <Button
                   size="sm"
+                  icon="play"
+                  onClick={() => setPlayOpen(true)}
+                  disabled={!playableScenes.length}
+                >
+                  Play story
+                </Button>
+                <Button
+                  size="sm"
                   icon="download"
                   onClick={() => {
                     const first = scenes.find((s) => s.url);
@@ -452,6 +468,15 @@ export default function StoryPage() {
           </div>
         </div>
       </div>
+
+      {/* Full-story reel: plays every completed scene back-to-back. */}
+      {playOpen && playableScenes.length > 0 && (
+        <StoryPlayer
+          scenes={playableScenes}
+          sceneSeconds={Number(String(settings.duration).replace("s", "")) || 5}
+          onClose={() => setPlayOpen(false)}
+        />
+      )}
     </div>
   );
 }
