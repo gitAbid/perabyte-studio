@@ -24,6 +24,7 @@ import {
 import { enhancePromptText, isVideoSource } from "@/lib/renderer";
 import { addAsset } from "@/lib/store";
 import type { Asset, GenerationSettings, StoryScene } from "@/lib/types";
+import { StoryPlayer } from "@/components/StoryPlayer";
 
 const CONTINUATIONS = [
   "an establishing wide shot that sets the scene",
@@ -49,6 +50,7 @@ export default function StoryPage() {
   const [scenes, setScenes] = useState<StoryScene[]>([]);
   const [busy, setBusy] = useState(false);
   const [storyId, setStoryId] = useState<string | null>(null);
+  const [playOpen, setPlayOpen] = useState(false);
 
   const { settings: userSettings } = useSettings();
   const catalog = useModelCatalog(kind);
@@ -72,10 +74,26 @@ export default function StoryPage() {
       settings: settingsValue,
       prompt: scene.prompt,
       uncensored: userSettings.uncensoredEnabled,
+      // Stream the render pipeline into the scene slot so a slow video render
+      // shows live progress instead of a frozen skeleton.
+      onProgress: (progress) =>
+        setScenes((prev) =>
+          prev.map((s) => (s.id === scene.id ? { ...s, progress } : s)),
+        ),
     });
-    const url = response.media[0]?.url ?? null;
+    const media = response.media[0];
+    const url = media?.url ?? null;
     const next = draft.map((s, i) =>
-      i === index ? { ...s, url, status: "completed" as const, kind } : s,
+      i === index
+        ? {
+            ...s,
+            url,
+            mime: media?.mime,
+            status: "completed" as const,
+            kind,
+            progress: undefined,
+          }
+        : s,
     );
     setScenes([...next]);
     persistStory(next, settingsValue);
@@ -165,7 +183,13 @@ export default function StoryPage() {
   function reset() {
     setScenes([]);
     setStoryId(null);
+    setPlayOpen(false);
   }
+
+  // Completed scenes in story order — the reel the player walks through.
+  const playableScenes = scenes
+    .filter((scene): scene is StoryScene & { url: string } => Boolean(scene.url))
+    .map((scene) => ({ url: scene.url, mime: scene.mime, label: scene.prompt }));
 
   function handleEnhancePrompt() {
     if (!prompt.trim() || busy) return;
@@ -315,9 +339,13 @@ export default function StoryPage() {
                     kind === "video" ? (
                       <VideoStage
                         posterUrl={typed.url}
-                        videoUrl={isVideoSource(typed.url) ? typed.url : undefined}
+                        videoUrl={
+                          typed.mime?.startsWith("video/") || isVideoSource(typed.url)
+                            ? typed.url
+                            : undefined
+                        }
                         title={typed.prompt}
-                        durationSeconds={5}
+                        durationSeconds={Number(String(settings.duration).replace("s", "")) || 5}
                       />
                     ) : (
                       <MediaFrame
@@ -327,7 +355,34 @@ export default function StoryPage() {
                       />
                     )
                   ) : typed && (typed.status === "generating" || typed.status === "queued") ? (
-                    <div className="skeleton w-full rounded-[14px]" style={ratioStyle} />
+                    // Live render progress: video scenes take 30–90s, so the
+                    // slot streams the pipeline's stage + percent (same design
+                    // language as the solo preview) instead of a bare skeleton.
+                    <div
+                      className="relative w-full overflow-hidden rounded-[14px] border border-border bg-surface-2"
+                      style={ratioStyle}
+                    >
+                      <div className="skeleton absolute inset-0" />
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-3 text-center">
+                        <p className="flex items-center gap-1.5 text-[11.5px] font-medium text-muted">
+                          <Icon name="clock" size={13} />
+                          {typed.progress?.message ??
+                            (typed.status === "queued"
+                              ? "Queued — waiting for a free render slot…"
+                              : "Generating scene…")}
+                        </p>
+                        <div className="h-1 w-28 overflow-hidden rounded-full bg-ink/10">
+                          {typed.progress?.percent !== undefined ? (
+                            <div
+                              className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out"
+                              style={{ width: `${typed.progress.percent}%` }}
+                            />
+                          ) : (
+                            <div className="h-full w-full animate-pulse rounded-full bg-primary/40" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   ) : index === 0 ? (
                     // Scene 1: an active starting point, not a dashed slot.
                     <div
@@ -373,6 +428,14 @@ export default function StoryPage() {
               <>
                 <Button
                   size="sm"
+                  icon="play"
+                  onClick={() => setPlayOpen(true)}
+                  disabled={!playableScenes.length}
+                >
+                  Play story
+                </Button>
+                <Button
+                  size="sm"
                   icon="download"
                   onClick={() => {
                     const first = scenes.find((s) => s.url);
@@ -405,6 +468,15 @@ export default function StoryPage() {
           </div>
         </div>
       </div>
+
+      {/* Full-story reel: plays every completed scene back-to-back. */}
+      {playOpen && playableScenes.length > 0 && (
+        <StoryPlayer
+          scenes={playableScenes}
+          sceneSeconds={Number(String(settings.duration).replace("s", "")) || 5}
+          onClose={() => setPlayOpen(false)}
+        />
+      )}
     </div>
   );
 }
