@@ -183,6 +183,9 @@ export function invalidateProviderConfigCache(): void {
   cachedConfig = null;
 }
 
+/** Test hook: alias for cache invalidation. */
+export const resetProviderConfigForTests = invalidateProviderConfigCache;
+
 export function setProviderConfigPathForTests(customPath: string | null): void {
   overridePath = customPath;
   cachedConfig = null;
