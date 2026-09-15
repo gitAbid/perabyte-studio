@@ -227,8 +227,14 @@ Converts a completed image story into a video story whose clips animate consecut
 each other: clip *i* gets `startImageRef` = image *i*'s ref and `endImageRef` = image *i*+1's ref
 (N images → N−1 clips).
 
-- **Entry point**: a `Convert to video` button in the story footer, visible when `kind === "image"`
-  and ≥ 2 scenes have completed media.
+- **Entry point + confirmation**: a `Convert to video` button in the story footer, visible when
+  `kind === "image"` and ≥ 2 scenes have completed media. Clicking it opens a compact popover —
+  "Animate N−1 clips · model: [pill] · [Convert]" — **before anything renders**. The pill lists
+  only end-capable video models (decision 3: no dead choices), pre-resolved per the model
+  resolution below, and the user can change it before confirming. Confirming normalizes refs,
+  enqueues the clips, and closes the popover; cancel/escape dismisses without touching either
+  story. The requested model choice is remembered on the popover (per browser), not forced back
+  after each conversion.
 - **Ref normalization**: every source image must be a cache ref before conversion. Scenes rendered
   by Pollinations carry provider URLs — the client fetches them through the existing
   `/api/media?u=…` proxy (same-origin) and uploads via `uploadFrameRef()`. Cached scenes parse their
@@ -245,12 +251,13 @@ each other: clip *i* gets `startImageRef` = image *i*'s ref and `endImageRef` = 
   ("manual refs make a scene runnable") already renders all clips **in parallel** — no chaining
   needed between clips. Continuity toggle stays meaningful for scenes *added later* to the converted
   story.
-- **Model resolution (end-capable)**: the user's selected video model is used when it has
-  `frameInput.end`; otherwise the runner auto-picks the first available entry from a preference
-  list of registered end-capable models — `ltx23-22b-fp8_i2v_distilled` (Sogni-native, fast,
-  popular) → `minimax-h3-fl2va-fp8_i2v_turbo` → `seedance-2-5` → `minimax-h3-fl2va-fp8_flf2v_turbo`
-  — recorded per story as `effectiveModelId`, with the same small model note on clip cards as
-  auto-swapped scenes. Duration: the story's video duration setting, clamped per model as today.
+- **Model resolution (end-capable)**: the popover's pill defaults to the user's selected video
+  model when it has `frameInput.end`; otherwise the first available entry from a preference list of
+  registered end-capable models — `ltx23-22b-fp8_i2v_distilled` (Sogni-native, fast, popular) →
+  `minimax-h3-fl2va-fp8_i2v_turbo` → `seedance-2-5` → `minimax-h3-fl2va-fp8_flf2v_turbo`. Whatever
+  the user confirms is used for all clips and recorded per story as `effectiveModelId`, with the
+  same small model note on clip cards as auto-swapped scenes. Duration: the story's video duration
+  setting, clamped per model as today.
 - **Failure**: a failed clip retries standalone (its refs are explicit, so nothing upstream to
   re-run). The conversion never mutates the source story, so "Convert" can be re-run at any time.
 
