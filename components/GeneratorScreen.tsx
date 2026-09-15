@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { MediaFrame, VideoStage } from "@/components/Media";
 import { PromptComposer } from "@/components/PromptComposer";
+import { RenderProgress } from "@/components/RenderProgress";
 import { Badge, Button, Segmented, useToast } from "@/components/ui";
 import {
   ASPECTS,
@@ -361,22 +362,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
             {busy && (
               <div className="flex flex-col items-center gap-3">
                 <div className="skeleton rounded-[16px]" style={fitBox} />
-                <div className="flex flex-col items-center gap-2">
-                  <p className="flex items-center gap-2 text-center text-[12.5px] font-medium text-muted">
-                    <Icon name="clock" size={14} />
-                    {statusLine}
-                  </p>
-                  <div className="h-1 w-44 overflow-hidden rounded-full bg-ink/10">
-                    {progress?.percent !== undefined ? (
-                      <div
-                        className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out"
-                        style={{ width: `${progress.percent}%` }}
-                      />
-                    ) : (
-                      <div className="h-full w-full animate-pulse rounded-full bg-primary/40" />
-                    )}
-                  </div>
-                </div>
+                <RenderProgress message={statusLine} percent={progress?.percent} />
               </div>
             )}
 

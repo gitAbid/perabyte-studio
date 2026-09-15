@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { MediaFrame, VideoStage } from "@/components/Media";
 import { PromptComposer } from "@/components/PromptComposer";
+import { RenderProgress } from "@/components/RenderProgress";
 import { Badge, Button, Segmented, useToast } from "@/components/ui";
 import {
   ASPECTS,
@@ -15,7 +16,12 @@ import {
   PROMPT_MAX,
   VIDEO_STYLES,
 } from "@/lib/constants";
-import { downloadMedia, requestGeneration } from "@/lib/generation";
+import {
+  downloadMedia,
+  requestGeneration,
+  storyProgressPercent,
+  type GenerationProgress,
+} from "@/lib/generation";
 import { requestPromptEnhancement } from "@/lib/enhancement";
 import { useModelCatalog } from "@/lib/model-catalog";
 import {
@@ -53,6 +59,11 @@ export default function StoryPage() {
   const [busy, setBusy] = useState(false);
   const [storyId, setStoryId] = useState<string | null>(null);
   const [playOpen, setPlayOpen] = useState(false);
+  /** Live render ticks per scene id — transient, never persisted with the story. */
+  const [sceneProgress, setSceneProgress] = useState<Record<string, GenerationProgress>>({});
+  const [activeSceneId, setActiveSceneId] = useState<string | null>(null);
+  /** Aborts the whole batch: the in-flight request and the scene loop. */
+  const abortRef = useRef<AbortController | null>(null);
 
   const { settings: userSettings } = useSettings();
   const catalog = useModelCatalog(kind);
@@ -73,38 +84,43 @@ export default function StoryPage() {
     };
   }
 
-  async function generateScene(index: number, draft: StoryScene[]) {
+  async function generateScene(index: number, draft: StoryScene[], signal: AbortSignal) {
     const scene = draft[index];
     const settingsValue = currentSettings();
-    const response = await requestGeneration({
-      settings: settingsValue,
-      prompt: scene.prompt,
-      uncensored: userSettings.uncensoredEnabled,
-      // Stream the render pipeline into the scene slot so a slow video render
-      // shows live progress instead of a frozen skeleton.
-      onProgress: (progress) =>
-        setScenes((prev) =>
-          prev.map((s) => (s.id === scene.id ? { ...s, progress } : s)),
-        ),
-    });
-    const media = response.media[0];
-    const url = media?.url ?? null;
-    const next = draft.map((s, i) =>
-      i === index
-        ? {
-            ...s,
-            url,
-            mime: media?.mime,
-            status: "completed" as const,
-            kind,
-            progress: undefined,
-            safe: settingsValue.safe,
-          }
-        : s,
-    );
-    setScenes([...next]);
-    persistStory(next, settingsValue);
-    return next;
+    try {
+      const response = await requestGeneration({
+        settings: settingsValue,
+        prompt: scene.prompt,
+        uncensored: userSettings.uncensoredEnabled,
+        signal,
+        onProgress: (progress) =>
+          setSceneProgress((prev) => ({ ...prev, [scene.id]: progress })),
+      });
+      const media = response.media[0];
+      const url = media?.url ?? null;
+      const next = draft.map((s, i) =>
+        i === index
+          ? {
+              ...s,
+              url,
+              mime: media?.mime,
+              status: "completed" as const,
+              kind,
+              safe: settingsValue.safe,
+            }
+          : s,
+      );
+      setScenes([...next]);
+      persistStory(next, settingsValue);
+      return next;
+    } finally {
+      // Progress readouts are transient; never let a tick outlive its scene.
+      setSceneProgress((prev) => {
+        if (!(scene.id in prev)) return prev;
+        const { [scene.id]: _drop, ...rest } = prev;
+        return rest;
+      });
+    }
   }
 
   function persistStory(list: StoryScene[], settingsValue: GenerationSettings) {
@@ -137,6 +153,9 @@ export default function StoryPage() {
     setPromptError(undefined);
     setBusy(true);
 
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     let draft: StoryScene[] = scenes.length
       ? scenes
       : [
@@ -153,22 +172,43 @@ export default function StoryPage() {
     try {
       for (let i = 0; i < draft.length; i += 1) {
         if (draft[i].url) continue;
+        if (controller.signal.aborted) break;
+        setActiveSceneId(draft[i].id);
         draft = draft.map((s, idx) =>
           idx === i ? { ...s, status: "generating" as const } : s,
         );
         setScenes([...draft]);
-        draft = await generateScene(i, draft);
+        draft = await generateScene(i, draft, controller.signal);
       }
-      toast.push(`Story saved with ${draft.filter((s) => s.url).length} scenes.`, "success");
+      if (!controller.signal.aborted) {
+        toast.push(`Story saved with ${draft.filter((s) => s.url).length} scenes.`, "success");
+      }
     } catch (error) {
-      const message = (error as Error).message ?? "Scene generation failed.";
+      const cancelled = controller.signal.aborted || (error as Error)?.name === "AbortError";
+      // A cancelled scene goes back to queued so the story can be resumed;
+      // a genuinely failed one surfaces its message on the failed batch.
       setScenes((prev) =>
-        prev.map((s) => (s.status === "generating" ? { ...s, status: "failed" } : s)),
+        prev.map((s) =>
+          s.status === "generating"
+            ? { ...s, status: cancelled ? "queued" : "failed" }
+            : s,
+        ),
       );
-      toast.push(message, "error");
+      if (cancelled) {
+        toast.push("Story generation cancelled — the remaining scenes stay queued.");
+      } else {
+        const message = (error as Error).message ?? "Scene generation failed.";
+        toast.push(message, "error");
+      }
     } finally {
+      abortRef.current = null;
+      setActiveSceneId(null);
       setBusy(false);
     }
+  }
+
+  function cancelBatch() {
+    abortRef.current?.abort();
   }
 
   function addScene() {
@@ -234,6 +274,17 @@ export default function StoryPage() {
       setEnhancing(false);
     }
   }
+
+  // Story-level batch progress: which slot is rendering and how far the whole
+  // story is (finished scenes count fully, the live scene contributes its
+  // provider percent when one exists).
+  const activeIndex = scenes.findIndex((s) => s.id === activeSceneId);
+  const completedScenes = scenes.filter((s) => s.url).length;
+  const overallPercent = storyProgressPercent(
+    completedScenes,
+    scenes.length,
+    activeSceneId ? sceneProgress[activeSceneId] : undefined,
+  );
 
   return (
     // Same workspace contract as the solo generator: on desktop the two panels
@@ -333,7 +384,7 @@ export default function StoryPage() {
               }}
               busy={busy}
               onGenerate={handleGenerateAll}
-              onCancel={() => setBusy(false)}
+              onCancel={cancelBatch}
               onEnhancePrompt={() => void handleEnhancePrompt()}
               enhancing={enhancing}
               onCopyPrompt={() => {
@@ -393,33 +444,27 @@ export default function StoryPage() {
                         sensitive={typed.safe === false}
                       />
                     )
-                  ) : typed && (typed.status === "generating" || typed.status === "queued") ? (
-                    // Live render progress: video scenes take 30–90s, so the
-                    // slot streams the pipeline's stage + percent (same design
-                    // language as the solo preview) instead of a bare skeleton.
+                  ) : typed && typed.status === "generating" ? (
                     <div
-                      className="relative w-full overflow-hidden rounded-[14px] border border-border bg-surface-2"
+                      className="skeleton relative w-full overflow-hidden rounded-[14px]"
                       style={ratioStyle}
                     >
-                      <div className="skeleton absolute inset-0" />
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-3 text-center">
-                        <p className="flex items-center gap-1.5 text-[11.5px] font-medium text-muted">
-                          <Icon name="clock" size={13} />
-                          {typed.progress?.message ??
-                            (typed.status === "queued"
-                              ? "Queued — waiting for a free render slot…"
-                              : "Generating scene…")}
-                        </p>
-                        <div className="h-1 w-28 overflow-hidden rounded-full bg-ink/10">
-                          {typed.progress?.percent !== undefined ? (
-                            <div
-                              className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out"
-                              style={{ width: `${typed.progress.percent}%` }}
-                            />
-                          ) : (
-                            <div className="h-full w-full animate-pulse rounded-full bg-primary/40" />
-                          )}
-                        </div>
+                      <div className="absolute inset-0 flex items-center justify-center p-3">
+                        <RenderProgress
+                          message={sceneProgress[typed.id]?.message || "Rendering your scene…"}
+                          percent={sceneProgress[typed.id]?.percent}
+                        />
+                      </div>
+                    </div>
+                  ) : typed && typed.status === "queued" ? (
+                    <div
+                      className="skeleton relative w-full overflow-hidden rounded-[14px]"
+                      style={ratioStyle}
+                    >
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="rounded-full bg-white px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-wide text-muted shadow-card">
+                          Queued
+                        </span>
                       </div>
                     </div>
                   ) : index === 0 ? (
@@ -463,7 +508,23 @@ export default function StoryPage() {
           </div>
 
           <div className="mt-4 flex shrink-0 flex-wrap items-center gap-2 border-t border-border pt-3.5">
-            {scenes.some((s) => s.url) ? (
+            {busy && activeIndex >= 0 ? (
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <p className="shrink-0 text-[11.5px] font-semibold text-ink-soft">
+                  Rendering scene {activeIndex + 1} of {scenes.length}…
+                </p>
+                <div className="h-1 min-w-0 max-w-[220px] flex-1 overflow-hidden rounded-full bg-ink/10">
+                  {overallPercent !== undefined ? (
+                    <div
+                      className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out"
+                      style={{ width: `${overallPercent}%` }}
+                    />
+                  ) : (
+                    <div className="h-full w-full animate-pulse rounded-full bg-primary/40" />
+                  )}
+                </div>
+              </div>
+            ) : scenes.some((s) => s.url) ? (
               <>
                 <Button
                   size="sm"
