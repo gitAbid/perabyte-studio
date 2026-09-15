@@ -53,12 +53,46 @@ describe("sogni catalog", () => {
     expect(videos.map((m) => m.model)).toEqual(["wan_v2.2-14b-fp8_t2v_lightx2v"]);
   });
 
-  it("prefers curated labels and hints, else uses the API name", () => {
-    const [krea, flux] = toDescriptors(LIVE_CATALOG, "image");
+  it("prefers curated labels and claims, else leaves models unclaimed", () => {
+    const images = toDescriptors(LIVE_CATALOG, "image");
+    const krea = images.find((m) => m.model === "krea2_turbo_fp8_scaled")!;
+    const flux = images.find((m) => m.model === "flux1-dev-fp8")!;
     expect(krea.label).toBe("Krea 2 Turbo");
-    expect(krea.hint).toBe("Sogni · spark credits");
+    expect(krea.hint).toBe("premium credits");
+    expect(krea.tier).toBe("recommended");
+    expect(krea.useCase).toBeTruthy();
     expect(flux.label).toBe("Flux Dev");
-    expect(flux.hint).toBe("Sogni · standard");
+    expect(flux.hint).toBeUndefined(); // no regex-guessed hints
+    expect(flux.tier).toBeUndefined();
+    expect(flux.useCase).toBeUndefined();
+  });
+
+  it("excludes audio/reference/utility workflows the studio cannot drive", () => {
+    const descriptors = toDescriptors(
+      [
+        model({ id: "ltx23-22b-fp8_a2v_dev", name: "LTX A2V", media: "video" }),
+        model({ id: "minimax-h3-fastvideo-int8_flfa2v_turbo", name: "FLFA2V", media: "video" }),
+        model({ id: "minimax-h3-ref2va-fp8_r2v", name: "MiniMax R2V", media: "video" }),
+        model({ id: "happyhorse-1.1-r2v", name: "HappyHorse R2V", media: "video" }),
+        model({ id: "birefnet_image_background_removal_fp16", name: "BiRefNet", media: "image" }),
+        model({ id: "seedance-2-0", name: "Seedance 2.0", media: "video" }),
+      ],
+      "video",
+    );
+    expect(descriptors.map((m) => m.model)).toEqual(["seedance-2-0"]);
+  });
+
+  it("stamps recommended-first ordering before alphabetical tail", () => {
+    const descriptors = toDescriptors(
+      [
+        model({ id: "aardvark_model", name: "Aardvark", media: "image" }),
+        model({ id: "krea2_turbo_fp8_scaled", name: "Krea 2 Turbo", media: "image" }),
+        model({ id: "krea2_turbo_v2_int8", name: "Krea 2 Turbo v2", media: "image" }),
+      ],
+      "image",
+    );
+    const tiers = descriptors.map((m) => (m.tier === "recommended" ? "rec" : "tail"));
+    expect(tiers).toEqual(["rec", "rec", "tail"]);
   });
 
   it("derives a readable label when the API name is missing", () => {
