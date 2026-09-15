@@ -3,6 +3,16 @@ import * as path from "node:path";
 
 export type KnownProviderId = "apikey-fan" | "sogni" | "pollinations";
 
+/** Alias used by consumers that validate user-supplied provider ids. */
+export type ProviderId = KnownProviderId;
+
+/** Priority order — keyed providers first, keyless fallback last. */
+export const PROVIDER_IDS: readonly KnownProviderId[] = [
+  "apikey-fan",
+  "sogni",
+  "pollinations",
+] as const;
+
 export interface ProviderEntryConfig {
   enabled: boolean;
   apiKey: string | null;
@@ -125,7 +135,10 @@ export function getProviderConfig(): ProviderConfig {
   return cachedConfig;
 }
 
-export function updateProviderConfig(patch: ProviderConfigPatch): ProviderConfig {
+/** Merges a validated patch onto the current config without persisting.
+ * Callers that also validate against live state (settings service) use this
+ * to preview the outcome before committing with `updateProviderConfig`. */
+export function mergeProviderConfigPatch(patch: ProviderConfigPatch): ProviderConfig {
   const current = getProviderConfig();
   const next: ProviderConfig = {
     version: 1,
@@ -167,6 +180,12 @@ export function updateProviderConfig(patch: ProviderConfigPatch): ProviderConfig
           : null;
     }
   }
+
+  return next;
+}
+
+export function updateProviderConfig(patch: ProviderConfigPatch): ProviderConfig {
+  const next = mergeProviderConfigPatch(patch);
 
   const target = resolveConfigPath();
   const dir = path.dirname(target);

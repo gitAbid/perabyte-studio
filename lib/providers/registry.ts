@@ -118,6 +118,17 @@ export function createRegistry(
 
 let registry: ProviderRegistry | null = null;
 
+let registeredProviders: AnyProvider[] = [
+  apiKeyFanProvider,
+  sogniProvider,
+  pollinationsProvider,
+];
+
+/** The app's provider adapters in priority order (keyed first, fallback last). */
+export function getRegisteredProviders(): AnyProvider[] {
+  return registeredProviders;
+}
+
 export function getGenerationRegistry(): ProviderRegistry {
   const dynamicGate: ProviderGate = {
     isEnabled: (providerId) => {
@@ -131,14 +142,21 @@ export function getGenerationRegistry(): ProviderRegistry {
       return p ? !p.disabledModels.includes(modelId) : true;
     },
   };
-  registry ??= createRegistry(
-    [apiKeyFanProvider, sogniProvider, pollinationsProvider],
-    dynamicGate,
-  );
+  registry ??= createRegistry(registeredProviders, dynamicGate);
   return registry;
 }
 
 /** Test hook: swap the app registry. */
 export function setRegistryForTests(fake: ProviderRegistry | null): void {
   registry = fake;
+}
+
+/** Test hook: swap the provider list and drop the cached registry. */
+export function setProvidersForTests(list: AnyProvider[] | null): void {
+  registeredProviders = list ?? [
+    apiKeyFanProvider,
+    sogniProvider,
+    pollinationsProvider,
+  ];
+  registry = null;
 }
