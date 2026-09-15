@@ -15,6 +15,7 @@ import { getStudioEnv } from "@/lib/config/env";
 import type { Logger } from "@/lib/logging/logger";
 import { logger as rootLogger } from "@/lib/logging/logger";
 import { getGenerationRegistry } from "@/lib/providers/registry";
+import { fetchLoraCatalog } from "@/lib/providers/sogni/lora-catalog";
 import {
   ProviderError,
   type GeneratedArtifact,
@@ -215,6 +216,36 @@ function validateLoras(value: unknown): LoraSelection[] {
     });
   }
   return selections;
+}
+
+/**
+ * Validate the client's LoRA selections against the live catalog before the
+ * request leaves the app. Sogni's worker fails the whole render on an unknown
+ * loraId (verified live 2026-09-15), so anything the catalog doesn't list for
+ * this model — stale client state, renamed ids — is stripped here. If the
+ * catalog itself is unreachable the adapters are dropped entirely: a render
+ * without its LoRAs beats no render at all.
+ */
+async function resolveLoras(
+  selections: LoraSelection[],
+  rawModelId: string,
+  log: Logger,
+): Promise<LoraSelection[]> {
+  const catalog = await fetchLoraCatalog().catch(() => null);
+  const known = new Set(
+    (catalog?.loras ?? [])
+      .filter((entry) => entry.modelIds.includes(rawModelId))
+      .map((entry) => entry.loraId),
+  );
+  const kept = selections.filter((s) => known.has(s.loraId));
+  if (kept.length !== selections.length) {
+    log.warn("dropped unknown or model-incompatible lora selections", {
+      model: rawModelId,
+      dropped: selections.filter((s) => !known.has(s.loraId)).map((s) => s.loraId),
+      catalogAvailable: catalog !== null,
+    });
+  }
+  return kept;
 }
 
 /* ------------------------------------------------------------------ */
@@ -451,7 +482,7 @@ export async function runGeneration(
     // LoRA adapters only ride along when the resolved model accepts them —
     // silently dropped otherwise (same degrade-don't-fail pattern as frames).
     ...(effective.model.loraCapable && request.loras.length
-      ? { loras: request.loras }
+      ? { loras: await resolveLoras(request.loras, effective.model.model, log) }
       : {}),
     startImage: framesActive ? startImage : undefined,
     endImage,

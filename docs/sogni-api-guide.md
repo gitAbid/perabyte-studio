@@ -188,3 +188,49 @@ This guide unlocks, with named parameters:
   Sogni key; rides the account subscription (no per-call charge observed).
   Tight `max_tokens` spends on hidden reasoning → empty `content` (treated as
   engine failure by the Enhance chain).
+
+## 8. LoRAs (verified live 2026-09-15; shipped in the studio)
+
+- **Catalog** — `GET /v1/loras/comfy?modelId=<raw model>`: public (no key),
+  `{ status, data: { loras[], models[], constraints } }` (payload nests under
+  `data`). 32 entries over 20 models today. The server honours `modelId`, but
+  the SDK re-filters client-side via each row's `modelIds` join — that join is
+  authoritative. SDK helpers (5-min cache): `projects.availableLoras()`,
+  `getLora(id)`, `supportsLoras(modelId)`, `loraConstraints()`. Our wrapper:
+  `lib/providers/sogni/lora-catalog.ts` (plain fetch + 5-min cache), served to
+  the client through `/api/models` (`loras[]`, `loraMaxPerRequest`).
+- **Submit** — `projects.create({ …, loras: string[], loraStrengths: number[] })`,
+  positionally matched. Max **8** per render (`constraints.maxPerRequest`);
+  strength hard bounds −100..100 server-clamped to each LoRA's `ui.min`/`ui.max`.
+  **Order is significant** (fp8 patches don't commute). **Omitting
+  `loraStrengths` = 1.0 for every LoRA — NOT each `ui.default`** (many default
+  to 0 or 0.8), so always send explicit strengths. Bipolar sliders: negative =
+  inverse effect, 0 = off; never clamp UI input to 0–1. Unknown `loraId` → the
+  worker **fails the whole render** ("A worker couldn't complete this
+  generation", reproduced live) — the service validates ids against the catalog
+  and strips unknowns before submit (`resolveLoras` in generation.service).
+- **Coverage** — image: 25 LoRAs on all 5 Krea 2 models (`krea2_turbo_fp8_scaled`,
+  `dark_beast_krea2_fp8`, both identity-edit variants, `sogni_v0_3_alpha`);
+  categories: character (age/weight/height/skin-tone/breast/chest-firmness/
+  nipple-projection/hourglass), lighting (warm-light, afterlight), detail
+  (detail-enhancer, scene-complexity, skin-detail, wetness, zoom), art
+  direction (realism, amateur, candid, purple-grainy), prompt-control
+  (filter-bypass-2/3, 0..100), community fine-tunes (aberrant, mystic-x,
+  realism-engine, bloomgirls). Video: 7 `h3-*` LoRAs on the 15 MiniMax H3
+  variants (`h3-mystic-xxx-v4` excludes the `ref2va-fp8_r2v` trio). **Zero**
+  LoRAs for Wan/LTX/Seedance/Flux/Z-Image; `chroma1-hd_fp8_scaled` is **not**
+  LoRA-capable despite the SDK README table claiming it (live catalog wins).
+- **`ui` block** — min/max/default/step, `recommendedMin`/`recommendedMax`
+  (author's usable band), `rangeLabels` (bipolar captions), `category`,
+  `nsfw`/`sexual` (require the Sensitive Content Filter off = our Uncensored
+  Mode), creator/sourceUrl/examples. Powers the composer picker as-is.
+- **BYOL** — project history records `personalLoras` provenance
+  (huggingface|civitai + sha256) but no SDK/API upload path exists: the 32
+  catalog entries are the entire surface.
+- **Studio integration** — `LoraSelection[]` on `GenerationSettings` →
+  `NormalizedGenerationRequest.loras` (stripped for non-capable models) →
+  `toImageParams`/`toVideoParams` positional split → `projects.create`. The
+  composer pill renders only for `loraCapable` models; nsfw entries hide
+  unless Uncensored Mode is on; story scenes inherit selections via
+  `story.settings`. Live-smoked: warm-light +2 on krea2 turbo renders golden;
+  ghost ids stripped with a warn log.

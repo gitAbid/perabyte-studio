@@ -116,9 +116,10 @@ Story mode needs **no new code path**: `story/runner.ts` already spreads
   (mirrors `allowed.aspects.length > 0` gating).
 - Chip opens a popover: category sections, one row per LoRA — name + toggle;
   when active, a range slider bound to `ui.min`/`ui.max` (step from `ui.step`,
-  default from `ui.default`, recommended band shown as tick marks).
-- Selected LoRAs summarize as small chips near the pill ("Warm-Light 2.0 ✕");
-  ✕ removes. Reorder not supported in v1 (order = add order).
+  default from `ui.default`). Bipolar LoRAs show their `rangeLabels` captions
+  (e.g. "Cooler & Darker ↔ Warmer & Golden").
+- The pill carries a count badge ("LoRA 2"); selections are removed from the
+  popover rows (toggle off). Reorder not supported in v1 (order = add order).
 - Nsfw/sexual rows hidden unless Uncensored Mode is on. Max 8 enforced by
   disabling further toggles (tooltip states the cap).
 - Styling: existing dark theme, **no focus rings** (tint shift only, per
