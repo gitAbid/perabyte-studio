@@ -4,8 +4,16 @@ import type {
   GeneratedArtifact,
   ImageProvider,
   ProviderContext,
+  TextGenerationRequest,
+  TextGenerationResult,
+  TextModelDescriptor,
+  TextProvider,
   VideoProvider,
 } from "@/lib/providers/types";
+import {
+  POLLINATIONS_TEXT_MODEL,
+  pollinationsTextComplete,
+} from "@/lib/providers/pollinations/pollinations.text";
 import type { NormalizedGenerationRequest } from "@/lib/domain/models";
 import { buildMediaUrl, randomSeed, type RenderRequest } from "@/lib/renderer";
 import { after } from "next/server";
@@ -120,7 +128,7 @@ async function generate(request: NormalizedGenerationRequest, ctx: ProviderConte
   return artifacts;
 }
 
-export const pollinationsProvider: ImageProvider & VideoProvider = {
+export const pollinationsProvider: ImageProvider & VideoProvider & TextProvider = {
   id: PROVIDER_ID,
   label: "Pollinations",
   isConfigured: () => true,
@@ -131,4 +139,16 @@ export const pollinationsProvider: ImageProvider & VideoProvider = {
 
   listVideoModels: () => [FLUX_VIDEO],
   generateVideo: (request, _model, ctx) => generate({ ...request, kind: "video" }, ctx),
+
+  listTextModels: (): TextModelDescriptor[] => [POLLINATIONS_TEXT_MODEL],
+  async generateText(request: TextGenerationRequest): Promise<TextGenerationResult> {
+    const text = await pollinationsTextComplete(request.userPrompt, {
+      signal: request.signal,
+    });
+    return {
+      text,
+      model: POLLINATIONS_TEXT_MODEL.id,
+      provider: PROVIDER_ID,
+    };
+  },
 };

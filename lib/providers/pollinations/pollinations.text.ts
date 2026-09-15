@@ -1,16 +1,12 @@
-import { ProviderError } from "@/lib/providers/types";
+import { ProviderError, type TextModelDescriptor } from "@/lib/providers/types";
 
-/**
- * Keyless text-completion adapter for the Pollinations legacy GET endpoint —
- * the same free tier the render fallback already rides. No system/user split:
- * the whole instruction travels in the URL path, so the instruction builder
- * keeps the prompt and its rules in one block.
- *
- * The endpoint fronts a shared anonymous key pool. When the pool is out of
- * budget it still answers 200 with an apology instead of an error status, so
- * the reply text itself must be screened — a budget notice must surface as a
- * ProviderError, never as an "enhanced" prompt.
- */
+export const POLLINATIONS_TEXT_MODEL: TextModelDescriptor = {
+  id: "pollinations:default",
+  label: "Pollinations (Keyless)",
+  provider: "pollinations",
+  description: "Anonymous shared key pool. Free fallback with no API key required.",
+};
+
 const HOST = "text.pollinations.ai";
 const TIMEOUT_MS = 12_000;
 

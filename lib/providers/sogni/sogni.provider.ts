@@ -2,6 +2,10 @@ import type {
   GeneratedArtifact,
   ImageProvider,
   ProviderContext,
+  TextGenerationRequest,
+  TextGenerationResult,
+  TextModelDescriptor,
+  TextProvider,
   VideoProvider,
 } from "@/lib/providers/types";
 import { ProviderError } from "@/lib/providers/types";
@@ -10,6 +14,7 @@ import { getStudioEnv } from "@/lib/config/env";
 import { randomSeed } from "@/lib/renderer";
 import { getSogniClient } from "@/lib/providers/sogni/client";
 import { getSogniCatalog } from "@/lib/providers/sogni/catalog";
+import { SOGNI_TEXT_MODELS, sogniTextComplete } from "@/lib/providers/sogni/sogni.text";
 import {
   PROVIDER_ID,
   toImageParams,
@@ -17,14 +22,9 @@ import {
 } from "@/lib/providers/sogni/request-maps";
 
 /**
- * Sogni AI adapter. Both capabilities run through one Supernet project:
- * `projects.create` fans out into provider jobs and `waitForCompletion()`
- * resolves with hosted result URLs (encrypted storage, 24-hour retention).
- * URLs are returned rather than downloaded here — the service layer's
- * `materializeArtifact` step caches non-allowlisted hosts server-side, the
- * same route apikey.fan's object-storage links take.
+ * Sogni AI adapter. Image, Video, and Text capabilities.
  */
-export const sogniProvider: ImageProvider & VideoProvider = {
+export const sogniProvider: ImageProvider & VideoProvider & TextProvider = {
   id: PROVIDER_ID,
   label: "Sogni AI",
 
@@ -32,12 +32,23 @@ export const sogniProvider: ImageProvider & VideoProvider = {
     return getStudioEnv().sogniApiKey !== null;
   },
 
-  // The live Sogni catalog, stale-while-revalidate (curated set until the
-  // first refresh lands) — see catalog.ts.
   listImageModels: () => getSogniCatalog().images,
   listVideoModels: () => getSogniCatalog().videos,
-  // i2v siblings + flf2v keyframe models: resolvable, never in the picker.
   listHiddenModels: () => getSogniCatalog().hidden,
+  listTextModels: (): TextModelDescriptor[] => SOGNI_TEXT_MODELS,
+
+  async generateText(request: TextGenerationRequest): Promise<TextGenerationResult> {
+    const text = await sogniTextComplete(request.userPrompt, {
+      signal: request.signal,
+      modelId: request.modelId,
+      systemPrompt: request.systemPrompt,
+    });
+    return {
+      text,
+      model: request.modelId ?? SOGNI_TEXT_MODELS[0].id,
+      provider: PROVIDER_ID,
+    };
+  },
 
   async generateImage(
     request: NormalizedGenerationRequest,

@@ -81,7 +81,51 @@ export interface VideoProvider {
   ): Promise<GeneratedArtifact[]>;
 }
 
-export type GenerationProvider = ImageProvider | VideoProvider;
+/** Descriptor for a text/chat model exposed by a text-capable provider. */
+export interface TextModelDescriptor {
+  readonly id: string;
+  readonly label: string;
+  readonly provider: string;
+  readonly description?: string;
+  readonly contextTokens?: number;
+  readonly reasoning?: boolean;
+}
+
+export interface TextGenerationRequest {
+  systemPrompt?: string;
+  userPrompt: string;
+  modelId?: string;
+  temperature?: number;
+  maxTokens?: number;
+  signal?: AbortSignal;
+}
+
+export interface TextGenerationResult {
+  text: string;
+  model: string;
+  provider: string;
+}
+
+export interface TextProvider {
+  readonly id: string;
+  readonly label: string;
+  isConfigured(): boolean;
+  listTextModels(): TextModelDescriptor[];
+  generateText(request: TextGenerationRequest): Promise<TextGenerationResult>;
+}
+
+export function isTextProvider(p: unknown): p is TextProvider {
+  return (
+    typeof p === "object" &&
+    p !== null &&
+    "listTextModels" in p &&
+    typeof (p as TextProvider).listTextModels === "function" &&
+    "generateText" in p &&
+    typeof (p as TextProvider).generateText === "function"
+  );
+}
+
+export type GenerationProvider = ImageProvider | VideoProvider | TextProvider;
 
 /** Provider failure mapped onto the API's `{ error, field, retryable }` contract. */
 export class ProviderError extends Error {
