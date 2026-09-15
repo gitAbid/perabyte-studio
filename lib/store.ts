@@ -6,7 +6,7 @@ import {
   DEFAULT_VIDEO_SETTINGS,
   titleFromPrompt,
 } from "./constants";
-import type { Asset, GenerationResponse, GenerationSettings } from "./types";
+import type { Asset, GenerationResponse, GenerationSettings, StoryScene } from "./types";
 
 const STORAGE_KEY = "perabyte.assets.v2";
 const SEED_KEY = "perabyte.seeded.v2";
@@ -202,6 +202,20 @@ export function addAsset(asset: Asset): Asset {
 
 export function updateAsset(id: string, patch: Partial<Asset>): void {
   persist(read().map((a) => (a.id === id ? { ...a, ...patch } : a)));
+}
+
+/** Functional scene update for a story asset (the queue's write path). */
+export function updateStoryScenes(
+  storyId: string,
+  updater: (scenes: StoryScene[]) => StoryScene[],
+): void {
+  persist(
+    read().map((asset) =>
+      asset.id === storyId && asset.scenes
+        ? { ...asset, scenes: updater(asset.scenes) }
+        : asset,
+    ),
+  );
 }
 
 export function toggleFavorite(id: string): void {
