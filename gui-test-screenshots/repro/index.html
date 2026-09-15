@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<script type="importmap">
+{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}
+</script>
+<style>body{margin:0}canvas{display:block}</style>
+</head><body>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
+
+const _h = location.hash.replace('#','');
+const phase = (_h.split('&')[0] || 'raw');
+const _qs = new URLSearchParams(_h.includes('&') ? _h.slice(_h.indexOf('&') + 1) : '');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#dfe3ea');
+const camera = new THREE.PerspectiveCamera(30, innerWidth/innerHeight, 0.1, 100);
+camera.position.set(0.35, 1.05, 2.7);
+camera.lookAt(0, 0.92, 0);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+document.body.appendChild(renderer.domElement);
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+const key = new THREE.DirectionalLight(0xffffff, 2.4); key.position.set(-1.6, 2.6, 2.2); scene.add(key);
+
+new GLTFLoader().load('/public/character/preview/avatar.glb', (gltf) => {
+  let model = gltf.scene;
+  if (phase !== 'raw' && phase !== 'zeronoclone') model = skeletonClone(model);
+  if (phase === 'appstate') {
+    let sk = null;
+    model.traverse(o => { if (o.isSkinnedMesh && !sk) sk = o; });
+    if (sk) {
+      const bones = sk.skeleton.bones;
+      const boneInverses = sk.skeleton.boneInverses;
+      const wb = new Map();
+      bones.forEach(function(b, i){ wb.set(b, boneInverses[i].clone().invert()); });
+      var loc = new THREE.Matrix4(), pw = new THREE.Matrix4();
+      for (var i = 0; i < bones.length; i++) {
+        var bone = bones[i], world = wb.get(bone);
+        var parent = bone.parent, pwv = parent ? wb.get(parent) : undefined;
+        if (pwv) { pw.copy(pwv).invert(); loc.multiplyMatrices(pw, world); }
+        else loc.copy(world);
+        loc.decompose(bone.position, bone.quaternion, bone.scale);
+      }
+      model.updateMatrixWorld(true);
+    }
+    model.traverse(function(o){ if (o.isMesh && (o.name.indexOf('Clothes__')===0 || o.name==='Teeth' || o.name==='Tongue' || o.name==='Eyes')) o.visible = false; });
+    var body = model.getObjectByName('Body');
+    var female = { ax_gender_f: 1, ax_age_young: 0.2, ax_age_average: 0.8, ax_height_short: 0.2, ax_height_average: 0.8, ax_weight_light: 0.6, ax_weight_average: 0.4, ax_muscle_flat: 0.7, ax_muscle_average: 0.3, breast_up: 0.3, eye_hooded__l: 0.45, eye_hooded__r: 0.45 };
+    var male = { ax_gender_m: 1, ax_age_young: 0.2, ax_age_average: 0.8, ax_height_short: 0.2, ax_height_average: 0.8, ax_weight_light: 0.6, ax_weight_average: 0.4, ax_muscle_flat: 0.7, ax_muscle_average: 0.3, eye_hooded__l: 0.45, eye_hooded__r: 0.45 };
+    var set = (location.hash.indexOf('male=1') !== -1) ? male : female;
+    Object.keys(set).forEach(function(n){
+      var i = body.morphTargetDictionary[n];
+      if (i !== undefined) body.morphTargetInfluences[i] = set[n];
+      else console.log('MISSING KEY ' + n);
+    });
+    model.updateMatrixWorld(true);
+  }
+  if (phase === 'mkmorph') {
+    const qs = new URLSearchParams(location.search);
+    const key = _qs.get('k') === 'NONE' ? null : (_qs.get('k') || 'ax_gender_m');
+    const body = model.getObjectByName('Body');
+    const i = body.morphTargetDictionary[key];
+    console.log('key', key, 'index', i);
+    if (key && i !== undefined) body.morphTargetInfluences[i] = 1;
+    model.traverse(o => { if (o.isMesh && o.name.startsWith('Clothes__')) o.visible = false; if (o.isMesh && o.name === 'Hair__long01') o.visible = false; if (o.isMesh && (o.name==='Teeth'||o.name==='Tongue'||o.name==='Eyes')) o.visible = false; });
+  }
+  if (phase === 'appclone') {
+    model.traverse((o) => {
+      if (o.isMesh && (o.name === 'Clothes__female_elegantsuit01')) {
+        const body0 = model.getObjectByName('Body');
+        body0.geometry.computeBoundingBox();
+        const pivot = new THREE.Vector3(); body0.geometry.boundingBox.getCenter(pivot);
+        o.scale.setScalar(1.15);
+        o.position.copy(pivot).multiplyScalar(1 - 1.15);
+        o.visible = true;
+      } else if (o.isMesh && (o.name.startsWith('Clothes__') || o.name.startsWith('Hair__'))) o.visible = false;
+      if (o.isMesh && (o.name === 'Teeth' || o.name === 'Tongue' || o.name === 'Eyes')) o.visible = false;
+      if (o.isMesh && o.name === 'Hair__long01') o.visible = true;
+    });
+    const body = model.getObjectByName('Body');
+    const set = { m_gender_f: 1, waist_thin: 0.6, m_muscle_down: 0.55, m_weight_down: 0.6, breast_up: 0.3, eye_hooded__l: 0.45, eye_hooded__r: 0.45 };
+    for (const [n, v] of Object.entries(set)) {
+      const i = body.morphTargetDictionary[n];
+      if (i !== undefined) body.morphTargetInfluences[i] = v;
+    }
+  }
+  scene.add(model);
+  if (phase === 'inflate') {
+    const scl = parseFloat(qs.get('scl') || '1.07');
+    model.traverse((o) => {
+      if (o.isMesh && (o.name === 'Clothes__female_elegantsuit01' || o.name === 'Clothes__female_casualsuit01')) {
+        // scale about the body's bounding-box centre
+        const body0 = model.getObjectByName('Body');
+        body0.geometry.computeBoundingBox();
+        const pivot = new THREE.Vector3(); body0.geometry.boundingBox.getCenter(pivot);
+        o.scale.setScalar(scl);
+        o.position.copy(pivot).multiplyScalar(1 - scl);
+        o.visible = true;
+      } else if (o.isMesh && (o.name.startsWith('Clothes__') || o.name.startsWith('Hair__'))) {
+        o.visible = false;
+      }
+    });
+    const body = model.getObjectByName('Body');
+    const set = { m_gender_f: 1, waist_thin: 0.6, m_muscle_down: 0.4, m_weight_down: 0.4, breast_up: 0.45 };
+    for (const [n, v] of Object.entries(set)) {
+      const i = body.morphTargetDictionary[n];
+      if (i !== undefined) body.morphTargetInfluences[i] = v;
+    }
+    model.updateMatrixWorld(true);
+  }
+
+  if (phase === 'morphs' || phase === 'full') {
+    const body = model.getObjectByName('Body');
+    // default-spec morph set exactly as lib/avatarParams.ts computes it
+    const set = { m_weight_down: 0.65, m_muscle_down: 0.55, waist_thin: 0.9, breast_up: 0.3 };
+    for (const [n, v] of Object.entries(set)) {
+      const i = body.morphTargetDictionary[n];
+      if (i !== undefined) body.morphTargetInfluences[i] = v;
+    }
+  }
+  if (phase === 'bind' || phase === 'bindbody') {
+    // replicate the app's restoreBindPose: rebuild local transforms from IBMs
+    let sk = null;
+    model.traverse(o => { if (o.isSkinnedMesh && !sk) sk = o; });
+    if (sk) {
+      const { bones, boneInverses } = sk.skeleton;
+      const worldBind = new Map();
+      bones.forEach((b, i) => worldBind.set(b, boneInverses[i].clone().invert()));
+      const local = new THREE.Matrix4(), pw = new THREE.Matrix4();
+      for (let i = 0; i < bones.length; i++) {
+        const bone = bones[i], world = worldBind.get(bone);
+        const parent = bone.parent;
+        const parentWorld = parent && worldBind.get(parent);
+        if (parentWorld) { pw.copy(parentWorld).invert(); local.multiplyMatrices(pw, world); }
+        else local.copy(world);
+        local.decompose(bone.position, bone.quaternion, bone.scale);
+      }
+      model.updateMatrixWorld(true);
+    }
+  }
+  if (phase === 'bindbody') {
+    model.traverse(o => {
+      if (o.isSkinnedMesh) o.visible = true;
+      else if (o.isMesh) o.visible = false;
+    });
+  }
+  if (phase === 'zero' || phase === 'zeronoclone' || phase === 'zerobodyonly') {
+    // absolute zero local rotations on the 21 driven bones
+    const NAMES = ["Root","pelvis","spine_01","spine_02","spine_03","neck_01","head",
+      "clavicle_l","upperarm_l","lowerarm_l","hand_l","clavicle_r","upperarm_r","lowerarm_r","hand_r",
+      "thigh_l","calf_l","foot_l","thigh_r","calf_r","foot_r"];
+    const bones = new Map(); model.traverse(o => { if (o.isBone) bones.set(o.name, o); });
+    for (const n of NAMES) { const b = bones.get(n); if (b) b.rotation.set(0,0,0); }
+    model.updateMatrixWorld(true);
+  }
+  if (phase === 'pose' || phase === 'full') {
+    // replicate the app's AvatarFigure useFrame: drive 21 named bones toward
+    // (pose target ?? [0,0,0]) in LOCAL space, portrait pose defaults.
+    const NAMES = ["Root","pelvis","spine_01","spine_02","spine_03","neck_01","head",
+      "clavicle_l","upperarm_l","lowerarm_l","hand_l","clavicle_r","upperarm_r","lowerarm_r","hand_r",
+      "thigh_l","calf_l","foot_l","thigh_r","calf_r","foot_r"];
+    const targets = { head: [0, 0.12, 0.05], upperarm_l: [-0.06, 0, 0.05], upperarm_r: [-0.06, 0, -0.05] };
+    const bones = new Map(); model.traverse(o => { if (o.isBone) bones.set(o.name, o); });
+    for (const n of NAMES) {
+      const b = bones.get(n); if (!b) continue;
+      const t = targets[n] || [0,0,0];
+      b.rotation.set(t[0], t[1], t[2]);
+    }
+  }
+  // hide all hairs/garments except one, like the app does
+  model.traverse((o) => {
+    if (o.isMesh && o.name.startsWith('Hair__')) o.visible = o.name === 'Hair__long01';
+    if (o.isMesh && o.name.startsWith('Clothes__')) o.visible = o.name === 'Clothes__female_casualsuit01' || o.name === 'Clothes__shoes01';
+  });
+  if (phase === 'zerobodyonly' || phase === 'staticsonly') {
+    model.traverse((o) => {
+      if (o.isSkinnedMesh) o.visible = phase === 'zerobodyonly';
+      else if (o.isMesh) o.visible = phase === 'staticsonly';
+    });
+  }
+  renderer.render(scene, camera);
+  document.title = 'loaded:' + phase;
+  if (phase === 'dump') {
+    const lines = [];
+    model.traverse((o) => {
+      if (o.isSkinnedMesh) {
+        const sk = o.skeleton;
+        lines.push(`SKINNED ${o.name} bones=${sk.bones.length} bindTime=${!!o.bindMatrix}`);
+      } else if (o.isMesh) {
+        lines.push(`STATIC  ${o.name}`);
+      }
+    });
+    // count distinct bone sets among skinned meshes
+    const sets = new Map();
+    model.traverse((o) => {
+      if (o.isSkinnedMesh) {
+        const key = o.skeleton.bones.map(b => b.name).join(',').slice(0, 120) + `#${o.skeleton.bones.length}@${o.skeleton.id}`;
+        sets.set(key, (sets.get(key) || 0) + 1);
+      }
+    });
+    lines.push(`--- distinct skeletons: ${sets.size}`);
+    for (const [k, n] of sets) lines.push(`SKELETON x${n}: ${k}`);
+    const bones = []; model.traverse(o => { if (o.isBone) bones.push(`${o.name}(parent=${o.parent && o.parent.type})`); });
+    lines.push(`BONES in graph: ${bones.length}: ` + bones.slice(0, 8).join(' | '));
+    console.log('DUMP\n' + lines.join('\n'));
+  }
+});
+</script></body></html>

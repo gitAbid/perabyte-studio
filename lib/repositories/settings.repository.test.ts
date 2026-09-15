@@ -8,6 +8,8 @@ import {
   resetSettingsForTests,
   setSelectedModel,
   setMaskUncensored,
+  setSoloCharacter,
+  setStoryCharacter,
   setUncensoredEnabled,
 } from "@/lib/repositories/settings.repository";
 
@@ -74,6 +76,21 @@ describe("settings repository", () => {
     const settings = getSettings();
     expect(settings.uncensoredEnabled).toBe(false);
     expect((settings as unknown as Record<string, unknown>).futureField).toBe(42);
+  });
+
+  it("defaults the attached characters to null", () => {
+    expect(getSettings().soloCharacterId).toBeNull();
+    expect(getSettings().storyCharacterId).toBeNull();
+  });
+
+  it("persists attached characters per surface", () => {
+    setSoloCharacter("ch_abc");
+    setStoryCharacter("ch_def");
+    expect(getSettings().soloCharacterId).toBe("ch_abc");
+    expect(getSettings().storyCharacterId).toBe("ch_def");
+    setSoloCharacter(null);
+    expect(getSettings().soloCharacterId).toBeNull();
+    expect(getSettings().storyCharacterId).toBe("ch_def");
   });
 
   it("bumps the catalog version on demand", () => {

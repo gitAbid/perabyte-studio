@@ -6,6 +6,11 @@ import {
 } from "@/lib/generation";
 import { extractLastFrame, refFromMediaUrl, uploadFrameRef } from "@/lib/media/frame";
 import { getAsset, updateStoryScenes } from "@/lib/store";
+import { composeSceneWithCharacter } from "@/lib/character";
+import {
+  getCharacter,
+  type SavedCharacter,
+} from "@/lib/repositories/characters.repository";
 import type { Asset, GenerationResponse, StoryScene } from "@/lib/types";
 
 /**
@@ -29,6 +34,8 @@ export interface StoryRunnerDeps {
   uploadFrameRef(blob: Blob): Promise<string>;
   extractLastFrame(videoUrl: string): Promise<Blob>;
   refFromMediaUrl(url: string | null | undefined): string | null;
+  /** Resolves a story's attached saved character; undefined when none. */
+  getCharacter?(id: string): SavedCharacter | undefined;
   onNotice?(message: string, tone?: "info" | "error"): void;
 }
 
@@ -155,9 +162,16 @@ export function createStoryRunner(deps: StoryRunnerDeps) {
       const scenes = deps.getStory(storyId)?.scenes ?? [];
       const predecessor = scene.startImageRef ? undefined : scenes[index - 1];
       const startRef = scene.startImageRef ?? predecessor?.endFrameRef;
+      // Attached saved character: its sanitized anchor leads every scene
+      // prompt (scene prompts stay clean in the UI). safe=false marks the
+      // story as rendered under the Uncensored gate.
+      const characterId =
+        typeof story.meta?.characterId === "string" ? story.meta.characterId : "";
+      const character = characterId ? deps.getCharacter?.(characterId) : undefined;
+      const uncensored = story.settings.safe === false;
       const response = await deps.requestGeneration({
         settings: { ...story.settings, kind: scene.kind },
-        prompt: scene.prompt,
+        prompt: composeSceneWithCharacter(scene.prompt, character?.spec ?? null, uncensored),
         ...(startRef ? { startImageRef: startRef } : {}),
         ...(scene.endImageRef ? { endImageRef: scene.endImageRef } : {}),
         signal: controller.signal,
@@ -284,4 +298,5 @@ export const appRunner = createStoryRunner({
   uploadFrameRef,
   extractLastFrame,
   refFromMediaUrl,
+  getCharacter,
 });

@@ -18,6 +18,7 @@ import {
 import type { ModelOption } from "@/lib/model-catalog";
 import { allowedOptions } from "@/lib/render-options";
 import type { ModelVideoLimits } from "@/lib/domain/models";
+import type { SavedCharacter } from "@/lib/repositories/characters.repository";
 import type { GenerationSettings } from "@/lib/types";
 
 const PILL_BASE =
@@ -177,6 +178,9 @@ export function PromptComposer({
   videoLimits,
   title = "Prompt composer",
   headerBadge,
+  characters,
+  characterId,
+  onCharacterChange,
 }: {
   kind: "image" | "video";
   prompt: string;
@@ -202,11 +206,17 @@ export function PromptComposer({
   videoLimits?: ModelVideoLimits;
   title?: string;
   headerBadge?: ReactNode;
+  /** Saved characters for the attach pill; wired by Solo and Story. */
+  characters?: SavedCharacter[];
+  characterId?: string | null;
+  onCharacterChange?: (characterId: string | null) => void;
 }) {
   const styles = kind === "video" ? VIDEO_STYLES : IMAGE_STYLES;
   // Presets the active model can render (unknown limits = show everything);
   // an empty list means the model takes no such input, so the pill hides.
   const allowed = allowedOptions(videoLimits);
+  const attachedCharacter =
+    characters?.find((character) => character.id === characterId) ?? null;
 
   return (
     // The composer is the panel itself and stretches with its column, so the
@@ -224,6 +234,29 @@ export function PromptComposer({
         {headerBadge}
       </div>
 
+      {/* Attached character chip: the scene prompt stays scene-only — the
+          character's look and outfit are folded in at generate time. */}
+      {attachedCharacter && onCharacterChange && (
+        <div className="mt-3 flex shrink-0 items-center gap-2 rounded-[10px] border border-primary/30 bg-primary-soft/50 px-2.5 py-1.5">
+          <Icon name="user" size={13} className="shrink-0 text-primary" />
+          <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-primary">
+            {attachedCharacter.name}
+            <span className="ml-1.5 font-normal text-ink-soft">
+              — look and outfit added automatically
+            </span>
+          </span>
+          <button
+            type="button"
+            aria-label={`Detach ${attachedCharacter.name}`}
+            title={`Detach ${attachedCharacter.name}`}
+            onClick={() => onCharacterChange(null)}
+            className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-primary transition-colors hover:bg-white"
+          >
+            <Icon name="close" size={11} />
+          </button>
+        </div>
+      )}
+
       <label htmlFor="prompt-input" className="sr-only">
         {kind === "video" ? "Describe your video" : "Describe your image"}
       </label>
@@ -240,9 +273,11 @@ export function PromptComposer({
           maxLength={PROMPT_MAX}
           aria-invalid={promptError ? true : undefined}
           placeholder={
-            kind === "video"
-              ? "A cinematic shot of a car driving through a mountain road at sunset."
-              : "A serene mountain landscape with a lake, sunrise, and pine trees."
+            attachedCharacter
+              ? `Describe the scene — ${attachedCharacter.name}'s look and outfit are added automatically.`
+              : kind === "video"
+                ? "A cinematic shot of a car driving through a mountain road at sunset."
+                : "A serene mountain landscape with a lake, sunrise, and pine trees."
           }
           onChange={(e) => onPromptChange(e.target.value)}
           onKeyDown={(e) => {
@@ -292,6 +327,22 @@ export function PromptComposer({
             onChange={onModelChange}
           />
           )}
+        {onCharacterChange && (
+          <PillSelect
+            icon="user"
+            label="Character"
+            value={characterId ?? ""}
+            options={[
+              { value: "", label: "None" },
+              ...(characters ?? []).map((character) => ({
+                value: character.id,
+                label: character.name,
+                group: "Saved",
+              })),
+            ]}
+            onChange={(value) => onCharacterChange(value || null)}
+          />
+        )}
         {allowed.aspects.length > 0 && (
           <PillSelect
             icon="grid"

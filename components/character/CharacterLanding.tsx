@@ -1,49 +1,31 @@
 "use client";
 
 import { Icon } from "@/components/Icon";
+import { MediaFrame } from "@/components/Media";
 import { Button } from "@/components/ui";
-import type { CharacterMode } from "@/lib/character";
+import type { SavedCharacter } from "@/lib/repositories/characters.repository";
 
 const HERO_MAIN = "/character/look-editorial.jpg";
 const HERO_SIDE = ["/character/look-golden.jpg", "/character/look-urban.jpg"];
 
-const MODE_CARDS: {
-  id: CharacterMode;
-  title: string;
-  body: string;
-  badge?: string;
-}[] = [
-  {
-    id: "normal",
-    title: "Normal Mode",
-    body: "Fully clothed adult characters. Safety checker on, NSFW locked at 0.",
-  },
-  {
-    id: "uncensored",
-    title: "Uncensored Mode",
-    body: "Adult creative control with clothing, nudity and NSFW intensity. 18+ only.",
-    badge: "NEW",
-  },
-];
-
 /**
- * Entry screen for the Character studio: the pitch, the mode choice and a
- * collage of sample characters. Picking a mode here pre-fills step 1. The
- * Uncensored card is locked unless Uncensored Mode is enabled in Settings.
+ * Entry screen for the Character studio: the pitch, any saved characters to
+ * reopen, and a collage of sample characters. One mode everywhere — adult
+ * options follow the global Uncensored Mode gate in Settings.
  */
 export function CharacterLanding({
-  mode,
-  onModeChange,
+  characters,
+  charactersReady,
   onStart,
-  uncensoredEnabled,
-  onLockedUncensored,
+  onOpenCharacter,
+  onDeleteCharacter,
 }: {
-  mode: CharacterMode;
-  onModeChange: (mode: CharacterMode) => void;
+  characters: SavedCharacter[];
+  /** False until the client has mounted (avoids a flash for SSR). */
+  charactersReady: boolean;
   onStart: () => void;
-  /** Global gate from Settings — disabled by default. */
-  uncensoredEnabled: boolean;
-  onLockedUncensored: () => void;
+  onOpenCharacter: (id: string) => void;
+  onDeleteCharacter: (id: string) => void;
 }) {
   return (
     <div className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-4 py-6 sm:px-6 lg:min-h-0 lg:justify-center lg:py-8">
@@ -56,87 +38,66 @@ export function CharacterLanding({
             Create unique characters for your images and videos.
           </h1>
           <p className="mt-4 max-w-md text-[14px] leading-relaxed text-muted sm:text-[14.5px]">
-            Design every detail — from appearance to personality. Bring your
-            imagination to life with AI.
+            Design every detail — from appearance to personality. Save your
+            characters and reuse them across Solo and Story scenes for a
+            consistent look.
           </p>
-
-          <div className="mt-6 grid max-w-xl gap-3 sm:grid-cols-2">
-            {MODE_CARDS.map((card) => {
-              const active = mode === card.id;
-              const locked = card.id === "uncensored" && !uncensoredEnabled;
-              return locked ? (
-                <button
-                  key={card.id}
-                  type="button"
-                  aria-disabled="true"
-                  onClick={onLockedUncensored}
-                  className="group flex flex-col items-start gap-2.5 rounded-[16px] border border-border bg-white/70 p-4 text-left"
-                >
-                  <span className="flex w-full items-center gap-2">
-                    <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-surface-2 text-muted">
-                      <Icon name="lock" size={15} />
-                    </span>
-                    <span className="flex-1 text-[13.5px] font-bold text-ink-soft">
-                      {card.title}
-                    </span>
-                    <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-muted">
-                      Locked
-                    </span>
-                  </span>
-                  <span className="text-[12.5px] leading-snug text-muted">
-                    {card.body}{" "}
-                    <span className="font-semibold text-ink-soft">
-                      Enable Uncensored Mode in Settings.
-                    </span>
-                  </span>
-                </button>
-              ) : (
-                <button
-                  key={card.id}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => onModeChange(card.id)}
-                  className={`group flex flex-col items-start gap-2.5 rounded-[16px] border bg-white p-4 text-left transition-all hover:-translate-y-0.5 ${
-                    active
-                      ? "border-primary shadow-[0_1px_2px_rgba(37,99,235,0.18),0_10px_28px_-14px_rgba(37,99,235,0.45)]"
-                      : "border-border hover:border-border-strong hover:shadow-card"
-                  }`}
-                >
-                  <span className="flex w-full items-center gap-2">
-                    <span
-                      className={`inline-flex size-9 shrink-0 items-center justify-center rounded-[10px] transition-colors ${
-                        active
-                          ? "bg-primary text-white"
-                          : "bg-surface-2 text-ink-soft group-hover:bg-primary-soft group-hover:text-primary"
-                      }`}
-                    >
-                      <Icon name="user" size={16} />
-                    </span>
-                    <span className="flex-1 text-[13.5px] font-bold text-ink">
-                      {card.title}
-                    </span>
-                    {card.badge && (
-                      <span className="rounded-full bg-danger-soft px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-danger">
-                        {card.badge}
-                      </span>
-                    )}
-                  </span>
-                  <span className="text-[12.5px] leading-snug text-muted">
-                    {card.body}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
 
           <Button
             size="lg"
             iconRight="arrow-right"
-            className="mt-7"
+            className="mt-6"
             onClick={onStart}
           >
             Get Started
           </Button>
+
+          {charactersReady && characters.length > 0 && (
+            <section aria-label="Saved characters" className="mt-8 max-w-xl">
+              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
+                Your characters
+              </p>
+              <div className="no-scrollbar mt-3 flex gap-3 overflow-x-auto pb-1">
+                {characters.map((character) => (
+                  <div key={character.id} className="relative shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => onOpenCharacter(character.id)}
+                      title={`Open ${character.name}`}
+                      className="group block w-24 text-left"
+                    >
+                      <span className="block overflow-hidden rounded-[12px] border border-border transition-all group-hover:border-primary/50 group-hover:shadow-card">
+                        {character.thumbnail ? (
+                          <MediaFrame
+                            src={character.thumbnail}
+                            alt=""
+                            ratio="4/5"
+                            rounded="rounded-[12px]"
+                          />
+                        ) : (
+                          <span className="flex aspect-[4/5] items-center justify-center bg-surface-2 text-muted">
+                            <Icon name="user" size={22} />
+                          </span>
+                        )}
+                      </span>
+                      <span className="mt-1.5 block truncate text-[12px] font-semibold text-ink">
+                        {character.name}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={`Delete ${character.name}`}
+                      title={`Delete ${character.name}`}
+                      onClick={() => onDeleteCharacter(character.id)}
+                      className="absolute -right-1.5 -top-1.5 inline-flex size-5 items-center justify-center rounded-full border border-border bg-white text-ink-soft shadow-card transition-colors hover:text-danger"
+                    >
+                      <Icon name="close" size={11} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
 
         {/* Sample character collage */}

@@ -217,3 +217,118 @@ describe("story runner scheduling", () => {
     );
   });
 });
+
+describe("story runner character reuse", () => {
+  it("prepends the attached character's anchor to every scene prompt", async () => {
+    const deps = makeDeps();
+    deps.getCharacter = vi.fn((id: string) =>
+      id === "ch_1"
+        ? {
+            id: "ch_1",
+            name: "Maya",
+            spec: {
+              prompt: "A warrior queen",
+              style: "Realistic",
+              gender: "Female",
+              age: 25,
+              ethnicity: "Not specified",
+              country: "Not specified",
+              skinTone: "medium",
+              faceShape: "Oval",
+              facialFeatures: "Natural",
+              expression: "Neutral",
+              hairColor: "Black",
+              hairStyle: "Braided",
+              eyeColor: "Brown",
+              eyeShape: "Almond",
+              outfit: "Fantasy armor",
+              accessories: "None",
+              build: "Athletic",
+              bodyDetails: "Normal proportions",
+              tattoos: false,
+              piercings: false,
+              facialHair: false,
+              personality: "",
+              nsfwLevel: 0,
+              look: "",
+            },
+            createdAt: 0,
+            updatedAt: 0,
+          }
+        : undefined,
+    ) as never;
+    const runner = createStoryRunner(deps);
+    deps.assets.set("story1", story([scene({ id: "s1", prompt: "walking through rain" })], {
+      continuity: true,
+      characterId: "ch_1",
+    }));
+
+    runner.start("story1");
+
+    await vi.waitFor(() => expect(deps.requestGeneration).toHaveBeenCalledTimes(1));
+    const calls = deps.requestGeneration.mock.calls as unknown as [{ prompt: string }][];
+    expect(calls[0][0].prompt.startsWith("portrait of an adult")).toBe(true);
+    expect(calls[0][0].prompt).toContain("fantasy armor");
+    expect(calls[0][0].prompt.endsWith("walking through rain")).toBe(true);
+  });
+
+  it("clamps an adult character to the safe anchor when the story renders safe", async () => {
+    const deps = makeDeps();
+    deps.getCharacter = vi.fn(() => ({
+      id: "ch_2",
+      name: "Adult character",
+      spec: {
+        prompt: "",
+        style: "Realistic",
+        gender: "Female",
+        age: 25,
+        ethnicity: "Not specified",
+        country: "Not specified",
+        skinTone: "medium",
+        faceShape: "Oval",
+        facialFeatures: "Natural",
+        expression: "Neutral",
+        hairColor: "Black",
+        hairStyle: "Braided",
+        eyeColor: "Brown",
+        eyeShape: "Almond",
+        outfit: "Nude",
+        accessories: "None",
+        build: "Slim",
+        bodyDetails: "Normal proportions",
+        tattoos: false,
+        piercings: false,
+        facialHair: false,
+        personality: "",
+        nsfwLevel: 3,
+        look: "",
+      },
+      createdAt: 0,
+      updatedAt: 0,
+    })) as never;
+    const runner = createStoryRunner(deps);
+    // safe: true ⇒ the uncensored gate is off for this story.
+    deps.assets.set("story1", story([scene({ id: "s1" })], { characterId: "ch_2" }));
+
+    runner.start("story1");
+
+    await vi.waitFor(() => expect(deps.requestGeneration).toHaveBeenCalledTimes(1));
+    const calls = deps.requestGeneration.mock.calls as unknown as [{ prompt: string }][];
+    expect(calls[0][0].prompt).not.toMatch(/nude|nsfw/i);
+    expect(calls[0][0].prompt).toContain("fully clothed");
+  });
+
+  it("keeps scene prompts untouched when the story has no character", async () => {
+    const deps = makeDeps();
+    const runner = createStoryRunner(deps);
+    deps.assets.set("story1", story([scene({ id: "s1", prompt: "a quiet cafe" })], {
+      characterId: "ch_missing",
+    }));
+
+    runner.start("story1");
+
+    await vi.waitFor(() => expect(deps.requestGeneration).toHaveBeenCalledTimes(1));
+    const calls = deps.requestGeneration.mock.calls as unknown as [{ prompt: string }][];
+    expect(calls[0][0].prompt).toBe("a quiet cafe");
+  });
+});

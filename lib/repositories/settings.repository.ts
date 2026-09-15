@@ -15,6 +15,10 @@ export interface UserSettings {
   maskUncensored: boolean;
   imageModel: string | null;
   videoModel: string | null;
+  /** Saved character attached in Solo Mode, or null for prompt-only scenes. */
+  soloCharacterId: string | null;
+  /** Saved character attached in Story Mode, or null for prompt-only scenes. */
+  storyCharacterId: string | null;
 }
 
 export const DEFAULT_USER_SETTINGS: UserSettings = {
@@ -22,6 +26,8 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   maskUncensored: true,
   imageModel: null,
   videoModel: null,
+  soloCharacterId: null,
+  storyCharacterId: null,
 };
 
 const STORAGE_KEY = "perabyte.settings.v1";
@@ -66,6 +72,16 @@ export function getSettings(): UserSettings {
 
 export function setUncensoredEnabled(value: boolean) {
   update({ uncensoredEnabled: value });
+}
+
+/** Attach or detach the saved character used by Solo Mode. */
+export function setSoloCharacter(characterId: string | null) {
+  update({ soloCharacterId: characterId });
+}
+
+/** Attach or detach the saved character used by Story Mode. */
+export function setStoryCharacter(characterId: string | null) {
+  update({ storyCharacterId: characterId });
 }
 
 export function setMaskUncensored(value: boolean) {

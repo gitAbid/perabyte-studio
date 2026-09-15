@@ -4,29 +4,31 @@ import type { AspectKey, ResolutionKey } from "./constants";
 /* Character spec                                                      */
 /* ------------------------------------------------------------------ */
 
-export type CharacterMode = "normal" | "uncensored";
-
 /**
- * Everything the wizard collects. Selects store human-readable values that
- * are folded straight into the composed prompt, so there is one source of
- * truth per option and no separate label/prompt mapping to maintain.
+ * Everything the wizard collects — identity only. Scene and render knobs
+ * (aspect, resolution, pose, scene notes…) live at generation time, so one
+ * saved character can be dropped into any Solo scene or Story frame.
+ * Selects store human-readable values that are folded straight into the
+ * composed prompt, so there is one source of truth per option.
  *
- * Characters are strictly adults (18+) in both modes. Regular Mode locks
- * clothing on and NSFW off; Uncensored Mode unlocks the adult creative
- * options and an NSFW intensity slider.
+ * Characters are strictly adults (18+). Adult options (revealing outfits,
+ * adult expressions, NSFW level) exist in the merged option tables but are
+ * gated by the global Uncensored Mode switch in Settings — the same single
+ * gate Solo and Story already use.
  */
 export interface CharacterSpec {
-  // Step 1 — Character Details
-  mode: CharacterMode;
+  // Step 1 — Character
   prompt: string;
-  aspect: AspectKey;
-  resolution: ResolutionKey;
   style: string;
 
   // Step 2 — Appearance
   gender: string;
-  age: string;
-  bodyType: string;
+  /** Exact age in years (AGE_MIN–AGE_MAX). Characters are always adults. */
+  age: number;
+  /** From ETHNICITIES. "Not specified" is never folded into the prompt. */
+  ethnicity: string;
+  /** From COUNTRIES. "Not specified" is never folded into the prompt. */
+  country: string;
   skinTone: string;
   faceShape: string;
   facialFeatures: string;
@@ -37,39 +39,28 @@ export interface CharacterSpec {
   eyeShape: string;
   outfit: string;
   accessories: string;
-
-  // Step 3 — Advanced Settings
-  height: string;
-  weight: string;
   build: string;
+
+  // Step 3 — Advanced
   bodyDetails: string;
-  pose: string;
-  violence: string;
   tattoos: boolean;
   piercings: boolean;
   facialHair: boolean;
   personality: string;
-  sceneNotes: string;
-  /** Uncensored-only. Regular Mode always stores "None". */
-  nudity: string;
-  /** Uncensored-only. Regular Mode always stores "None". */
-  sexualContent: string;
-  /** Uncensored-only, 0–5. Regular Mode is locked at 0. */
+  /** 0–5. Forced to 0 while the global Uncensored Mode gate is off. */
   nsfwLevel: number;
   /** Id of a look preset from the inspiration grid, or "" when untouched. */
   look: string;
 }
 
 export const DEFAULT_CHARACTER_SPEC: CharacterSpec = {
-  mode: "normal",
   prompt: "",
-  aspect: "9:16",
-  resolution: "1080p",
   style: "Realistic",
 
   gender: "Female",
-  age: "Adult (18+)",
-  bodyType: "Slim",
+  age: 25,
+  ethnicity: "Not specified",
+  country: "Not specified",
   skinTone: "medium",
   faceShape: "Oval",
   facialFeatures: "Natural",
@@ -80,20 +71,13 @@ export const DEFAULT_CHARACTER_SPEC: CharacterSpec = {
   eyeShape: "Almond",
   outfit: "Casual",
   accessories: "None",
-
-  height: `5'6" (168 cm)`,
-  weight: "55 kg",
   build: "Slim",
+
   bodyDetails: "Normal proportions",
-  pose: "Portrait",
-  violence: "None",
   tattoos: false,
   piercings: false,
   facialHair: false,
   personality: "",
-  sceneNotes: "",
-  nudity: "None",
-  sexualContent: "None",
   nsfwLevel: 0,
   look: "",
 };
@@ -114,18 +98,29 @@ export const CHARACTER_STYLES = [
   "South Asian",
 ] as const;
 
-/** Characters are strictly adults: every option is 18+ by definition. */
-export const AGES = [
-  "Adult (18+)",
-  "Young Adult (18–24)",
-  "Adult (25–39)",
-  "Mature (40–59)",
-  "Senior (60+)",
-] as const;
+/** Characters are strictly adults: the age slider spans adult years only. */
+export const AGE_MIN = 18;
+export const AGE_MAX = 80;
+const DEFAULT_AGE = 25;
+
+/** Keep a value a whole adult year, whatever a stale form or store hands in. */
+export function clampAge(age: number): number {
+  const n = Math.trunc(Number(age));
+  if (!Number.isFinite(n)) return DEFAULT_AGE;
+  return Math.min(AGE_MAX, Math.max(AGE_MIN, n));
+}
+
+/** Coarse bucket for the current age, shown as a hint under the slider. */
+export function ageBucketLabel(age: number): string {
+  if (age < 25) return "Young adult (18–24)";
+  if (age < 40) return "Adult (25–39)";
+  if (age < 60) return "Mature (40–59)";
+  return "Senior (60+)";
+}
 
 export const GENDERS = ["Female", "Male", "Non-binary"] as const;
 
-export const BODY_TYPES = ["Slim", "Athletic", "Average", "Curvy", "Plus-size"] as const;
+export const BUILDS = ["Slim", "Athletic", "Average", "Muscular", "Curvy", "Plus-size"] as const;
 
 export const SKIN_TONES = [
   { id: "porcelain", hex: "#f6e0d2", prompt: "porcelain" },
@@ -176,34 +171,229 @@ export const EYE_COLORS = ["Brown", "Hazel", "Blue", "Green", "Grey", "Amber", "
 
 export const EYE_SHAPES = ["Almond", "Round", "Hooded", "Monolid", "Upturned"] as const;
 
-export const HEIGHTS = [
-  `5'0" (152 cm)`,
-  `5'3" (160 cm)`,
-  `5'6" (168 cm)`,
-  `5'9" (175 cm)`,
-  `6'0" (183 cm)`,
-  `6'3" (190 cm)`,
+export const ETHNICITIES = [
+  "Not specified",
+  "South Asian",
+  "East Asian",
+  "Southeast Asian",
+  "Middle Eastern",
+  "Central Asian",
+  "White / European",
+  "Black / African",
+  "Afro-Caribbean",
+  "Latino / Hispanic",
+  "Mixed",
+  "Pacific Islander",
+  "Indigenous",
 ] as const;
 
-export const WEIGHTS = ["45 kg", "55 kg", "65 kg", "75 kg", "85 kg", "95 kg"] as const;
-
-export const BUILDS = ["Slim", "Athletic", "Average", "Muscular", "Curvy", "Plus-size"] as const;
-
-/* ------------------------------------------------------------------ */
-/* Regular Mode                                                        */
-/* ------------------------------------------------------------------ */
-
-export const EXPRESSIONS_REGULAR = [
-  "Neutral",
-  "Happy",
-  "Serious",
-  "Smiling",
-  "Confident",
-  "Thoughtful",
-  "Graceful",
+export const COUNTRIES = [
+  "Not specified",
+  "Afghanistan",
+  "Albania",
+  "Algeria",
+  "Andorra",
+  "Angola",
+  "Antigua and Barbuda",
+  "Argentina",
+  "Armenia",
+  "Australia",
+  "Austria",
+  "Azerbaijan",
+  "Bahamas",
+  "Bahrain",
+  "Bangladesh",
+  "Barbados",
+  "Belarus",
+  "Belgium",
+  "Belize",
+  "Benin",
+  "Bhutan",
+  "Bolivia",
+  "Bosnia and Herzegovina",
+  "Botswana",
+  "Brazil",
+  "Brunei",
+  "Bulgaria",
+  "Burkina Faso",
+  "Burundi",
+  "Cabo Verde",
+  "Cambodia",
+  "Cameroon",
+  "Canada",
+  "Central African Republic",
+  "Chad",
+  "Chile",
+  "China",
+  "Colombia",
+  "Comoros",
+  "Congo (Republic)",
+  "Congo (Democratic Republic)",
+  "Costa Rica",
+  "Côte d'Ivoire",
+  "Croatia",
+  "Cuba",
+  "Cyprus",
+  "Czechia",
+  "Denmark",
+  "Djibouti",
+  "Dominica",
+  "Dominican Republic",
+  "Ecuador",
+  "Egypt",
+  "El Salvador",
+  "Equatorial Guinea",
+  "Eritrea",
+  "Estonia",
+  "Eswatini",
+  "Ethiopia",
+  "Fiji",
+  "Finland",
+  "France",
+  "Gabon",
+  "Gambia",
+  "Georgia",
+  "Germany",
+  "Ghana",
+  "Greece",
+  "Grenada",
+  "Guatemala",
+  "Guinea",
+  "Guinea-Bissau",
+  "Guyana",
+  "Haiti",
+  "Honduras",
+  "Hungary",
+  "Iceland",
+  "India",
+  "Indonesia",
+  "Iran",
+  "Iraq",
+  "Ireland",
+  "Israel",
+  "Italy",
+  "Jamaica",
+  "Japan",
+  "Jordan",
+  "Kazakhstan",
+  "Kenya",
+  "Kiribati",
+  "Korea (North)",
+  "Korea (South)",
+  "Kosovo",
+  "Kuwait",
+  "Kyrgyzstan",
+  "Laos",
+  "Latvia",
+  "Lebanon",
+  "Lesotho",
+  "Liberia",
+  "Libya",
+  "Liechtenstein",
+  "Lithuania",
+  "Luxembourg",
+  "Madagascar",
+  "Malawi",
+  "Malaysia",
+  "Maldives",
+  "Mali",
+  "Malta",
+  "Marshall Islands",
+  "Mauritania",
+  "Mauritius",
+  "Mexico",
+  "Micronesia",
+  "Moldova",
+  "Monaco",
+  "Mongolia",
+  "Montenegro",
+  "Morocco",
+  "Mozambique",
+  "Myanmar",
+  "Namibia",
+  "Nauru",
+  "Nepal",
+  "Netherlands",
+  "New Zealand",
+  "Nicaragua",
+  "Niger",
+  "Nigeria",
+  "North Macedonia",
+  "Norway",
+  "Oman",
+  "Pakistan",
+  "Palau",
+  "Palestine",
+  "Panama",
+  "Papua New Guinea",
+  "Paraguay",
+  "Peru",
+  "Philippines",
+  "Poland",
+  "Portugal",
+  "Qatar",
+  "Romania",
+  "Russia",
+  "Rwanda",
+  "Saint Kitts and Nevis",
+  "Saint Lucia",
+  "Saint Vincent and the Grenadines",
+  "Samoa",
+  "San Marino",
+  "Sao Tome and Principe",
+  "Saudi Arabia",
+  "Senegal",
+  "Serbia",
+  "Seychelles",
+  "Sierra Leone",
+  "Singapore",
+  "Slovakia",
+  "Slovenia",
+  "Solomon Islands",
+  "Somalia",
+  "South Africa",
+  "South Sudan",
+  "Spain",
+  "Sri Lanka",
+  "Sudan",
+  "Suriname",
+  "Sweden",
+  "Switzerland",
+  "Syria",
+  "Taiwan",
+  "Tajikistan",
+  "Tanzania",
+  "Thailand",
+  "Timor-Leste",
+  "Togo",
+  "Tonga",
+  "Trinidad and Tobago",
+  "Tunisia",
+  "Turkey",
+  "Turkmenistan",
+  "Tuvalu",
+  "Uganda",
+  "Ukraine",
+  "United Arab Emirates",
+  "United Kingdom",
+  "United States",
+  "Uruguay",
+  "Uzbekistan",
+  "Vanuatu",
+  "Vatican City",
+  "Venezuela",
+  "Vietnam",
+  "Yemen",
+  "Zambia",
+  "Zimbabwe",
 ] as const;
 
-export const OUTFITS_REGULAR = [
+/* ------------------------------------------------------------------ */
+/* Merged option tables — everyday options always, adult options       */
+/* only while the global Uncensored Mode gate is on.                   */
+/* ------------------------------------------------------------------ */
+
+const EVERYDAY_OUTFITS = [
   "Casual",
   "Formal",
   "Fantasy armor",
@@ -214,7 +404,19 @@ export const OUTFITS_REGULAR = [
   "Business attire",
 ] as const;
 
-export const OUTFITS_SUBCONTINENT_REGULAR = [
+const ADULT_OUTFITS = [
+  "Partially clothed",
+  "Lingerie",
+  "Underwear only",
+  "Transparent clothing",
+  "Micro bikini",
+  "Latex",
+  "Bondage gear",
+  "Fetish outfits",
+  "Nude",
+] as const;
+
+const SUBCONTINENT_OUTFITS = [
   "Saree",
   "Salwar Kameez",
   "Lehenga",
@@ -227,78 +429,7 @@ export const OUTFITS_SUBCONTINENT_REGULAR = [
   "Pathani suit",
 ] as const;
 
-export const ACCESSORIES_REGULAR = [
-  "None",
-  "Glasses",
-  "Jewelry",
-  "Hats",
-  "Bags",
-  "Weapons (non-gore)",
-] as const;
-
-export const ACCESSORIES_SUBCONTINENT_REGULAR = [
-  "Bindi",
-  "Maang Tikka",
-  "Jhumka earrings",
-  "Nose ring (nath)",
-  "Bangles",
-  "Anklets",
-  "Dupatta",
-  "Turban",
-  "Mangalsutra",
-] as const;
-
-export const BODY_DETAILS_REGULAR = [
-  "Normal proportions",
-  "Athletic",
-  "Slim",
-  "Curvy (clothed)",
-  "South Asian features",
-] as const;
-
-export const POSES_REGULAR = [
-  "Standing",
-  "Sitting",
-  "Walking",
-  "Portrait",
-  "Action",
-  "Relaxed",
-  "Dynamic",
-  "Classical dance pose",
-] as const;
-
-export const VIOLENCE_REGULAR = ["None", "Light scratches", "Minor bruises"] as const;
-
-/* ------------------------------------------------------------------ */
-/* Uncensored Mode                                                     */
-/* ------------------------------------------------------------------ */
-
-export const EXPRESSIONS_UNCENSORED = [
-  "Neutral",
-  "Happy",
-  "Seductive",
-  "Aroused",
-  "Moaning",
-  "Ecstatic",
-  "Dominant",
-  "Submissive",
-  "Coy",
-] as const;
-
-export const OUTFITS_UNCENSORED = [
-  "Fully clothed",
-  "Partially clothed",
-  "Lingerie",
-  "Underwear only",
-  "Nude",
-  "Transparent clothing",
-  "Micro bikini",
-  "Latex",
-  "Bondage gear",
-  "Fetish outfits",
-] as const;
-
-export const OUTFITS_SUBCONTINENT_UNCENSORED = [
+const SUBCONTINENT_ADULT_OUTFITS = [
   "Saree (draped / slipped)",
   "Blouse only",
   "Lehenga (open)",
@@ -310,9 +441,16 @@ export const OUTFITS_SUBCONTINENT_UNCENSORED = [
   "Nude with jewelry only",
 ] as const;
 
-export const ACCESSORIES_UNCENSORED = [
+const EVERYDAY_ACCESSORIES = [
   "None",
-  "Lingerie",
+  "Glasses",
+  "Jewelry",
+  "Hats",
+  "Bags",
+  "Weapons (non-gore)",
+] as const;
+
+const ADULT_ACCESSORIES = [
   "Collars",
   "Restraints",
   "Toys",
@@ -321,21 +459,57 @@ export const ACCESSORIES_UNCENSORED = [
   "Tattoos (explicit)",
 ] as const;
 
-export const ACCESSORIES_SUBCONTINENT_UNCENSORED = [
+const SUBCONTINENT_ACCESSORIES = [
   "Bindi",
   "Maang Tikka",
+  "Jhumka earrings",
+  "Nose ring (nath)",
+  "Bangles",
+  "Anklets",
+  "Dupatta",
+  "Turban",
+  "Mangalsutra",
+] as const;
+
+const SUBCONTINENT_ADULT_ACCESSORIES = [
   "Jhumka",
   "Nose ring",
   "Heavy bangles",
-  "Anklets",
   "Waist chain (kamarbandh)",
   "Toe rings",
   "Traditional jewelry with nude body",
   "Mehndi patterns",
 ] as const;
 
-export const BODY_DETAILS_UNCENSORED = [
+const SAFE_EXPRESSIONS = [
+  "Neutral",
+  "Happy",
+  "Serious",
+  "Smiling",
+  "Confident",
+  "Thoughtful",
+  "Graceful",
+] as const;
+
+const ADULT_EXPRESSIONS = [
+  "Seductive",
+  "Aroused",
+  "Moaning",
+  "Ecstatic",
+  "Dominant",
+  "Submissive",
+  "Coy",
+] as const;
+
+const SAFE_BODY_DETAILS = [
   "Normal proportions",
+  "Athletic",
+  "Slim",
+  "Curvy (clothed)",
+  "South Asian features",
+] as const;
+
+const ADULT_BODY_DETAILS = [
   "South Asian body features",
   "Enhanced proportions",
   "Detailed breasts",
@@ -344,32 +518,6 @@ export const BODY_DETAILS_UNCENSORED = [
   "Wet skin",
   "Sweat",
   "Body fluids",
-] as const;
-
-export const POSES_UNCENSORED = [
-  "Standing",
-  "Sitting",
-  "Lying down",
-  "Arched back",
-  "On all fours",
-  "Spreading",
-  "Sexual positions",
-  "Dynamic action",
-  "Submissive",
-  "Dominant",
-  "Classical dance (erotic interpretation)",
-] as const;
-
-export const VIOLENCE_UNCENSORED = ["None", "Mild", "Moderate", "Heavy", "Extreme"] as const;
-
-export const NUDITY = ["None", "Topless", "Bottomless", "Full nude", "Partial nude"] as const;
-
-export const SEXUAL_CONTENT = [
-  "None",
-  "Suggestive",
-  "Soft erotic",
-  "Explicit sexual",
-  "Fetish acts",
 ] as const;
 
 export const NSFW_LEVELS = [
@@ -384,7 +532,7 @@ export const NSFW_LEVELS = [
 export const NSFW_LEVEL_MAX = 5;
 
 /* ------------------------------------------------------------------ */
-/* Mode helpers                                                        */
+/* Gated option accessors                                              */
 /* ------------------------------------------------------------------ */
 
 export interface OptionGroup {
@@ -392,44 +540,30 @@ export interface OptionGroup {
   options: readonly string[];
 }
 
-export function clothingGroups(mode: CharacterMode): OptionGroup[] {
-  return mode === "uncensored"
-    ? [
-        { label: "Clothing", options: OUTFITS_UNCENSORED },
-        { label: "Subcontinent", options: OUTFITS_SUBCONTINENT_UNCENSORED },
-      ]
-    : [
-        { label: "Clothing", options: OUTFITS_REGULAR },
-        { label: "Subcontinent", options: OUTFITS_SUBCONTINENT_REGULAR },
-      ];
+export function clothingGroups(uncensored: boolean): OptionGroup[] {
+  return [
+    { label: "Clothing", options: EVERYDAY_OUTFITS },
+    ...(uncensored ? [{ label: "Adult (18+)", options: ADULT_OUTFITS }] : []),
+    { label: "Subcontinent", options: SUBCONTINENT_OUTFITS },
+    ...(uncensored ? [{ label: "Subcontinent (18+)", options: SUBCONTINENT_ADULT_OUTFITS }] : []),
+  ];
 }
 
-export function accessoryGroups(mode: CharacterMode): OptionGroup[] {
-  return mode === "uncensored"
-    ? [
-        { label: "Accessories", options: ACCESSORIES_UNCENSORED },
-        { label: "Subcontinent", options: ACCESSORIES_SUBCONTINENT_UNCENSORED },
-      ]
-    : [
-        { label: "Accessories", options: ACCESSORIES_REGULAR },
-        { label: "Subcontinent", options: ACCESSORIES_SUBCONTINENT_REGULAR },
-      ];
+export function accessoryGroups(uncensored: boolean): OptionGroup[] {
+  return [
+    { label: "Accessories", options: EVERYDAY_ACCESSORIES },
+    ...(uncensored ? [{ label: "Adult (18+)", options: ADULT_ACCESSORIES }] : []),
+    { label: "Subcontinent", options: SUBCONTINENT_ACCESSORIES },
+    ...(uncensored ? [{ label: "Subcontinent (18+)", options: SUBCONTINENT_ADULT_ACCESSORIES }] : []),
+  ];
 }
 
-export function expressionOptions(mode: CharacterMode): readonly string[] {
-  return mode === "uncensored" ? EXPRESSIONS_UNCENSORED : EXPRESSIONS_REGULAR;
+export function expressionOptions(uncensored: boolean): readonly string[] {
+  return uncensored ? [...SAFE_EXPRESSIONS, ...ADULT_EXPRESSIONS] : SAFE_EXPRESSIONS;
 }
 
-export function poseOptions(mode: CharacterMode): readonly string[] {
-  return mode === "uncensored" ? POSES_UNCENSORED : POSES_REGULAR;
-}
-
-export function bodyDetailOptions(mode: CharacterMode): readonly string[] {
-  return mode === "uncensored" ? BODY_DETAILS_UNCENSORED : BODY_DETAILS_REGULAR;
-}
-
-export function violenceOptions(mode: CharacterMode): readonly string[] {
-  return mode === "uncensored" ? VIOLENCE_UNCENSORED : VIOLENCE_REGULAR;
+export function bodyDetailOptions(uncensored: boolean): readonly string[] {
+  return uncensored ? [...SAFE_BODY_DETAILS, ...ADULT_BODY_DETAILS] : SAFE_BODY_DETAILS;
 }
 
 export interface CharacterTemplate {
@@ -438,7 +572,7 @@ export interface CharacterTemplate {
   text: string;
 }
 
-export const PERSONALITY_TEMPLATES_REGULAR: CharacterTemplate[] = [
+export const PERSONALITY_TEMPLATES_SAFE: CharacterTemplate[] = [
   {
     id: "scholar",
     label: "The Scholar",
@@ -471,7 +605,7 @@ export const PERSONALITY_TEMPLATES_REGULAR: CharacterTemplate[] = [
   },
 ];
 
-export const PERSONALITY_TEMPLATES_UNCENSORED: CharacterTemplate[] = [
+export const PERSONALITY_TEMPLATES_ADULT: CharacterTemplate[] = [
   {
     id: "temptress",
     label: "The Temptress",
@@ -504,82 +638,10 @@ export const PERSONALITY_TEMPLATES_UNCENSORED: CharacterTemplate[] = [
   },
 ];
 
-export const SCENE_NOTE_TEMPLATES_REGULAR: CharacterTemplate[] = [
-  {
-    id: "rooftop",
-    label: "Rooftop café",
-    text: "Rooftop café at golden hour, city skyline behind, warm wind, a half-finished cup of chai.",
-  },
-  {
-    id: "library",
-    label: "Library aisle",
-    text: "Quiet library aisle, afternoon light through tall windows, dust motes, a book held open at the chest.",
-  },
-  {
-    id: "rain-street",
-    label: "Rainy street",
-    text: "Rain-washed street at dusk, neon reflections on wet stone, walking under a dark umbrella.",
-  },
-  {
-    id: "courtyard",
-    label: "Temple courtyard",
-    text: "Temple courtyard at dusk, marigold petals on stone, incense smoke, a dupatta lifting in the breeze.",
-  },
-  {
-    id: "studio",
-    label: "Portrait studio",
-    text: "Clean studio portrait, softbox lighting, seamless grey backdrop, editorial stillness.",
-  },
-  {
-    id: "overlook",
-    label: "Mountain overlook",
-    text: "Mountain trail overlook, wind in the hair, distant peaks, late-afternoon sun.",
-  },
-];
-
-export const SCENE_NOTE_TEMPLATES_UNCENSORED: CharacterTemplate[] = [
-  {
-    id: "hotel",
-    label: "Hotel suite",
-    text: "Dim hotel suite, rumpled sheets, city lights through sheer curtains, jewellery on the nightstand.",
-  },
-  {
-    id: "steam",
-    label: "Steamed bath",
-    text: "Candlelit bathroom, steam on the mirror, wet tile, skin still glistening from the shower.",
-  },
-  {
-    id: "balcony",
-    label: "Night balcony",
-    text: "Private balcony at night, city below, barely dressed, a glass in one hand.",
-  },
-  {
-    id: "silk",
-    label: "Silk bedroom",
-    text: "Silk-draped bedroom, one warm lamp, jewellery on the dresser, the rest of the clothes on the floor.",
-  },
-  {
-    id: "after-hours",
-    label: "After hours",
-    text: "Locked office after midnight, desk lamp, blinds half-drawn, the rest of the building empty.",
-  },
-  {
-    id: "wet-terrace",
-    label: "Wet terrace",
-    text: "Rain-soaked terrace, fabric clinging, thunder in the distance, no one else outside.",
-  },
-];
-
-export function personalityTemplates(mode: CharacterMode): CharacterTemplate[] {
-  return mode === "uncensored"
-    ? PERSONALITY_TEMPLATES_UNCENSORED
-    : PERSONALITY_TEMPLATES_REGULAR;
-}
-
-export function sceneNoteTemplates(mode: CharacterMode): CharacterTemplate[] {
-  return mode === "uncensored"
-    ? SCENE_NOTE_TEMPLATES_UNCENSORED
-    : SCENE_NOTE_TEMPLATES_REGULAR;
+export function personalityTemplates(uncensored: boolean): CharacterTemplate[] {
+  return uncensored
+    ? [...PERSONALITY_TEMPLATES_SAFE, ...PERSONALITY_TEMPLATES_ADULT]
+    : PERSONALITY_TEMPLATES_SAFE;
 }
 
 function flatten(groups: OptionGroup[]): string[] {
@@ -591,36 +653,29 @@ function clampOption(value: string, allowed: readonly string[], fallback: string
 }
 
 /**
- * When the user switches Regular ⇄ Uncensored, drop any selection that is
- * not legal in the destination mode so the composed prompt cannot leak
- * locked options (e.g. a Regular render never inherits Uncensored clothing).
+ * Clamp a spec to what the current gate allows: while Uncensored Mode is off,
+ * any adult selection falls back to its safe equivalent and NSFW locks at 0.
+ * Used when the gate changes under a loaded spec and before reusing a saved
+ * character in a safe scene.
  */
-export function sanitizeSpecForMode(spec: CharacterSpec, mode: CharacterMode): CharacterSpec {
-  const next: CharacterSpec = { ...spec, mode };
-  next.outfit = clampOption(next.outfit, flatten(clothingGroups(mode)), mode === "uncensored" ? "Fully clothed" : "Casual");
-  next.accessories = clampOption(next.accessories, flatten(accessoryGroups(mode)), "None");
-  next.expression = clampOption(next.expression, expressionOptions(mode), "Neutral");
-  next.pose = clampOption(next.pose, poseOptions(mode), mode === "uncensored" ? "Standing" : "Portrait");
+export function sanitizeSpec(spec: CharacterSpec, uncensored: boolean): CharacterSpec {
+  const next: CharacterSpec = { ...spec };
+  next.age = clampAge(next.age);
+  next.outfit = clampOption(next.outfit, flatten(clothingGroups(uncensored)), "Casual");
+  next.accessories = clampOption(next.accessories, flatten(accessoryGroups(uncensored)), "None");
+  next.expression = clampOption(next.expression, expressionOptions(uncensored), "Neutral");
   next.bodyDetails = clampOption(
     next.bodyDetails,
-    bodyDetailOptions(mode),
+    bodyDetailOptions(uncensored),
     "Normal proportions",
   );
-  next.violence = clampOption(next.violence, violenceOptions(mode), "None");
 
-  if (mode === "normal") {
-    next.nudity = "None";
-    next.sexualContent = "None";
+  if (!uncensored) {
     next.nsfwLevel = 0;
-    if (PERSONALITY_TEMPLATES_UNCENSORED.some((t) => t.text === next.personality)) {
+    if (PERSONALITY_TEMPLATES_ADULT.some((t) => t.text === next.personality)) {
       next.personality = "";
     }
-    if (SCENE_NOTE_TEMPLATES_UNCENSORED.some((t) => t.text === next.sceneNotes)) {
-      next.sceneNotes = "";
-    }
   } else {
-    next.nudity = clampOption(next.nudity, NUDITY, "None");
-    next.sexualContent = clampOption(next.sexualContent, SEXUAL_CONTENT, "None");
     next.nsfwLevel = Math.min(NSFW_LEVEL_MAX, Math.max(0, Math.trunc(next.nsfwLevel) || 0));
   }
 
@@ -691,14 +746,6 @@ const GENDER_NOUN: Record<string, string> = {
   "Non-binary": "person",
 };
 
-const AGE_PROMPT: Record<string, string> = {
-  "Adult (18+)": "adult",
-  "Young Adult (18–24)": "young adult",
-  "Adult (25–39)": "adult",
-  "Mature (40–59)": "middle-aged adult",
-  "Senior (60+)": "senior adult",
-};
-
 const NSFW_LEVEL_PROMPT: Record<number, string> = {
   0: "fully clothed, safe for work",
   1: "suggestive, revealing clothing",
@@ -714,26 +761,28 @@ const NUDE_OUTFITS = new Set([
 ]);
 
 /**
- * Fold every wizard choice into one descriptive prompt for the render
- * provider. The user's own prompt always leads; the attribute selections
- * read like a character sheet after it. Characters are always framed as
- * adults — age options contain no minors and "adult" is stated explicitly.
+ * The character-identity text: who this person is, what they look like and
+ * wear. Composed from the spec alone — no scene, pose or render settings —
+ * so the same anchor keeps the character consistent wherever it is reused.
  */
-export function composeCharacterPrompt(spec: CharacterSpec): string {
+export function composeCharacterAnchor(spec: CharacterSpec): string {
   const parts: string[] = [];
-  const uncensored = spec.mode === "uncensored";
-
-  const base = spec.prompt.trim();
-  if (base) parts.push(base);
 
   const noun = GENDER_NOUN[spec.gender] ?? "person";
-  const age = AGE_PROMPT[spec.age] ?? "adult";
-  parts.push(`portrait of an adult ${age} ${noun}, 18+`);
+  const age = clampAge(spec.age);
+  const ethnicity =
+    spec.ethnicity && spec.ethnicity !== "Not specified"
+      ? ` ${spec.ethnicity.toLowerCase()}`
+      : "";
+  const origin =
+    spec.country && spec.country !== "Not specified" ? ` from ${spec.country}` : "";
+  parts.push(`portrait of an adult ${age}-year-old${ethnicity} ${noun}${origin}, 18+`);
 
   const tone = SKIN_TONES.find((t) => t.id === spec.skinTone);
   if (tone) parts.push(`${tone.prompt} skin`);
 
-  if (spec.faceShape && spec.faceShape !== "Oval") parts.push(`${spec.faceShape.toLowerCase()} face shape`);
+  if (spec.faceShape && spec.faceShape !== "Oval")
+    parts.push(`${spec.faceShape.toLowerCase()} face shape`);
   if (spec.facialFeatures && spec.facialFeatures !== "Natural")
     parts.push(spec.facialFeatures.toLowerCase());
   if (spec.expression && spec.expression !== "Neutral")
@@ -742,42 +791,30 @@ export function composeCharacterPrompt(spec: CharacterSpec): string {
   parts.push(`${spec.eyeShape.toLowerCase()} ${spec.eyeColor.toLowerCase()} eyes`);
   parts.push(`${spec.hairColor.toLowerCase()} hair, ${spec.hairStyle.toLowerCase()}`);
 
-  if (spec.bodyType && spec.bodyType !== "Average") parts.push(`${spec.bodyType.toLowerCase()} body`);
   if (spec.build && spec.build !== "Average") parts.push(`${spec.build.toLowerCase()} build`);
   if (spec.bodyDetails && spec.bodyDetails !== "Normal proportions")
     parts.push(spec.bodyDetails.toLowerCase());
-  if (spec.height) parts.push(`${spec.height.replace(/\s*\(.*\)/, "")} tall`);
 
-  if (uncensored) {
+  if (spec.nsfwLevel > 0) {
     const level = NSFW_LEVELS.find((item) => item.value === spec.nsfwLevel);
     if (level) parts.push(`NSFW level ${level.value} (${NSFW_LEVEL_PROMPT[level.value]})`);
-    if (spec.nudity && spec.nudity !== "None") parts.push(spec.nudity.toLowerCase());
-    if (spec.sexualContent && spec.sexualContent !== "None")
-      parts.push(spec.sexualContent.toLowerCase());
+  }
 
-    if (NUDE_OUTFITS.has(spec.outfit) || spec.nudity === "Full nude") {
-      parts.push("nude");
-      if (spec.outfit === "Nude with jewelry only") parts.push("wearing jewelry only");
-    } else if (spec.outfit && spec.outfit !== "Fully clothed") {
-      parts.push(`wearing ${spec.outfit.toLowerCase()}`);
-    } else if (spec.nsfwLevel === 0) {
-      parts.push("wearing fully clothed outfit");
-    }
-  } else {
-    parts.push(`wearing ${spec.outfit.toLowerCase()}, fully clothed`);
+  if (NUDE_OUTFITS.has(spec.outfit)) {
+    parts.push("nude");
+    if (spec.outfit === "Nude with jewelry only") parts.push("wearing jewelry only");
+  } else if (spec.outfit) {
+    parts.push(`wearing ${spec.outfit.toLowerCase()}${spec.nsfwLevel === 0 ? ", fully clothed" : ""}`);
   }
 
   if (spec.accessories && spec.accessories !== "None")
     parts.push(`with ${spec.accessories.toLowerCase()}`);
 
-  if (spec.pose) parts.push(`${spec.pose.toLowerCase()} pose`);
-  if (spec.violence && spec.violence !== "None") parts.push(spec.violence.toLowerCase());
   if (spec.tattoos) parts.push("visible tattoos");
   if (spec.piercings) parts.push("piercings");
   if (spec.facialHair) parts.push("facial hair");
 
   if (spec.personality.trim()) parts.push(`vibe of someone who is ${spec.personality.trim()}`);
-  if (spec.sceneNotes.trim()) parts.push(spec.sceneNotes.trim());
 
   const look = lookById(spec.look);
   if (look) parts.push(look.prompt);
@@ -789,27 +826,60 @@ export function composeCharacterPrompt(spec: CharacterSpec): string {
     .trim();
 }
 
-/** Blocks sexual content outright — applied in Regular Mode. */
+/**
+ * Fold the wizard choices into one descriptive prompt for the character
+ * render: the user's own prompt leads, the identity anchor follows.
+ */
+export function composeCharacterPrompt(spec: CharacterSpec): string {
+  const base = spec.prompt.trim();
+  const anchor = composeCharacterAnchor(spec);
+  return base ? `${base}, ${anchor}` : anchor;
+}
+
+/**
+ * Reuse path for Solo scenes and Story frames: the saved character's
+ * sanitized anchor leads, the user's scene prompt follows. With `uncensored`
+ * off, an adult character is clamped to its safe equivalent first, so adult
+ * wording can never leak into a safe render.
+ */
+export function composeSceneWithCharacter(
+  scenePrompt: string,
+  spec: CharacterSpec | null,
+  uncensored: boolean,
+): string {
+  const scene = scenePrompt.trim();
+  if (!spec) return scene;
+  const anchor = composeCharacterAnchor(sanitizeSpec(spec, uncensored));
+  return scene ? `${anchor}, ${scene}` : anchor;
+}
+
+/** Blocks sexual content outright — applied while Uncensored Mode is off. */
 const NSFW_NEGATIVE =
   "nsfw, nude, nudity, topless, bottomless, sexual, explicit, erotic, lingerie, fetish, suggestive, underwear, underage, minor, child, teen";
 
 /** Uncensored Mode still never waives protection of minors. */
 const MINOR_NEGATIVE = "underage, minor, child, teen, under 18";
 
+export interface CharacterRenderParams {
+  aspect: AspectKey;
+  resolution: ResolutionKey;
+  modelId?: string;
+}
+
 /**
- * Mode shapes how the request is sent:
- * - Regular Mode: safety checker on, prompt auto-enhancement, NSFW locked at 0,
- *   negative prompt blocks all NSFW terms.
- * - Uncensored Mode: safety checker off, prompt sent as composed, NSFW slider
- *   0–5, negative prompt only blocks underage terms. Content is tagged
- *   Uncensored in History.
+ * How a character render is sent: safety, enhancement and the negative
+ * prompt follow the global Uncensored Mode gate; aspect, resolution and the
+ * model are generation-time choices, not part of the character identity.
  */
-export function characterGenerationSettings(spec: CharacterSpec, modelId?: string) {
-  const uncensored = spec.mode === "uncensored";
+export function characterGenerationSettings(
+  spec: CharacterSpec,
+  params: CharacterRenderParams,
+  uncensored: boolean,
+) {
   return {
     kind: "image" as const,
-    aspect: spec.aspect,
-    resolution: spec.resolution,
+    aspect: params.aspect,
+    resolution: params.resolution,
     style: spec.style,
     count: 4,
     enhance: !uncensored,
@@ -817,6 +887,6 @@ export function characterGenerationSettings(spec: CharacterSpec, modelId?: strin
     negativePrompt: uncensored ? MINOR_NEGATIVE : NSFW_NEGATIVE,
     seed: "",
     duration: "5s" as const,
-    ...(modelId ? { modelId } : {}),
+    ...(params.modelId ? { modelId: params.modelId } : {}),
   };
 }

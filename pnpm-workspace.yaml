@@ -1,0 +1,5 @@
+allowBuilds:
+  esbuild: true
+minimumReleaseAgeExclude:
+  - '@sogni-ai/sogni-client@5.49.0'
+  - '@sogni-ai/sogni-protocol@1.0.0-alpha.41'
