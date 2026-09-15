@@ -1,5 +1,13 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { resetStudioEnvForTests } from "@/lib/config/env";
+import {
+  resetProviderConfigForTests,
+  setProviderConfigPathForTests,
+  updateProviderConfig,
+} from "@/lib/repositories/provider-config.repository";
 import {
   resetEnhancementCacheForTests,
   runPromptEnhancement,
@@ -12,10 +20,27 @@ function mockFetchOnce(impl: () => Promise<Response>) {
   return fetchMock;
 }
 
+// Redirect config I/O to a per-test temp file so tests never share disk state.
+let tempConfigFile: string | null = null;
+
+beforeEach(() => {
+  tempConfigFile = path.join(
+    os.tmpdir(),
+    `provider-config-test-${Date.now()}-${Math.random().toString(36).slice(2)}.json`,
+  );
+  setProviderConfigPathForTests(tempConfigFile);
+});
+
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   resetEnhancementCacheForTests();
+  resetProviderConfigForTests();
+  if (tempConfigFile) {
+    fs.rmSync(tempConfigFile, { force: true });
+    tempConfigFile = null;
+  }
+  setProviderConfigPathForTests(null);
   delete process.env.SOGNI_API_KEY;
   resetStudioEnvForTests();
 });
@@ -142,5 +167,49 @@ describe("runPromptEnhancement", () => {
     expect(result.source).toBe("ai");
     expect(result.enhanced).toContain("Pollinations");
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("honors configured task model over default priority order", async () => {
+    enableSogni();
+    updateProviderConfig({
+      tasks: { enhance: "pollinations:default" },
+    });
+    const fetchMock = vi.fn(async (url: string | URL | Request) => {
+      void url;
+      return new Response("Pollinations explicit model rewrite.", { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await runPromptEnhancement({ prompt: "a quiet harbor", kind: "image" });
+    expect(result.source).toBe("ai");
+    expect(result.enhanced).toBe("Pollinations explicit model rewrite.");
+    expect(String(fetchMock.mock.calls[0][0])).toContain("text.pollinations.ai");
+  });
+
+  it("skips disabled provider even when credentials exist", async () => {
+    enableSogni();
+    updateProviderConfig({
+      providers: { sogni: { enabled: false } },
+    });
+    const fetchMock = vi.fn(async (url: string | URL | Request) => {
+      void url;
+      return new Response("Pollinations ran because Sogni disabled.", { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await runPromptEnhancement({ prompt: "a quiet harbor", kind: "image" });
+    expect(result.source).toBe("ai");
+    expect(result.enhanced).toContain("Pollinations");
+    expect(String(fetchMock.mock.calls[0][0])).toContain("text.pollinations.ai");
+  });
+
+  it("does not collide cache across different configured enhance models", async () => {
+    const fetchMock = vi.fn(async () => new Response("Model 1 output", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const r1 = await runPromptEnhancement({ prompt: "same prompt", kind: "image" });
+    expect(r1.enhanced).toBe("Model 1 output");
+
+    updateProviderConfig({ tasks: { enhance: "pollinations:default" } });
+    fetchMock.mockImplementation(async () => new Response("Model 2 output", { status: 200 }));
+    const r2 = await runPromptEnhancement({ prompt: "same prompt", kind: "image" });
+    expect(r2.enhanced).toBe("Model 2 output");
   });
 });

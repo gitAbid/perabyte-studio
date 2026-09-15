@@ -7,6 +7,8 @@ export const POLLINATIONS_TEXT_MODEL: TextModelDescriptor = {
   description: "Anonymous shared key pool. Free fallback with no API key required.",
 };
 
+export const POLLINATIONS_TEXT_MODELS: TextModelDescriptor[] = [POLLINATIONS_TEXT_MODEL];
+
 const HOST = "text.pollinations.ai";
 const TIMEOUT_MS = 12_000;
 
