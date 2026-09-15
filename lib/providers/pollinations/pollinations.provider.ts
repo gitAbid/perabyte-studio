@@ -36,6 +36,9 @@ const FLUX_IMAGE: ModelDescriptor = {
   model: "flux",
   label: "Flux",
   hint: "free demo",
+  tier: "recommended",
+  useCase: "Free fallback — no key needed",
+  costTier: "free",
   // No separate uncensored mode: safe=true merely keeps the provider's
   // checker on, so this model always renders behind it.
   uncensored: false,
@@ -48,6 +51,8 @@ const FLUX_VIDEO: ModelDescriptor = {
   model: "flux",
   label: "Flux keyframe",
   hint: "free demo · still frame",
+  useCase: "Free still-frame preview — not true video",
+  costTier: "free",
   uncensored: false,
 };
 
