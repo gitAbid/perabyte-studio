@@ -37,7 +37,7 @@ const CONTENT_TYPES: Record<string, string> = {
 };
 
 /** Sniff the file type from magic bytes so refs match their real payload. */
-function sniff(bytes: Buffer): { ext: string; contentType: string } | null {
+export function sniff(bytes: Buffer): { ext: string; contentType: string } | null {
   if (bytes.length >= 8 && bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) {
     return { ext: "png", contentType: "image/png" };
   }
