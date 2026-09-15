@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   SOGNI_IMAGE_MODELS,
   SOGNI_VIDEO_MODELS,
+  sogniCuratedLabel,
   sogniModelMeta,
 } from "@/lib/providers/sogni/model-meta";
 
@@ -36,6 +37,12 @@ describe("sogni model meta", () => {
   it("returns null for unknown models — no guessed claims", () => {
     expect(sogniModelMeta("some_brand_new_model_fp8")).toBeNull();
     expect(sogniModelMeta("gpt-image-2.5-flare")).toBeNull();
+  });
+
+  it("gives the curated label only to verbatim ids — variants keep their API name", () => {
+    expect(sogniCuratedLabel("krea2_turbo_fp8_scaled")).toBe("Krea 2 Turbo");
+    expect(sogniCuratedLabel("seedance-2-0-fast")).toBeNull();
+    expect(sogniCuratedLabel("wan_v2.2-14b-fp8_t2v")).toBeNull();
   });
 
   it("curated seedance entries stay styleless (guard against curated-flag override)", () => {

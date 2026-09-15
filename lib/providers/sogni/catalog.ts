@@ -3,7 +3,7 @@ import { buildModelId } from "@/lib/domain/models";
 import { getStudioEnv } from "@/lib/config/env";
 import type { SogniAvailableModel, SogniClient } from "@/lib/providers/sogni/client";
 import { fetchLoraCatalog } from "@/lib/providers/sogni/lora-catalog";
-import { sogniModelMeta } from "@/lib/providers/sogni/model-meta";
+import { sogniCuratedLabel, sogniModelMeta } from "@/lib/providers/sogni/model-meta";
 import {
   PROVIDER_ID,
   SOGNI_IMAGE_MODELS,
@@ -208,7 +208,8 @@ export function toDescriptors(
         providerId: PROVIDER_ID,
         kind,
         model: model.id,
-        label: meta?.label ?? (model.name?.trim() || prettifyModelId(model.id)),
+        label: sogniCuratedLabel(model.id) ??
+          (model.name?.trim() || prettifyModelId(model.id)),
         ...(meta?.hint ? { hint: meta.hint } : {}),
         ...(meta?.tier ? { tier: meta.tier } : {}),
         ...(meta?.useCase ? { useCase: meta.useCase } : {}),

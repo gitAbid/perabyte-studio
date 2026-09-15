@@ -145,3 +145,9 @@ export function sogniModelMeta(modelId: string): CuratedModel | null {
   if (exact) return exact;
   return FAMILY_META.find((entry) => modelId.startsWith(entry.familyBase!)) ?? null;
 }
+
+/** The curated display label, only for ids curated verbatim. Family variants
+ * keep their live/API name so same-family picker rows stay distinguishable. */
+export function sogniCuratedLabel(modelId: string): string | null {
+  return EXACT_META.get(modelId)?.label ?? null;
+}
