@@ -58,6 +58,13 @@ export interface GenerationResponse {
   frameUsed?: boolean;
 }
 
+/** Live progress tick for a story scene while its render is in flight. */
+export interface StorySceneProgress {
+  stage: "submitted" | "rendering" | "downloading";
+  message: string;
+  percent?: number;
+}
+
 export interface StoryScene {
   id: string;
   prompt: string;
@@ -65,6 +72,10 @@ export interface StoryScene {
   status: JobStatus;
   kind: GenerationKind;
   error?: string;
+  /** Real content type when known — lets the UI pick a true video player. */
+  mime?: string;
+  /** In-flight render progress; cleared once the scene completes. */
+  progress?: StorySceneProgress;
   /** Manual reference frame uploaded by the user (media-cache ref). */
   startImageRef?: string;
   endImageRef?: string;
@@ -73,6 +84,8 @@ export interface StoryScene {
   /** Model actually used when the service swapped for frame capability. */
   effectiveModelId?: string;
   frameUsed?: boolean;
+  /** Provider safety-checker state used for this scene's render — drives 18+ masking. */
+  safe?: boolean;
 }
 
 export interface Asset {

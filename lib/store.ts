@@ -223,7 +223,13 @@ export function toggleFavorite(id: string): void {
 }
 
 export function removeAsset(id: string): void {
-  persist(read().filter((a) => a.id !== id));
+  removeAssets([id]);
+}
+
+/** Delete several assets in one persist/notify pass (bulk manage actions). */
+export function removeAssets(ids: string[]): void {
+  const doomed = new Set(ids);
+  persist(read().filter((a) => !doomed.has(a.id)));
 }
 
 export function clearAssets(): void {

@@ -1,10 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_USER_SETTINGS,
+  bumpCatalogVersion,
+  getCatalogVersion,
   getSelectedModel,
   getSettings,
   resetSettingsForTests,
   setSelectedModel,
+  setMaskUncensored,
   setSoloCharacter,
   setStoryCharacter,
   setUncensoredEnabled,
@@ -46,6 +49,17 @@ describe("settings repository", () => {
     expect(JSON.parse(raw as string).uncensoredEnabled).toBe(true);
   });
 
+  it("defaults to masking uncensored content", () => {
+    expect(getSettings().maskUncensored).toBe(true);
+  });
+
+  it("persists the mask toggle", () => {
+    setMaskUncensored(false);
+    expect(getSettings().maskUncensored).toBe(false);
+    const raw = window.localStorage.getItem("perabyte.settings.v1");
+    expect(JSON.parse(raw as string).maskUncensored).toBe(false);
+  });
+
   it("stores model selections per kind and reports them back", () => {
     setSelectedModel("image", "apikey-fan:grok-imagine-image-2.0");
     setSelectedModel("video", "pollinations:flux-keyframe");
@@ -77,5 +91,19 @@ describe("settings repository", () => {
     setSoloCharacter(null);
     expect(getSettings().soloCharacterId).toBeNull();
     expect(getSettings().storyCharacterId).toBe("ch_def");
+  });
+
+  it("bumps the catalog version on demand", () => {
+    const start = getCatalogVersion();
+    bumpCatalogVersion();
+    expect(getCatalogVersion()).toBe(start + 1);
+    bumpCatalogVersion();
+    expect(getCatalogVersion()).toBe(start + 2);
+  });
+
+  it("accepts null to clear a model default", () => {
+    setSelectedModel("image", "pollinations:flux");
+    setSelectedModel("image", null);
+    expect(getSelectedModel("image")).toBeNull();
   });
 });

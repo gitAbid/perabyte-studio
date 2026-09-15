@@ -40,5 +40,8 @@ yarn-error.log*
 # generated media cache (server-side)
 /.media-cache
 
+# provider settings saved from the /settings page
+/.studio
+
 # git worktrees
 /.worktrees

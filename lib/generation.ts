@@ -179,6 +179,25 @@ export type JobPhase =
   | { phase: "completed"; response: GenerationResponse }
   | { phase: "failed"; message: string; retryable: boolean };
 
+/**
+ * Story-level percent for the batch bar: finished scenes count fully and the
+ * in-flight scene contributes its own provider percent. Returns undefined
+ * while nothing is measurable (nothing finished, no live percent) so the UI
+ * can stay indeterminate instead of fabricating a number.
+ */
+export function storyProgressPercent(
+  completed: number,
+  total: number,
+  current?: GenerationProgress,
+): number | undefined {
+  if (total <= 0) return undefined;
+  const base = Math.max(0, Math.min(completed, total)) / total;
+  if (completed === 0 && current?.percent === undefined) return undefined;
+  const currentFraction =
+    current?.percent === undefined ? 0 : Math.max(0, Math.min(100, current.percent)) / 100 / total;
+  return Math.round(Math.min(1, base + currentFraction) * 100);
+}
+
 export function useGeneration() {
   const [job, setJob] = useState<JobPhase>({ phase: "idle" });
   const controller = useRef<AbortController | null>(null);

@@ -98,6 +98,21 @@ export function isVideoSource(url: string | null | undefined): boolean {
   return /\.mp4(?=$|[?#&])/i.test(url);
 }
 
+/** Minimal shape the story player needs to classify a scene. */
+export interface PlayableScene {
+  url: string;
+  mime?: string;
+}
+
+/**
+ * True when a story scene must play through a <video> element. Prefers the
+ * generation's real mime; legacy persisted stories only have the URL, so the
+ * `.mp4` sniff stays as the fallback.
+ */
+export function isVideoScene(scene: PlayableScene): boolean {
+  return scene.mime ? scene.mime.startsWith("video/") : isVideoSource(scene.url);
+}
+
 /**
  * Every render is displayed through our own origin.
  *

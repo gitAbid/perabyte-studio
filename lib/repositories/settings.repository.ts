@@ -11,6 +11,8 @@ import type { GenerationKind } from "@/lib/constants";
  */
 export interface UserSettings {
   uncensoredEnabled: boolean;
+  /** Blur 18+/uncensored media in the UI until the user reveals it. On by default. */
+  maskUncensored: boolean;
   imageModel: string | null;
   videoModel: string | null;
   /** Saved character attached in Solo Mode, or null for prompt-only scenes. */
@@ -21,6 +23,7 @@ export interface UserSettings {
 
 export const DEFAULT_USER_SETTINGS: UserSettings = {
   uncensoredEnabled: false,
+  maskUncensored: true,
   imageModel: null,
   videoModel: null,
   soloCharacterId: null,
@@ -81,13 +84,34 @@ export function setStoryCharacter(characterId: string | null) {
   update({ storyCharacterId: characterId });
 }
 
-export function setSelectedModel(kind: GenerationKind, modelId: string) {
+export function setMaskUncensored(value: boolean) {
+  update({ maskUncensored: value });
+}
+
+export function setSelectedModel(kind: GenerationKind, modelId: string | null) {
   update(kind === "video" ? { videoModel: modelId } : { imageModel: modelId });
 }
 
 /** Selected model for a kind, falling back to `null` (→ catalog default). */
 export function getSelectedModel(kind: GenerationKind): string | null {
   return kind === "video" ? read().videoModel : read().imageModel;
+}
+
+// Bumped after a provider-settings save so open model catalogs re-fetch.
+let catalogVersion = 0;
+
+export function bumpCatalogVersion(): void {
+  catalogVersion += 1;
+  emit();
+}
+
+export function getCatalogVersion(): number {
+  return catalogVersion;
+}
+
+/** Reactive view for hooks that must re-run when provider settings change. */
+export function useCatalogVersion(): number {
+  return useSyncExternalStore(subscribe, () => catalogVersion, () => 0);
 }
 
 function subscribe(listener: () => void) {

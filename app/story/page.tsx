@@ -8,6 +8,8 @@ import { SceneRefChips } from "@/components/story/SceneRefChips";
 import { Icon } from "@/components/Icon";
 import { MediaFrame, VideoStage } from "@/components/Media";
 import { PromptComposer } from "@/components/PromptComposer";
+import { RenderProgress } from "@/components/RenderProgress";
+import { StoryPlayer } from "@/components/StoryPlayer";
 import { Badge, Button, Segmented, useToast } from "@/components/ui";
 import {
   ASPECTS,
@@ -15,7 +17,11 @@ import {
   PROMPT_MAX,
   VIDEO_STYLES,
 } from "@/lib/constants";
-import { downloadMedia } from "@/lib/generation";
+import {
+  downloadMedia,
+  storyProgressPercent,
+  type GenerationProgress,
+} from "@/lib/generation";
 import {
   EnhancementError,
   requestPromptEnhancement,
@@ -77,7 +83,8 @@ export default function StoryPage() {
     }
   }
 
-  // Restore active story on mount or reload (spec §5 — persistent queue survives reloads).
+  // Restore the active story on mount or reload (spec §5 — the queue survives
+  // reloads; ?id= wins over the last active story).
   useEffect(() => {
     if (typeof window === "undefined") return;
     const fromUrl = new URLSearchParams(window.location.search).get("id");
@@ -91,12 +98,35 @@ export default function StoryPage() {
   const [continuityOn, setContinuityOn] = useState(true);
   const [convertOpen, setConvertOpen] = useState(false);
   const [enhancing, setEnhancing] = useState(false);
+  const [playOpen, setPlayOpen] = useState(false);
+  /** Live render ticks per scene id — transient, never persisted. */
+  const [sceneProgress, setSceneProgress] = useState<Record<string, GenerationProgress>>({});
 
   const { assets } = useAssets();
   const story = storyId ? assets.find((a) => a.id === storyId) : undefined;
   const scenes: StoryScene[] = useMemo(() => story?.scenes ?? [], [story]);
 
-  // Sync continuity and prompt when the active story is loaded.
+  // The runner owns execution: the page is "busy" exactly while a scene is
+  // in flight. Queued-but-blocked scenes don't count (their Generate press
+  // retries/resumes).
+  const running = scenes.some((s) => s.status === "generating");
+
+  // Live provider ticks flow through the runner's hooks; a settled scene
+  // never leaves a stale readout behind.
+  useEffect(() => {
+    appRunner.setHooks({
+      onSceneProgress: (sceneId, progress) =>
+        setSceneProgress((prev) => ({ ...prev, [sceneId]: progress })),
+      onSceneSettled: (sceneId) =>
+        setSceneProgress((prev) => {
+          if (!(sceneId in prev)) return prev;
+          const { [sceneId]: _drop, ...rest } = prev;
+          return rest;
+        }),
+    });
+  }, []);
+
+  // Sync continuity, prompt and media kind when the active story loads.
   useEffect(() => {
     if (!story) return;
     if (story.meta && typeof story.meta.continuity === "boolean") {
@@ -106,15 +136,15 @@ export default function StoryPage() {
       setPrompt(story.prompt);
     }
     const storyMediaKind = story.settings?.kind;
-    if (storyMediaKind && (storyMediaKind === "image" || storyMediaKind === "video") && storyMediaKind !== kind) {
+    if (
+      storyMediaKind &&
+      (storyMediaKind === "image" || storyMediaKind === "video") &&
+      storyMediaKind !== kind
+    ) {
       setKind(storyMediaKind);
     }
-  }, [story]);
-
-  // The runner owns execution: the page is "busy" exactly while a scene is
-  // in flight. Queued-but-blocked scenes don't count (their Generate press
-  // retries/resumes).
-  const running = scenes.some((s) => s.status === "generating");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [story?.id]);
 
   const { settings: userSettings } = useSettings();
   const { characters } = useCharacters();
@@ -132,6 +162,8 @@ export default function StoryPage() {
 
   const selectedModel = catalog.models.find((m) => m.id === modelId);
   const endSupported = Boolean(selectedModel?.frameInput?.end);
+  // Style presets are per-model: provider-workflow models take only the raw prompt.
+  const stylesSupported = selectedModel?.stylesSupported ?? true;
 
   function currentSettings(): GenerationSettings {
     return {
@@ -341,6 +373,7 @@ export default function StoryPage() {
   function reset() {
     if (storyId) appRunner.cancel(storyId);
     setStoryId(null);
+    setPlayOpen(false);
   }
 
   async function handleEnhancePrompt() {
@@ -350,8 +383,8 @@ export default function StoryPage() {
       const result = await requestPromptEnhancement({
         prompt,
         kind,
-        style: selectedModel?.stylesSupported === false ? null : settings.style,
-        stylesSupported: selectedModel?.stylesSupported !== false,
+        style: stylesSupported ? settings.style : null,
+        stylesSupported,
         aspect: settings.aspect,
         duration: kind === "video" ? settings.duration : null,
         sceneIndex: scenes.length ? scenes.length : 1,
@@ -359,7 +392,12 @@ export default function StoryPage() {
         negativePrompt: settings.negativePrompt || null,
       });
       setPrompt(result.enhanced.slice(0, PROMPT_MAX));
-      toast.push("Prompt enhanced — review it and press Generate.", "success");
+      toast.push(
+        result.source === "ai"
+          ? "Prompt enhanced with AI — review it and press Generate."
+          : "Prompt enriched with style and lighting cues — AI enhancement is unavailable right now.",
+        "success",
+      );
     } catch (error) {
       if ((error as EnhancementError)?.name !== "AbortError") {
         toast.push(
@@ -375,6 +413,23 @@ export default function StoryPage() {
   /* ------------------------------ rendering ---------------------------- */
 
   const hasAnyMedia = scenes.some((s) => s.url);
+
+  // Completed scenes in story order — the reel the player walks through.
+  const playableScenes = scenes
+    .filter((scene): scene is StoryScene & { url: string } => Boolean(scene.url))
+    .map((scene) => ({ url: scene.url, mime: scene.mime, label: scene.prompt }));
+
+  // Story-level batch progress: which slot is rendering and how far the whole
+  // story is (finished scenes count fully, the live scene contributes its
+  // provider percent when one exists).
+  const activeSceneId = scenes.find((s) => s.status === "generating")?.id ?? null;
+  const activeIndex = activeSceneId ? scenes.findIndex((s) => s.id === activeSceneId) : -1;
+  const completedScenes = scenes.filter((s) => s.url).length;
+  const overallPercent = storyProgressPercent(
+    completedScenes,
+    scenes.length,
+    activeSceneId ? sceneProgress[activeSceneId] : undefined,
+  );
 
   return (
     // Same workspace contract as the solo generator: on desktop the two panels
@@ -468,7 +523,7 @@ export default function StoryPage() {
               busy={running}
               onGenerate={handleGenerateAll}
               onCancel={handleCancel}
-              onEnhancePrompt={handleEnhancePrompt}
+              onEnhancePrompt={() => void handleEnhancePrompt()}
               enhancing={enhancing}
               onCopyPrompt={() => {
                 void navigator.clipboard
@@ -543,27 +598,49 @@ export default function StoryPage() {
                     typed.kind === "video" ? (
                       <VideoStage
                         posterUrl={typed.url}
-                        videoUrl={isVideoSource(typed.url) ? typed.url : undefined}
+                        videoUrl={
+                          typed.mime?.startsWith("video/") || isVideoSource(typed.url)
+                            ? typed.url
+                            : undefined
+                        }
                         title={typed.prompt}
-                        durationSeconds={5}
+                        durationSeconds={Number(String(settings.duration).replace("s", "")) || 5}
+                        sensitive={typed.safe === false}
                       />
                     ) : (
                       <MediaFrame
                         src={typed.url}
                         alt={typed.prompt}
                         ratio={`${ASPECTS[settings.aspect].width}/${ASPECTS[settings.aspect].height}`}
+                        sensitive={typed.safe === false}
                       />
                     )
-                  ) : typed && (typed.status === "generating" || typed.status === "queued") ? (
+                  ) : typed && typed.status === "generating" ? (
+                    <div
+                      className="skeleton relative w-full overflow-hidden rounded-[14px]"
+                      style={ratioStyle}
+                    >
+                      <div className="absolute inset-0 flex items-center justify-center p-3">
+                        <RenderProgress
+                          message={sceneProgress[typed.id]?.message || "Rendering your scene…"}
+                          percent={sceneProgress[typed.id]?.percent}
+                        />
+                      </div>
+                    </div>
+                  ) : typed && typed.status === "queued" ? (
                     <div className="relative">
                       <div className="skeleton w-full rounded-[14px]" style={ratioStyle} />
-                      {waitingFor && (
-                        <div className="absolute inset-0 flex items-center justify-center rounded-[14px]">
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        {waitingFor ? (
                           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-[11px] font-semibold text-ink shadow-card">
                             <Icon name="link" size={12} /> Waiting for Scene {index}
                           </span>
-                        </div>
-                      )}
+                        ) : (
+                          <span className="rounded-full bg-white px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-wide text-muted shadow-card">
+                            Queued
+                          </span>
+                        )}
+                      </div>
                     </div>
                   ) : index === 0 && !typed ? (
                     // Scene 1: an active starting point, not a dashed slot.
@@ -643,8 +720,34 @@ export default function StoryPage() {
           </div>
 
           <div className="mt-4 flex shrink-0 flex-wrap items-center gap-2 border-t border-border pt-3.5">
-            {hasAnyMedia || scenes.length ? (
+            {running && activeIndex >= 0 ? (
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <p className="shrink-0 text-[11.5px] font-semibold text-ink-soft">
+                  Rendering scene {activeIndex + 1} of {scenes.length}…
+                </p>
+                <div className="h-1 min-w-0 max-w-[220px] flex-1 overflow-hidden rounded-full bg-ink/10">
+                  {overallPercent !== undefined ? (
+                    <div
+                      className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out"
+                      style={{ width: `${overallPercent}%` }}
+                    />
+                  ) : (
+                    <div className="h-full w-full animate-pulse rounded-full bg-primary/40" />
+                  )}
+                </div>
+              </div>
+            ) : hasAnyMedia || scenes.length ? (
               <>
+                {hasAnyMedia && (
+                  <Button
+                    size="sm"
+                    icon="play"
+                    onClick={() => setPlayOpen(true)}
+                    disabled={!playableScenes.length}
+                  >
+                    Play story
+                  </Button>
+                )}
                 {hasAnyMedia && (
                   <Button
                     size="sm"
@@ -692,6 +795,15 @@ export default function StoryPage() {
           </div>
         </div>
       </div>
+
+      {/* Full-story reel: plays every completed scene back-to-back. */}
+      {playOpen && playableScenes.length > 0 && (
+        <StoryPlayer
+          scenes={playableScenes}
+          sceneSeconds={Number(String(settings.duration).replace("s", "")) || 5}
+          onClose={() => setPlayOpen(false)}
+        />
+      )}
     </div>
   );
 }

@@ -15,10 +15,12 @@ import {
   useToast,
 } from "@/components/ui";
 import { ASPECTS } from "@/lib/constants";
+import { isSensitiveAsset } from "@/lib/domain/models";
 import { downloadMedia } from "@/lib/generation";
 import { isVideoSource } from "@/lib/renderer";
 import { getAsset, removeAsset, toggleFavorite, useAssets } from "@/lib/store";
 import type { Asset } from "@/lib/types";
+import { StoryPlayer } from "@/components/StoryPlayer";
 
 export default function ResultsPage() {
   const { assets, ready } = useAssets();
@@ -27,6 +29,7 @@ export default function ResultsPage() {
   const [variant, setVariant] = useState(0);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [missing, setMissing] = useState(false);
+  const [playOpen, setPlayOpen] = useState(false);
 
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get("id");
@@ -67,8 +70,25 @@ export default function ResultsPage() {
 
   const ratio = `${ASPECTS[asset.settings.aspect]?.width ?? 16}/${ASPECTS[asset.settings.aspect]?.height ?? 9}`;
   const currentUrl = asset.variants[variant] ?? asset.url;
-  const isVideo = asset.kind === "video";
+  // Video player selection follows the media itself, not just the asset kind:
+  // story assets persist kind "story" even when every scene is a rendered
+  // mp4, and falling through to MediaFrame would show a frozen, control-less
+  // first frame instead of the playable video.
+  const isVideo = asset.kind === "video" || isVideoSource(currentUrl);
   const isStory = asset.kind === "story";
+  // Reel for the full-story player: persisted scenes when available
+  // (newest saves carry mime), falling back to the variant list.
+  const storyScenes = isStory
+    ? asset.scenes?.some((scene) => scene.url)
+      ? asset.scenes
+          .filter((scene) => scene.url)
+          .map((scene) => ({
+            url: scene.url as string,
+            mime: scene.mime,
+            label: scene.prompt,
+          }))
+      : asset.variants.map((url) => ({ url }))
+    : [];
 
   function handleFavorite() {
     if (!asset) return;
@@ -146,6 +166,7 @@ export default function ResultsPage() {
             videoUrl={isVideoSource(currentUrl) ? currentUrl : undefined}
             title={asset.title}
             durationSeconds={Number(String(asset.settings.duration).replace("s", "")) || 5}
+            sensitive={isSensitiveAsset(asset)}
           />
         ) : (
           <MediaFrame
@@ -155,6 +176,8 @@ export default function ResultsPage() {
             rounded="rounded-[20px]"
             className="bg-ink"
             priority
+            sensitive={isSensitiveAsset(asset)}
+            detailed
           />
         )}
 
@@ -179,6 +202,7 @@ export default function ResultsPage() {
                   ratio="1/1"
                   rounded="rounded-[12px]"
                   className="w-[92px]"
+                  sensitive={isSensitiveAsset(asset)}
                 />
               </button>
             ))}
@@ -200,6 +224,11 @@ export default function ResultsPage() {
           >
             Generate Another
           </Button>
+          {isStory && storyScenes.length > 0 && (
+            <Button variant="secondary" icon="play" onClick={() => setPlayOpen(true)}>
+              Play story
+            </Button>
+          )}
           <Button variant="secondary" icon="heart" onClick={handleFavorite}>
             {asset.favorite ? "Unsave" : "Save"}
           </Button>
@@ -236,6 +265,14 @@ export default function ResultsPage() {
           )}
         </Card>
       </div>
+
+      {playOpen && storyScenes.length > 0 && (
+        <StoryPlayer
+          scenes={storyScenes}
+          sceneSeconds={Number(String(asset.settings.duration).replace("s", "")) || 5}
+          onClose={() => setPlayOpen(false)}
+        />
+      )}
 
       <ConfirmDialog
         open={confirmOpen}

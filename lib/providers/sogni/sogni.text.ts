@@ -1,22 +1,38 @@
 import { getStudioEnv } from "@/lib/config/env";
-import { ProviderError } from "@/lib/providers/types";
+import { ProviderError, type TextModelDescriptor } from "@/lib/providers/types";
 
-/**
- * Text-completion adapter over Sogni's OpenAI-compatible chat endpoint.
- * Primary engine for prompt enhancement: the key is already required for
- * Sogni renders, completions ride the account subscription (no per-call
- * charge observed), and it answers with real reasoning models instead of
- * Pollinations' shared key pool.
- *
- * Reasoning quirk: with a tight `max_tokens` the model spends everything on
- * hidden reasoning and answers `content: ""` — an empty content is treated
- * as an engine failure so the service falls through to the next engine.
- */
-const MODEL = "qwen3.5-35b-a3b-abliterated-gguf-q4km";
+export const DEFAULT_SOGNI_TEXT_MODEL = "qwen3.5-35b-a3b-abliterated-gguf-q4km";
+
+export const SOGNI_TEXT_MODELS: TextModelDescriptor[] = [
+  {
+    id: "sogni:qwen3.5-35b-a3b-abliterated-gguf-q4km",
+    label: "Qwen 3.5 35B (Abliterated)",
+    provider: "sogni",
+    description: "Uncensored instruction model with reasoning. Fast and expressive.",
+    reasoning: true,
+  },
+  {
+    id: "sogni:qwen3.6-35b-a3b-gguf-iq4xs",
+    label: "Qwen 3.6 35B",
+    provider: "sogni",
+    description: "Latest Qwen release with enhanced reasoning capabilities.",
+    reasoning: true,
+  },
+  {
+    id: "sogni:deepseek-v4-flash-vision-exp-dspark-1m",
+    label: "DeepSeek v4 Flash Vision",
+    provider: "sogni",
+    description: "Vision-capable fast reasoning model with 1M context.",
+    reasoning: true,
+  },
+];
+
 const TIMEOUT_MS = 25_000;
 
 export interface TextCompletionOptions {
   signal?: AbortSignal;
+  modelId?: string;
+  systemPrompt?: string;
 }
 
 export async function sogniTextComplete(
@@ -28,6 +44,16 @@ export async function sogniTextComplete(
     throw new ProviderError("Sogni is not configured.", { retryable: false });
   }
 
+  // Strip "sogni:" prefix if present
+  let model = options.modelId ?? DEFAULT_SOGNI_TEXT_MODEL;
+  if (model.startsWith("sogni:")) {
+    model = model.slice("sogni:".length);
+  }
+
+  const system =
+    options.systemPrompt ??
+    "You rewrite AI-generation prompts. Follow the user's rules exactly and reply with the rewritten prompt only.";
+
   const timeout = AbortSignal.timeout(TIMEOUT_MS);
   let response: Response;
   try {
@@ -38,13 +64,9 @@ export async function sogniTextComplete(
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: MODEL,
+        model,
         messages: [
-          {
-            role: "system",
-            content:
-              "You rewrite AI-generation prompts. Follow the user's rules exactly and reply with the rewritten prompt only.",
-          },
+          { role: "system", content: system },
           { role: "user", content: instruction },
         ],
         max_tokens: 700,

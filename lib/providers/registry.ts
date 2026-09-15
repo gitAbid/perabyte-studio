@@ -4,6 +4,21 @@ import { ProviderError } from "@/lib/providers/types";
 import { apiKeyFanProvider } from "@/lib/providers/apikey-fan/apikey-fan.provider";
 import { sogniProvider } from "@/lib/providers/sogni/sogni.provider";
 import { pollinationsProvider } from "@/lib/providers/pollinations/pollinations.provider";
+import { getProviderConfig } from "@/lib/repositories/provider-config.repository";
+
+/**
+ * Gate interface for runtime provider/model enablement.
+ * If omitted, all providers and models are enabled.
+ */
+export interface ProviderGate {
+  isEnabled(providerId: string): boolean;
+  isModelEnabled(providerId: string, modelId: string): boolean;
+}
+
+const defaultAllowGate: ProviderGate = {
+  isEnabled: () => true,
+  isModelEnabled: () => true,
+};
 
 /**
  * Provider registry (Factory). `createRegistry` accepts any provider list —
@@ -41,19 +56,28 @@ function hiddenModelsOf(provider: AnyProvider): ModelDescriptor[] {
   return provider.listHiddenModels?.() ?? [];
 }
 
-export function createRegistry(providers: AnyProvider[]): ProviderRegistry {
+export function createRegistry(
+  providers: AnyProvider[],
+  gate: ProviderGate = defaultAllowGate,
+): ProviderRegistry {
   return {
     listModels(kind) {
       return providers
-        .filter((provider) => provider.isConfigured())
-        .flatMap((provider) => modelsOf(provider, kind));
+        .filter((provider) => provider.isConfigured() && gate.isEnabled(provider.id))
+        .flatMap((provider) =>
+          modelsOf(provider, kind).filter((model) => gate.isModelEnabled(provider.id, model.id)),
+        );
     },
 
     /** Picker models plus hidden capability models (i2v siblings, flf2v). */
     listAllModels(kind) {
       return providers
-        .filter((provider) => provider.isConfigured())
-        .flatMap((provider) => [...modelsOf(provider, kind), ...hiddenModelsOf(provider)]);
+        .filter((provider) => provider.isConfigured() && gate.isEnabled(provider.id))
+        .flatMap((provider) =>
+          [...modelsOf(provider, kind), ...hiddenModelsOf(provider)].filter((model) =>
+            gate.isModelEnabled(provider.id, model.id),
+          ),
+        );
     },
 
     defaultModel(kind) {
@@ -67,7 +91,12 @@ export function createRegistry(providers: AnyProvider[]): ProviderRegistry {
 
     resolve(modelId) {
       const found = this.findAnywhere(modelId);
-      if (found && found.provider.isConfigured()) {
+      if (
+        found &&
+        found.provider.isConfigured() &&
+        gate.isEnabled(found.provider.id) &&
+        gate.isModelEnabled(found.provider.id, found.model.id)
+      ) {
         return { provider: found.provider, model: found.model };
       }
       return null;
@@ -89,12 +118,45 @@ export function createRegistry(providers: AnyProvider[]): ProviderRegistry {
 
 let registry: ProviderRegistry | null = null;
 
+let registeredProviders: AnyProvider[] = [
+  apiKeyFanProvider,
+  sogniProvider,
+  pollinationsProvider,
+];
+
+/** The app's provider adapters in priority order (keyed first, fallback last). */
+export function getRegisteredProviders(): AnyProvider[] {
+  return registeredProviders;
+}
+
 export function getGenerationRegistry(): ProviderRegistry {
-  registry ??= createRegistry([apiKeyFanProvider, sogniProvider, pollinationsProvider]);
+  const dynamicGate: ProviderGate = {
+    isEnabled: (providerId) => {
+      const config = getProviderConfig();
+      const p = config.providers[providerId as keyof typeof config.providers];
+      return p ? p.enabled : true;
+    },
+    isModelEnabled: (providerId, modelId) => {
+      const config = getProviderConfig();
+      const p = config.providers[providerId as keyof typeof config.providers];
+      return p ? !p.disabledModels.includes(modelId) : true;
+    },
+  };
+  registry ??= createRegistry(registeredProviders, dynamicGate);
   return registry;
 }
 
 /** Test hook: swap the app registry. */
 export function setRegistryForTests(fake: ProviderRegistry | null): void {
   registry = fake;
+}
+
+/** Test hook: swap the provider list and drop the cached registry. */
+export function setProvidersForTests(list: AnyProvider[] | null): void {
+  registeredProviders = list ?? [
+    apiKeyFanProvider,
+    sogniProvider,
+    pollinationsProvider,
+  ];
+  registry = null;
 }

@@ -155,4 +155,45 @@ describe("provider registry", () => {
     expect(registry.findAnywhere(hidden.id)?.model.model).toBe(hidden.model);
     expect(registry.resolve(hidden.id)?.model.model).toBe(hidden.model);
   });
+
+  describe("ProviderGate integration", () => {
+    it("filters out disabled providers from listModels and resolve", () => {
+      const gate = {
+        isEnabled: (id: string) => id !== "apikey-fan",
+        isModelEnabled: () => true,
+      };
+      const registry = createRegistry([grok, flux], gate);
+      expect(registry.listModels("image").map((m) => m.id)).toEqual(["pollinations:flux"]);
+      expect(registry.resolve("apikey-fan:grok-imagine-image-2.0")).toBeNull();
+      // findAnywhere still locates the model so callers know it's a known model
+      expect(registry.findAnywhere("apikey-fan:grok-imagine-image-2.0")?.provider.id).toBe(
+        "apikey-fan",
+      );
+    });
+
+    it("filters out individual disabled models from listModels and resolve", () => {
+      const gate = {
+        isEnabled: () => true,
+        isModelEnabled: (_providerId: string, modelId: string) =>
+          modelId !== "apikey-fan:grok-imagine-image-2.0",
+      };
+      const registry = createRegistry([grok, flux], gate);
+      expect(registry.listModels("image").map((m) => m.id)).toEqual(["pollinations:flux"]);
+      expect(registry.listModels("video").map((m) => m.id)).toEqual([
+        "apikey-fan:grok-imagine-video-1.5",
+        "pollinations:flux-keyframe",
+      ]);
+      expect(registry.resolve("apikey-fan:grok-imagine-image-2.0")).toBeNull();
+      expect(registry.resolve("apikey-fan:grok-imagine-video-1.5")).not.toBeNull();
+    });
+
+    it("skips disabled models when picking the default model", () => {
+      const gate = {
+        isEnabled: () => true,
+        isModelEnabled: (_p: string, m: string) => m !== "apikey-fan:grok-imagine-image-2.0",
+      };
+      const registry = createRegistry([grok, flux], gate);
+      expect(registry.defaultModel("image").id).toBe("pollinations:flux");
+    });
+  });
 });

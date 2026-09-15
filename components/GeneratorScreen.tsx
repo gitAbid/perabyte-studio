@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { MediaFrame, VideoStage } from "@/components/Media";
 import { PromptComposer } from "@/components/PromptComposer";
+import { RenderProgress } from "@/components/RenderProgress";
 import { Badge, Button, Segmented, useToast } from "@/components/ui";
 import {
   ASPECTS,
@@ -16,6 +17,7 @@ import {
   VIDEO_STYLES,
   type AspectKey,
 } from "@/lib/constants";
+import { isSensitiveAsset } from "@/lib/domain/models";
 import { downloadMedia, useGeneration } from "@/lib/generation";
 import { requestPromptEnhancement } from "@/lib/enhancement";
 import { useModelCatalog } from "@/lib/model-catalog";
@@ -378,22 +380,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
             {busy && (
               <div className="flex flex-col items-center gap-3">
                 <div className="skeleton rounded-[16px]" style={fitBox} />
-                <div className="flex flex-col items-center gap-2">
-                  <p className="flex items-center gap-2 text-center text-[12.5px] font-medium text-muted">
-                    <Icon name="clock" size={14} />
-                    {statusLine}
-                  </p>
-                  <div className="h-1 w-44 overflow-hidden rounded-full bg-ink/10">
-                    {progress?.percent !== undefined ? (
-                      <div
-                        className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out"
-                        style={{ width: `${progress.percent}%` }}
-                      />
-                    ) : (
-                      <div className="h-full w-full animate-pulse rounded-full bg-primary/40" />
-                    )}
-                  </div>
-                </div>
+                <RenderProgress message={statusLine} percent={progress?.percent} />
               </div>
             )}
 
@@ -438,6 +425,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
                     videoUrl={isRealVideo ? shownUrl : undefined}
                     title={prompt || "Generated video"}
                     durationSeconds={Number(settings.duration.replace("s", ""))}
+                    sensitive={settings.safe === false}
                   />
                 ) : (
                   <MediaFrame
@@ -446,6 +434,8 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
                     alt={prompt || "Generated image"}
                     rounded="rounded-none"
                     priority
+                    sensitive={settings.safe === false}
+                    detailed
                   />
                 )}
 
@@ -497,6 +487,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
                 src: media.url,
                 title: `Show variation ${index + 1}`,
                 active: index === activeVariant,
+                sensitive: settings.safe === false,
                 onClick: () => setActiveVariant(index),
               }))}
             />
@@ -509,6 +500,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
                   key: asset.id,
                   src: asset.url,
                   title: asset.title,
+                  sensitive: isSensitiveAsset(asset),
                   onClick: () => router.push(`/results?id=${asset.id}`),
                 }))}
               />
@@ -566,6 +558,7 @@ function ThumbStrip({
     src: string;
     title: string;
     active?: boolean;
+    sensitive?: boolean;
     onClick: () => void;
   }[];
 }) {
@@ -596,6 +589,7 @@ function ThumbStrip({
               ratio="16/9"
               rounded="rounded-[10px]"
               className="w-36"
+              sensitive={thumb.sensitive}
             />
           </button>
         ))}

@@ -98,7 +98,7 @@ export function SceneRefChips({
   }
 
   return (
-    <div className="mt-1 grid grid-cols-2 gap-2">
+    <div className={`mt-1 gap-2 ${endSupported ? "grid grid-cols-2" : "flex max-w-[140px]"}`}>
       {chip("start", "Start frame", scene.startImageRef, startInput)}
       {endSupported ? chip("end", "End frame", scene.endImageRef, endInput) : null}
     </div>

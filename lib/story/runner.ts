@@ -1,6 +1,9 @@
 "use client";
 
-import { requestGeneration } from "@/lib/generation";
+import {
+  requestGeneration,
+  type GenerationProgress,
+} from "@/lib/generation";
 import { extractLastFrame, refFromMediaUrl, uploadFrameRef } from "@/lib/media/frame";
 import { getAsset, updateStoryScenes } from "@/lib/store";
 import { composeSceneWithCharacter } from "@/lib/character";
@@ -25,6 +28,8 @@ export interface StoryRunnerDeps {
     startImageRef?: string;
     endImageRef?: string;
     signal?: AbortSignal;
+    /** Live provider ticks for the UI (transient — never persisted). */
+    onProgress?: (progress: GenerationProgress) => void;
   }): Promise<GenerationResponse>;
   uploadFrameRef(blob: Blob): Promise<string>;
   extractLastFrame(videoUrl: string): Promise<Blob>;
@@ -38,8 +43,16 @@ interface ActiveStory {
   controllers: Set<AbortController>;
 }
 
+/** Optional UI hooks — the page subscribes for live render ticks. */
+export interface StoryRunnerHooks {
+  onSceneProgress?(sceneId: string, progress: GenerationProgress): void;
+  /** The scene left "generating" (completed, failed, or canceled). */
+  onSceneSettled?(sceneId: string): void;
+}
+
 export function createStoryRunner(deps: StoryRunnerDeps) {
   const active = new Map<string, ActiveStory>();
+  let hooks: StoryRunnerHooks = {};
   /** Scenes whose end frame is being derived right now (dedupe guard). */
   const deriving = new Set<string>();
   /** Scenes whose end-frame derivation was attempted and failed — their
@@ -162,19 +175,26 @@ export function createStoryRunner(deps: StoryRunnerDeps) {
         ...(startRef ? { startImageRef: startRef } : {}),
         ...(scene.endImageRef ? { endImageRef: scene.endImageRef } : {}),
         signal: controller.signal,
+        onProgress: (progress) => hooks.onSceneProgress?.(scene.id, progress),
       });
 
       const endFrameRef = await deriveEndFrameRef(response, scene);
       patch(storyId, scene.id, {
         url: response.media[0]?.url ?? null,
+        mime: response.media[0]?.mime,
+        // Persist the render's safety state so masking (18+ veil) survives
+        // reloads exactly like the solo generator's saves.
+        safe: story.settings.safe,
         status: "completed",
         effectiveModelId: response.effectiveModelId,
         frameUsed: response.frameUsed,
         ...(endFrameRef ? { endFrameRef } : {}),
       });
+      hooks.onSceneSettled?.(scene.id);
     } catch (error) {
       if ((error as Error)?.name === "AbortError" || controller.signal.aborted) {
         patch(storyId, scene.id, { status: "queued" });
+        hooks.onSceneSettled?.(scene.id);
         entry.controllers.delete(controller);
         return;
       }
@@ -182,6 +202,7 @@ export function createStoryRunner(deps: StoryRunnerDeps) {
         status: "failed",
         error: (error as Error).message ?? "Scene generation failed.",
       });
+      hooks.onSceneSettled?.(scene.id);
       deps.onNotice?.((error as Error).message ?? "Scene generation failed.", "error");
     }
     entry.controllers.delete(controller);
@@ -210,6 +231,11 @@ export function createStoryRunner(deps: StoryRunnerDeps) {
   }
 
   return {
+    /** Subscribe UI hooks (idempotent — replaces the previous set). */
+    setHooks(next: StoryRunnerHooks) {
+      hooks = next ?? {};
+    },
+
     /** Idempotent: schedule (or resume) one story's queue. Failed scenes are
      * reset to queued — pressing Generate again retries them. */
     start(storyId: string) {
