@@ -51,6 +51,13 @@ export interface GenerationResponse {
   media: GeneratedMedia[];
 }
 
+/** Live progress tick for a story scene while its render is in flight. */
+export interface StorySceneProgress {
+  stage: "submitted" | "rendering" | "downloading";
+  message: string;
+  percent?: number;
+}
+
 export interface StoryScene {
   id: string;
   prompt: string;
@@ -58,6 +65,10 @@ export interface StoryScene {
   status: JobStatus;
   kind: GenerationKind;
   error?: string;
+  /** Real content type when known — lets the UI pick a true video player. */
+  mime?: string;
+  /** In-flight render progress; cleared once the scene completes. */
+  progress?: StorySceneProgress;
 }
 
 export interface Asset {

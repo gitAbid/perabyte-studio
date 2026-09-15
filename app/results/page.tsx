@@ -67,7 +67,11 @@ export default function ResultsPage() {
 
   const ratio = `${ASPECTS[asset.settings.aspect]?.width ?? 16}/${ASPECTS[asset.settings.aspect]?.height ?? 9}`;
   const currentUrl = asset.variants[variant] ?? asset.url;
-  const isVideo = asset.kind === "video";
+  // Video player selection follows the media itself, not just the asset kind:
+  // story assets persist kind "story" even when every scene is a rendered
+  // mp4, and falling through to MediaFrame would show a frozen, control-less
+  // first frame instead of the playable video.
+  const isVideo = asset.kind === "video" || isVideoSource(currentUrl);
   const isStory = asset.kind === "story";
 
   function handleFavorite() {
