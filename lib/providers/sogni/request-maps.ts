@@ -74,6 +74,9 @@ export const SOGNI_VIDEO_MODELS: ModelDescriptor[] = [
     model: "seedance-2-0-mini",
     label: "Seedance 2.0 Mini",
     hint: "Sogni · fast",
+    // Provider workflow: takes only the raw prompt (no negative prompt, no
+    // style directives) — the service must not fold presets into it.
+    stylesSupported: false,
   },
 ];
 

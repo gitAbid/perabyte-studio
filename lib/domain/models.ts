@@ -17,6 +17,10 @@ export interface ModelDescriptor {
   label: string;
   /** Short qualifier shown in the model picker (speed / price / tier). */
   hint?: string;
+  /** `false` when the model can't honour style presets — the UI disables the
+   * style picker and the service skips folding the preset into the prompt.
+   * Absent means supported. */
+  stylesSupported?: boolean;
 }
 
 export function buildModelId(providerId: string, model: string): string {

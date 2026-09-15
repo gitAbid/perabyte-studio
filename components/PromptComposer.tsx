@@ -170,6 +170,7 @@ export function PromptComposer({
   models,
   modelId,
   onModelChange,
+  stylesSupported,
   title = "Prompt composer",
   headerBadge,
 }: {
@@ -189,6 +190,8 @@ export function PromptComposer({
   models?: ModelOption[];
   modelId?: string | null;
   onModelChange?: (modelId: string) => void;
+  /** False when the active model can't honour style presets. */
+  stylesSupported?: boolean;
   title?: string;
   headerBadge?: ReactNode;
 }) {
@@ -303,6 +306,8 @@ export function PromptComposer({
           value={settings.style}
           options={Object.keys(styles).map((name) => ({ value: name, label: name }))}
           onChange={(value) => onSettingsChange({ style: value })}
+          disabled={stylesSupported === false}
+          disabledHint="This model doesn't support style presets"
         />
         {kind === "video" && (
           <PillSelect

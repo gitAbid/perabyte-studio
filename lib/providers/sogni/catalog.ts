@@ -36,6 +36,17 @@ const EXCLUDED_ID_PATTERNS = [
   "identity",
 ];
 
+/**
+ * Provider-workflow video families that accept only the raw prompt — the SDK
+ * documents that they reject even negativePrompt, so style presets are
+ * meaningless there and the UI disables the style picker for them.
+ */
+const STYLELESS_ID_PATTERNS = [/^seedance/i, /^happyhorse/i, /^minimax/i];
+
+function supportsStyles(modelId: string): boolean {
+  return !STYLELESS_ID_PATTERNS.some((pattern) => pattern.test(modelId));
+}
+
 /** Curated entries keep their hand-written labels, hints and order. */
 const CURATED = new Map(
   [...SOGNI_IMAGE_MODELS, ...SOGNI_VIDEO_MODELS].map((model) => [model.model, model]),
@@ -128,6 +139,7 @@ export function toDescriptors(
         model: model.id,
         label: curated?.label ?? (model.name?.trim() || prettifyModelId(model.id)),
         hint: curated?.hint ?? speedHint(model.id),
+        stylesSupported: curated ? curated.stylesSupported : supportsStyles(model.id),
       } satisfies ModelDescriptor;
     });
 

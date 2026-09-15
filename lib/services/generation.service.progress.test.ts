@@ -8,6 +8,7 @@ import {
   setRegistryForTests,
   type ProviderRegistry,
 } from "@/lib/providers/registry";
+import type { NormalizedGenerationRequest } from "@/lib/domain/models";
 import type {
   GeneratedArtifact,
   ImageProvider,
@@ -42,16 +43,20 @@ function body(): Record<string, unknown> {
  */
 function fakeProgressProvider(
   ticks: ProviderProgress[],
-): { registry: ProviderRegistry; seen: ProviderProgress[][] } {
+  modelOverride?: Partial<ModelDescriptor>,
+): { registry: ProviderRegistry; seen: ProviderProgress[][]; requests: NormalizedGenerationRequest[] } {
   const seen: ProviderProgress[][] = [];
+  const requests: NormalizedGenerationRequest[] = [];
+  const resolvedModel: ModelDescriptor = { ...model, ...modelOverride };
   const provider: ImageProvider = {
     id: "fake",
     label: "Fake",
     isConfigured: () => true,
-    listImageModels: () => [model],
-    generateImage: async (_request, _model, ctx: ProviderContext) => {
+    listImageModels: () => [resolvedModel],
+    generateImage: async (request, _model, ctx: ProviderContext) => {
       const sink: ProviderProgress[] = [];
       seen.push(sink);
+      requests.push(request);
       for (const tick of ticks) {
         ctx.onProgress?.(tick);
         sink.push(tick);
@@ -67,11 +72,13 @@ function fakeProgressProvider(
   };
   return {
     seen,
+    requests,
     registry: {
-      listModels: (kind) => (kind === "image" ? [model] : []),
-      defaultModel: (kind) => (kind === "image" ? model : ({} as ModelDescriptor)),
-      resolve: (id) => (id === model.id ? { provider, model } : null),
-      findAnywhere: (id) => (id === model.id ? { provider, model } : null),
+      listModels: (kind) => (kind === "image" ? [resolvedModel] : []),
+      defaultModel: (kind) => (kind === "image" ? resolvedModel : ({} as ModelDescriptor)),
+      resolve: (id) => (id === resolvedModel.id ? { provider, model: resolvedModel } : null),
+      findAnywhere: (id) =>
+        id === resolvedModel.id ? { provider, model: resolvedModel } : null,
     },
   };
 }
@@ -118,5 +125,22 @@ describe("runGeneration progress forwarding", () => {
 
     const response = await runGeneration(body());
     expect(response.status).toBe("completed");
+  });
+
+  it("folds the style preset into the prompt for style-capable models", async () => {
+    const { registry, requests } = fakeProgressProvider([]);
+    setRegistryForTests(registry);
+
+    await runGeneration(body());
+    expect(requests[0].prompt).toContain("a lighthouse");
+    expect(requests[0].prompt).toContain("photorealistic");
+  });
+
+  it("sends the raw prompt when the model doesn't support styles", async () => {
+    const { registry, requests } = fakeProgressProvider([], { stylesSupported: false });
+    setRegistryForTests(registry);
+
+    await runGeneration(body());
+    expect(requests[0].prompt).toBe("a lighthouse");
   });
 });

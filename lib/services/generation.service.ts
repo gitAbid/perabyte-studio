@@ -300,7 +300,12 @@ export async function runGeneration(
 
   const normalized: NormalizedGenerationRequest = {
     kind: request.kind,
-    prompt: styleWithPrompt(request.rawPrompt, request.style),
+    // Style presets are folded into the prompt only when the model supports
+    // them (provider-workflow video models take just the raw prompt).
+    prompt:
+      resolved.model.stylesSupported === false
+        ? request.rawPrompt
+        : styleWithPrompt(request.rawPrompt, request.style),
     negativePrompt: request.negativePrompt,
     aspect: request.aspect,
     resolution: request.resolution,

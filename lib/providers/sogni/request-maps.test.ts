@@ -85,6 +85,13 @@ describe("sogni request maps", () => {
   });
 
   describe("toVideoParams", () => {
+    it("flags provider-workflow models as styleless", () => {
+      const seedance = SOGNI_VIDEO_MODELS.find((m) => m.model === "seedance-2-0-mini");
+      expect(seedance?.stylesSupported).toBe(false);
+      const wan = SOGNI_VIDEO_MODELS.find((m) => m.model.startsWith("wan"));
+      expect(wan?.stylesSupported).toBeUndefined();
+    });
+
     it("passes the negative prompt through for models that accept one", () => {
       const model = SOGNI_VIDEO_MODELS[0];
       const params = toVideoParams(

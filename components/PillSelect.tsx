@@ -26,6 +26,8 @@ export function PillSelect({
   options,
   onChange,
   align = "left",
+  disabled = false,
+  disabledHint,
 }: {
   icon: IconName;
   label: string;
@@ -33,6 +35,9 @@ export function PillSelect({
   options: PillOption[];
   onChange: (value: string) => void;
   align?: "left" | "right";
+  /** Non-interactive pill for options the active model can't honour. */
+  disabled?: boolean;
+  disabledHint?: string;
 }) {
   const [open, setOpen] = useState(false);
   const shellRef = useRef<HTMLDivElement>(null);
@@ -62,11 +67,17 @@ export function PillSelect({
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={`${label}: ${current?.label ?? value}`}
-        onClick={() => setOpen((v) => !v)}
+        aria-disabled={disabled || undefined}
+        title={disabled ? (disabledHint ?? `${label} is not available for this model`) : undefined}
+        onClick={() => {
+          if (!disabled) setOpen((v) => !v);
+        }}
         className={`${PILL_BASE} ${
-          open
-            ? "border-primary bg-primary-soft text-primary"
-            : PILL_IDLE
+          disabled
+            ? "cursor-not-allowed border-border bg-surface text-muted"
+            : open
+              ? "border-primary bg-primary-soft text-primary"
+              : PILL_IDLE
         }`}
       >
         <Icon name={icon} size={13} />

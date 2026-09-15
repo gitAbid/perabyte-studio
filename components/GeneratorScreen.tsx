@@ -62,6 +62,10 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
   const modelId =
     (kind === "video" ? userSettings.videoModel : userSettings.imageModel) ??
     catalog.defaultModelId;
+  // Style presets are per-model: provider-workflow models (e.g. Seedance)
+  // take only the raw prompt, so the style picker disables itself.
+  const stylesSupported =
+    catalog.models.find((model) => model.id === modelId)?.stylesSupported ?? true;
 
   // Prefill from History / Results "Regenerate" links.
   useEffect(() => {
@@ -282,6 +286,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
               setSelectedModel(kind, nextModel);
               patchSettings({ modelId: nextModel });
             }}
+            stylesSupported={stylesSupported}
             onSettingsChange={patchSettings}
             busy={busy}
             onGenerate={handleGenerate}

@@ -67,6 +67,24 @@ describe("sogni catalog", () => {
     expect(derived.label).toBe("Some new model v2");
   });
 
+  it("marks provider-workflow video families as styleless", () => {
+    const videos = toDescriptors(
+      [
+        model({ id: "seedance-2-5", name: "Seedance 2.5", media: "video" }),
+        model({ id: "happyhorse-1.1-t2v", name: "HappyHorse 1.1", media: "video" }),
+        model({ id: "wan3.0-video", name: "Wan 3.0", media: "video" }),
+        // Curated entry carries its static flag through the live mapping.
+        model({ id: "seedance-2-0-mini", name: "Seedance 2.0 Mini", media: "video" }),
+      ],
+      "video",
+    );
+    const byId = new Map(videos.map((v) => [v.model, v.stylesSupported]));
+    expect(byId.get("seedance-2-5")).toBe(false);
+    expect(byId.get("happyhorse-1.1-t2v")).toBe(false);
+    expect(byId.get("seedance-2-0-mini")).toBe(false);
+    expect(byId.get("wan3.0-video")).toBe(true);
+  });
+
   it("refreshes in the background and the provider serves the warmed list", async () => {
     setCatalogFetcherForTests(async () => LIVE_CATALOG);
     await warmSogniCatalog();

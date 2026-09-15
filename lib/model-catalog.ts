@@ -15,6 +15,8 @@ export interface ModelOption {
   hint?: string;
   providerId: string;
   providerLabel: string;
+  /** False when the model can't honour style presets (picker disabled). */
+  stylesSupported?: boolean;
 }
 
 export interface ModelCatalog {

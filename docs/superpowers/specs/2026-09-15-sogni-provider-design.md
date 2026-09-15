@@ -149,3 +149,15 @@ Approved follow-ups while smoke-testing:
   features) — extend the exclusion list rather than the allowlist if a model
   needs reference media.
 
+## Per-model style support
+
+Sogni's API does not advertise style support (`ModelOptions` covers
+steps/guidance/samplers only), so the capability is modelled app-side:
+`ModelDescriptor.stylesSupported` (absent = supported). Sogni
+provider-workflow video families that reject even negative prompts
+(seedance, happyhorse, minimax) are marked styleless in both the static
+catalog and the dynamic family map. `/api/models` forwards the flag;
+`PillSelect` gained a disabled state (muted pill + hint) and the composer's
+Style picker disables itself for such models; the service skips folding the
+preset into the prompt so the flag and the wire payload always agree.
+
