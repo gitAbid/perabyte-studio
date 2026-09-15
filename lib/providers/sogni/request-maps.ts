@@ -1,6 +1,6 @@
 import { ASPECTS, type AspectKey, type ResolutionKey } from "@/lib/constants";
 import type { ModelDescriptor, NormalizedGenerationRequest } from "@/lib/domain/models";
-import { buildModelId } from "@/lib/domain/models";
+import { PROVIDER_ID } from "@/lib/providers/sogni/model-meta";
 import { isMinimaxH3, minimaxH3Dimensions, sogniVideoLimits } from "@/lib/providers/sogni/video-limits";
 
 /**
@@ -10,76 +10,12 @@ import { isMinimaxH3, minimaxH3Dimensions, sogniVideoLimits } from "@/lib/provid
  * generation request, and `numberOfMedia` outputs come back as URLs from
  * `project.waitForCompletion()`.
  */
-export const PROVIDER_ID = "sogni";
 
 /* ------------------------------------------------------------------ */
-/* Model catalog — ids verified against the SDK README model list       */
+/* Model catalog — curated entries live in model-meta.ts                */
 /* ------------------------------------------------------------------ */
 
-export const SOGNI_IMAGE_MODELS: ModelDescriptor[] = [
-  {
-    id: buildModelId(PROVIDER_ID, "krea2_turbo_fp8_scaled"),
-    providerId: PROVIDER_ID,
-    kind: "image",
-    model: "krea2_turbo_fp8_scaled",
-    label: "Krea 2 Turbo",
-    hint: "Sogni · spark credits",
-  },
-  {
-    id: buildModelId(PROVIDER_ID, "flux1-schnell-fp8"),
-    providerId: PROVIDER_ID,
-    kind: "image",
-    model: "flux1-schnell-fp8",
-    label: "Flux Schnell",
-    hint: "Sogni · 4-step",
-  },
-  {
-    id: buildModelId(PROVIDER_ID, "z_image_turbo_bf16"),
-    providerId: PROVIDER_ID,
-    kind: "image",
-    model: "z_image_turbo_bf16",
-    label: "Z-Image Turbo",
-    hint: "Sogni · sharp",
-  },
-  {
-    id: buildModelId(PROVIDER_ID, "chroma1-hd_fp8_scaled"),
-    providerId: PROVIDER_ID,
-    kind: "image",
-    model: "chroma1-hd_fp8_scaled",
-    label: "Chroma 1 HD",
-    hint: "Sogni · high detail",
-  },
-];
-
-export const SOGNI_VIDEO_MODELS: ModelDescriptor[] = [
-  {
-    id: buildModelId(PROVIDER_ID, "wan_v2.2-14b-fp8_t2v_lightx2v"),
-    providerId: PROVIDER_ID,
-    kind: "video",
-    model: "wan_v2.2-14b-fp8_t2v_lightx2v",
-    label: "WAN 2.2 LightX2V",
-    hint: "Sogni · budget",
-  },
-  {
-    id: buildModelId(PROVIDER_ID, "ltx25-22b-int8_t2v_distilled"),
-    providerId: PROVIDER_ID,
-    kind: "video",
-    model: "ltx25-22b-int8_t2v_distilled",
-    label: "LTX 2.5",
-    hint: "Sogni · flagship",
-  },
-  {
-    id: buildModelId(PROVIDER_ID, "seedance-2-0-mini"),
-    providerId: PROVIDER_ID,
-    kind: "video",
-    model: "seedance-2-0-mini",
-    label: "Seedance 2.0 Mini",
-    hint: "Sogni · fast",
-    // Provider workflow: takes only the raw prompt (no negative prompt, no
-    // style directives) — the service must not fold presets into it.
-    stylesSupported: false,
-  },
-];
+export { PROVIDER_ID, SOGNI_IMAGE_MODELS, SOGNI_VIDEO_MODELS } from "@/lib/providers/sogni/model-meta";
 
 /* ------------------------------------------------------------------ */
 /* Payload mapping                                                     */
