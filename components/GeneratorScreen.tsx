@@ -22,7 +22,7 @@ import { useModelCatalog } from "@/lib/model-catalog";
 import { setSelectedModel, useSettings } from "@/lib/repositories/settings.repository";
 import { addAsset, assetFromResponse, DEMO_SPECS, toggleFavorite, useAssets } from "@/lib/store";
 import type { DemoSpec } from "@/lib/store";
-import { enhancePromptText } from "@/lib/renderer";
+import { requestPromptEnhancement } from "@/lib/enhancement";
 import type { GenerationSettings } from "@/lib/types";
 
 const COPY = {
@@ -53,6 +53,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
   const [assetId, setAssetId] = useState<string | null>(null);
   const [favorite, setFavorite] = useState(false);
   const [activeVariant, setActiveVariant] = useState(0);
+  const [enhancing, setEnhancing] = useState(false);
 
   const { job, run, cancel, reset } = useGeneration();
   const { assets } = useAssets();
@@ -184,10 +185,36 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
     toast.push(`“${demo.title}” example loaded — tweak it and press Generate.`);
   }
 
-  function handleEnhancePrompt() {
-    if (!prompt.trim() || busy) return;
-    setPrompt(enhancePromptText(prompt, settings.style).slice(0, PROMPT_MAX));
-    toast.push("Prompt enhanced — review it and press Generate.", "success");
+  async function handleEnhancePrompt() {
+    const current = prompt.trim();
+    if (!current || busy || enhancing) return;
+    setEnhancing(true);
+    try {
+      const result = await requestPromptEnhancement({
+        prompt: current,
+        kind,
+        style: stylesSupported ? settings.style : null,
+        stylesSupported,
+        aspect: settings.aspect,
+        duration: kind === "video" ? settings.duration : null,
+        negativePrompt: settings.negativePrompt,
+      });
+      setPrompt(result.enhanced.slice(0, PROMPT_MAX));
+      toast.push(
+        result.source === "ai"
+          ? "Prompt enhanced with AI — review it and press Generate."
+          : "Prompt enriched with style and lighting cues — AI enhancement is unavailable right now.",
+        "success",
+      );
+    } catch (error) {
+      if ((error as Error)?.name === "AbortError") return;
+      toast.push(
+        (error as Error).message || "Could not enhance the prompt.",
+        "error",
+      );
+    } finally {
+      setEnhancing(false);
+    }
   }
 
   // Newest renders from History, shown when the current result has no
@@ -293,7 +320,8 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
             onGenerate={handleGenerate}
             onCancel={cancel}
             onCopyPrompt={handleCopyPrompt}
-            onEnhancePrompt={handleEnhancePrompt}
+            onEnhancePrompt={() => void handleEnhancePrompt()}
+            enhancing={enhancing}
           />
         </div>
 

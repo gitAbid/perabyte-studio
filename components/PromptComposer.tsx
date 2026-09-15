@@ -167,6 +167,7 @@ export function PromptComposer({
   onCancel,
   onCopyPrompt,
   onEnhancePrompt,
+  enhancing,
   models,
   modelId,
   onModelChange,
@@ -186,6 +187,8 @@ export function PromptComposer({
   onCopyPrompt: () => void;
   /** Rewrites the prompt in place with richer detail (one click, no flag). */
   onEnhancePrompt: () => void;
+  /** True while an async enhancement request is in flight. */
+  enhancing?: boolean;
   /** Model catalog for the picker; the pill is hidden while empty. */
   models?: ModelOption[];
   modelId?: string | null;
@@ -246,12 +249,12 @@ export function PromptComposer({
           <button
             type="button"
             onClick={onEnhancePrompt}
-            disabled={busy || !prompt.trim()}
+            disabled={busy || enhancing || !prompt.trim()}
             title="Expand the prompt with richer, style-aware detail"
             className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-semibold text-muted transition-colors hover:bg-surface-2 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Icon name="sparkle" size={13} />
-            Enhance prompt
+            {enhancing ? "Enhancing…" : "Enhance prompt"}
           </button>
         </div>
       </div>
