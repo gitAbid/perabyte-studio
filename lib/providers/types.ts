@@ -44,6 +44,9 @@ export interface GeneratedArtifact {
   /** True when this artifact was already produced before the provider call
    * resolved (Pollinations inline warming) — surfaced as `prewarmed`. */
   prewarmed?: boolean;
+  /** Provider accepted the request but dropped/refused the continuity frame;
+   * surfaced as `frameUsed: false` so the UI can degrade gracefully. */
+  frameDropped?: boolean;
 }
 
 export interface ImageProvider {
