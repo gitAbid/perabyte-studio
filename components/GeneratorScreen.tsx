@@ -19,7 +19,13 @@ import {
 import { downloadMedia, useGeneration } from "@/lib/generation";
 import { requestPromptEnhancement } from "@/lib/enhancement";
 import { useModelCatalog } from "@/lib/model-catalog";
-import { setSelectedModel, useSettings } from "@/lib/repositories/settings.repository";
+import { composeSceneWithCharacter } from "@/lib/character";
+import {
+  setSelectedModel,
+  setSoloCharacter,
+  useSettings,
+} from "@/lib/repositories/settings.repository";
+import { useCharacters } from "@/lib/repositories/characters.repository";
 import { addAsset, assetFromResponse, DEMO_SPECS, toggleFavorite, useAssets } from "@/lib/store";
 import type { DemoSpec } from "@/lib/store";
 import type { GenerationSettings } from "@/lib/types";
@@ -57,7 +63,13 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
   const { job, run, cancel, reset } = useGeneration();
   const { assets } = useAssets();
   const { settings: userSettings } = useSettings();
+  const { characters } = useCharacters();
   const catalog = useModelCatalog(kind);
+
+  // Character reuse: the attached saved character's identity is folded into
+  // the prompt at generate time; the textarea keeps holding only the scene.
+  const attachedCharacter =
+    characters.find((character) => character.id === userSettings.soloCharacterId) ?? null;
 
   // Active model: the user's stored pick for this kind, else the catalog default.
   const modelId =
@@ -136,7 +148,8 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
 
     const response = await run({
       settings: nextSettings,
-      prompt: prompt.trim(),
+      // The saved character's (sanitized) anchor leads; the scene follows.
+      prompt: composeSceneWithCharacter(prompt.trim(), attachedCharacter?.spec ?? null, uncensored),
       uncensored,
     });
     if (!response) return;
@@ -317,6 +330,9 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
             }}
             stylesSupported={stylesSupported}
             onSettingsChange={patchSettings}
+            characters={characters}
+            characterId={userSettings.soloCharacterId}
+            onCharacterChange={setSoloCharacter}
             busy={busy}
             onGenerate={handleGenerate}
             onCancel={cancel}

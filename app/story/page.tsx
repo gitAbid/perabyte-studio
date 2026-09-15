@@ -37,8 +37,10 @@ import {
 import { isVideoSource } from "@/lib/renderer";
 import {
   setSelectedModel,
+  setStoryCharacter,
   useSettings,
 } from "@/lib/repositories/settings.repository";
+import { useCharacters } from "@/lib/repositories/characters.repository";
 import type { Asset, GenerationSettings, StoryScene } from "@/lib/types";
 
 const CONTINUATIONS = [
@@ -115,6 +117,11 @@ export default function StoryPage() {
   const running = scenes.some((s) => s.status === "generating");
 
   const { settings: userSettings } = useSettings();
+  const { characters } = useCharacters();
+  // Character reuse: the runner folds the attached saved character's
+  // sanitized anchor into every scene prompt at render time.
+  const attachedCharacter =
+    characters.find((character) => character.id === userSettings.storyCharacterId) ?? null;
   const catalog = useModelCatalog(kind);
   const modelId =
     (kind === "video" ? userSettings.videoModel : userSettings.imageModel) ??
@@ -174,6 +181,7 @@ export default function StoryPage() {
         continuity: continuityOn,
         running: true,
         style: currentSettings().style,
+        characterId: attachedCharacter?.id ?? "",
       },
     };
     addAsset(asset);
@@ -273,6 +281,7 @@ export default function StoryPage() {
           running: true,
           convertedFrom: storyId ?? "",
           style: currentSettings().style,
+          characterId: attachedCharacter?.id ?? "",
         },
       };
       addAsset(asset);
@@ -316,7 +325,12 @@ export default function StoryPage() {
         favorite: false,
         mode: "Story Mode",
         scenes: [draft],
-        meta: { continuity: continuityOn, running: false, style: currentSettings().style },
+        meta: {
+          continuity: continuityOn,
+          running: false,
+          style: currentSettings().style,
+          characterId: attachedCharacter?.id ?? "",
+        },
       };
       addAsset(asset);
       setStoryId(id);
@@ -448,6 +462,9 @@ export default function StoryPage() {
                 setSelectedModel(kind, nextModel);
                 setSettings((s) => ({ ...s, modelId: nextModel }));
               }}
+              characters={characters}
+              characterId={userSettings.storyCharacterId}
+              onCharacterChange={setStoryCharacter}
               busy={running}
               onGenerate={handleGenerateAll}
               onCancel={handleCancel}

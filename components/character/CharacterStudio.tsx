@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { MediaFrame } from "@/components/Media";
@@ -13,39 +12,36 @@ import {
   StepDetails,
   StepReview,
   Stepper,
+  type ReferenceImage,
 } from "@/components/character/CharacterSteps";
 import { CharacterLanding } from "@/components/character/CharacterLanding";
+import { CharacterPreviewPanel } from "@/components/character/CharacterPreviewPanel";
 import {
   DEFAULT_CHARACTER_SPEC,
   composeCharacterPrompt,
   characterGenerationSettings,
   lookById,
-  sanitizeSpecForMode,
+  sanitizeSpec,
+  type CharacterRenderParams,
   type CharacterSpec,
 } from "@/lib/character";
 import { downloadMedia, useGeneration } from "@/lib/generation";
 import { useModelCatalog } from "@/lib/model-catalog";
 import {
   setSelectedModel,
+  setSoloCharacter,
+  setStoryCharacter,
   useSettings,
 } from "@/lib/repositories/settings.repository";
+import {
+  addCharacter,
+  getCharacter,
+  removeCharacter,
+  useCharacters,
+} from "@/lib/repositories/characters.repository";
 import { addAsset } from "@/lib/store";
 import { titleFromPrompt } from "@/lib/constants";
 import type { GenerationResponse } from "@/lib/types";
-import type { ReferenceImage } from "@/components/character/CharacterSteps";
-
-// WebGL canvas — client-only.
-const AvatarPreview = dynamic(
-  () => import("@/components/character/preview/AvatarPreview"),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex aspect-[4/5] w-full items-center justify-center rounded-[20px] border border-border bg-white shadow-card">
-        <span className="text-[12.5px] text-muted">Loading 3D preview…</span>
-      </div>
-    ),
-  },
-);
 
 type Phase = "landing" | "wizard" | "generating" | "ready";
 
@@ -59,7 +55,8 @@ const GENERATING_STAGES = [
 /**
  * The Character studio: a landing screen followed by a four-step wizard,
  * the generating progress view and the ready view. State lives here; the
- * step components stay presentational.
+ * step components stay presentational. Adult options across the wizard
+ * follow the global Uncensored Mode gate from Settings.
  */
 export function CharacterStudio() {
   const toast = useToast();
@@ -68,29 +65,37 @@ export function CharacterStudio() {
   const [step, setStep] = useState(1);
   const [maxVisited, setMaxVisited] = useState(1);
   const [spec, setSpec] = useState<CharacterSpec>({ ...DEFAULT_CHARACTER_SPEC });
+  const [renderParams, setRenderParams] = useState<CharacterRenderParams>({
+    aspect: "9:16",
+    resolution: "1080p",
+  });
   const [promptError, setPromptError] = useState<string | undefined>();
   const [reference, setReference] = useState<ReferenceImage | null>(null);
 
   const [result, setResult] = useState<GenerationResponse | null>(null);
   const [activeVariant, setActiveVariant] = useState(0);
   const [saved, setSaved] = useState(false);
+  const [saveName, setSaveName] = useState("");
+  const [savedCharacterId, setSavedCharacterId] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
   const { job, run, cancel, reset } = useGeneration();
   const { settings: userSettings, ready: settingsReady } = useSettings();
+  const { characters, ready: charactersReady } = useCharacters();
   const catalog = useModelCatalog("image");
   const characterModelId = userSettings.imageModel ?? catalog.defaultModelId;
+  const uncensored = userSettings.uncensoredEnabled;
 
-  // The Settings toggle is the single gate: when Uncensored Mode is off, any
-  // uncensored spec falls back to Normal (selections are sanitized, never
-  // leaked into a safe render). Runs only after hydration so a saved spec
-  // from an enabled session is not reset on reload.
+  // The Settings gate is the single switch: when Uncensored Mode is off, an
+  // adult selection anywhere in the spec falls back to its safe equivalent
+  // (selections are sanitized, never leaked into a safe render). Runs only
+  // after hydration so a loaded spec is not reset on reload.
   useEffect(() => {
     if (!settingsReady) return;
-    if (!userSettings.uncensoredEnabled && spec.mode === "uncensored") {
-      patchSpec({ mode: "normal" });
+    if (!uncensored) {
+      setSpec((s) => sanitizeSpec(s, false));
     }
-  }, [settingsReady, userSettings.uncensoredEnabled, spec.mode]);
+  }, [settingsReady, uncensored]);
 
   // Checklist progress while generating: advance one stage every ~1.6s and
   // hold on the last one until the real response resolves the wait.
@@ -113,12 +118,11 @@ export function CharacterStudio() {
   }, [phase, step]);
 
   function patchSpec(patch: Partial<CharacterSpec>) {
-    setSpec((s) => {
-      const next = { ...s, ...patch };
-      return patch.mode && patch.mode !== s.mode
-        ? sanitizeSpecForMode(next, patch.mode)
-        : next;
-    });
+    setSpec((s) => ({ ...s, ...patch }));
+  }
+
+  function patchRenderParams(patch: Partial<CharacterRenderParams>) {
+    setRenderParams((p) => ({ ...p, ...patch }));
   }
 
   function goToStep(next: number) {
@@ -127,8 +131,33 @@ export function CharacterStudio() {
   }
 
   function startWizard() {
+    setSpec({ ...DEFAULT_CHARACTER_SPEC });
+    setRenderParams({ aspect: "9:16", resolution: "1080p" });
+    setReference(null);
+    setSaveName("");
+    setSavedCharacterId(null);
     goToStep(1);
     setPhase("wizard");
+  }
+
+  function handleOpenCharacter(id: string) {
+    const character = getCharacter(id);
+    if (!character) return;
+    // Sanitize in case the gate has moved since the character was saved.
+    setSpec(sanitizeSpec({ ...DEFAULT_CHARACTER_SPEC, ...character.spec }, uncensored));
+    setReference(null);
+    setSaveName(character.name);
+    setSavedCharacterId(character.id);
+    goToStep(1);
+    setPhase("wizard");
+  }
+
+  function handleDeleteCharacter(id: string) {
+    removeCharacter(id);
+    // Detach the character from Solo/Story if it was attached there.
+    if (userSettings.soloCharacterId === id) setSoloCharacter(null);
+    if (userSettings.storyCharacterId === id) setStoryCharacter(null);
+    toast.push("Character deleted.");
   }
 
   function handleDetailsNext() {
@@ -143,12 +172,17 @@ export function CharacterStudio() {
   async function handleGenerate() {
     setPhase("generating");
     setSaved(false);
+    setSavedCharacterId(null);
     setActiveVariant(0);
 
     const response = await run({
-      settings: characterGenerationSettings(spec, characterModelId ?? undefined),
+      settings: characterGenerationSettings(
+        spec,
+        { ...renderParams, modelId: characterModelId ?? undefined },
+        uncensored,
+      ),
       prompt: composeCharacterPrompt(spec),
-      uncensored: spec.mode === "uncensored",
+      uncensored,
     });
 
     if (!response) return; // failure is rendered from job.phase below
@@ -177,24 +211,38 @@ export function CharacterStudio() {
       url: primary.url,
       variants: result.media.map((m) => m.url),
       posterUrl: primary.url,
-      settings: characterGenerationSettings(spec, characterModelId ?? undefined),
+      settings: characterGenerationSettings(
+        spec,
+        { ...renderParams, modelId: characterModelId ?? undefined },
+        uncensored,
+      ),
       createdAt: Date.now(),
       favorite: false,
-      mode: spec.mode === "uncensored" ? "Character Studio (Uncensored)" : "Character Studio",
+      mode: uncensored ? "Character Studio (Uncensored)" : "Character Studio",
       meta: {
         requestId: result.requestId,
         seeds: result.media.map((m) => m.seed).join(", "),
         example: false,
-        characterMode: spec.mode,
         look: spec.look,
         nsfwLevel: spec.nsfwLevel,
-        rating: spec.mode === "uncensored" ? "Uncensored" : "Regular",
+        rating: uncensored ? "Uncensored" : "Regular",
         referenceThumb: reference?.dataUrl ?? "",
       },
     };
     addAsset(asset);
     setSaved(true);
     toast.push("Character saved to History.", "success");
+  }
+
+  function handleSaveCharacter() {
+    if (!result || savedCharacterId) return;
+    const primary = result.media[activeVariant] ?? result.media[0];
+    const character = addCharacter(saveName, spec, primary?.url);
+    setSavedCharacterId(character.id);
+    toast.push(
+      `“${character.name}” saved — attach it from the Character pill in Solo or Story.`,
+      "success",
+    );
   }
 
   function handleDownload() {
@@ -215,13 +263,11 @@ export function CharacterStudio() {
   if (phase === "landing") {
     return (
       <CharacterLanding
-        mode={spec.mode}
-        onModeChange={(mode) => patchSpec({ mode })}
+        characters={characters}
+        charactersReady={charactersReady}
         onStart={startWizard}
-        uncensoredEnabled={userSettings.uncensoredEnabled}
-        onLockedUncensored={() =>
-          toast.push("Enable Uncensored Mode in Settings first.")
-        }
+        onOpenCharacter={handleOpenCharacter}
+        onDeleteCharacter={handleDeleteCharacter}
       />
     );
   }
@@ -318,8 +364,8 @@ export function CharacterStudio() {
                   <Icon name="sparkle" size={14} className="mt-0.5 shrink-0 text-primary" />
                   <span>
                     <span className="font-bold text-ink">Tip — </span>
-                    You can create multiple characters with different looks,
-                    styles, and personalities.
+                    Save the finished character and reuse it across Solo and
+                    Story for a consistent look.
                   </span>
                 </p>
               </div>
@@ -332,7 +378,7 @@ export function CharacterStudio() {
 
   /* -------------------------------- Ready -------------------------------- */
   if (phase === "ready" && result) {
-    const [w, h] = spec.aspect.split(":").map(Number);
+    const [w, h] = renderParams.aspect.split(":").map(Number);
     const shown = result.media[activeVariant] ?? result.media[0] ?? null;
     const look = lookById(spec.look);
     return (
@@ -404,6 +450,42 @@ export function CharacterStudio() {
             </div>
 
             <div className="flex min-w-0 flex-col gap-2.5">
+              {/* Save as a reusable character — the reuse path for Solo/Story. */}
+              {savedCharacterId ? (
+                <p className="flex items-center gap-2 rounded-[12px] border border-primary/30 bg-primary-soft/60 px-3 py-2.5 text-[12.5px] font-semibold text-primary">
+                  <Icon name="check" size={14} />
+                  Saved — attach it from the Character pill in Solo or Story.
+                </p>
+              ) : (
+                <div className="rounded-[14px] border border-primary/30 bg-primary-soft/40 p-3">
+                  <p className="text-[12.5px] font-bold text-ink">
+                    Save this character for reuse
+                  </p>
+                  <p className="mt-0.5 text-[11.5px] text-muted">
+                    Keeps the exact look for Solo scenes and Story frames.
+                  </p>
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      type="text"
+                      value={saveName}
+                      onChange={(e) => setSaveName(e.target.value)}
+                      placeholder="Character name, e.g. Maya"
+                      aria-label="Character name"
+                      maxLength={40}
+                      className="h-9 min-w-0 flex-1 rounded-[10px] border border-border-strong bg-white px-2.5 text-[12.5px] text-ink placeholder:text-muted focus:border-primary focus:outline-none"
+                    />
+                    <Button
+                      size="sm"
+                      icon="user"
+                      disabled={!saveName.trim()}
+                      onClick={handleSaveCharacter}
+                    >
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <Button icon="download" onClick={handleDownload}>
                 Download
               </Button>
@@ -431,12 +513,14 @@ export function CharacterStudio() {
                 <h3 className="text-[13px] font-bold text-ink">Character Details</h3>
                 <div className="mt-2 space-y-1.5">
                   {[
-                    ["Mode", spec.mode === "normal" ? "Normal" : "Uncensored"],
-                    ["Age", spec.age],
-                    ["Aspect Ratio", spec.aspect],
-                    ["Resolution", spec.resolution],
+                    ["Age", `${spec.age} years old`],
+                    ["Ethnicity", spec.ethnicity === "Not specified" ? "—" : spec.ethnicity],
+                    ["Country", spec.country === "Not specified" ? "—" : spec.country],
+                    ["Build", spec.build],
                     ["Style", spec.style],
-                    ...(spec.mode === "uncensored"
+                    ["Aspect Ratio", renderParams.aspect],
+                    ["Resolution", renderParams.resolution],
+                    ...(uncensored
                       ? ([["NSFW Level", String(spec.nsfwLevel)]] as const)
                       : []),
                   ].map(([label, value]) => (
@@ -460,6 +544,14 @@ export function CharacterStudio() {
   }
 
   /* -------------------------------- Wizard ------------------------------- */
+  const previewPanel = (
+    <CharacterPreviewPanel
+      spec={spec}
+      uncensored={uncensored}
+      modelId={characterModelId}
+    />
+  );
+
   return (
     <div
       ref={scrollRef}
@@ -511,6 +603,7 @@ export function CharacterStudio() {
               <StepAppearance
                 spec={spec}
                 patch={patchSpec}
+                uncensored={uncensored}
                 onBack={() => goToStep(1)}
                 onNext={() => goToStep(3)}
               />
@@ -519,6 +612,7 @@ export function CharacterStudio() {
               <StepAdvanced
                 spec={spec}
                 patch={patchSpec}
+                uncensored={uncensored}
                 reference={reference}
                 onReferenceChange={setReference}
                 onBack={() => goToStep(2)}
@@ -528,7 +622,10 @@ export function CharacterStudio() {
             {step === 4 && (
               <StepReview
                 spec={spec}
+                uncensored={uncensored}
                 reference={reference}
+                renderParams={renderParams}
+                onRenderParamsChange={patchRenderParams}
                 models={catalog.models}
                 modelId={characterModelId}
                 onModelChange={(nextModel) => setSelectedModel("image", nextModel)}
@@ -544,13 +641,13 @@ export function CharacterStudio() {
         </div>
 
         <aside className="mt-6 hidden lg:sticky lg:top-6 lg:mt-0 lg:block">
-          <AvatarPreview spec={spec} />
+          {previewPanel}
         </aside>
       </div>
 
       {/* Mobile preview sheet */}
       {previewOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Live 3D preview">
+        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Live preview">
           <button
             type="button"
             aria-label="Close preview"
@@ -559,7 +656,7 @@ export function CharacterStudio() {
           />
           <div className="absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-[20px] bg-white p-3 shadow-2xl">
             <div className="mb-2 flex items-center justify-between px-1">
-              <span className="text-[13px] font-bold text-ink">Live 3D Preview</span>
+              <span className="text-[13px] font-bold text-ink">Live preview</span>
               <button
                 type="button"
                 aria-label="Close"
@@ -569,7 +666,7 @@ export function CharacterStudio() {
                 <Icon name="close" size={14} />
               </button>
             </div>
-            <AvatarPreview spec={spec} />
+            {previewPanel}
           </div>
         </div>
       )}

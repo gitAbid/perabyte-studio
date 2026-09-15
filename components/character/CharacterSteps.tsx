@@ -3,51 +3,44 @@
 import { useRef, useState, type DragEvent, type ReactNode } from "react";
 import { Icon, type IconName } from "@/components/Icon";
 import { MediaFrame } from "@/components/Media";
-import { Button, Segmented, SelectField, TextAreaField, Toggle } from "@/components/ui";
+import { Button, SelectField, Segmented, TextAreaField, Toggle } from "@/components/ui";
+import { ASPECTS, PROMPT_MAX, RESOLUTIONS } from "@/lib/constants";
 import {
-  ASPECTS,
-  PROMPT_MAX,
-  RESOLUTIONS,
-} from "@/lib/constants";
-import {
-  AGES,
-  BODY_TYPES,
+  AGE_MAX,
+  AGE_MIN,
   BUILDS,
   CHARACTER_STYLES,
+  COUNTRIES,
   EYE_COLORS,
   EYE_SHAPES,
+  ETHNICITIES,
   FACE_SHAPES,
   FACIAL_FEATURES,
   GENDERS,
   HAIR_COLORS,
   HAIR_STYLES,
-  HEIGHTS,
   LOOK_PRESETS,
   NSFW_LEVELS,
-  NUDITY,
-  SEXUAL_CONTENT,
   SKIN_TONES,
-  WEIGHTS,
   accessoryGroups,
+  ageBucketLabel,
   bodyDetailOptions,
+  clampAge,
   clothingGroups,
   expressionOptions,
   lookById,
   personalityTemplates,
-  poseOptions,
-  sanitizeSpecForMode,
-  sceneNoteTemplates,
-  violenceOptions,
-  type CharacterMode,
   type CharacterSpec,
+  type CharacterRenderParams,
   type CharacterTemplate,
   type OptionGroup,
 } from "@/lib/character";
+import type { AspectKey, ResolutionKey } from "@/lib/constants";
 
 export const CHARACTER_STEPS = [
-  "Character Details",
+  "Character",
   "Appearance",
-  "Advanced Settings",
+  "Advanced",
   "Review",
 ] as const;
 
@@ -165,72 +158,6 @@ function StepNav({
   );
 }
 
-export function ModePicker({
-  value,
-  onChange,
-}: {
-  value: CharacterMode;
-  onChange: (mode: CharacterMode) => void;
-}) {
-  const cards: { id: CharacterMode; title: string; body: string; badge?: string }[] = [
-    {
-      id: "normal",
-      title: "Normal",
-      body: "Fully clothed, safety checker on, NSFW locked at 0.",
-    },
-    {
-      id: "uncensored",
-      title: "Uncensored",
-      body: "Adult creative control. Clothing optional, NSFW 0–5. 18+ only.",
-      badge: "NEW",
-    },
-  ];
-  return (
-    <fieldset>
-      <legend className="text-[13px] font-semibold text-ink-soft">Mode</legend>
-      <div className="mt-2 grid gap-3 sm:grid-cols-2">
-        {cards.map((card) => {
-          const active = value === card.id;
-          return (
-            <button
-              key={card.id}
-              type="button"
-              aria-pressed={active}
-              onClick={() => onChange(card.id)}
-              className={`flex items-start gap-3 rounded-[14px] border p-3.5 text-left transition-all ${
-                active
-                  ? "border-primary bg-primary-soft/60"
-                  : "border-border bg-white hover:border-border-strong"
-              }`}
-            >
-              <span
-                className={`mt-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-[9px] ${
-                  active ? "bg-primary text-white" : "bg-surface-2 text-ink-soft"
-                }`}
-              >
-                <Icon name="user" size={15} />
-              </span>
-              <span className="min-w-0">
-                <span className="flex items-center gap-2 text-[13.5px] font-bold text-ink">
-                  {card.title}
-                  {card.badge && (
-                    <span className="rounded-full bg-danger-soft px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-danger">
-                      {card.badge}
-                    </span>
-                  )}
-                </span>
-                <span className="mt-0.5 block text-[12px] leading-snug text-muted">
-                  {card.body}
-                </span>
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </fieldset>
-  );
-}
-
 function ReviewRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex items-baseline justify-between gap-4 py-1.5">
@@ -258,6 +185,42 @@ function ReviewCard({
 }
 
 const toneById = (id: string) => SKIN_TONES.find((t) => t.id === id);
+
+/** Whole-year age picker — precise steps with the classic buckets as a hint. */
+function AgeSlider({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (age: number) => void;
+}) {
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-3">
+        <label htmlFor="character-age" className="text-[13px] font-semibold text-ink-soft">
+          Age
+        </label>
+        <span className="text-[12px] font-semibold text-ink">{value} years old</span>
+      </div>
+      <input
+        id="character-age"
+        type="range"
+        min={AGE_MIN}
+        max={AGE_MAX}
+        step={1}
+        value={clampAge(value)}
+        aria-valuetext={`${value} years old`}
+        onChange={(e) => onChange(clampAge(Number(e.target.value)))}
+        className="mt-2 w-full accent-primary"
+      />
+      <div className="mt-1 flex justify-between text-[10.5px] font-medium text-muted">
+        <span>{AGE_MIN}</span>
+        <span>{AGE_MAX}</span>
+      </div>
+      <p className="mt-1.5 text-[12px] text-muted">{ageBucketLabel(value)}</p>
+    </div>
+  );
+}
 
 function NsfwSlider({
   value,
@@ -358,8 +321,15 @@ function GroupedSelect({
 }
 
 /* ------------------------------------------------------------------ */
-/* Step 1 — Character Details                                          */
+/* Step 1 — Character                                                  */
 /* ------------------------------------------------------------------ */
+
+/** One-click starters that show the kind of info the prompt should carry. */
+const PROMPT_EXAMPLES = [
+  "A young artist with ink-stained fingers, messy hair and a paint-splattered apron, warm smile.",
+  "A battle-worn warrior in ornate scarred armor, dark braid, storm-grey eyes.",
+  "A cheerful barista in a lavender apron, freckles, curls escaping a messy bun.",
+];
 
 export function StepDetails({
   spec,
@@ -377,8 +347,8 @@ export function StepDetails({
   return (
     <div className="space-y-5">
       <StepHeading
-        title="1. Character Details"
-        subtitle="Describe your character or use the options below to build one."
+        title="1. Character"
+        subtitle="Describe your character, then fine-tune with the options on the next steps."
       />
 
       <TextAreaField
@@ -387,55 +357,55 @@ export function StepDetails({
         maxLength={PROMPT_MAX}
         rows={5}
         error={promptError}
-        placeholder="e.g. A beautiful young woman with long black hair, wearing a red dress, standing in a forest."
+        placeholder="e.g. A young artist with ink-stained fingers and a paint-splattered apron, warm smile."
         onChange={(value) => patch({ prompt: value })}
       />
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <SelectField
-          label="Aspect Ratio"
-          value={spec.aspect}
-          onChange={(e) => patch({ aspect: e.target.value as CharacterSpec["aspect"] })}
-        >
-          {Object.entries(ASPECTS).map(([key, preset]) => (
-            <option key={key} value={key}>
-              {`${key} (${preset.hint})`}
-            </option>
+      <div className="rounded-[14px] border border-border bg-surface p-3.5">
+        <p className="text-[12.5px] font-semibold text-ink-soft">
+          What to include in the prompt
+        </p>
+        <p className="mt-1 text-[12px] leading-snug text-muted">
+          Who they are, their distinctive features, what they wear and their
+          mood or setting. Everything else is tuned from the options in the
+          next steps.
+        </p>
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
+          {PROMPT_EXAMPLES.map((example, index) => (
+            <button
+              key={example}
+              type="button"
+              aria-pressed={spec.prompt === example}
+              title={example}
+              onClick={() => patch({ prompt: spec.prompt === example ? "" : example })}
+              className={`rounded-full border px-2.5 py-1 text-[12px] font-semibold transition-colors ${
+                spec.prompt === example
+                  ? "border-primary bg-primary-soft text-primary"
+                  : "border-border bg-white text-ink-soft hover:border-border-strong hover:text-ink"
+              }`}
+            >
+              {["Artist", "Warrior", "Barista"][index]}
+            </button>
           ))}
-        </SelectField>
-        <SelectField
-          label="Resolution"
-          value={spec.resolution}
-          onChange={(e) =>
-            patch({ resolution: e.target.value as CharacterSpec["resolution"] })
-          }
-        >
-          {Object.entries(RESOLUTIONS).map(([key, preset]) => (
-            <option key={key} value={key}>
-              {preset.label}
-            </option>
-          ))}
-        </SelectField>
-        <SelectField
-          label="Style"
-          value={spec.style}
-          onChange={(e) => patch({ style: e.target.value })}
-        >
-          {CHARACTER_STYLES.map((style) => (
-            <option key={style} value={style}>
-              {style}
-            </option>
-          ))}
-        </SelectField>
+        </div>
       </div>
 
-      <ModePicker
-        value={spec.mode}
-        onChange={(mode) => patch(sanitizeSpecForMode(spec, mode))}
-      />
+      <SelectField
+        label="Art Style"
+        value={spec.style}
+        onChange={(e) => patch({ style: e.target.value })}
+      >
+        {CHARACTER_STYLES.map((style) => (
+          <option key={style} value={style}>
+            {style}
+          </option>
+        ))}
+      </SelectField>
+
       <p className="text-[12px] text-muted">
-        Characters are strictly 18+. Regular Mode keeps clothing on and NSFW off;
-        Uncensored Mode unlocks adult options and is auto-tagged in History.
+        Aspect ratio, resolution and model are picked at the Review step. Adult
+        options across the wizard follow the Uncensored Mode switch in
+        Settings.
       </p>
 
       <StepNav onBack={onBack} onNext={onNext} nextLabel="Next" nextIcon="arrow-right" backHidden />
@@ -453,11 +423,14 @@ type AppearanceTab = (typeof APPEARANCE_TABS)[number];
 export function StepAppearance({
   spec,
   patch,
+  uncensored,
   onBack,
   onNext,
 }: {
   spec: CharacterSpec;
   patch: (patch: Partial<CharacterSpec>) => void;
+  /** Global Uncensored Mode gate — surfaces the adult option groups. */
+  uncensored: boolean;
   onBack: () => void;
   onNext: () => void;
 }) {
@@ -485,25 +458,37 @@ export function StepAppearance({
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
+            <AgeSlider value={spec.age} onChange={(age) => patch({ age })} />
             <SelectField
-              label="Age"
-              value={spec.age}
-              onChange={(e) => patch({ age: e.target.value })}
+              label="Build"
+              value={spec.build}
+              onChange={(e) => patch({ build: e.target.value })}
             >
-              {AGES.map((age) => (
-                <option key={age} value={age}>
-                  {age}
+              {["Slim", "Athletic", "Average", "Muscular", "Curvy", "Plus-size"].map((build) => (
+                <option key={build} value={build}>
+                  {build}
                 </option>
               ))}
             </SelectField>
             <SelectField
-              label="Body Type"
-              value={spec.bodyType}
-              onChange={(e) => patch({ bodyType: e.target.value })}
+              label="Ethnicity"
+              value={spec.ethnicity}
+              onChange={(e) => patch({ ethnicity: e.target.value })}
             >
-              {BODY_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {type}
+              {ETHNICITIES.map((value) => (
+                <option key={value} value={value}>
+                  {value}
+                </option>
+              ))}
+            </SelectField>
+            <SelectField
+              label="Country"
+              value={spec.country}
+              onChange={(e) => patch({ country: e.target.value })}
+            >
+              {COUNTRIES.map((value) => (
+                <option key={value} value={value}>
+                  {value}
                 </option>
               ))}
             </SelectField>
@@ -591,7 +576,7 @@ export function StepAppearance({
                     value={spec.expression}
                     onChange={(e) => patch({ expression: e.target.value })}
                   >
-                    {expressionOptions(spec.mode).map((value) => (
+                    {expressionOptions(uncensored).map((value) => (
                       <option key={value} value={value}>
                         {value}
                       </option>
@@ -653,9 +638,9 @@ export function StepAppearance({
               )}
               {tab === "Clothing" && (
                 <GroupedSelect
-                  label={spec.mode === "normal" ? "Outfit Style" : "Clothing (optional)"}
+                  label="Outfit"
                   value={spec.outfit}
-                  groups={clothingGroups(spec.mode)}
+                  groups={clothingGroups(uncensored)}
                   onChange={(outfit) => patch({ outfit })}
                 />
               )}
@@ -663,7 +648,7 @@ export function StepAppearance({
                 <GroupedSelect
                   label="Accessories"
                   value={spec.accessories}
-                  groups={accessoryGroups(spec.mode)}
+                  groups={accessoryGroups(uncensored)}
                   onChange={(accessories) => patch({ accessories })}
                 />
               )}
@@ -722,7 +707,7 @@ export function StepAppearance({
 }
 
 /* ------------------------------------------------------------------ */
-/* Step 3 — Advanced Settings                                          */
+/* Step 3 — Advanced                                                   */
 /* ------------------------------------------------------------------ */
 
 function Disclosure({
@@ -801,6 +786,7 @@ export interface ReferenceImage {
 export function StepAdvanced({
   spec,
   patch,
+  uncensored,
   reference,
   onReferenceChange,
   onBack,
@@ -808,13 +794,14 @@ export function StepAdvanced({
 }: {
   spec: CharacterSpec;
   patch: (patch: Partial<CharacterSpec>) => void;
+  /** Global Uncensored Mode gate — surfaces the NSFW slider. */
+  uncensored: boolean;
   reference: ReferenceImage | null;
   onReferenceChange: (image: ReferenceImage | null) => void;
   onBack: () => void;
   onNext: () => void;
 }) {
   const [personalityOpen, setPersonalityOpen] = useState(false);
-  const [poseOpen, setPoseOpen] = useState(false);
   const [referenceOpen, setReferenceOpen] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -840,111 +827,27 @@ export function StepAdvanced({
   return (
     <div className="space-y-5">
       <StepHeading
-        title="3. Advanced Settings"
+        title="3. Advanced"
         subtitle="Add more details to make your character unique."
       />
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <SelectField
-          label="Height"
-          value={spec.height}
-          onChange={(e) => patch({ height: e.target.value })}
-        >
-          {HEIGHTS.map((value) => (
-            <option key={value} value={value}>
-              {value}
-            </option>
-          ))}
-        </SelectField>
-        <SelectField
-          label="Weight"
-          value={spec.weight}
-          onChange={(e) => patch({ weight: e.target.value })}
-        >
-          {WEIGHTS.map((value) => (
-            <option key={value} value={value}>
-              {value}
-            </option>
-          ))}
-        </SelectField>
-        <SelectField
-          label="Build"
-          value={spec.build}
-          onChange={(e) => patch({ build: e.target.value })}
-        >
-          {BUILDS.map((value) => (
-            <option key={value} value={value}>
-              {value}
-            </option>
-          ))}
-        </SelectField>
-      </div>
+      <SelectField
+        label="Body Details"
+        value={spec.bodyDetails}
+        onChange={(e) => patch({ bodyDetails: e.target.value })}
+      >
+        {bodyDetailOptions(uncensored).map((value) => (
+          <option key={value} value={value}>
+            {value}
+          </option>
+        ))}
+      </SelectField>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <SelectField
-          label="Body Details"
-          value={spec.bodyDetails}
-          onChange={(e) => patch({ bodyDetails: e.target.value })}
-        >
-          {bodyDetailOptions(spec.mode).map((value) => (
-            <option key={value} value={value}>
-              {value}
-            </option>
-          ))}
-        </SelectField>
-        <SelectField
-          label="Pose"
-          value={spec.pose}
-          onChange={(e) => patch({ pose: e.target.value })}
-        >
-          {poseOptions(spec.mode).map((value) => (
-            <option key={value} value={value}>
-              {value}
-            </option>
-          ))}
-        </SelectField>
-        <SelectField
-          label="Violence / Gore"
-          value={spec.violence}
-          onChange={(e) => patch({ violence: e.target.value })}
-        >
-          {violenceOptions(spec.mode).map((value) => (
-            <option key={value} value={value}>
-              {value}
-            </option>
-          ))}
-        </SelectField>
-      </div>
-
-      {spec.mode === "uncensored" ? (
+      {uncensored ? (
         <div className="space-y-4 rounded-[14px] border border-warning/30 bg-[#fffbeb] p-4">
           <p className="text-[12.5px] font-semibold text-warning">
             Uncensored · 18+ only · auto-tagged in History
           </p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <SelectField
-              label="Nudity"
-              value={spec.nudity}
-              onChange={(e) => patch({ nudity: e.target.value })}
-            >
-              {NUDITY.map((value) => (
-                <option key={value} value={value}>
-                  {value}
-                </option>
-              ))}
-            </SelectField>
-            <SelectField
-              label="Sexual Content"
-              value={spec.sexualContent}
-              onChange={(e) => patch({ sexualContent: e.target.value })}
-            >
-              {SEXUAL_CONTENT.map((value) => (
-                <option key={value} value={value}>
-                  {value}
-                </option>
-              ))}
-            </SelectField>
-          </div>
           <NsfwSlider
             value={spec.nsfwLevel}
             onChange={(nsfwLevel) => patch({ nsfwLevel })}
@@ -952,8 +855,8 @@ export function StepAdvanced({
         </div>
       ) : (
         <p className="rounded-[14px] border border-border bg-surface px-4 py-3 text-[12.5px] text-muted">
-          Regular Mode: clothing is required, nudity and sexual content are
-          disabled, and NSFW is locked at 0.
+          Adult options are hidden while Uncensored Mode is off. Enable it in
+          Settings to unlock the NSFW slider and adult outfit options.
         </p>
       )}
 
@@ -984,7 +887,7 @@ export function StepAdvanced({
           onToggle={() => setPersonalityOpen((v) => !v)}
         >
           <TemplateChips
-            templates={personalityTemplates(spec.mode)}
+            templates={personalityTemplates(uncensored)}
             activeText={spec.personality}
             onPick={(text) => patch({ personality: text })}
           />
@@ -996,30 +899,6 @@ export function StepAdvanced({
               rows={3}
               placeholder="e.g. friendly and adventurous, loves photography and travel."
               onChange={(personality) => patch({ personality })}
-            />
-          </div>
-        </Disclosure>
-
-        <Disclosure
-          icon="sparkle"
-          title="Scene Notes"
-          subtitle="Optional extra direction for the scene or setting."
-          open={poseOpen}
-          onToggle={() => setPoseOpen((v) => !v)}
-        >
-          <TemplateChips
-            templates={sceneNoteTemplates(spec.mode)}
-            activeText={spec.sceneNotes}
-            onPick={(text) => patch({ sceneNotes: text })}
-          />
-          <div className="mt-3">
-            <TextAreaField
-              label="Scene notes (optional)"
-              value={spec.sceneNotes}
-              maxLength={300}
-              rows={3}
-              placeholder="e.g. sitting on a café terrace, morning light."
-              onChange={(sceneNotes) => patch({ sceneNotes })}
             />
           </div>
         </Disclosure>
@@ -1113,7 +992,10 @@ export function StepAdvanced({
 
 export function StepReview({
   spec,
+  uncensored,
   reference,
+  renderParams,
+  onRenderParamsChange,
   models,
   modelId,
   onModelChange,
@@ -1121,7 +1003,12 @@ export function StepReview({
   onGenerate,
 }: {
   spec: CharacterSpec;
+  /** Global Uncensored Mode gate — shows the NSFW row. */
+  uncensored: boolean;
   reference: ReferenceImage | null;
+  /** Generation-time aspect/resolution, edited here and on the Review step. */
+  renderParams: { aspect: AspectKey; resolution: ResolutionKey };
+  onRenderParamsChange: (patch: Partial<{ aspect: AspectKey; resolution: ResolutionKey }>) => void;
   /** Image model catalog for the picker; row hidden while empty. */
   models?: { id: string; label: string; hint?: string; providerLabel: string }[];
   modelId?: string | null;
@@ -1140,15 +1027,37 @@ export function StepReview({
       />
 
       <div className="space-y-4">
-        <ReviewCard title="Character Details">
-          <ReviewRow label="Mode">{spec.mode === "normal" ? "Normal" : "Uncensored"}</ReviewRow>
-          <ReviewRow label="Prompt">
-            <span className="line-clamp-3 whitespace-pre-wrap font-normal text-ink-soft">
-              {spec.prompt.trim() || "—"}
-            </span>
+        <ReviewCard title="Render">
+          <ReviewRow label="Aspect Ratio">
+            <select
+              aria-label="Aspect ratio"
+              value={renderParams.aspect}
+              onChange={(e) => onRenderParamsChange({ aspect: e.target.value as AspectKey })}
+              className="h-8 max-w-[220px] appearance-none rounded-[9px] border border-border-strong bg-white pl-2.5 pr-6 text-[12px] font-semibold text-ink transition-colors hover:border-muted focus:border-primary focus:outline-none"
+            >
+              {Object.keys(ASPECTS).map((key) => (
+                <option key={key} value={key}>
+                  {key} ({ASPECTS[key as AspectKey].hint})
+                </option>
+              ))}
+            </select>
           </ReviewRow>
-          <ReviewRow label="Aspect Ratio">{spec.aspect}</ReviewRow>
-          <ReviewRow label="Resolution">{spec.resolution}</ReviewRow>
+          <ReviewRow label="Resolution">
+            <select
+              aria-label="Resolution"
+              value={renderParams.resolution}
+              onChange={(e) =>
+                onRenderParamsChange({ resolution: e.target.value as ResolutionKey })
+              }
+              className="h-8 max-w-[220px] appearance-none rounded-[9px] border border-border-strong bg-white pl-2.5 pr-6 text-[12px] font-semibold text-ink transition-colors hover:border-muted focus:border-primary focus:outline-none"
+            >
+              {Object.keys(RESOLUTIONS).map((key) => (
+                <option key={key} value={key}>
+                  {RESOLUTIONS[key as ResolutionKey].label}
+                </option>
+              ))}
+            </select>
+          </ReviewRow>
           <ReviewRow label="Style">{spec.style}</ReviewRow>
           {models && models.length > 0 && onModelChange && (
             <ReviewRow label="Model">
@@ -1177,8 +1086,10 @@ export function StepReview({
 
         <ReviewCard title="Appearance">
           <ReviewRow label="Gender">{spec.gender}</ReviewRow>
-          <ReviewRow label="Age">{spec.age}</ReviewRow>
-          <ReviewRow label="Body Type">{spec.bodyType}</ReviewRow>
+          <ReviewRow label="Age">{spec.age} years old</ReviewRow>
+          <ReviewRow label="Ethnicity">{spec.ethnicity}</ReviewRow>
+          <ReviewRow label="Country">{spec.country}</ReviewRow>
+          <ReviewRow label="Build">{spec.build}</ReviewRow>
           <ReviewRow label="Skin Tone">
             <span className="inline-flex items-center justify-end gap-1.5">
               {tone && (
@@ -1194,7 +1105,7 @@ export function StepReview({
           <ReviewRow label="Inspiration">{look ? look.label : "None"}</ReviewRow>
         </ReviewCard>
 
-        <ReviewCard title="Advanced Settings">
+        <ReviewCard title="Details">
           <ReviewRow label="Hair">
             {spec.hairColor} · {spec.hairStyle}
           </ReviewRow>
@@ -1202,21 +1113,12 @@ export function StepReview({
             {spec.eyeColor} · {spec.eyeShape}
           </ReviewRow>
           <ReviewRow label="Clothing">{spec.outfit}</ReviewRow>
-          <ReviewRow label="Pose">{spec.pose}</ReviewRow>
           <ReviewRow label="Body Details">{spec.bodyDetails}</ReviewRow>
-          <ReviewRow label="Height">{spec.height}</ReviewRow>
-          <ReviewRow label="Weight">{spec.weight}</ReviewRow>
-          <ReviewRow label="Build">{spec.build}</ReviewRow>
-          {spec.mode === "uncensored" && (
-            <>
-              <ReviewRow label="Nudity">{spec.nudity}</ReviewRow>
-              <ReviewRow label="Sexual Content">{spec.sexualContent}</ReviewRow>
-              <ReviewRow label="NSFW Level">
-                {spec.nsfwLevel} · {NSFW_LEVELS.find((l) => l.value === spec.nsfwLevel)?.label}
-              </ReviewRow>
-            </>
+          {uncensored && (
+            <ReviewRow label="NSFW Level">
+              {spec.nsfwLevel} · {NSFW_LEVELS.find((l) => l.value === spec.nsfwLevel)?.label}
+            </ReviewRow>
           )}
-          <ReviewRow label="Violence">{spec.violence}</ReviewRow>
           <ReviewRow label="Extras">
             {[
               spec.tattoos && "Tattoos",
