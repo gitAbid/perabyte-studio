@@ -4,8 +4,18 @@ import { resetStudioEnvForTests } from "@/lib/config/env";
 import { logger } from "@/lib/logging/logger";
 import {
   apiKeyFanProvider,
-  POLL_DEADLINE_MS,
+  pollDeadlineMs,
 } from "@/lib/providers/apikey-fan/apikey-fan.provider";
+import {
+  resetProviderConfigForTests,
+  setProviderConfigPathForTests,
+  updateProviderConfig,
+} from "@/lib/repositories/provider-config.repository";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+let configDir = "";
 
 const PNG_BYTES = Buffer.from([
   0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13,
@@ -58,21 +68,36 @@ const videoModel = {
 };
 
 beforeEach(() => {
+  configDir = mkdtempSync(join(tmpdir(), "apikey-fan-provider-test-"));
+  setProviderConfigPathForTests(join(configDir, "settings.json"));
+  resetProviderConfigForTests();
   process.env.APIKEY_FAN_API_KEY = "sk-test-key";
   resetStudioEnvForTests();
 });
 
 afterEach(() => {
   delete process.env.APIKEY_FAN_API_KEY;
+  setProviderConfigPathForTests(null);
+  resetProviderConfigForTests();
   resetStudioEnvForTests();
+  if (configDir) {
+    try {
+      rmSync(configDir, { recursive: true, force: true });
+    } catch {}
+  }
   vi.unstubAllGlobals();
 });
 
 describe("apikey-fan provider", () => {
-  it("keeps the video poll deadline inside the route's 300s budget", () => {
-    // Regression: the constant was 5_700_000 ms (95 min) while the comment
-    // claimed ~6.5 min — a stuck job would hang far past maxDuration=300.
-    expect(POLL_DEADLINE_MS).toBeLessThanOrEqual(240_000);
+  it("derives the poll deadline from the configured video timeout", () => {
+    // Default: 10 min video budget − 1 min download headroom.
+    expect(pollDeadlineMs()).toBe(540_000);
+  });
+
+  it("applies a custom video timeout from settings", () => {
+    updateProviderConfig({ renderTimeouts: { video: 120 } });
+    resetStudioEnvForTests();
+    expect(pollDeadlineMs()).toBe(60_000);
   });
 
   it("generates one video per requested variation (count honoured)", async () => {    const createCalls: string[] = [];

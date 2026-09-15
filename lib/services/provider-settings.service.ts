@@ -48,6 +48,8 @@ export interface ProviderView {
 export interface ProviderSettingsPayload {
   providers: ProviderView[];
   tasks: { enhance: string | null };
+  /** Overall render deadlines in seconds (Settings → Render timeouts). */
+  renderTimeouts: { image: number; video: number };
 }
 
 export interface ProviderSettingsUpdate {
@@ -56,6 +58,7 @@ export interface ProviderSettingsUpdate {
     { enabled?: boolean; apiKey?: string | null; disabledModels?: string[] }
   >;
   tasks?: { enhance?: string | null };
+  renderTimeouts?: { image?: number; video?: number };
 }
 
 export class ProviderSettingsError extends Error {
@@ -133,7 +136,14 @@ export function getProviderSettings(): ProviderSettingsPayload {
       textModels,
     });
   }
-  return { providers, tasks: { enhance: config.tasks.enhance } };
+  return {
+    providers,
+    tasks: { enhance: config.tasks.enhance },
+    renderTimeouts: {
+      image: config.renderTimeouts.image,
+      video: config.renderTimeouts.video,
+    },
+  };
 }
 
 function knownModelIds(): Map<string, Set<string>> {
@@ -234,6 +244,29 @@ export function applyProviderSettingsUpdate(body: unknown): ProviderSettingsPayl
       }
       patch.tasks = { enhance };
     }
+  }
+
+  if (raw.renderTimeouts !== undefined) {
+    if (typeof raw.renderTimeouts !== "object" || raw.renderTimeouts === null) {
+      throw new ProviderSettingsError("Invalid render timeouts payload.", {
+        field: "renderTimeouts",
+      });
+    }
+    const timeoutPatch: NonNullable<ProviderConfigPatch["renderTimeouts"]> = {};
+    for (const kind of ["image", "video"] as const) {
+      const value = raw.renderTimeouts[kind];
+      if (value === undefined) continue;
+      // The UI sends minutes as decimals; seconds arrive pre-multiplied.
+      if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+        throw new ProviderSettingsError(
+          `The ${kind} render timeout must be a positive number of seconds.`,
+          { field: "renderTimeouts" },
+        );
+      }
+      // Out-of-range values clamp to the sane band instead of failing the save.
+      timeoutPatch[kind] = Math.round(value);
+    }
+    patch.renderTimeouts = timeoutPatch;
   }
 
   // The last enabled provider is load-bearing: renders need at least one.

@@ -69,6 +69,13 @@ export const apiKeyFanProvider: ImageProvider & VideoProvider = {
     const client = createApiKeyFanClient({ baseUrl: env.apiKeyFanBaseUrl, apiKey });
 
     const prompt = foldNegativePrompt(request.prompt, request.negativePrompt);
+    // Image generation is one synchronous b64 call — its HTTP budget is the
+    // configured image render timeout (Settings → Render timeouts).
+    const imageCallOptions = {
+      logger: ctx.logger,
+      signal: ctx.signal,
+      timeoutMs: env.imageRenderTimeoutMs,
+    };
     const generatePlain = async (): Promise<ImageResponse> => {
       const { payload, fallbackPayload } = toImagePayload(model.model, {
         prompt,
@@ -77,10 +84,7 @@ export const apiKeyFanProvider: ImageProvider & VideoProvider = {
         resolution: request.resolution,
       });
       try {
-        return await client.postJson<ImageResponse>("/images/generations", payload, {
-          logger: ctx.logger,
-          signal: ctx.signal,
-        });
+        return await client.postJson<ImageResponse>("/images/generations", payload, imageCallOptions);
       } catch (error) {
         // The exact aspect-ratio field name is the one part of the relay's API
         // we could not verify without a key. If the strict payload is rejected
@@ -88,10 +92,7 @@ export const apiKeyFanProvider: ImageProvider & VideoProvider = {
         // carries the full composition.
         if (error instanceof ProviderError && error.status === 400) {
           ctx.logger.warn("image_config rejected — retrying without it", { model: model.model });
-          return client.postJson<ImageResponse>("/images/generations", fallbackPayload, {
-            logger: ctx.logger,
-            signal: ctx.signal,
-          });
+          return client.postJson<ImageResponse>("/images/generations", fallbackPayload, imageCallOptions);
         }
         throw error;
       }
@@ -111,7 +112,7 @@ export const apiKeyFanProvider: ImageProvider & VideoProvider = {
             image: request.startImage,
             count: request.count,
           }),
-          { logger: ctx.logger, signal: ctx.signal },
+          imageCallOptions,
         );
       } catch (error) {
         if (error instanceof ProviderError && error.status === 400) {
@@ -244,11 +245,13 @@ interface VideoStatusResponse {
 
 const POLL_INTERVAL_MS = 3_000;
 /**
- * Per-job poll budget. Must stay inside the route's `maxDuration = 300`:
- * 3 min polling + 1 min download leaves headroom, and video jobs normally
- * finish far sooner.
+ * Per-job poll budget: the configurable video render deadline (Settings →
+ * Render timeouts, default 10 min) minus the download headroom, both computed
+ * in the env layer. Video jobs normally finish far sooner.
  */
-export const POLL_DEADLINE_MS = 180_000;
+export function pollDeadlineMs(): number {
+  return getStudioEnv().videoRenderDeadlineMs;
+}
 
 function sleep(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -271,7 +274,7 @@ async function pollVideo(
   signal?: AbortSignal,
   onProgress?: (progress: { stage: "rendering"; message: string }) => void,
 ): Promise<{ video: { url: string } }> {
-  const deadline = Date.now() + POLL_DEADLINE_MS;
+  const deadline = Date.now() + pollDeadlineMs();
   const startedAt = Date.now();
   let ticks = 0;
 
@@ -306,9 +309,10 @@ async function pollVideo(
       );
     }
   }
-  throw new ProviderError("Video generation timed out. Try a shorter duration.", {
-    retryable: true,
-  });
+  throw new ProviderError(
+    "The video render hit its time limit — raise it in Settings → Render timeouts, or try a shorter duration.",
+    { retryable: true },
+  );
 }
 
 /**

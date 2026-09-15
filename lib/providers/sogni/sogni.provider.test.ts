@@ -5,12 +5,22 @@ import type { NormalizedGenerationRequest } from "@/lib/domain/models";
 import { ProviderError, type ProviderProgress } from "@/lib/providers/types";
 import { setSogniClientForTests, type SogniClient } from "@/lib/providers/sogni/client";
 import {
-  IMAGE_DEADLINE_MS,
+  imageDeadlineMs,
   sogniProvider,
-  VIDEO_DEADLINE_MS,
+  videoDeadlineMs,
 } from "@/lib/providers/sogni/sogni.provider";
 import { SOGNI_IMAGE_MODELS, SOGNI_VIDEO_MODELS } from "@/lib/providers/sogni/request-maps";
 import type { SogniVideoParams } from "@/lib/providers/sogni/request-maps";
+import {
+  resetProviderConfigForTests,
+  setProviderConfigPathForTests,
+  updateProviderConfig,
+} from "@/lib/repositories/provider-config.repository";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+let configDir = "";
 
 const imageModel = SOGNI_IMAGE_MODELS[0];
 const videoModel = SOGNI_VIDEO_MODELS[0];
@@ -66,6 +76,9 @@ function fakeClient(completion: Promise<string[]>) {
 }
 
 beforeEach(() => {
+  configDir = mkdtempSync(join(tmpdir(), "sogni-provider-test-"));
+  setProviderConfigPathForTests(join(configDir, "settings.json"));
+  resetProviderConfigForTests();
   process.env.SOGNI_API_KEY = "test-sogni-key";
   resetStudioEnvForTests();
 });
@@ -74,7 +87,14 @@ afterEach(() => {
   setSogniClientForTests(null);
   delete process.env.SOGNI_API_KEY;
   delete process.env.SOGNI_APP_ID;
+  setProviderConfigPathForTests(null);
+  resetProviderConfigForTests();
   resetStudioEnvForTests();
+  if (configDir) {
+    try {
+      rmSync(configDir, { recursive: true, force: true });
+    } catch {}
+  }
   vi.useRealTimers();
 });
 
@@ -192,7 +212,7 @@ describe("sogni provider", () => {
 
     const pending = sogniProvider.generateImage(imageRequest(), imageModel, { logger });
     const assertion = expect(pending).rejects.toMatchObject({ retryable: true });
-    await vi.advanceTimersByTimeAsync(IMAGE_DEADLINE_MS + 1);
+    await vi.advanceTimersByTimeAsync(imageDeadlineMs() + 1);
     await assertion;
   });
 
@@ -210,7 +230,15 @@ describe("sogni provider", () => {
     await vi.advanceTimersByTimeAsync(1);
     controller.abort();
     await assertion;
-    expect(IMAGE_DEADLINE_MS).toBeLessThan(VIDEO_DEADLINE_MS);
+    expect(imageDeadlineMs()).toBeLessThan(videoDeadlineMs());
+  });
+
+  it("derives its deadlines from the configured render timeouts", () => {
+    updateProviderConfig({ renderTimeouts: { image: 120, video: 300 } });
+    resetStudioEnvForTests();
+    // Budget minus the 1-minute download headroom.
+    expect(imageDeadlineMs()).toBe(60_000);
+    expect(videoDeadlineMs()).toBe(240_000);
   });
 
   it("maps video completions to mp4 artifacts", async () => {

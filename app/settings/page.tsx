@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ContentPreferencesSection } from "@/components/settings/ContentPreferencesSection";
 import { ProvidersSection } from "@/components/settings/ProvidersSection";
+import { RenderTimeoutsSection } from "@/components/settings/RenderTimeoutsSection";
 import { TaskModelsSection } from "@/components/settings/TaskModelsSection";
 import { useToast } from "@/components/ui";
 import { invalidateModelCatalog } from "@/lib/model-catalog";
@@ -89,6 +90,10 @@ export default function SettingsPage() {
               enhanceModel={data.tasks.enhance}
               onUpdate={onUpdate}
             />
+            <RenderTimeoutsSection
+              renderTimeouts={data.renderTimeouts}
+              onUpdate={onUpdate}
+            />
           </>
         ) : (
           <p className="text-[13px] text-muted">Loading settings…</p>
@@ -143,5 +148,8 @@ function optimisticMerge(
       patch.tasks?.enhance !== undefined
         ? { enhance: patch.tasks.enhance }
         : current.tasks,
+    renderTimeouts: patch.renderTimeouts
+      ? { ...current.renderTimeouts, ...patch.renderTimeouts }
+      : current.renderTimeouts,
   };
 }

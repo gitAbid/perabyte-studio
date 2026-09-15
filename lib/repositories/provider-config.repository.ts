@@ -23,10 +23,17 @@ export interface TaskModelConfig {
   enhance: string | null;
 }
 
+/** Overall render deadlines in seconds, configurable from Settings. */
+export interface RenderTimeoutsConfig {
+  image: number;
+  video: number;
+}
+
 export interface ProviderConfig {
   version: 1;
   providers: Record<KnownProviderId, ProviderEntryConfig>;
   tasks: TaskModelConfig;
+  renderTimeouts: RenderTimeoutsConfig;
 }
 
 export interface ProviderConfigPatch {
@@ -39,7 +46,17 @@ export interface ProviderConfigPatch {
     >
   >;
   tasks?: Partial<TaskModelConfig>;
+  renderTimeouts?: Partial<RenderTimeoutsConfig>;
 }
+
+/** Defaults: images 5 minutes, videos 10 minutes. */
+export const RENDER_TIMEOUT_DEFAULTS: RenderTimeoutsConfig = {
+  image: 300,
+  video: 600,
+};
+
+/** Sanity clamp applied to configured values, in seconds. */
+export const RENDER_TIMEOUT_RANGE = { min: 30, max: 3600 } as const;
 
 const KNOWN_PROVIDERS: readonly KnownProviderId[] = [
   "apikey-fan",
@@ -66,11 +83,21 @@ export function getDefaultProviderConfig(): ProviderConfig {
     tasks: {
       enhance: null,
     },
+    renderTimeouts: { ...RENDER_TIMEOUT_DEFAULTS },
   };
 }
 
 function cloneDefault(): ProviderConfig {
   return JSON.parse(JSON.stringify(getDefaultProviderConfig()));
+}
+
+/** Coerces a configured timeout to a clamped integer within the safe range. */
+function clampRenderTimeout(value: unknown, fallback: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return fallback;
+  return Math.min(
+    RENDER_TIMEOUT_RANGE.max,
+    Math.max(RENDER_TIMEOUT_RANGE.min, Math.round(value)),
+  );
 }
 
 function sanitizeLoadedConfig(raw: unknown): ProviderConfig {
@@ -114,6 +141,19 @@ function sanitizeLoadedConfig(raw: unknown): ProviderConfig {
     defaults.tasks.enhance = null;
   }
 
+  const timeoutsObj =
+    obj.renderTimeouts && typeof obj.renderTimeouts === "object"
+      ? (obj.renderTimeouts as Record<string, unknown>)
+      : {};
+  defaults.renderTimeouts.image = clampRenderTimeout(
+    timeoutsObj.image,
+    defaults.renderTimeouts.image,
+  );
+  defaults.renderTimeouts.video = clampRenderTimeout(
+    timeoutsObj.video,
+    defaults.renderTimeouts.video,
+  );
+
   return defaults;
 }
 
@@ -148,6 +188,7 @@ export function mergeProviderConfigPatch(patch: ProviderConfigPatch): ProviderCo
       pollinations: { ...current.providers.pollinations },
     },
     tasks: { ...current.tasks },
+    renderTimeouts: { ...current.renderTimeouts },
   };
 
   if (patch.providers) {
@@ -178,6 +219,21 @@ export function mergeProviderConfigPatch(patch: ProviderConfigPatch): ProviderCo
         patch.tasks.enhance.trim().length > 0
           ? patch.tasks.enhance.trim()
           : null;
+    }
+  }
+
+  if (patch.renderTimeouts) {
+    if (patch.renderTimeouts.image !== undefined) {
+      next.renderTimeouts.image = clampRenderTimeout(
+        patch.renderTimeouts.image,
+        next.renderTimeouts.image,
+      );
+    }
+    if (patch.renderTimeouts.video !== undefined) {
+      next.renderTimeouts.video = clampRenderTimeout(
+        patch.renderTimeouts.video,
+        next.renderTimeouts.video,
+      );
     }
   }
 

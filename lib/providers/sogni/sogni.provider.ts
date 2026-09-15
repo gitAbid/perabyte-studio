@@ -64,7 +64,7 @@ export const sogniProvider: ImageProvider & VideoProvider & TextProvider = {
     model: ModelDescriptor,
     ctx: ProviderContext,
   ): Promise<GeneratedArtifact[]> {
-    const { urls, lastFrameUrl } = await createProject(request, model, ctx, IMAGE_DEADLINE_MS, "image");
+    const { urls, lastFrameUrl } = await createProject(request, model, ctx, imageDeadlineMs(), "image");
     return toArtifacts(urls, "png", request, lastFrameUrl);
   },
 
@@ -73,17 +73,24 @@ export const sogniProvider: ImageProvider & VideoProvider & TextProvider = {
     model: ModelDescriptor,
     ctx: ProviderContext,
   ): Promise<GeneratedArtifact[]> {
-    const { urls, lastFrameUrl } = await createProject(request, model, ctx, VIDEO_DEADLINE_MS, "video");
+    const { urls, lastFrameUrl } = await createProject(request, model, ctx, videoDeadlineMs(), "video");
     return toArtifacts(urls, "mp4", request, lastFrameUrl);
   },
 };
 
 /**
- * Per-project deadline. Must leave room inside the route's `maxDuration = 300`
- * for the service layer to download and cache the finished files.
+ * Per-project deadlines, derived from the configurable render timeouts
+ * (Settings → Render timeouts — default 5 min images / 10 min videos) with
+ * the download headroom already subtracted. Functions, not constants: a
+ * Settings save applies to the very next render.
  */
-export const IMAGE_DEADLINE_MS = 120_000;
-export const VIDEO_DEADLINE_MS = 180_000;
+export function imageDeadlineMs(): number {
+  return getStudioEnv().imageRenderDeadlineMs;
+}
+
+export function videoDeadlineMs(): number {
+  return getStudioEnv().videoRenderDeadlineMs;
+}
 
 async function createProject(
   request: NormalizedGenerationRequest,

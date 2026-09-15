@@ -136,4 +136,32 @@ describe("provider-config.repository", () => {
     expect(read.providers["apikey-fan"].apiKey).toBe("fan_key");
     expect(read.providers.pollinations.enabled).toBe(true);
   });
+
+  it("defaults render timeouts to 5 min images and 10 min videos", () => {
+    const config = getProviderConfig();
+    expect(config.renderTimeouts).toEqual({ image: 300, video: 600 });
+  });
+
+  it("persists render timeout patches alongside existing settings", () => {
+    updateProviderConfig({ providers: { sogni: { enabled: false } } });
+
+    updateProviderConfig({ renderTimeouts: { video: 900 } });
+
+    const read = getProviderConfig();
+    expect(read.renderTimeouts).toEqual({ image: 300, video: 900 });
+    expect(read.providers.sogni.enabled).toBe(false);
+  });
+
+  it("sanitizes and clamps render timeouts loaded from disk", async () => {
+    await fs.writeFile(
+      configPath,
+      JSON.stringify({ renderTimeouts: { image: 7, video: "lots", extra: 1 } }),
+      "utf-8",
+    );
+
+    const config = getProviderConfig();
+    // Below the 30 s floor clamps up; a non-number keeps the default.
+    expect(config.renderTimeouts.image).toBe(30);
+    expect(config.renderTimeouts.video).toBe(600);
+  });
 });

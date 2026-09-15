@@ -11,6 +11,7 @@ import {
   type ResolutionKey,
 } from "@/lib/constants";
 import { durationToSeconds, type FrameImage, type NormalizedGenerationRequest } from "@/lib/domain/models";
+import { getStudioEnv } from "@/lib/config/env";
 import type { Logger } from "@/lib/logging/logger";
 import { logger as rootLogger } from "@/lib/logging/logger";
 import { getGenerationRegistry } from "@/lib/providers/registry";
@@ -410,18 +411,31 @@ export async function runGeneration(
     endImage,
   };
 
+  // Overall render budget (Settings → Render timeouts): a safety net around
+  // every provider. A video budget applies per clip so multi-clip requests
+  // keep their per-job allowance; client cancellation still propagates.
+  const env = getStudioEnv();
+  const budgetMs =
+    request.kind === "video"
+      ? env.videoRenderTimeoutMs * Math.max(1, request.count)
+      : env.imageRenderTimeoutMs;
+  const budgetSignal = AbortSignal.timeout(budgetMs);
+  const renderSignal = options.signal
+    ? AbortSignal.any([options.signal, budgetSignal])
+    : budgetSignal;
+
   try {
     const artifacts =
       request.kind === "video"
         ? await (effective.provider as VideoProvider).generateVideo(
             normalized,
             effective.model,
-            { logger: log, signal: options.signal, onProgress: options.onProgress },
+            { logger: log, signal: renderSignal, onProgress: options.onProgress },
           )
         : await (effective.provider as ImageProvider).generateImage(
             normalized,
             effective.model,
-            { logger: log, signal: options.signal, onProgress: options.onProgress },
+            { logger: log, signal: renderSignal, onProgress: options.onProgress },
           );
 
     options.onProgress?.({
@@ -452,6 +466,14 @@ export async function runGeneration(
       media,
     };
   } catch (error) {
+    if ((error as Error)?.name === "TimeoutError") {
+      const minutes = Math.round(budgetMs / 60_000);
+      log.warn("generation hit the render timeout", { budgetMs });
+      throw new GenerationServiceError(
+        `Your ${request.kind} render hit the ${minutes}-minute time limit — raise it in Settings → Render timeouts and try again.`,
+        { retryable: true, status: 504 },
+      );
+    }
     if (error instanceof ProviderError) {
       log.error("provider failed", { message: error.message, retryable: error.retryable });
       throw new GenerationServiceError(error.message, {
