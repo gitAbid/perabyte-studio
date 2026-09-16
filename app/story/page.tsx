@@ -441,6 +441,19 @@ export default function StoryPage() {
     );
   }
 
+  /** Swap a scene with its neighbor. Purely an ordering edit — the chain
+   * follows scene order, nothing re-renders from this. */
+  function moveScene(index: number, delta: -1 | 1) {
+    if (!storyId) return;
+    const target = index + delta;
+    if (target < 0 || target >= scenes.length) return;
+    updateStoryScenes(storyId, (list) => {
+      const next = [...list];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  }
+
   function toggleContinuity() {
     const next = !continuityOn;
     setContinuityOn(next);
@@ -1098,6 +1111,30 @@ export default function StoryPage() {
                       !scenes[index + 1]?.startImageRef && (
                         <Icon name="link" size={11} className="text-muted" />
                       )}
+                    {typed && (
+                      <div className="ml-auto flex shrink-0 items-center gap-0.5">
+                        <button
+                          type="button"
+                          aria-label={`Move scene ${index + 1} earlier`}
+                          title="Move earlier"
+                          disabled={running || index === 0}
+                          onClick={() => moveScene(index, -1)}
+                          className="inline-flex size-6 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-ink disabled:opacity-30 disabled:hover:bg-transparent"
+                        >
+                          <Icon name="chevron-down" size={12} className="rotate-180" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Move scene ${index + 1} later`}
+                          title="Move later"
+                          disabled={running || index === scenes.length - 1}
+                          onClick={() => moveScene(index, 1)}
+                          className="inline-flex size-6 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-ink disabled:opacity-30 disabled:hover:bg-transparent"
+                        >
+                          <Icon name="chevron-down" size={12} />
+                        </button>
+                      </div>
+                    )}
                   </div>
                   {typed?.prompt &&
                     (editingSceneId === typed.id && editable ? (
