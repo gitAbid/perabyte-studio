@@ -40,6 +40,9 @@ yarn-error.log*
 # generated media cache (server-side)
 /.media-cache
 
+# headless-browser smoke screenshots
+/gui-test-screenshots
+
 # provider settings saved from the /settings page
 /.studio
 

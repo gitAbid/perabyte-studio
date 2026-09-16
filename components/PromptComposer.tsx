@@ -23,6 +23,8 @@ import { CastPicker } from "@/components/CastPicker";
 import { LORA_PRESETS, matchLoraPreset } from "@/lib/lora-presets";
 import type { LoraOption } from "@/lib/providers/sogni/lora-catalog";
 import { LoraPicker } from "./LoraPicker";
+import { FrameDock, type FrameRefs, type FrameSlotSpec } from "./FrameDock";
+import type { IconName } from "./Icon";
 import type { ModelVideoLimits } from "@/lib/domain/models";
 import type { SavedCharacter } from "@/lib/character-store";
 import type { GenerationSettings } from "@/lib/types";
@@ -194,6 +196,12 @@ export function PromptComposer({
   characters,
   characterIds,
   onCharactersChange,
+  frames,
+  onFramesChange,
+  onFramesError,
+  frameEndSupported = false,
+  frameNote,
+  frameNoteIcon = "image",
 }: {
   kind: "image" | "video";
   prompt: string;
@@ -233,6 +241,18 @@ export function PromptComposer({
   /** Attached character ids, in anchor order. */
   characterIds?: string[];
   onCharactersChange?: (characterIds: string[]) => void;
+  /** Manual frames for the scene/render being authored. Omit (or leave
+   * `onFramesChange` unset) to hide the frame dock entirely. */
+  frames?: FrameRefs;
+  onFramesChange?: (patch: FrameRefs) => void;
+  /** Frame attach failures (bad file type, upload error) — toast it. */
+  onFramesError?: (message: string) => void;
+  /** The active model can condition on a last frame — shows the slot. */
+  frameEndSupported?: boolean;
+  /** One muted hint under the prompt surface explaining what the attached
+   * frames will do (chain override, model swap, img2img…). */
+  frameNote?: string;
+  frameNoteIcon?: IconName;
 }) {
   const styles = kind === "video" ? VIDEO_STYLES : IMAGE_STYLES;
   // Presets the active model can render (unknown limits = show everything);
@@ -247,6 +267,17 @@ export function PromptComposer({
   const attachedCharacters = (characters ?? []).filter((character) =>
     characterIds?.includes(character.id),
   );
+  // Frame slots follow the kind and the model's capability: video takes a
+  // first frame (plus a last frame when the model can end on one); image
+  // takes a single img2img reference.
+  const lastSlot: FrameSlotSpec[] = frameEndSupported
+    ? [{ key: "endImageRef", label: "Last frame" }]
+    : [];
+  const frameSlots: FrameSlotSpec[] = onFramesChange
+    ? kind === "video"
+      ? [{ key: "startImageRef", label: "First frame" }, ...lastSlot]
+      : [{ key: "startImageRef", label: "Reference image" }]
+    : [];
 
   return (
     // The composer is the panel itself and stretches with its column, so the
@@ -331,13 +362,21 @@ export function PromptComposer({
           }}
           className="min-h-[104px] w-full flex-1 resize-none bg-transparent text-[14px] leading-relaxed text-ink placeholder:text-muted focus:outline-none focus-visible:outline-none sm:text-[14.5px]"
         />
-        <div className="flex shrink-0 items-center justify-end pt-1">
+        {/* Attach row: frame dock leads (content you add), Enhance trails. */}
+        <div className="flex shrink-0 items-center gap-2 pt-1">
+          <FrameDock
+            slots={frameSlots}
+            refs={frames ?? {}}
+            onChange={onFramesChange ?? (() => {})}
+            onError={onFramesError}
+            className="min-w-0"
+          />
           <button
             type="button"
             onClick={onEnhancePrompt}
             disabled={busy || enhancing || !prompt.trim()}
             title="Expand the prompt with richer, style-aware detail"
-            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-semibold text-muted transition-colors hover:bg-surface-2 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-muted"
+            className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-semibold text-muted transition-colors hover:bg-surface-2 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:text-muted"
           >
             <Icon
               name="sparkle"
@@ -348,6 +387,15 @@ export function PromptComposer({
           </button>
         </div>
       </div>
+
+      {/* Smart frame hint: only when the attached frames change something the
+          user couldn't guess (chain override, model swap, img2img role). */}
+      {frameNote && (
+        <p className="mt-2 flex shrink-0 items-center gap-1.5 text-[11.5px] text-muted">
+          <Icon name={frameNoteIcon} size={12} className="shrink-0" />
+          {frameNote}
+        </p>
+      )}
 
       {/* Settings badges live inline in the prompt box. Model leads so the
           active engine is always the first thing you see. */}
