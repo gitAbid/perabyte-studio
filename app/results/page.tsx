@@ -83,10 +83,10 @@ export default function ResultsPage() {
 
   const aspect = ASPECTS[asset.settings.aspect];
   const ratio = `${aspect?.width ?? 16}/${aspect?.height ?? 9}`;
-  // The stage honours the render's native aspect ratio but never exceeds the
-  // viewport height: maxWidth = the width at which the stage is ~64dvh tall
-  // inside its dark mat, so a portrait render centres at a sane size.
-  const stageMaxWidth = `calc(64dvh * ${aspect?.width ?? 16} / ${aspect?.height ?? 9})`;
+  // The stage scales to the space actually available inside the fixed-viewport
+  // layout (top bar + pinned preview strip + paddings), honouring the render's
+  // native ratio; on mobile the page scrolls so a plain 64dvh cap applies.
+  const stageMaxWidth = `calc(min(64dvh, 100dvh - 310px) * ${aspect?.width ?? 16} / ${aspect?.height ?? 9})`;
   const currentUrl = asset.variants[variant] ?? asset.url;
   // Video player selection follows the media itself, not just the asset kind:
   // story assets persist kind "story" even when every scene is a rendered
@@ -157,9 +157,9 @@ export default function ResultsPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1280px] px-4 pb-12 pt-6 sm:px-6">
+    <div className="mx-auto flex w-full max-w-[1280px] flex-col px-4 pb-6 pt-6 sm:px-6 lg:h-dvh">
       {/* Top bar */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-none items-center justify-between gap-3">
         <Link
           href="/images"
           className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border bg-raised pl-2.5 pr-3.5 text-[12.5px] font-semibold text-ink-soft transition-colors hover:border-border-strong hover:text-ink"
@@ -178,7 +178,7 @@ export default function ResultsPage() {
         )}
       </div>
 
-      <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+      <div className="mt-4 grid min-h-0 flex-1 gap-6 overflow-y-auto lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:pr-1">
         {/* ── Media stage ─────────────────────────────────────────── */}
         <div className="min-w-0">
           <div className="mx-auto w-fit max-w-full rounded-[24px] bg-black p-3 shadow-lift sm:p-4">
@@ -235,61 +235,12 @@ export default function ResultsPage() {
             </div>
           )}
 
-          {/* More from your library — click to preview in place */}
-          {others.length > 0 && (
-            <section className="mt-8">
-              <div className="flex items-center justify-between">
-                <h2 className="text-[14px] font-bold text-ink">More from your library</h2>
-                <Link
-                  href="/images"
-                  className="text-[12px] font-semibold text-muted transition-colors hover:text-ink"
-                >
-                  View all →
-                </Link>
-              </div>
-              <div className="mt-3 flex gap-3 overflow-x-auto no-scrollbar pb-1">
-                {others.map((other) => {
-                  const cover =
-                    other.kind === "story"
-                      ? storyCover(other)
-                      : other.posterUrl ?? other.url;
-                  return (
-                    <button
-                      key={other.id}
-                      type="button"
-                      onClick={() => selectAsset(other)}
-                      aria-label={`Preview ${other.title}`}
-                      className="group relative w-[148px] shrink-0 overflow-hidden rounded-[14px] border border-border bg-surface-2 shadow-card transition-all duration-150 hover:-translate-y-0.5 hover:shadow-lift motion-reduce:hover:transform-none"
-                    >
-                      <MediaFrame
-                        src={cover ?? null}
-                        alt={other.title}
-                        ratio="1/1"
-                        rounded="rounded-[13px]"
-                        sensitive={isSensitiveAsset(other)}
-                      />
-                      <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-2.5 pb-2 pt-6 text-left">
-                        <span className="block truncate text-[11.5px] font-semibold text-white">
-                          {other.title}
-                        </span>
-                        <span className="mt-0.5 block text-[10px] font-medium uppercase tracking-wide text-white/60">
-                          {other.kind === "video"
-                            ? "Video"
-                            : other.kind === "story"
-                              ? "Story"
-                              : "Image"}
-                        </span>
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          )}
+          {/* More from your library — rendered on the page-level pinned bar
+              below (desktop); on mobile it flows after the panel. */}
         </div>
 
         {/* ── Info panel ──────────────────────────────────────────── */}
-        <aside className="flex min-w-0 flex-col gap-4 rounded-[24px] border border-border bg-raised p-5 shadow-card lg:sticky lg:top-6">
+        <aside className="flex min-w-0 flex-col gap-4 rounded-[24px] border border-border bg-raised p-5 shadow-card">
           {/* Title + favourite */}
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -451,6 +402,60 @@ export default function ResultsPage() {
           </Button>
         </aside>
       </div>
+
+      {/* Pinned preview strip — fixed at the bottom of the viewport on
+          desktop, so switching renders never moves it. Flows in-page on
+          mobile. */}
+      {others.length > 0 && (
+        <div className="mt-6 flex-none lg:mt-3 lg:border-t lg:border-border lg:pt-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-[13.5px] font-bold text-ink">More from your library</h2>
+            <Link
+              href="/images"
+              className="text-[12px] font-semibold text-muted transition-colors hover:text-ink"
+            >
+              View all →
+            </Link>
+          </div>
+          <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar lg:pb-1">
+            {others.map((other) => {
+              const cover =
+                other.kind === "story"
+                  ? storyCover(other)
+                  : other.posterUrl ?? other.url;
+              return (
+                <button
+                  key={other.id}
+                  type="button"
+                  onClick={() => selectAsset(other)}
+                  aria-label={`Preview ${other.title}`}
+                  className="group relative w-[140px] shrink-0 overflow-hidden rounded-[14px] border border-border bg-surface-2 shadow-card transition-all duration-150 hover:-translate-y-0.5 hover:shadow-lift motion-reduce:hover:transform-none"
+                >
+                  <MediaFrame
+                    src={cover ?? null}
+                    alt={other.title}
+                    ratio="4/3"
+                    rounded="rounded-[13px]"
+                    sensitive={isSensitiveAsset(other)}
+                  />
+                  <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-2.5 pb-2 pt-6 text-left">
+                    <span className="block truncate text-[11.5px] font-semibold text-white">
+                      {other.title}
+                    </span>
+                    <span className="mt-0.5 block text-[10px] font-medium uppercase tracking-wide text-white/60">
+                      {other.kind === "video"
+                        ? "Video"
+                        : other.kind === "story"
+                          ? "Story"
+                          : "Image"}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {playOpen && storyScenes.length > 0 && (
         <StoryPlayer
