@@ -370,6 +370,14 @@ export default function HistoryPage() {
                             href={`/results?id=${asset.id}`}
                             onDone={() => setOpenMenu(null)}
                           />
+                          {asset.kind === "story" && (
+                            <MenuItem
+                              icon="video"
+                              label="Continue in editor"
+                              href={`/story?id=${asset.id}`}
+                              onDone={() => setOpenMenu(null)}
+                            />
+                          )}
                           <MenuItem
                             icon="download"
                             label="Download"
