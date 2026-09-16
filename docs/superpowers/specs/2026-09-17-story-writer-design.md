@@ -77,12 +77,12 @@ convert) is the existing story pipeline.
   story record, navigates to `/story?id=<id>`. The story page shows the scenes
   as reviewable cards (inline edit + per-scene re-run already exist) and the
   user hits Generate there — the existing server runner chains the renders.
-- **Use in Solo** (secondary): runs split with count 1 → stores the single
-  polished prompt in `sessionStorage` under `perabyte.writer.solo`
-  (`{ prompt, at }`, consumed once on the generate page's mount then removed)
-  → navigates to `/generate/image`. The generate page reads and clears that
-  key on mount to prefill the composer. (A query param was rejected: prompts
-  are long and would persist in history/share links.)
+- **Use in Solo** (secondary): runs split with count 1 → navigates to
+  `/generate/image?prompt=<encoded>`, reusing the existing `?prompt=` prefill
+  seam in `GeneratorScreen` (the same mechanism History/Results "Regenerate"
+  links use). Chosen over a sessionStorage channel during planning — the seam
+  already existed and one less handoff protocol beats URL-length concerns at
+  PROMPT_MAX-scale prompts.
 - **Model pill**: PillSelect of all text models from the providers'
   `listTextModels()` (Sogni qwen3.5-35b abliterated, qwen3.6-35b,
   deepseek-v4-flash-vision, Pollinations default), defaulting to the

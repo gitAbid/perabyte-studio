@@ -51,6 +51,17 @@ export type VideoStyleKey = keyof typeof VIDEO_STYLES;
 export const DURATIONS = ["3s", "5s", "6s", "8s", "10s", "15s"] as const;
 export type DurationKey = (typeof DURATIONS)[number];
 
+/** Story Writer tone presets — folded into the writing instruction, not render styles. */
+export const WRITER_TONES = {
+  none: "No particular tone",
+  dark: "Dark",
+  whimsical: "Whimsical",
+  romantic: "Romantic",
+  thriller: "Thriller",
+  documentary: "Documentary",
+} as const;
+export type WriterToneKey = keyof typeof WRITER_TONES;
+
 export const VARIANT_COUNTS = [1, 2, 3, 4] as const;
 
 export const DEFAULT_IMAGE_SETTINGS = {

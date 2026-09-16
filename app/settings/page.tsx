@@ -128,6 +128,7 @@ export default function SettingsPage() {
             <GeneralSection
               providers={data?.providers ?? []}
               enhanceModel={data?.tasks.enhance ?? null}
+              writerModel={data?.tasks.writer ?? null}
               onUpdate={onUpdate}
             />
           ) : null}
@@ -207,10 +208,16 @@ function optimisticMerge(
   return {
     providers,
     customProviders: current.customProviders,
-    tasks:
-      patch.tasks?.enhance !== undefined
-        ? { enhance: patch.tasks.enhance }
-        : current.tasks,
+    tasks: {
+      enhance:
+        patch.tasks?.enhance !== undefined
+          ? patch.tasks.enhance
+          : current.tasks.enhance,
+      writer:
+        patch.tasks?.writer !== undefined
+          ? patch.tasks.writer
+          : current.tasks.writer,
+    },
     renderTimeouts: patch.renderTimeouts
       ? { ...current.renderTimeouts, ...patch.renderTimeouts }
       : current.renderTimeouts,

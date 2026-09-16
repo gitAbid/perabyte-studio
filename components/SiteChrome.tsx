@@ -19,6 +19,7 @@ const PRIMARY_NAV: NavItem[] = [
   // Main menu — opens the generation studio. Story mode lives inside it
   // (the composer's Solo/Story toggle); /story stays for toggle + deep links.
   { href: "/generate/image", label: "Generate", icon: "sparkle" },
+  { href: "/writer", label: "Writer", icon: "pen" },
   { href: "/character", label: "Characters", icon: "character" },
   { href: "/images", label: "Images", icon: "image" },
   { href: "/stories", label: "Stories", icon: "grid" },
@@ -390,6 +391,7 @@ export function SiteSidebar() {
 
 const FOOTER_LINKS = [
   { href: "/generate/image", label: "Solo Mode" },
+  { href: "/writer", label: "Writer" },
   { href: "/story", label: "Story Mode" },
   { href: "/character", label: "Character Studio" },
   { href: "/images", label: "Images & videos" },

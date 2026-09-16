@@ -199,6 +199,31 @@ describe("provider settings service", () => {
     expect(getProviderSettings().tasks.enhance).toBeNull();
   });
 
+  it("reports tasks.writer in the payload", () => {
+    wireRegistry();
+    const payload = getProviderSettings();
+    expect(payload.tasks.writer).toBeNull();
+  });
+
+  it("accepts a known writer text model and rejects unknown ones", () => {
+    wireRegistry();
+    applyProviderSettingsUpdate({ tasks: { writer: "sogni:qwen-a" } });
+    expect(getProviderSettings().tasks.writer).toBe("sogni:qwen-a");
+
+    expect(() =>
+      applyProviderSettingsUpdate({ tasks: { writer: "sogni:ghost" } }),
+    ).toThrow(ProviderSettingsError);
+    expect(getProviderSettings().tasks.writer).toBe("sogni:qwen-a"); // unchanged on rejection
+  });
+
+  it("preserves the other task key when both are patched together", () => {
+    wireRegistry();
+    applyProviderSettingsUpdate({ tasks: { enhance: "sogni:qwen-a", writer: "sogni:qwen-b" } });
+    const tasks = getProviderSettings().tasks;
+    expect(tasks.enhance).toBe("sogni:qwen-a");
+    expect(tasks.writer).toBe("sogni:qwen-b");
+  });
+
   it("accepts text models in a provider's disabled list", () => {
     wireRegistry();
     const payload = applyProviderSettingsUpdate({

@@ -73,7 +73,7 @@ export interface CustomProviderView {
 export interface ProviderSettingsPayload {
   providers: ProviderView[];
   customProviders: CustomProviderView[];
-  tasks: { enhance: string | null };
+  tasks: { enhance: string | null; writer: string | null };
   /** Overall render deadlines in seconds (Settings → Render timeouts). */
   renderTimeouts: { image: number; video: number; staleness: number };
 }
@@ -84,7 +84,7 @@ export interface ProviderSettingsUpdate {
     { enabled?: boolean; apiKey?: string | null; disabledModels?: string[] }
   >;
   customProviders?: CustomProvidersPatch;
-  tasks?: { enhance?: string | null };
+  tasks?: { enhance?: string | null; writer?: string | null };
   renderTimeouts?: { image?: number; video?: number; staleness?: number };
 }
 
@@ -221,7 +221,7 @@ export function getProviderSettings(): ProviderSettingsPayload {
   return {
     providers,
     customProviders,
-    tasks: { enhance: config.tasks.enhance },
+    tasks: { enhance: config.tasks.enhance, writer: config.tasks.writer },
     renderTimeouts: {
       image: config.renderTimeouts.image,
       video: config.renderTimeouts.video,
@@ -500,6 +500,20 @@ export function applyProviderSettingsUpdate(body: unknown): ProviderSettingsPayl
         });
       }
       patch.tasks = { enhance };
+    }
+    if (raw.tasks.writer !== undefined) {
+      // Same contract as enhance: null clears, otherwise must be a known
+      // text model — Story Writer reads from the same text pool.
+      const writer = raw.tasks.writer;
+      if (writer !== null && typeof writer !== "string") {
+        throw new ProviderSettingsError("Invalid writer model.", { field: "tasks" });
+      }
+      if (typeof writer === "string" && !allTextModelIds().has(writer)) {
+        throw new ProviderSettingsError(`Unknown writer model "${writer}".`, {
+          field: "tasks",
+        });
+      }
+      patch.tasks = { ...(patch.tasks ?? {}), writer };
     }
   }
 

@@ -22,10 +22,12 @@ type OnUpdate = (patch: ProviderSettingsUpdate) => Promise<void>;
 export function GeneralSection({
   providers,
   enhanceModel,
+  writerModel,
   onUpdate,
 }: {
   providers: ProviderView[];
   enhanceModel: string | null;
+  writerModel: string | null;
   onUpdate: OnUpdate;
 }) {
   return (
@@ -38,6 +40,7 @@ export function GeneralSection({
       <TaskModelsCard
         providers={providers}
         enhanceModel={enhanceModel}
+        writerModel={writerModel}
         onUpdate={onUpdate}
       />
     </SectionShell>
@@ -131,10 +134,12 @@ function ContentPreferencesCard() {
 function TaskModelsCard({
   providers,
   enhanceModel,
+  writerModel,
   onUpdate,
 }: {
   providers: ProviderView[];
   enhanceModel: string | null;
+  writerModel: string | null;
   onUpdate: OnUpdate;
 }) {
   const { settings, ready } = useSettings();
@@ -193,6 +198,23 @@ function TaskModelsCard({
             value={enhanceModel ?? ""}
             onChange={(event) =>
               onUpdate({ tasks: { enhance: event.target.value || null } }).catch(
+                () => undefined,
+              )
+            }
+          >
+            <option value="">Auto (recommended)</option>
+            {enhanceOptions.map((model) => (
+              <option key={model.id} value={model.id}>
+                {model.label}
+              </option>
+            ))}
+          </SelectField>
+
+          <SelectField
+            label="Story writer"
+            value={writerModel ?? ""}
+            onChange={(event) =>
+              onUpdate({ tasks: { writer: event.target.value || null } }).catch(
                 () => undefined,
               )
             }
