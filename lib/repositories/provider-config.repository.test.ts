@@ -139,7 +139,7 @@ describe("provider-config.repository", () => {
 
   it("defaults render timeouts to 5 min images and 10 min videos", () => {
     const config = getProviderConfig();
-    expect(config.renderTimeouts).toEqual({ image: 300, video: 600 });
+    expect(config.renderTimeouts).toEqual({ image: 300, video: 600, staleness: 300 });
   });
 
   it("persists render timeout patches alongside existing settings", () => {
@@ -148,7 +148,7 @@ describe("provider-config.repository", () => {
     updateProviderConfig({ renderTimeouts: { video: 900 } });
 
     const read = getProviderConfig();
-    expect(read.renderTimeouts).toEqual({ image: 300, video: 900 });
+    expect(read.renderTimeouts).toEqual({ image: 300, video: 900, staleness: 300 });
     expect(read.providers.sogni.enabled).toBe(false);
   });
 
@@ -163,5 +163,16 @@ describe("provider-config.repository", () => {
     // Below the 30 s floor clamps up; a non-number keeps the default.
     expect(config.renderTimeouts.image).toBe(30);
     expect(config.renderTimeouts.video).toBe(600);
+  });
+});
+
+describe("render staleness knob", () => {
+  it("applies a staleness patch and clamps out-of-band values", () => {
+    updateProviderConfig({ renderTimeouts: { staleness: 120 } });
+    expect(getProviderConfig().renderTimeouts.staleness).toBe(120);
+    updateProviderConfig({ renderTimeouts: { staleness: 5 } });
+    expect(getProviderConfig().renderTimeouts.staleness).toBe(60); // min clamp
+    updateProviderConfig({ renderTimeouts: { staleness: 99_999 } });
+    expect(getProviderConfig().renderTimeouts.staleness).toBe(1800); // max clamp
   });
 });

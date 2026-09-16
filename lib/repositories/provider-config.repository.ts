@@ -27,6 +27,12 @@ export interface TaskModelConfig {
 export interface RenderTimeoutsConfig {
   image: number;
   video: number;
+  /**
+   * Durable-job staleness (Phase B): fail a render when the provider has
+   * not reported progress for this long. Measures OUR wait, not provider
+   * load — a backed-up render keeps polling, a hung one dies here.
+   */
+  staleness: number;
 }
 
 export interface ProviderConfig {
@@ -49,14 +55,17 @@ export interface ProviderConfigPatch {
   renderTimeouts?: Partial<RenderTimeoutsConfig>;
 }
 
-/** Defaults: images 5 minutes, videos 10 minutes. */
+/** Defaults: images 5 minutes, videos 10 minutes, staleness 5 minutes. */
 export const RENDER_TIMEOUT_DEFAULTS: RenderTimeoutsConfig = {
   image: 300,
   video: 600,
+  staleness: 300,
 };
 
 /** Sanity clamp applied to configured values, in seconds. */
 export const RENDER_TIMEOUT_RANGE = { min: 30, max: 3600 } as const;
+/** Staleness has a tighter sane band — probing for hours would hide hangs. */
+export const RENDER_STALENESS_RANGE = { min: 60, max: 1800 } as const;
 
 const KNOWN_PROVIDERS: readonly KnownProviderId[] = [
   "apikey-fan",
@@ -97,6 +106,15 @@ function clampRenderTimeout(value: unknown, fallback: number): number {
   return Math.min(
     RENDER_TIMEOUT_RANGE.max,
     Math.max(RENDER_TIMEOUT_RANGE.min, Math.round(value)),
+  );
+}
+
+/** Staleness clamps to its own band; missing value keeps the fallback. */
+function clampStaleness(value: unknown, fallback: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return fallback;
+  return Math.min(
+    RENDER_STALENESS_RANGE.max,
+    Math.max(RENDER_STALENESS_RANGE.min, Math.round(value)),
   );
 }
 
@@ -152,6 +170,10 @@ function sanitizeLoadedConfig(raw: unknown): ProviderConfig {
   defaults.renderTimeouts.video = clampRenderTimeout(
     timeoutsObj.video,
     defaults.renderTimeouts.video,
+  );
+  defaults.renderTimeouts.staleness = clampStaleness(
+    timeoutsObj.staleness,
+    defaults.renderTimeouts.staleness,
   );
 
   return defaults;
@@ -233,6 +255,12 @@ export function mergeProviderConfigPatch(patch: ProviderConfigPatch): ProviderCo
       next.renderTimeouts.video = clampRenderTimeout(
         patch.renderTimeouts.video,
         next.renderTimeouts.video,
+      );
+    }
+    if (patch.renderTimeouts.staleness !== undefined) {
+      next.renderTimeouts.staleness = clampStaleness(
+        patch.renderTimeouts.staleness,
+        next.renderTimeouts.staleness,
       );
     }
   }

@@ -49,7 +49,7 @@ export interface ProviderSettingsPayload {
   providers: ProviderView[];
   tasks: { enhance: string | null };
   /** Overall render deadlines in seconds (Settings → Render timeouts). */
-  renderTimeouts: { image: number; video: number };
+  renderTimeouts: { image: number; video: number; staleness: number };
 }
 
 export interface ProviderSettingsUpdate {
@@ -58,7 +58,7 @@ export interface ProviderSettingsUpdate {
     { enabled?: boolean; apiKey?: string | null; disabledModels?: string[] }
   >;
   tasks?: { enhance?: string | null };
-  renderTimeouts?: { image?: number; video?: number };
+  renderTimeouts?: { image?: number; video?: number; staleness?: number };
 }
 
 export class ProviderSettingsError extends Error {
@@ -142,6 +142,7 @@ export function getProviderSettings(): ProviderSettingsPayload {
     renderTimeouts: {
       image: config.renderTimeouts.image,
       video: config.renderTimeouts.video,
+      staleness: config.renderTimeouts.staleness,
     },
   };
 }

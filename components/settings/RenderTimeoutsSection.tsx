@@ -83,7 +83,7 @@ export function RenderTimeoutsSection({
   renderTimeouts,
   onUpdate,
 }: {
-  renderTimeouts: { image: number; video: number };
+  renderTimeouts: { image: number; video: number; staleness: number };
   onUpdate: OnUpdate;
 }) {
   return (
@@ -108,9 +108,18 @@ export function RenderTimeoutsSection({
             onUpdate({ renderTimeouts: { video: seconds } }).catch(() => undefined)
           }
         />
+        <TimeoutField
+          label="Staleness limit"
+          hint="Fail a render when the provider stops reporting progress for this long."
+          valueSeconds={renderTimeouts.staleness}
+          onCommit={(seconds) =>
+            onUpdate({ renderTimeouts: { staleness: seconds } }).catch(() => undefined)
+          }
+        />
         <p className="border-t border-border pt-3 text-[11.5px] leading-snug text-muted">
-          Defaults: 5 minutes for images, 10 for videos. Applies to every
-          provider; the platform hosting the studio can still cap it lower.
+          Defaults: 5 minutes for images, 10 for videos, 5 for staleness.
+          Renders run as server jobs — closing the tab never stops them; the
+          staleness limit is what catches a genuinely hung render.
         </p>
       </div>
     </section>
