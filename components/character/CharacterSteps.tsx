@@ -329,7 +329,7 @@ function GroupedSelect({
 /* ------------------------------------------------------------------ */
 
 /** One-click starters that show the kind of info the prompt should carry. */
-const PROMPT_EXAMPLES = [
+export const PROMPT_EXAMPLES = [
   "A young artist with ink-stained fingers, messy hair and a paint-splattered apron, warm smile.",
   "A battle-worn warrior in ornate scarred armor, dark braid, storm-grey eyes.",
   "A cheerful barista in a lavender apron, freckles, curls escaping a messy bun.",
@@ -1046,8 +1046,8 @@ export function StepReview({
   return (
     <div className="space-y-5">
       <StepHeading
-        title="4. Review & Generate"
-        subtitle="Check your settings before generating your character."
+        title="4. Review & Render"
+        subtitle="Check your settings, then render the full character sheet."
       />
 
       <div className="space-y-4">
@@ -1186,7 +1186,7 @@ export function StepReview({
       <StepNav
         onBack={onBack}
         onNext={onGenerate}
-        nextLabel="Generate Character"
+        nextLabel="Render Character Sheet"
         nextIcon="sparkle"
       />
     </div>

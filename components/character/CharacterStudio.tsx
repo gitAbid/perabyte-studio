@@ -1,10 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
-import { MediaFrame } from "@/components/Media";
-import { Badge, Button, EmptyState, LinkButton, useToast } from "@/components/ui";
+import { EmptyState, LinkButton, Segmented, useToast } from "@/components/ui";
 import {
   CHARACTER_STEPS,
   StepAppearance,
@@ -14,17 +13,21 @@ import {
   Stepper,
   type ReferenceImage,
 } from "@/components/character/CharacterSteps";
-import { CharacterPreviewPanel } from "@/components/character/CharacterPreviewPanel";
+import { StepSimple } from "@/components/character/StepSimple";
+import {
+  CharacterSheetPanel,
+  type CompletedSheetView,
+} from "@/components/character/CharacterSheetPanel";
 import {
   DEFAULT_CHARACTER_SPEC,
+  characterSheetSettings,
   composeCharacterPrompt,
-  characterGenerationSettings,
-  lookById,
   sanitizeSpec,
+  sheetViewById,
   type CharacterRenderParams,
   type CharacterSpec,
+  type SheetViewId,
 } from "@/lib/character";
-import { downloadMedia, useGeneration } from "@/lib/generation";
 import { useModelCatalog } from "@/lib/model-catalog";
 import { snapLorasForModel } from "@/lib/lora-options";
 import { setSelectedModel, useSettings } from "@/lib/repositories/settings.repository";
@@ -36,24 +39,18 @@ import {
 } from "@/lib/character-store";
 import { addAsset, updateAsset, useAssets } from "@/lib/store";
 import { titleFromPrompt } from "@/lib/constants";
-import type { Asset, GenerationResponse } from "@/lib/types";
+import type { Asset } from "@/lib/types";
 
-type Phase = "wizard" | "generating" | "ready";
-
-const GENERATING_STAGES = [
-  "Processing your prompt",
-  "Generating appearance",
-  "Applying details",
-  "Finalizing",
-];
+type CreationMode = "simple" | "details";
 
 /**
- * The Character wizard: four steps, the generating progress view and the
- * ready view. Mounted at /character/new (create, optionally seeded from a
- * parent = variation) and /character/[id] (edit an existing character —
- * "Save changes" persists spec edits back). State lives here; the step
- * components stay presentational. Adult options across the wizard follow
- * the global Uncensored Mode gate from Settings.
+ * The Character studio: a Simple mode (one prompt, straight to the sheet) and
+ * a Detailed mode (the four-step wizard), both rendering into the same
+ * right-side character sheet. Nothing navigates away — every view renders in
+ * place and can be re-rendered solo. Mounted at /character/new (create,
+ * optionally seeded from a parent = variation) and /character/[id] (edit —
+ * "Save changes" persists spec edits back). Adult options follow the global
+ * Uncensored Mode gate from Settings.
  */
 export function CharacterStudio({
   mode = "new",
@@ -67,23 +64,29 @@ export function CharacterStudio({
   const toast = useToast();
   const router = useRouter();
 
-  const [phase, setPhase] = useState<Phase>("wizard");
+  // Creating starts in Simple mode; editing an existing character starts in
+  // Detailed (and re-follows the character's own mode once its spec loads).
+  const [creationMode, setCreationMode] = useState<CreationMode>(mode === "edit" ? "details" : "simple");
   const [step, setStep] = useState(1);
   const [maxVisited, setMaxVisited] = useState(1);
-  const [spec, setSpec] = useState<CharacterSpec>({ ...DEFAULT_CHARACTER_SPEC });
+  const [spec, setSpec] = useState<CharacterSpec>({
+    ...DEFAULT_CHARACTER_SPEC,
+    freeform: mode !== "edit",
+  });
+  // 720p keeps a six-view sheet quick and cheap; Review can bump it.
   const [renderParams, setRenderParams] = useState<CharacterRenderParams>({
     aspect: "9:16",
-    resolution: "1080p",
+    resolution: "720p",
   });
   const [promptError, setPromptError] = useState<string | undefined>();
   const [reference, setReference] = useState<ReferenceImage | null>(null);
 
-  const [result, setResult] = useState<GenerationResponse | null>(null);
-  const [activeVariant, setActiveVariant] = useState(0);
-  const [saved, setSaved] = useState(false);
+  const [completedViews, setCompletedViews] = useState<CompletedSheetView[]>([]);
+  const [batchRequest, setBatchRequest] = useState(0);
+  const [savedToLibrary, setSavedToLibrary] = useState(false);
   const [saveName, setSaveName] = useState("");
   const [savedCharacterId, setSavedCharacterId] = useState<string | null>(null);
-  const [previewOpen, setPreviewOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [savingChanges, setSavingChanges] = useState(false);
 
   /** Library-mode init: prefill from the saved record or the variation parent. */
@@ -93,7 +96,6 @@ export function CharacterStudio({
   /** The History asset this session produced, for post-save character tagging. */
   const [lastSavedAsset, setLastSavedAsset] = useState<{ id: string; meta: Asset["meta"] } | null>(null);
 
-  const { job, run, cancel, reset } = useGeneration();
   const { settings: userSettings, ready: settingsReady } = useSettings();
   const { assets } = useAssets();
   const catalog = useModelCatalog("image");
@@ -101,15 +103,8 @@ export function CharacterStudio({
   const characterModel = catalog.models.find((model) => model.id === characterModelId);
   const uncensored = userSettings.uncensoredEnabled;
 
-  /** The character this session renders belong to (edit id or just-saved id). */
+  /** The character this session's renders belong to (edit id or just-saved id). */
   const galleryId = characterId ?? savedCharacterId;
-  const renders =
-    galleryId
-      ? assets.filter((a) => {
-          const ids = a.meta?.characterIds;
-          return Array.isArray(ids) && (ids as string[]).includes(galleryId);
-        })
-      : [];
 
   useEffect(() => {
     if (initialized) return;
@@ -130,6 +125,8 @@ export function CharacterStudio({
         }
         setSpec(sanitizeSpec({ ...DEFAULT_CHARACTER_SPEC, ...character.spec }, uncensored));
         setSaveName(character.name);
+        // Reopen in the mode the character was created in.
+        setCreationMode(character.spec.freeform === true ? "simple" : "details");
         setInitialized(true);
         return;
       }
@@ -140,6 +137,7 @@ export function CharacterStudio({
           setSpec(sanitizeSpec({ ...DEFAULT_CHARACTER_SPEC, ...parent.spec }, uncensored));
           setSaveName("");
           setParentName(parent.name);
+          setCreationMode(parent.spec.freeform === true ? "simple" : "details");
         } else {
           toast.push("Parent character not found — starting fresh.");
         }
@@ -153,8 +151,7 @@ export function CharacterStudio({
   }, [initialized, mode, characterId, parentId, settingsReady]);
 
   // LoRA selections snap to the render model: entries it doesn't accept drop
-  // (same policy as Solo/Story), so the Review step never shows a count the
-  // server would silently discard. Adult picks drop with the Uncensored gate
+  // (same policy as Solo/Story). Adult picks drop with the Uncensored gate
   // too — same reactive snap the other surfaces apply.
   useEffect(() => {
     if (!characterModel?.model || !catalog.loras.length) return;
@@ -175,9 +172,8 @@ export function CharacterStudio({
   }, [characterModelId, catalog.models, catalog.loras, catalog.loraMaxPerRequest, uncensored]);
 
   // The Settings gate is the single switch: when Uncensored Mode is off, an
-  // adult selection anywhere in the spec falls back to its safe equivalent
-  // (selections are sanitized, never leaked into a safe render). Runs only
-  // after hydration so a loaded spec is not reset on reload.
+  // adult selection anywhere in the spec falls back to its safe equivalent.
+  // Runs only after hydration so a loaded spec is not reset on reload.
   useEffect(() => {
     if (!settingsReady) return;
     if (!uncensored) {
@@ -185,25 +181,40 @@ export function CharacterStudio({
     }
   }, [settingsReady, uncensored]);
 
-  // Checklist progress while generating: advance one stage every ~1.6s and
-  // hold on the last one until the real response resolves the wait.
-  const [stage, setStage] = useState(0);
+  // Stepping (and mode switching) scrolls the workspace back to the top.
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (phase !== "generating") return;
-    setStage(0);
-    const id = window.setInterval(() => {
-      setStage((s) => Math.min(s + 1, GENERATING_STAGES.length - 1));
-    }, 1600);
-    return () => window.clearInterval(id);
-  }, [phase]);
-
-  // Every phase change scrolls the workspace back to the top so stepping
-  // forward never lands the user mid-page.
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
-  }, [phase, step]);
+  }, [step, creationMode]);
+
+  // Latest saved sheet for this character — restores the tiles on edit open.
+  const initialViews = useMemo(() => {
+    if (!galleryId) return null;
+    const latestSheet = assets
+      .filter((a) => {
+        const ids = a.meta?.characterIds;
+        return (
+          Array.isArray(a.meta?.sheetOrder) &&
+          Array.isArray(ids) &&
+          (ids as string[]).includes(galleryId)
+        );
+      })
+      .sort((a, b) => b.createdAt - a.createdAt)[0];
+    if (!latestSheet) return null;
+    const order = latestSheet.meta?.sheetOrder as string[];
+    const entries: [SheetViewId, string][] = [];
+    order.forEach((id, index) => {
+      const url = latestSheet.variants[index];
+      if (url && sheetViewById(id)) entries.push([id as SheetViewId, url]);
+    });
+    return entries.length
+      ? (Object.fromEntries(entries) as Record<SheetViewId, string>)
+      : null;
+  }, [assets, galleryId]);
+
+  const handleViewsChange = useCallback((views: CompletedSheetView[]) => {
+    setCompletedViews(views);
+  }, []);
 
   function patchSpec(patch: Partial<CharacterSpec>) {
     setSpec((s) => ({ ...s, ...patch }));
@@ -211,6 +222,13 @@ export function CharacterStudio({
 
   function patchRenderParams(patch: Partial<CharacterRenderParams>) {
     setRenderParams((p) => ({ ...p, ...patch }));
+  }
+
+  /** Mode switches move the identity source with them: Simple renders the
+   * raw prompt, Detailed composes the anchor from the tuned fields. */
+  function switchMode(next: CreationMode) {
+    setCreationMode(next);
+    patchSpec({ freeform: next === "simple" });
   }
 
   function goToStep(next: number) {
@@ -231,87 +249,38 @@ export function CharacterStudio({
     goToStep(2);
   }
 
-  async function handleGenerate() {
-    setPhase("generating");
-    setSaved(false);
-    setSavedCharacterId(null);
-    setActiveVariant(0);
-
-    const response = await run({
-      settings: characterGenerationSettings(
-        spec,
-        { ...renderParams, modelId: characterModelId ?? undefined },
-        uncensored,
-      ),
-      prompt: composeCharacterPrompt(spec),
-      uncensored,
-    });
-
-    if (!response) return; // failure is rendered from job.phase below
-    setResult(response);
-    setPhase("ready");
-    toast.push("Your character is ready.", "success");
+  /** Trigger a full sheet render — the panel owns the batch. */
+  function requestSheetBatch() {
+    if (!spec.prompt.trim()) {
+      setPromptError("Describe your character before rendering.");
+      return;
+    }
+    setPromptError(undefined);
+    setSavedToLibrary(false);
+    setBatchRequest((count) => count + 1);
   }
 
-  function handleRegenerate() {
-    reset();
-    setResult(null);
-    setSaved(false);
-    goToStep(1);
-    setPhase("wizard");
-  }
-
-  function handleSave() {
-    if (!result || saved) return;
-    const primary = result.media[activeVariant] ?? result.media[0];
-    if (!primary) return;
-    const asset = {
-      id: `c_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
-      kind: "image" as const,
-      title: titleFromPrompt(spec.prompt || "AI character"),
-      prompt: spec.prompt.trim(),
-      url: primary.url,
-      variants: result.media.map((m) => m.url),
-      posterUrl: primary.url,
-      settings: characterGenerationSettings(
-        spec,
-        { ...renderParams, modelId: characterModelId ?? undefined },
-        uncensored,
-      ),
-      createdAt: Date.now(),
-      favorite: false,
-      mode: uncensored ? "Character Studio (Uncensored)" : "Character Studio",
-      meta: {
-        requestId: result.requestId,
-        seeds: result.media.map((m) => m.seed).join(", "),
-        example: false,
-        look: spec.look,
-        nsfwLevel: spec.nsfwLevel,
-        rating: uncensored ? "Uncensored" : "Regular",
-        referenceThumb: reference?.dataUrl ?? "",
-        // Tag the render to this character so the library renders strip and
-        // the gallery derive from it (meta passes through the row parser).
-        ...(galleryId ? { characterIds: [galleryId] } : {}),
-      } as Asset["meta"],
-    };
-    addAsset(asset);
-    setLastSavedAsset({ id: asset.id, meta: asset.meta });
-    setSaved(true);
-    toast.push("Render saved to your library.", "success");
+  /** Poster for saving: the front view, else the first completed view. */
+  function posterUrl(): string | null {
+    return (
+      completedViews.find((view) => view.id === "front")?.url ??
+      completedViews[0]?.url ??
+      null
+    );
   }
 
   function handleSaveCharacter() {
-    if (!result || savedCharacterId) return;
-    const primary = result.media[activeVariant] ?? result.media[0];
+    const poster = posterUrl();
+    if (!poster || savedCharacterId) return;
     const character = addCharacter(
       saveName,
       spec,
-      primary?.url,
+      poster,
       parentId ? { parentId } : undefined,
     );
     setSavedCharacterId(character.id);
-    // If the render was already saved to History, tag it to the character so
-    // the gallery picks it up even though the save order was reversed.
+    // If the sheet was already saved to History, tag it to the character so
+    // the library picks it up even though the save order was reversed.
     if (lastSavedAsset) {
       updateAsset(lastSavedAsset.id, {
         meta: { ...lastSavedAsset.meta, characterIds: [character.id] },
@@ -323,11 +292,17 @@ export function CharacterStudio({
     );
   }
 
-  /** Edit mode: persist spec/name edits back to the saved record. */
-  async function handleSaveChanges() {
+  /** Edit mode: persist spec/name edits back to the saved record, keeping the
+   * poster in sync with the freshly rendered front view. */
+  function handleSaveChanges() {
     if (!characterId || !saveName.trim() || savingChanges) return;
     setSavingChanges(true);
-    updateCharacter(characterId, { name: saveName.trim(), spec });
+    const poster = posterUrl();
+    updateCharacter(characterId, {
+      name: saveName.trim(),
+      spec,
+      ...(poster ? { thumbnail: poster } : {}),
+    });
     setSavingChanges(false);
     setSavedCharacterId(characterId);
     toast.push("Character updated.", "success");
@@ -335,36 +310,63 @@ export function CharacterStudio({
 
   /** Edit mode: branch a copy from the current state. */
   function handleSaveAsCopy() {
-    if (!result) return;
-    const primary = result.media[activeVariant] ?? result.media[0];
+    const poster = posterUrl();
+    if (!poster) return;
     const character = addCharacter(
       `${saveName || "Character"} (copy)`,
       spec,
-      primary?.url,
+      poster,
     );
     toast.push(`“${character.name}” created.`, "success");
     router.push(`/character/${character.id}`);
   }
 
-  /** Promote a gallery render to the character's poster image. */
-  function handleSetThumbnail(url: string) {
+  /** Save the whole sheet as one library asset (poster = front view). */
+  function handleSaveToLibrary() {
+    if (savedToLibrary || completedViews.length === 0) return;
+    const front = completedViews.find((view) => view.id === "front") ?? completedViews[0];
+    const frontView = sheetViewById(front.id);
+    const asset = {
+      id: `c_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
+      kind: "image" as const,
+      title: titleFromPrompt(spec.prompt || "AI character"),
+      prompt: composeCharacterPrompt(spec),
+      url: front.url,
+      variants: completedViews.map((view) => view.url),
+      posterUrl: front.url,
+      settings: characterSheetSettings(
+        spec,
+        frontView!,
+        renderParams,
+        uncensored,
+      ),
+      createdAt: Date.now(),
+      favorite: false,
+      mode: uncensored ? "Character Studio (Uncensored)" : "Character Studio",
+      meta: {
+        requestId: front.requestId ?? "",
+        seeds: completedViews.map((view) => view.seed ?? "").join(", "),
+        example: false,
+        look: spec.look,
+        nsfwLevel: spec.nsfwLevel,
+        rating: uncensored ? "Uncensored" : "Regular",
+        referenceThumb: reference?.dataUrl ?? "",
+        // View order mirrors `variants` so the panel can restore the sheet.
+        sheetOrder: completedViews.map((view) => view.id),
+        ...(galleryId ? { characterIds: [galleryId] } : {}),
+      } as Asset["meta"],
+    };
+    addAsset(asset);
+    setLastSavedAsset({ id: asset.id, meta: asset.meta });
+    setSavedToLibrary(true);
+    toast.push("Character sheet saved to your library.", "success");
+  }
+
+  /** Promote a sheet view to the character's poster image. */
+  function handleSetPoster(url: string) {
     if (!galleryId) return;
     updateCharacter(galleryId, { thumbnail: url });
-    toast.push("Thumbnail updated.", "success");
-  }
-
-  function handleDownload() {
-    if (!result) return;
-    const media = result.media[activeVariant] ?? result.media[0];
-    if (!media) return;
-    downloadMedia(media.url, `perabyte-character-${Date.now()}`);
-    toast.push("Your download has started.", "success");
-  }
-
-  function handleCancel() {
-    cancel();
-    goToStep(4);
-    setPhase("wizard");
+    toast.push("Poster updated.", "success");
   }
 
   /* ------------------------------ Not found ------------------------------ */
@@ -385,356 +387,6 @@ export function CharacterStudio({
     );
   }
 
-  /* ------------------------------ Generating ----------------------------- */
-  if (phase === "generating") {
-    const failed = job.phase === "failed";
-    return (
-      <div
-        ref={scrollRef}
-        className="mx-auto flex w-full max-w-[760px] flex-1 flex-col justify-center px-4 py-8 sm:px-6"
-      >
-        <div className="rounded-[20px] border border-border bg-raised p-6 text-center shadow-card sm:p-10">
-          {failed ? (
-            <>
-              <span className="inline-flex size-14 items-center justify-center rounded-full bg-danger-soft text-danger">
-                <Icon name="alert" size={24} />
-              </span>
-              <h2 className="mt-4 text-[19px] font-extrabold tracking-[-0.02em] text-ink">
-                Character generation failed
-              </h2>
-              <p className="mx-auto mt-1.5 max-w-sm text-[13px] text-ink-soft">
-                {job.phase === "failed" ? job.message : undefined}
-              </p>
-              <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
-                <Button variant="secondary" onClick={() => setPhase("wizard")}>
-                  Back to review
-                </Button>
-                {job.phase === "failed" && job.retryable && (
-                  <Button icon="refresh" onClick={handleGenerate}>
-                    Try again
-                  </Button>
-                )}
-              </div>
-            </>
-          ) : (
-            <>
-              <div
-                aria-hidden
-                className="mx-auto size-14 animate-spin rounded-full border-[3px] border-primary-soft border-t-primary"
-              />
-              <h2 className="mt-5 text-[19px] font-extrabold tracking-[-0.02em] text-ink">
-                Creating your character…
-              </h2>
-              <p className="mt-1 text-[13px] text-muted">
-                Your character is being created. This may take a few moments.
-              </p>
-
-              <ul className="mx-auto mt-6 max-w-xs space-y-2.5 text-left">
-                {GENERATING_STAGES.map((label, index) => {
-                  const done = index < stage || job.phase === "completed";
-                  const active = index === stage && job.phase !== "completed";
-                  return (
-                    <li
-                      key={label}
-                      className={`flex items-center gap-2.5 text-[13.5px] font-medium transition-colors ${
-                        done ? "text-ink" : active ? "text-primary" : "text-muted"
-                      }`}
-                      aria-current={active ? "step" : undefined}
-                    >
-                      <span
-                        className={`inline-flex size-5 shrink-0 items-center justify-center rounded-full ${
-                          done
-                            ? "bg-primary-strong text-white"
-                            : active
-                              ? "bg-primary-soft text-primary"
-                              : "bg-surface-2 text-muted"
-                        }`}
-                      >
-                        {done ? (
-                          <Icon name="check" size={11} />
-                        ) : active ? (
-                          <span className="size-2 animate-pulse rounded-full bg-primary" />
-                        ) : (
-                          <span className="size-1.5 rounded-full bg-border-strong" />
-                        )}
-                      </span>
-                      {label}
-                    </li>
-                  );
-                })}
-              </ul>
-
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="mt-7 text-[12.5px] font-semibold text-muted underline-offset-4 hover:text-ink hover:underline"
-              >
-                Cancel and go back
-              </button>
-
-              <div className="mx-auto mt-6 max-w-sm rounded-[14px] border border-border bg-primary-soft/50 p-3.5 text-left">
-                <p className="flex items-start gap-2 text-[12.5px] leading-snug text-ink-soft">
-                  <Icon name="sparkle" size={14} className="mt-0.5 shrink-0 text-primary" />
-                  <span>
-                    <span className="font-bold text-ink">Tip — </span>
-                    Save the finished character and reuse it across Solo and
-                    Story for a consistent look.
-                  </span>
-                </p>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  /* -------------------------------- Ready -------------------------------- */
-  if (phase === "ready" && result) {
-    const [w, h] = renderParams.aspect.split(":").map(Number);
-    const shown = result.media[activeVariant] ?? result.media[0] ?? null;
-    const look = lookById(spec.look);
-    return (
-      <div
-        ref={scrollRef}
-        className="mx-auto flex w-full max-w-[980px] flex-1 flex-col px-4 py-6 sm:px-6 lg:justify-center lg:py-8"
-      >
-        <div className="rounded-[20px] border border-border bg-raised p-5 shadow-card sm:p-7">
-          <div className="flex items-center gap-2.5">
-            <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-strong text-white">
-              <Icon name="check" size={16} />
-            </span>
-            <div className="min-w-0">
-              <h2 className="text-[19px] font-extrabold tracking-[-0.02em] text-ink">
-                Character Ready
-              </h2>
-              <p className="mt-0.5 text-[13px] text-muted">
-                Your character has been created successfully.
-              </p>
-            </div>
-            <Badge tone="primary" >
-              <Icon name="sparkle" size={11} /> {look ? look.label : "Custom"}
-            </Badge>
-          </div>
-
-          <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(250px,320px)]">
-            <div className="min-w-0">
-              {/* Cap width by the aspect ratio so a portrait render never
-                  grows taller than the viewport (which would crop it). */}
-              <div
-                className="mx-auto w-full"
-                style={{ maxWidth: `calc(62vh * ${w} / ${h})` }}
-              >
-                <MediaFrame
-                  src={shown?.url ?? null}
-                  alt={spec.prompt || "Generated character"}
-                  ratio={`${w}/${h}`}
-                  rounded="rounded-[16px]"
-                  priority
-                  className="w-full border border-border"
-                />
-              </div>
-              {result.media.length > 1 && (
-                <div className="mt-3 flex gap-2">
-                  {result.media.map((media, index) => (
-                    <button
-                      key={media.id}
-                      type="button"
-                      onClick={() => setActiveVariant(index)}
-                      aria-label={`Show variation ${index + 1}`}
-                      aria-pressed={index === activeVariant}
-                      className={`overflow-hidden rounded-[10px] border-2 transition-all ${
-                        index === activeVariant
-                          ? "border-primary"
-                          : "border-transparent hover:border-border-strong"
-                      }`}
-                    >
-                      <MediaFrame
-                        src={media.url}
-                        alt=""
-                        ratio="4/5"
-                        rounded="rounded-[8px]"
-                        className="w-12"
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="flex min-w-0 flex-col gap-2.5">
-              {/* Library actions: edit mode persists back to the record; new
-                  mode saves a reusable character (variation when parented). */}
-              {mode === "edit" && characterId ? (
-                savedCharacterId ? (
-                  <p className="flex items-center gap-2 rounded-[12px] border border-primary/30 bg-primary-soft/60 px-3 py-2.5 text-[12.5px] font-semibold text-primary">
-                    <Icon name="check" size={14} />
-                    Changes saved to the character.
-                  </p>
-                ) : (
-                  <div className="rounded-[14px] border border-primary/30 bg-primary-soft/40 p-3">
-                    <p className="text-[12.5px] font-bold text-ink">Update this character</p>
-                    <p className="mt-0.5 text-[11.5px] text-muted">
-                      Save the edited look back to “{saveName}”.
-                    </p>
-                    <div className="mt-2 flex gap-2">
-                      <input
-                        type="text"
-                        value={saveName}
-                        onChange={(e) => setSaveName(e.target.value)}
-                        placeholder="Character name"
-                        aria-label="Character name"
-                        maxLength={40}
-                        className="h-9 min-w-0 flex-1 rounded-[10px] border border-border-strong bg-raised px-2.5 text-[12.5px] text-ink placeholder:text-muted focus:border-primary focus:outline-none"
-                      />
-                      <Button
-                        size="sm"
-                        icon="check"
-                        loading={savingChanges}
-                        disabled={!saveName.trim()}
-                        onClick={handleSaveChanges}
-                      >
-                        Save changes
-                      </Button>
-                    </div>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      icon="copy"
-                      className="mt-2 w-full"
-                      onClick={handleSaveAsCopy}
-                    >
-                      Save as copy
-                    </Button>
-                  </div>
-                )
-              ) : savedCharacterId ? (
-                <p className="flex items-center gap-2 rounded-[12px] border border-primary/30 bg-primary-soft/60 px-3 py-2.5 text-[12.5px] font-semibold text-primary">
-                  <Icon name="check" size={14} />
-                  Saved — attach it from the Character pill in Solo or Story.
-                </p>
-              ) : (
-                <div className="rounded-[14px] border border-primary/30 bg-primary-soft/40 p-3">
-                  <p className="text-[12.5px] font-bold text-ink">
-                    Save this character for reuse
-                  </p>
-                  <p className="mt-0.5 text-[11.5px] text-muted">
-                    {parentName
-                      ? `Will be saved as a variation of ${parentName}.`
-                      : "Keeps the exact look for Solo scenes and Story frames."}
-                  </p>
-                  <div className="mt-2 flex gap-2">
-                    <input
-                      type="text"
-                      value={saveName}
-                      onChange={(e) => setSaveName(e.target.value)}
-                      placeholder="Character name, e.g. Maya"
-                      aria-label="Character name"
-                      maxLength={40}
-                      className="h-9 min-w-0 flex-1 rounded-[10px] border border-border-strong bg-raised px-2.5 text-[12.5px] text-ink placeholder:text-muted focus:border-primary focus:outline-none"
-                    />
-                    <Button
-                      size="sm"
-                      icon="user"
-                      disabled={!saveName.trim()}
-                      onClick={handleSaveCharacter}
-                    >
-                      Save
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Renders strip: every render tagged to this character. */}
-              {galleryId && renders.length > 0 && (
-                <div className="rounded-[14px] border border-border bg-surface p-3">
-                  <p className="text-[12px] font-bold text-ink">
-                    Renders ({renders.length})
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {renders.map((render) => (
-                      <button
-                        key={render.id}
-                        type="button"
-                        onClick={() => handleSetThumbnail(render.url)}
-                        title="Set as thumbnail"
-                        aria-label={`Set render of ${render.title} as thumbnail`}
-                        className={`relative overflow-hidden rounded-[10px] border-2 transition-all ${
-                          render.url === (getCharacter(galleryId)?.thumbnail ?? null)
-                            ? "border-primary"
-                            : "border-transparent hover:border-border-strong"
-                        }`}
-                      >
-                        <MediaFrame
-                          src={render.url}
-                          alt={render.title}
-                          ratio="4/5"
-                          rounded="rounded-[8px]"
-                          className="w-[64px]"
-                          sensitive
-                        />
-                      </button>
-                    ))}
-                  </div>
-                  <p className="mt-1.5 text-[11px] text-muted">
-                    Click a render to set it as the character's thumbnail.
-                  </p>
-                </div>
-              )}
-
-              <Button icon="download" onClick={handleDownload}>
-                Download
-              </Button>
-              <Button variant="secondary" icon="refresh" onClick={handleRegenerate}>
-                Generate Another
-              </Button>
-              <Button
-                variant="secondary"
-                icon={saved ? "check" : "history"}
-                disabled={saved}
-                onClick={handleSave}
-              >
-                {saved ? "Saved to library" : "Save to library"}
-              </Button>
-              <LinkButton href="/character" variant="ghost" size="sm" iconRight="arrow-right">
-                Open library
-              </LinkButton>
-
-              <div className="mt-2 rounded-[14px] border border-border bg-surface p-4">
-                <h3 className="text-[13px] font-bold text-ink">Character Details</h3>
-                <div className="mt-2 space-y-1.5">
-                  {[
-                    ["Age", `${spec.age} years old`],
-                    ["Ethnicity", spec.ethnicity === "Not specified" ? "—" : spec.ethnicity],
-                    ["Country", spec.country === "Not specified" ? "—" : spec.country],
-                    ["Build", spec.build],
-                    ["Style", spec.style],
-                    ["Aspect Ratio", renderParams.aspect],
-                    ["Resolution", renderParams.resolution],
-                    ...(uncensored
-                      ? ([["NSFW Level", String(spec.nsfwLevel)]] as const)
-                      : []),
-                  ].map(([label, value]) => (
-                    <div key={label} className="flex items-baseline justify-between gap-3">
-                      <span className="text-[12px] text-muted">{label}</span>
-                      <span className="text-right text-[12px] font-semibold text-ink">
-                        {value}
-                      </span>
-                    </div>
-                  ))}
-                  <p className="whitespace-pre-wrap border-t border-border pt-2 text-[12px] leading-snug text-ink-soft">
-                    {spec.prompt}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  /* -------------------------------- Wizard ------------------------------- */
   if (!initialized) {
     return (
       <div className="mx-auto w-full max-w-[720px] px-4 py-16 sm:px-6">
@@ -748,21 +400,14 @@ export function CharacterStudio({
     );
   }
 
-  const previewPanel = (
-    <CharacterPreviewPanel
-      spec={spec}
-      uncensored={uncensored}
-      modelId={characterModelId}
-      loras={renderParams.loras}
-    />
-  );
+  const canRender = spec.prompt.trim().length > 0;
 
   return (
     <div
       ref={scrollRef}
       className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-4 py-5 sm:px-6 lg:py-7"
     >
-      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(280px,320px)] lg:items-start lg:gap-6">
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] lg:items-start lg:gap-6">
         <div className="flex min-w-0 flex-col">
           <div className="flex items-center gap-2.5">
             <button
@@ -787,111 +432,173 @@ export function CharacterStudio({
                 </p>
               )}
             </div>
-            <button
-              type="button"
-              onClick={() => setPreviewOpen(true)}
-              className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-border bg-raised px-3 py-1.5 text-[12.5px] font-semibold text-ink-soft transition-colors hover:border-border-strong hover:text-ink lg:hidden"
-            >
-              <Icon name="user" size={14} />
-              Preview
-            </button>
           </div>
 
-          <div className="mt-4 sm:mt-5">
-            <Stepper
-              current={step}
-              maxVisited={maxVisited}
-              onStepClick={(next) => goToStep(next)}
+          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <Segmented<CreationMode>
+              ariaLabel="Creation mode"
+              value={creationMode}
+              onChange={switchMode}
+              options={[
+                { value: "simple", label: "Simple", icon: "sparkle" },
+                { value: "details", label: "Detailed", icon: "sliders" },
+              ]}
             />
+            <p className="hidden text-[12px] text-muted sm:block">
+              {creationMode === "simple"
+                ? "One prompt, straight to the sheet."
+                : "Full control, step by step."}
+            </p>
           </div>
+
+          {creationMode === "details" && (
+            <div className="mt-4 sm:mt-5">
+              <Stepper
+                current={step}
+                maxVisited={maxVisited}
+                onStepClick={(next) => goToStep(next)}
+              />
+            </div>
+          )}
 
           <div className="mt-4 rounded-[20px] border border-border bg-raised p-5 shadow-card sm:p-7">
-            {step === 1 && (
-              <StepDetails
+            {creationMode === "simple" ? (
+              <StepSimple
                 spec={spec}
                 patch={patchSpec}
                 promptError={promptError}
-                onBack={backToLibrary}
-                onNext={handleDetailsNext}
+                onSwitchToDetailed={() => switchMode("details")}
               />
-            )}
-            {step === 2 && (
-              <StepAppearance
-                spec={spec}
-                patch={patchSpec}
-                uncensored={uncensored}
-                onBack={() => goToStep(1)}
-                onNext={() => goToStep(3)}
-              />
-            )}
-            {step === 3 && (
-              <StepAdvanced
-                spec={spec}
-                patch={patchSpec}
-                uncensored={uncensored}
-                reference={reference}
-                onReferenceChange={setReference}
-                onBack={() => goToStep(2)}
-                onNext={() => goToStep(4)}
-              />
-            )}
-            {step === 4 && (
-              <StepReview
-                spec={spec}
-                uncensored={uncensored}
-                reference={reference}
-                renderParams={renderParams}
-                onRenderParamsChange={patchRenderParams}
-                models={catalog.models}
-                modelId={characterModelId}
-                onModelChange={(nextModel) => setSelectedModel("image", nextModel)}
-                loraCatalog={catalog.loras}
-                loraMaxPerRequest={catalog.loraMaxPerRequest}
-                loraCapable={characterModel?.loraCapable === true}
-                loraModel={characterModel?.model}
-                allowNsfwLoras={uncensored}
-                loras={renderParams.loras}
-                onLorasChange={(loras) => patchRenderParams({ loras })}
-                onBack={() => goToStep(3)}
-                onGenerate={handleGenerate}
-              />
+            ) : (
+              <>
+                {step === 1 && (
+                  <StepDetails
+                    spec={spec}
+                    patch={patchSpec}
+                    promptError={promptError}
+                    onBack={backToLibrary}
+                    onNext={handleDetailsNext}
+                  />
+                )}
+                {step === 2 && (
+                  <StepAppearance
+                    spec={spec}
+                    patch={patchSpec}
+                    uncensored={uncensored}
+                    onBack={() => goToStep(1)}
+                    onNext={() => goToStep(3)}
+                  />
+                )}
+                {step === 3 && (
+                  <StepAdvanced
+                    spec={spec}
+                    patch={patchSpec}
+                    uncensored={uncensored}
+                    reference={reference}
+                    onReferenceChange={setReference}
+                    onBack={() => goToStep(2)}
+                    onNext={() => goToStep(4)}
+                  />
+                )}
+                {step === 4 && (
+                  <StepReview
+                    spec={spec}
+                    uncensored={uncensored}
+                    reference={reference}
+                    renderParams={renderParams}
+                    onRenderParamsChange={patchRenderParams}
+                    models={catalog.models}
+                    modelId={characterModelId}
+                    onModelChange={(nextModel) => setSelectedModel("image", nextModel)}
+                    loraCatalog={catalog.loras}
+                    loraMaxPerRequest={catalog.loraMaxPerRequest}
+                    loraCapable={characterModel?.loraCapable === true}
+                    loraModel={characterModel?.model}
+                    allowNsfwLoras={uncensored}
+                    loras={renderParams.loras}
+                    onLorasChange={(loras) => patchRenderParams({ loras })}
+                    onBack={() => goToStep(3)}
+                    onGenerate={requestSheetBatch}
+                  />
+                )}
+              </>
             )}
           </div>
 
-          <p className="mt-3 text-center text-[12px] text-muted">
-            Step {step} of {CHARACTER_STEPS.length} · {CHARACTER_STEPS[step - 1]}
-          </p>
+          {creationMode === "details" && (
+            <p className="mt-3 text-center text-[12px] text-muted">
+              Step {step} of {CHARACTER_STEPS.length} · {CHARACTER_STEPS[step - 1]}
+            </p>
+          )}
         </div>
 
-        <aside className="mt-6 hidden lg:sticky lg:top-6 lg:mt-0 lg:block">
-          {previewPanel}
-        </aside>
-      </div>
-
-      {/* Mobile preview sheet */}
-      {previewOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Live preview">
+        {/* Mobile drawer backdrop */}
+        {sheetOpen && (
           <button
             type="button"
-            aria-label="Close preview"
-            onClick={() => setPreviewOpen(false)}
-            className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+            aria-label="Close character sheet"
+            onClick={() => setSheetOpen(false)}
+            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] lg:hidden"
           />
-          <div className="absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-[20px] bg-raised p-3 shadow-2xl">
+        )}
+
+        {/* One sheet instance: a sticky aside on desktop, a bottom drawer on
+            mobile — never two mounts, so renders always keep running. */}
+        <aside
+          className={
+            sheetOpen
+              ? "fixed inset-x-0 bottom-0 z-50 max-h-[86dvh] overflow-y-auto rounded-t-[20px] border-t border-border bg-raised p-3 shadow-2xl"
+              : "mt-6 hidden lg:sticky lg:top-6 lg:mt-0 lg:block"
+          }
+        >
+          {sheetOpen && (
             <div className="mb-2 flex items-center justify-between px-1">
-              <span className="text-[13px] font-bold text-ink">Live preview</span>
+              <span className="text-[13px] font-bold text-ink">Character sheet</span>
               <button
                 type="button"
                 aria-label="Close"
-                onClick={() => setPreviewOpen(false)}
+                onClick={() => setSheetOpen(false)}
                 className="inline-flex size-8 items-center justify-center rounded-full bg-surface-2 text-ink-soft"
               >
                 <Icon name="close" size={14} />
               </button>
             </div>
-            {previewPanel}
-          </div>
-        </div>
+          )}
+          <CharacterSheetPanel
+            spec={spec}
+            uncensored={uncensored}
+            renderParams={renderParams}
+            batchRequest={batchRequest}
+            canRender={canRender}
+            renderHint="Describe your character first — then render the sheet."
+            mode={mode}
+            saveName={saveName}
+            onNameChange={setSaveName}
+            parentName={parentName}
+            savedCharacterId={savedCharacterId}
+            savingChanges={savingChanges}
+            savedToLibrary={savedToLibrary}
+            initialViews={initialViews}
+            onViewsChange={handleViewsChange}
+            onSaveCharacter={handleSaveCharacter}
+            onSaveChanges={handleSaveChanges}
+            onSaveAsCopy={handleSaveAsCopy}
+            onSaveToLibrary={handleSaveToLibrary}
+            onSetPoster={handleSetPoster}
+          />
+        </aside>
+      </div>
+
+      {/* Mobile launcher pill */}
+      {!sheetOpen && (
+        <button
+          type="button"
+          onClick={() => setSheetOpen(true)}
+          className="fixed bottom-4 right-4 z-40 inline-flex items-center gap-1.5 rounded-full bg-primary-strong px-3.5 py-2 text-[12.5px] font-bold text-white shadow-lg lg:hidden"
+        >
+          <Icon name="grid" size={14} />
+          Sheet {completedViews.length}/6
+        </button>
       )}
     </div>
   );

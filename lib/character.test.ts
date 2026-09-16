@@ -12,9 +12,14 @@ import {
   composeSceneWithCharacter,
   composeSceneWithCharacters,
   MAX_SCENE_CHARACTERS,
+  SHEET_CHAIN_LEAD,
+  SHEET_VIEWS,
+  characterSheetSettings,
+  composeSheetPrompt,
   expressionOptions,
   personalityTemplates,
   sanitizeSpec,
+  sheetViewById,
   type CharacterSpec,
 } from "@/lib/character";
 
@@ -277,5 +282,136 @@ describe("characterGenerationSettings", () => {
     expect(uncensored.enhance).toBe(false);
     expect(uncensored.negativePrompt).toContain("underage");
     expect(uncensored.negativePrompt).not.toContain("nude,");
+  });
+});
+/* ------------------------------------------------------------------ */
+/* Freeform (Simple mode) identity                                     */
+/* ------------------------------------------------------------------ */
+
+describe("freeform specs", () => {
+  const freeform: CharacterSpec = {
+    ...DEFAULT_CHARACTER_SPEC,
+    freeform: true,
+    prompt: "A teal-haired courier with a chrome helmet",
+  };
+
+  it("renders the raw prompt alone — no defaulted anchor fields", () => {
+    const composed = composeCharacterPrompt(freeform);
+    expect(composed).toBe("A teal-haired courier with a chrome helmet");
+    expect(composed).not.toContain("25-year-old");
+    expect(composed).not.toContain("portrait of");
+  });
+
+  it("uses the prompt as the reuse anchor so scenes keep the identity", () => {
+    const scene = composeSceneWithCharacter("walking through a market", freeform, true);
+    expect(scene).toBe("A teal-haired courier with a chrome helmet, walking through a market");
+  });
+
+  it("labels freeform members in multi-character scenes", () => {
+    const second: CharacterSpec = {
+      ...DEFAULT_CHARACTER_SPEC,
+      prompt: "A broad-shouldered blacksmith",
+    };
+    const scene = composeSceneWithCharacters("a workshop", [freeform, second], true);
+    expect(scene).toContain("First: A teal-haired courier with a chrome helmet");
+    expect(scene).toContain("Second: an adult 25-year-old woman");
+  });
+
+  it("composes to empty when the freeform prompt is empty (render is gated on a prompt)", () => {
+    expect(composeCharacterPrompt({ ...freeform, prompt: "  " })).toBe("");
+  });
+
+  it("passes freeform through sanitizeSpec untouched", () => {
+    expect(sanitizeSpec(freeform, false).freeform).toBe(true);
+    expect(sanitizeSpec({ ...DEFAULT_CHARACTER_SPEC }, true).freeform).toBe(false);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Character sheet views                                               */
+/* ------------------------------------------------------------------ */
+
+describe("character sheet", () => {
+  it("has six ordered views with Full Front first as the identity base", () => {
+    expect(SHEET_VIEWS.map((view) => view.id)).toEqual([
+      "front",
+      "back",
+      "face",
+      "chest",
+      "hip",
+      "butt",
+    ]);
+    expect(SHEET_VIEWS[0].kind).toBe("full");
+    expect(SHEET_VIEWS.slice(1).every((view) => view.framing.length > 0)).toBe(true);
+  });
+
+  it("composes identity + framing for an unchained view", () => {
+    const prompt = composeSheetPrompt(DEFAULT_CHARACTER_SPEC, SHEET_VIEWS[0], false);
+    expect(prompt).toContain("portrait of an adult 25-year-old woman");
+    expect(prompt).toContain("full body character design sheet, standing front view");
+    expect(prompt).not.toContain(SHEET_CHAIN_LEAD);
+  });
+
+  it("leads chained views with the reference instruction", () => {
+    const prompt = composeSheetPrompt(DEFAULT_CHARACTER_SPEC, sheetViewById("face")!, true);
+    expect(prompt.startsWith(`${SHEET_CHAIN_LEAD}, `)).toBe(true);
+    expect(prompt).toContain("close-up portrait of the face");
+  });
+
+  it("uses the raw prompt for freeform characters", () => {
+    const spec = { ...DEFAULT_CHARACTER_SPEC, freeform: true, prompt: "A punk drummer" };
+    expect(composeSheetPrompt(spec, sheetViewById("hip")!, false)).toContain("A punk drummer");
+    expect(composeSheetPrompt(spec, sheetViewById("hip")!, false)).not.toContain("25-year-old");
+  });
+
+  it("renders one image per view, square for close-ups", () => {
+    const front = characterSheetSettings(
+      DEFAULT_CHARACTER_SPEC,
+      sheetViewById("front")!,
+      { aspect: "4:5", resolution: "720p" },
+      true,
+    );
+    expect(front.count).toBe(1);
+    expect(front.aspect).toBe("4:5");
+    expect(front.kind).toBe("image");
+
+    const face = characterSheetSettings(
+      DEFAULT_CHARACTER_SPEC,
+      sheetViewById("face")!,
+      { aspect: "4:5", resolution: "720p" },
+      true,
+    );
+    expect(face.count).toBe(1);
+    expect(face.aspect).toBe("1:1");
+  });
+
+  it("follows the gate for sheet views exactly like the single render", () => {
+    const safe = characterSheetSettings(
+      DEFAULT_CHARACTER_SPEC,
+      sheetViewById("butt")!,
+      { aspect: "9:16", resolution: "720p" },
+      false,
+    );
+    expect(safe.safe).toBe(true);
+    expect(safe.negativePrompt).toContain("nsfw");
+
+    const uncensored = characterSheetSettings(
+      DEFAULT_CHARACTER_SPEC,
+      sheetViewById("butt")!,
+      { aspect: "9:16", resolution: "720p" },
+      true,
+    );
+    expect(uncensored.safe).toBe(false);
+  });
+
+  it("keeps LoRA selections on sheet views", () => {
+    const loras = [{ loraId: "mystic-x", strength: 80 }];
+    const settings = characterSheetSettings(
+      DEFAULT_CHARACTER_SPEC,
+      sheetViewById("front")!,
+      { aspect: "9:16", resolution: "720p", loras },
+      true,
+    );
+    expect(settings.loras).toEqual(loras);
   });
 });
