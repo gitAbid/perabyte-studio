@@ -7,6 +7,7 @@ import type {
   ProviderSettingsUpdate,
   ProviderView,
 } from "@/lib/services/provider-settings.service";
+import { SectionShell } from "@/components/settings/shared";
 
 type OnUpdate = (patch: ProviderSettingsUpdate) => Promise<void>;
 
@@ -33,7 +34,12 @@ export function ProvidersSection({
   const [expanded, setExpanded] = useState<string | null>(null);
 
   return (
-    <div className="divide-y divide-border overflow-hidden rounded-[14px] border border-border bg-raised">
+    <SectionShell
+      icon="chip"
+      title="Providers"
+      description="Enable providers and manage API keys"
+    >
+      <div className="divide-y divide-border overflow-hidden rounded-[14px] border border-border bg-raised">
       {providers.map((provider) => (
         <ProviderRow
           key={provider.id}
@@ -46,7 +52,8 @@ export function ProvidersSection({
           onUpdate={onUpdate}
         />
       ))}
-    </div>
+      </div>
+    </SectionShell>
   );
 }
 

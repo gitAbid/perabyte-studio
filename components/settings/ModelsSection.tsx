@@ -7,6 +7,7 @@ import type {
   ProviderSettingsUpdate,
   ProviderView,
 } from "@/lib/services/provider-settings.service";
+import { SectionShell } from "@/components/settings/shared";
 
 type OnUpdate = (patch: ProviderSettingsUpdate) => Promise<void>;
 
@@ -28,7 +29,12 @@ export function ModelsSection({
   const query = filter.trim().toLowerCase();
 
   return (
-    <div className="space-y-4">
+    <SectionShell
+      icon="grid"
+      title="Models"
+      description="Choose which models appear in the pickers"
+    >
+      <div className="space-y-4">
       <label className="relative block">
         <Icon
           name="search"
@@ -52,7 +58,8 @@ export function ModelsSection({
           onUpdate={onUpdate}
         />
       ))}
-    </div>
+      </div>
+    </SectionShell>
   );
 }
 
@@ -209,17 +216,17 @@ function ModelPill({
       aria-label={`${model.enabled ? "Hide" : "Show"} ${model.label} in model pickers`}
       title={"hint" in model ? (model.hint ?? model.label) : model.label}
       onClick={() => toggleModel(provider, model.id, onUpdate)}
-      className={`flex min-w-0 items-center gap-2 rounded-[10px] border px-3 py-2 text-left transition-colors ${
+      className={`flex min-w-0 items-center gap-2.5 rounded-[10px] border px-3 py-2 text-left transition-colors ${
         model.enabled
-          ? "border-primary bg-primary-soft text-primary"
-          : "border-border bg-surface text-ink-soft hover:border-border-strong"
+          ? "border-border bg-raised text-ink hover:border-border-strong"
+          : "border-transparent bg-surface-2 text-muted hover:border-border-strong"
       }`}
     >
       <span
-        className={`grid size-4 shrink-0 place-items-center rounded-full border ${
+        className={`grid size-4 shrink-0 place-items-center rounded-full ${
           model.enabled
-            ? "border-primary bg-primary text-white"
-            : "border-border-strong"
+            ? "bg-primary text-white"
+            : "border border-border-strong bg-transparent"
         }`}
       >
         {model.enabled ? <Icon name="check" size={10} /> : null}
