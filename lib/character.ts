@@ -1,4 +1,5 @@
 import type { AspectKey, ResolutionKey } from "./constants";
+import type { LoraSelection } from "./types";
 
 /* ------------------------------------------------------------------ */
 /* Character spec                                                      */
@@ -766,6 +767,12 @@ const NUDE_OUTFITS = new Set([
  * so the same anchor keeps the character consistent wherever it is reused.
  */
 export function composeCharacterAnchor(spec: CharacterSpec): string {
+  return `portrait of ${composeAnchorBody(spec)}`;
+}
+
+/** The anchor without its "portrait of" lead — the reusable half that
+ * multi-character scenes label per person ("First: …; Second: …"). */
+function composeAnchorBody(spec: CharacterSpec): string {
   const parts: string[] = [];
 
   const noun = GENDER_NOUN[spec.gender] ?? "person";
@@ -776,7 +783,7 @@ export function composeCharacterAnchor(spec: CharacterSpec): string {
       : "";
   const origin =
     spec.country && spec.country !== "Not specified" ? ` from ${spec.country}` : "";
-  parts.push(`portrait of an adult ${age}-year-old${ethnicity} ${noun}${origin}, 18+`);
+  parts.push(`an adult ${age}-year-old${ethnicity} ${noun}${origin}, 18+`);
 
   const tone = SKIN_TONES.find((t) => t.id === spec.skinTone);
   if (tone) parts.push(`${tone.prompt} skin`);
@@ -853,6 +860,44 @@ export function composeSceneWithCharacter(
   return scene ? `${anchor}, ${scene}` : anchor;
 }
 
+/**
+ * Text-only identity is where image models are weakest, and it degrades fast
+ * as subjects pile up — three already reads as mush on most models.
+ */
+export const MAX_SCENE_CHARACTERS = 3;
+
+const ORDINALS = ["First", "Second", "Third"] as const;
+const COUNT_WORDS = ["", "one", "two", "three"] as const;
+
+/**
+ * Multi-character reuse path: each saved character's sanitized identity is
+ * labeled per person ("First: …; Second: …") instead of merged into one
+ * singular "portrait of …" anchor, so the model keeps the subjects distinct.
+ * Order follows the caller's array; entries the user deselected arrive as
+ * already-filtered input, nulls are tolerated and dropped.
+ */
+export function composeSceneWithCharacters(
+  scenePrompt: string,
+  specs: readonly (CharacterSpec | null | undefined)[],
+  uncensored: boolean,
+): string {
+  const scene = scenePrompt.trim();
+  const cast = specs
+    .filter((spec): spec is CharacterSpec => Boolean(spec))
+    .slice(0, MAX_SCENE_CHARACTERS);
+  if (cast.length === 0) return scene;
+  if (cast.length === 1) return composeSceneWithCharacter(scene, cast[0], uncensored);
+
+  const bodies = cast.map(
+    (spec) => composeAnchorBody(sanitizeSpec(spec, uncensored)),
+  );
+  const lead = `Scene with ${COUNT_WORDS[cast.length]} characters.`;
+  const people = bodies
+    .map((body, index) => `${ORDINALS[index]}: ${body}`)
+    .join(". ");
+  return scene ? `${lead} ${people}. ${scene}` : `${lead} ${people}`;
+}
+
 /** Blocks sexual content outright — applied while Uncensored Mode is off. */
 const NSFW_NEGATIVE =
   "nsfw, nude, nudity, topless, bottomless, sexual, explicit, erotic, lingerie, fetish, suggestive, underwear, underage, minor, child, teen";
@@ -864,6 +909,9 @@ export interface CharacterRenderParams {
   aspect: AspectKey;
   resolution: ResolutionKey;
   modelId?: string;
+  /** LoRA adapters for the render — generation-time styling, never part of
+   * the character identity. The server drops entries the model rejects. */
+  loras?: LoraSelection[];
 }
 
 /**
@@ -888,5 +936,6 @@ export function characterGenerationSettings(
     seed: "",
     duration: "5s" as const,
     ...(params.modelId ? { modelId: params.modelId } : {}),
+    ...(params.loras?.length ? { loras: params.loras } : {}),
   };
 }

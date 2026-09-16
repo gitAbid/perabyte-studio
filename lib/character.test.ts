@@ -10,6 +10,8 @@ import {
   composeCharacterAnchor,
   composeCharacterPrompt,
   composeSceneWithCharacter,
+  composeSceneWithCharacters,
+  MAX_SCENE_CHARACTERS,
   expressionOptions,
   personalityTemplates,
   sanitizeSpec,
@@ -184,6 +186,61 @@ describe("composeSceneWithCharacter", () => {
   });
 });
 
+describe("composeSceneWithCharacters", () => {
+  it("returns the scene untouched with an empty cast", () => {
+    expect(composeSceneWithCharacters("a cafe scene", [], false)).toBe("a cafe scene");
+    expect(composeSceneWithCharacters("a cafe scene", [null], false)).toBe("a cafe scene");
+  });
+
+  it("delegates to the single-character anchor for one entry", () => {
+    const composed = composeSceneWithCharacters(
+      "running through rain",
+      [DEFAULT_CHARACTER_SPEC],
+      false,
+    );
+    expect(composed).toBe(composeSceneWithCharacter("running through rain", DEFAULT_CHARACTER_SPEC, false));
+    expect(composed.startsWith("portrait of an adult")).toBe(true);
+  });
+
+  it("labels each cast member so the model keeps subjects distinct", () => {
+    const a = { ...DEFAULT_CHARACTER_SPEC, hairColor: "Black" };
+    const b = { ...DEFAULT_CHARACTER_SPEC, hairColor: "Blonde" };
+    const composed = composeSceneWithCharacters("sharing coffee", [a, b], false);
+    expect(composed).toContain("Scene with two characters.");
+    expect(composed).toMatch(/First: an adult 25-year-old/);
+    expect(composed).toContain("Second: an adult");
+    expect(composed).toContain("black hair");
+    expect(composed).toContain("blonde hair");
+    expect(composed.endsWith("sharing coffee")).toBe(true);
+    // No singular "portrait of" lead when the cast has more than one person.
+    expect(composed).not.toContain("portrait of");
+  });
+
+  it("sanitizes every member against the gate", () => {
+    const composed = composeSceneWithCharacters(
+      "a cafe scene",
+      [uncensoredSpec, uncensoredSpec],
+      false,
+    );
+    expect(composed).not.toMatch(/nude|seductive|nsfw/i);
+    expect(composed).toContain("fully clothed");
+  });
+
+  it("caps the cast and tolerates null entries", () => {
+    const three = Array.from({ length: 3 }, () => DEFAULT_CHARACTER_SPEC);
+    const capped = composeSceneWithCharacters(
+      "one scene",
+      [...three, DEFAULT_CHARACTER_SPEC, null, undefined],
+      false,
+    );
+    const labels = ["First:", "Second:", "Third:"].filter((label) =>
+      capped.includes(label),
+    );
+    expect(labels).toHaveLength(MAX_SCENE_CHARACTERS);
+    expect(capped).toContain("Scene with three characters.");
+  });
+});
+
 describe("characterGenerationSettings", () => {
   it("takes aspect, resolution and model from the params", () => {
     const settings = characterGenerationSettings(
@@ -196,6 +253,17 @@ describe("characterGenerationSettings", () => {
     expect(settings.modelId).toBe("test:model");
     expect(settings.kind).toBe("image");
     expect(settings.count).toBe(4);
+    expect(settings).not.toHaveProperty("loras");
+  });
+
+  it("carries LoRA selections through when present", () => {
+    const loras = [{ loraId: "mystic-x", strength: 80 }];
+    const settings = characterGenerationSettings(
+      DEFAULT_CHARACTER_SPEC,
+      { aspect: "9:16", resolution: "1080p", loras },
+      true,
+    );
+    expect(settings.loras).toEqual(loras);
   });
 
   it("follows the gate for safety, enhancement and the negative prompt", () => {

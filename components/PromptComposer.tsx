@@ -19,6 +19,7 @@ import type { ModelOption } from "@/lib/model-catalog";
 import { modelPickerSections } from "@/lib/model-picker-options";
 import { allowedOptions } from "@/lib/render-options";
 import { lorasForModel, visibleLoras } from "@/lib/lora-options";
+import { CastPicker } from "@/components/CastPicker";
 import { LORA_PRESETS, matchLoraPreset } from "@/lib/lora-presets";
 import type { LoraOption } from "@/lib/providers/sogni/lora-catalog";
 import { LoraPicker } from "./LoraPicker";
@@ -191,8 +192,8 @@ export function PromptComposer({
   title = "Prompt composer",
   headerBadge,
   characters,
-  characterId,
-  onCharacterChange,
+  characterIds,
+  onCharactersChange,
 }: {
   kind: "image" | "video";
   prompt: string;
@@ -227,10 +228,11 @@ export function PromptComposer({
   allowNsfwLoras?: boolean;
   title?: string;
   headerBadge?: ReactNode;
-  /** Saved characters for the attach pill; wired by Solo and Story. */
+  /** Saved characters for the cast picker; wired by Solo and Story. */
   characters?: SavedCharacter[];
-  characterId?: string | null;
-  onCharacterChange?: (characterId: string | null) => void;
+  /** Attached character ids, in anchor order. */
+  characterIds?: string[];
+  onCharactersChange?: (characterIds: string[]) => void;
 }) {
   const styles = kind === "video" ? VIDEO_STYLES : IMAGE_STYLES;
   // Presets the active model can render (unknown limits = show everything);
@@ -242,8 +244,9 @@ export function PromptComposer({
     loraCapable && loraModel && loraCatalog?.length
       ? visibleLoras(lorasForModel(loraCatalog, loraModel), allowNsfwLoras)
       : [];
-  const attachedCharacter =
-    characters?.find((character) => character.id === characterId) ?? null;
+  const attachedCharacters = (characters ?? []).filter((character) =>
+    characterIds?.includes(character.id),
+  );
 
   return (
     // The composer is the panel itself and stretches with its column, so the
@@ -261,26 +264,37 @@ export function PromptComposer({
         {headerBadge}
       </div>
 
-      {/* Attached character chip: the scene prompt stays scene-only — the
-          character's look and outfit are folded in at generate time. */}
-      {attachedCharacter && onCharacterChange && (
-        <div className="mt-3 flex shrink-0 items-center gap-2 rounded-[10px] border border-primary/30 bg-primary-soft/50 px-2.5 py-1.5">
-          <Icon name="user" size={13} className="shrink-0 text-primary" />
-          <span className="min-w-0 flex-1 truncate text-[12px] font-semibold text-primary">
-            {attachedCharacter.name}
-            <span className="ml-1.5 font-normal text-ink-soft">
-              — look and outfit added automatically
+      {/* Attached-cast chips: the scene prompt stays scene-only — each
+          character's look and outfit is folded in at generate time. */}
+      {attachedCharacters.length > 0 && onCharactersChange && (
+        <div className="mt-3 flex shrink-0 flex-wrap items-center gap-1.5 rounded-[10px] border border-primary/30 bg-primary-soft/50 px-2.5 py-1.5">
+          {attachedCharacters.map((character) => (
+            <span
+              key={character.id}
+              className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full bg-white/70 px-2 py-0.5"
+            >
+              <Icon name="user" size={12} className="shrink-0 text-primary" />
+              <span className="min-w-0 truncate text-[12px] font-semibold text-primary">
+                {character.name}
+              </span>
+              <button
+                type="button"
+                aria-label={`Detach ${character.name}`}
+                title={`Detach ${character.name}`}
+                onClick={() =>
+                  onCharactersChange(characterIds?.filter((id) => id !== character.id) ?? [])
+                }
+                className="inline-flex size-4 shrink-0 items-center justify-center rounded-full text-primary transition-colors hover:bg-primary-soft"
+              >
+                <Icon name="close" size={10} />
+              </button>
             </span>
+          ))}
+          <span className="min-w-0 flex-1 truncate text-[11.5px] font-normal text-ink-soft">
+            {attachedCharacters.length === 1
+              ? "— look and outfit added automatically"
+              : "— the cast's looks and outfits are added automatically"}
           </span>
-          <button
-            type="button"
-            aria-label={`Detach ${attachedCharacter.name}`}
-            title={`Detach ${attachedCharacter.name}`}
-            onClick={() => onCharacterChange(null)}
-            className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-primary transition-colors hover:bg-white"
-          >
-            <Icon name="close" size={11} />
-          </button>
         </div>
       )}
 
@@ -300,11 +314,13 @@ export function PromptComposer({
           maxLength={PROMPT_MAX}
           aria-invalid={promptError ? true : undefined}
           placeholder={
-            attachedCharacter
-              ? `Describe the scene — ${attachedCharacter.name}'s look and outfit are added automatically.`
-              : kind === "video"
-                ? "A cinematic shot of a car driving through a mountain road at sunset."
-                : "A serene mountain landscape with a lake, sunrise, and pine trees."
+            attachedCharacters.length === 1
+              ? `Describe the scene — ${attachedCharacters[0].name}'s look and outfit are added automatically.`
+              : attachedCharacters.length > 1
+                ? "Describe the scene — the cast's looks and outfits are added automatically."
+                : kind === "video"
+                  ? "A cinematic shot of a car driving through a mountain road at sunset."
+                  : "A serene mountain landscape with a lake, sunrise, and pine trees."
           }
           onChange={(e) => onPromptChange(e.target.value)}
           onKeyDown={(e) => {
@@ -354,20 +370,11 @@ export function PromptComposer({
             />
           );
         })()}
-        {onCharacterChange && (
-          <PillSelect
-            icon="user"
-            label="Character"
-            value={characterId ?? ""}
-            options={[
-              { value: "", label: "None" },
-              ...(characters ?? []).map((character) => ({
-                value: character.id,
-                label: character.name,
-                group: "Saved",
-              })),
-            ]}
-            onChange={(value) => onCharacterChange(value || null)}
+        {onCharactersChange && characters && characters.length > 0 && (
+          <CastPicker
+            characters={characters}
+            selectedIds={characterIds ?? []}
+            onChange={onCharactersChange}
           />
         )}
         {loraEntries.length > 0 && (

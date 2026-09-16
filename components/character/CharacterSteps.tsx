@@ -3,7 +3,11 @@
 import { useRef, useState, type DragEvent, type ReactNode } from "react";
 import { Icon, type IconName } from "@/components/Icon";
 import { MediaFrame } from "@/components/Media";
+import { LoraPicker } from "@/components/LoraPicker";
 import { Button, SelectField, Segmented, TextAreaField, Toggle } from "@/components/ui";
+import { lorasForModel, visibleLoras } from "@/lib/lora-options";
+import type { LoraOption } from "@/lib/providers/sogni/lora-catalog";
+import type { LoraSelection } from "@/lib/types";
 import { ASPECTS, PROMPT_MAX, RESOLUTIONS } from "@/lib/constants";
 import {
   AGE_MAX,
@@ -999,6 +1003,13 @@ export function StepReview({
   models,
   modelId,
   onModelChange,
+  loraCatalog,
+  loraMaxPerRequest = 8,
+  loraCapable = false,
+  loraModel,
+  allowNsfwLoras = false,
+  loras,
+  onLorasChange,
   onBack,
   onGenerate,
 }: {
@@ -1013,11 +1024,24 @@ export function StepReview({
   models?: { id: string; label: string; hint?: string; providerLabel: string }[];
   modelId?: string | null;
   onModelChange?: (modelId: string) => void;
+  /** LoRA catalog + raw model id — the adapter row renders only when the
+   * chosen model accepts adapters (krea2-class), mirroring Solo/Story. */
+  loraCatalog?: LoraOption[];
+  loraMaxPerRequest?: number;
+  loraCapable?: boolean;
+  loraModel?: string;
+  allowNsfwLoras?: boolean;
+  loras?: LoraSelection[];
+  onLorasChange?: (loras: LoraSelection[]) => void;
   onBack: () => void;
   onGenerate: () => void;
 }) {
   const look = lookById(spec.look);
   const tone = toneById(spec.skinTone);
+  const loraEntries =
+    loraCapable && loraModel && loraCatalog?.length
+      ? visibleLoras(lorasForModel(loraCatalog, loraModel), allowNsfwLoras)
+      : [];
 
   return (
     <div className="space-y-5">
@@ -1080,6 +1104,19 @@ export function StepReview({
                   </option>
                 ))}
               </select>
+            </ReviewRow>
+          )}
+          {onLorasChange && loraEntries.length > 0 && (
+            <ReviewRow label="LoRA">
+              {/* Relative anchor so the popover opens upward inside the card. */}
+              <span className="relative inline-flex">
+                <LoraPicker
+                  entries={loraEntries}
+                  selection={loras ?? []}
+                  onChange={onLorasChange}
+                  maxPerRequest={loraMaxPerRequest}
+                />
+              </span>
             </ReviewRow>
           )}
         </ReviewCard>
