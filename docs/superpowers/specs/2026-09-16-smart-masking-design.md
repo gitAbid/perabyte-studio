@@ -1,6 +1,11 @@
 # Smart Masking — Content-Aware 18+ Gating via Vision LLM
 
-Date: 2026-09-16 · Status: awaiting review · No code written yet.
+Date: 2026-09-16 · Status: **implemented** (merged d8c39fa, 2026-09-16; plan
+`docs/superpowers/plans/2026-09-16-smart-masking.md`). Verified live: image_url
+data-URI parts accepted, 1024px inline-image cap (handled via sharp downscale),
+502-outage degradation end-to-end. Pending: the successful verdict round-trip
+(`npm run verify:moderation <safe> <explicit>`) — Sogni's LLM gateway was down
+for the whole test window.
 
 ## 1. Problem
 
