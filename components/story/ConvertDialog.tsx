@@ -48,7 +48,7 @@ export function ConvertDialog({
       aria-modal="true"
       aria-label="Convert image story to video"
     >
-      <div className="w-full max-w-[340px] rounded-[16px] border border-border bg-white p-4 shadow-card">
+      <div className="w-full max-w-[340px] rounded-[16px] border border-border bg-raised p-4 shadow-card">
         <div className="flex items-start justify-between gap-2">
           <div>
             <p className="text-[14px] font-extrabold text-ink">Animate your story</p>

@@ -604,7 +604,7 @@ export default function StoryPage() {
             <Link
               href="/"
               aria-label="Back to home"
-              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-white text-ink-soft transition-colors hover:border-border-strong hover:text-ink"
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-raised text-ink-soft transition-colors hover:border-border-strong hover:text-ink"
             >
               <Icon name="arrow-left" size={16} />
             </Link>
@@ -766,7 +766,7 @@ export default function StoryPage() {
               className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-[12px] border px-3 text-[12.5px] font-semibold transition-colors ${
                 continuityOn
                   ? "border-primary/30 bg-primary-soft text-primary"
-                  : "border-border bg-white text-muted hover:text-ink"
+                  : "border-border bg-raised text-muted hover:text-ink"
               }`}
             >
               <Icon name="link" size={13} />
@@ -885,7 +885,7 @@ export default function StoryPage() {
                             <Icon name="link" size={12} /> Waiting for Scene {chainPredIndex + 1}
                           </span>
                         ) : (
-                          <span className="rounded-full bg-white px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-wide text-muted shadow-card">
+                          <span className="rounded-full bg-raised px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-wide text-muted shadow-card">
                             Queued
                           </span>
                         )}
@@ -906,7 +906,7 @@ export default function StoryPage() {
                         className="flex w-full flex-col items-center justify-center rounded-[14px] border border-dashed border-border-strong bg-surface px-3 text-center"
                         style={ratioStyle}
                       >
-                        <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-wide text-muted shadow-card">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-raised px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-wide text-muted shadow-card">
                           <Icon name="close" size={10} /> Canceled
                         </span>
                         <p className="mt-2 text-[11px] text-muted">
@@ -926,7 +926,7 @@ export default function StoryPage() {
                   ) : index === 0 && !typed ? (
                     // Scene 1: an active starting point, not a dashed slot.
                     <div
-                      className="flex flex-col items-center justify-center rounded-[16px] border border-border bg-white px-3 text-center shadow-card"
+                      className="flex flex-col items-center justify-center rounded-[16px] border border-border bg-raised px-3 text-center shadow-card"
                       style={ratioStyle}
                     >
                       <span className="inline-flex size-10 items-center justify-center rounded-full bg-primary-soft text-primary">
@@ -942,7 +942,7 @@ export default function StoryPage() {
                   ) : (
                     !typed && (
                       <div
-                        className="flex flex-col items-center justify-center rounded-[16px] border border-dashed border-border-strong bg-white px-3 text-center"
+                        className="flex flex-col items-center justify-center rounded-[16px] border border-dashed border-border-strong bg-raised px-3 text-center"
                         style={ratioStyle}
                       >
                         <Icon name="image" size={20} className="text-muted" />
@@ -1066,7 +1066,7 @@ export default function StoryPage() {
                 {storyId && (
                   <Link
                     href={`/results?id=${storyId}`}
-                    className="inline-flex h-9 items-center gap-2 rounded-[12px] border border-border-strong bg-white px-3.5 text-[13px] font-semibold text-ink transition-colors hover:border-muted hover:bg-surface"
+                    className="inline-flex h-9 items-center gap-2 rounded-[12px] border border-border-strong bg-raised px-3.5 text-[13px] font-semibold text-ink transition-colors hover:border-muted hover:bg-surface"
                   >
                     Open in Results
                     <Icon name="arrow-right" size={15} />

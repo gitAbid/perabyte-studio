@@ -159,7 +159,7 @@ export function StoryPlayer({
       role="dialog"
       aria-modal="true"
       aria-label="Story playback"
-      className="fixed inset-0 z-50 bg-ink"
+      className="fixed inset-0 z-50 bg-black"
     >
       {/* Stage — hard cuts between scenes for the uninterrupted-video feel. */}
       <div className="absolute inset-0 flex items-center justify-center">
@@ -196,7 +196,7 @@ export function StoryPlayer({
             type="button"
             onClick={replay}
             aria-label="Replay story"
-            className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-ink/60 text-white transition-colors hover:bg-ink/45"
+            className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60 text-white transition-colors hover:bg-black/45"
           >
             <span className="inline-flex size-14 items-center justify-center rounded-full bg-white/15 backdrop-blur">
               <Icon name="refresh" size={22} />
@@ -232,7 +232,7 @@ export function StoryPlayer({
           {scenes.map((entry, i) => (
             <span key={`${entry.url}-${i}`} className="h-1 flex-1 overflow-hidden rounded-full bg-white/25">
               <span
-                className="block h-full rounded-full bg-white transition-[width] duration-200 ease-linear"
+                className="block h-full rounded-full bg-raised transition-[width] duration-200 ease-linear"
                 style={{ width: `${i < index ? 100 : i === index ? progressPct : 0}%` }}
               />
             </span>

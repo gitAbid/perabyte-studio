@@ -89,7 +89,7 @@ export function CharacterLanding({
                       aria-label={`Delete ${character.name}`}
                       title={`Delete ${character.name}`}
                       onClick={() => onDeleteCharacter(character.id)}
-                      className="absolute -right-1.5 -top-1.5 inline-flex size-5 items-center justify-center rounded-full border border-border bg-white text-ink-soft shadow-card transition-colors hover:text-danger"
+                      className="absolute -right-1.5 -top-1.5 inline-flex size-5 items-center justify-center rounded-full border border-border bg-raised text-ink-soft shadow-card transition-colors hover:text-danger"
                     >
                       <Icon name="close" size={11} />
                     </button>

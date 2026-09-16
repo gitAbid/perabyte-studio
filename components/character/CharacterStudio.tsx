@@ -280,7 +280,7 @@ export function CharacterStudio() {
         ref={scrollRef}
         className="mx-auto flex w-full max-w-[760px] flex-1 flex-col justify-center px-4 py-8 sm:px-6"
       >
-        <div className="rounded-[20px] border border-border bg-white p-6 text-center shadow-card sm:p-10">
+        <div className="rounded-[20px] border border-border bg-raised p-6 text-center shadow-card sm:p-10">
           {failed ? (
             <>
               <span className="inline-flex size-14 items-center justify-center rounded-full bg-danger-soft text-danger">
@@ -386,7 +386,7 @@ export function CharacterStudio() {
         ref={scrollRef}
         className="mx-auto flex w-full max-w-[980px] flex-1 flex-col px-4 py-6 sm:px-6 lg:justify-center lg:py-8"
       >
-        <div className="rounded-[20px] border border-border bg-white p-5 shadow-card sm:p-7">
+        <div className="rounded-[20px] border border-border bg-raised p-5 shadow-card sm:p-7">
           <div className="flex items-center gap-2.5">
             <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-white">
               <Icon name="check" size={16} />
@@ -472,7 +472,7 @@ export function CharacterStudio() {
                       placeholder="Character name, e.g. Maya"
                       aria-label="Character name"
                       maxLength={40}
-                      className="h-9 min-w-0 flex-1 rounded-[10px] border border-border-strong bg-white px-2.5 text-[12.5px] text-ink placeholder:text-muted focus:border-primary focus:outline-none"
+                      className="h-9 min-w-0 flex-1 rounded-[10px] border border-border-strong bg-raised px-2.5 text-[12.5px] text-ink placeholder:text-muted focus:border-primary focus:outline-none"
                     />
                     <Button
                       size="sm"
@@ -564,7 +564,7 @@ export function CharacterStudio() {
               type="button"
               aria-label="Back to character overview"
               onClick={() => setPhase("landing")}
-              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-white text-ink-soft transition-colors hover:border-border-strong hover:text-ink"
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-raised text-ink-soft transition-colors hover:border-border-strong hover:text-ink"
             >
               <Icon name="arrow-left" size={16} />
             </button>
@@ -574,7 +574,7 @@ export function CharacterStudio() {
             <button
               type="button"
               onClick={() => setPreviewOpen(true)}
-              className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-3 py-1.5 text-[12.5px] font-semibold text-ink-soft transition-colors hover:border-border-strong hover:text-ink lg:hidden"
+              className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-border bg-raised px-3 py-1.5 text-[12.5px] font-semibold text-ink-soft transition-colors hover:border-border-strong hover:text-ink lg:hidden"
             >
               <Icon name="user" size={14} />
               Preview
@@ -589,7 +589,7 @@ export function CharacterStudio() {
             />
           </div>
 
-          <div className="mt-4 rounded-[20px] border border-border bg-white p-5 shadow-card sm:p-7">
+          <div className="mt-4 rounded-[20px] border border-border bg-raised p-5 shadow-card sm:p-7">
             {step === 1 && (
               <StepDetails
                 spec={spec}
@@ -652,9 +652,9 @@ export function CharacterStudio() {
             type="button"
             aria-label="Close preview"
             onClick={() => setPreviewOpen(false)}
-            className="absolute inset-0 bg-ink/40 backdrop-blur-[2px]"
+            className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
           />
-          <div className="absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-[20px] bg-white p-3 shadow-2xl">
+          <div className="absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-[20px] bg-raised p-3 shadow-2xl">
             <div className="mb-2 flex items-center justify-between px-1">
               <span className="text-[13px] font-bold text-ink">Live preview</span>
               <button

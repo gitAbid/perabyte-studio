@@ -19,7 +19,7 @@ export interface PillOption {
 const PILL_BASE =
   "inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12.5px] font-semibold transition-colors";
 const PILL_IDLE =
-  "border-border bg-white text-ink-soft hover:border-border-strong hover:text-ink";
+  "border-border bg-raised text-ink-soft hover:border-border-strong hover:text-ink";
 
 /**
  * A badge-shaped dropdown. Values live inline in the prompt box so the whole
@@ -186,7 +186,7 @@ export function PillSelect({
         <div
           role="listbox"
           aria-label={label}
-          className={`thin-scrollbar absolute bottom-[calc(100%+8px)] z-30 max-h-80 w-72 overflow-y-auto rounded-[14px] border border-border bg-white p-1.5 shadow-lift ${
+          className={`thin-scrollbar absolute bottom-[calc(100%+8px)] z-30 max-h-80 w-72 overflow-y-auto rounded-[14px] border border-border bg-raised p-1.5 shadow-lift ${
             align === "right" ? "right-0" : "left-0"
           }`}
         >

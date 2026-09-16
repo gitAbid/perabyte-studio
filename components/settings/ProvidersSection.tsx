@@ -124,7 +124,7 @@ function ProviderCard({
               onKeyDown={(event) => {
                 if (event.key === "Enter") saveKey();
               }}
-              className="h-9 w-full rounded-[10px] border border-border-strong bg-white px-3 text-[13px] text-ink placeholder:text-muted focus:border-primary focus:outline-none"
+              className="h-9 w-full rounded-[10px] border border-border-strong bg-raised px-3 text-[13px] text-ink placeholder:text-muted focus:border-primary focus:outline-none"
             />
             <button
               type="button"
@@ -240,7 +240,7 @@ function ModelRow({
         }`}
       >
         <span
-          className={`absolute top-0.5 size-4 rounded-full bg-white transition-all ${
+          className={`absolute top-0.5 size-4 rounded-full bg-raised transition-all ${
             checked ? "left-[18px]" : "left-0.5"
           }`}
         />

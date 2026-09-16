@@ -25,7 +25,7 @@ const VARIANTS: Record<Variant, string> = {
   primary:
     "bg-primary text-white hover:bg-primary-dark active:bg-primary-dark shadow-[0_1px_2px_rgba(37,99,235,0.35)]",
   secondary:
-    "bg-white text-ink border border-border-strong hover:border-muted hover:bg-surface",
+    "bg-raised text-ink border border-border-strong hover:border-muted hover:bg-surface",
   ghost: "bg-transparent text-ink hover:bg-surface-2",
   danger: "bg-danger text-white hover:brightness-110",
   text: "bg-transparent text-primary hover:underline underline-offset-4 px-0",
@@ -135,7 +135,7 @@ export function Card({
 }) {
   return (
     <Tag
-      className={`rounded-[20px] border border-border bg-white p-6 shadow-card ${className}`}
+      className={`rounded-[20px] border border-border bg-raised p-6 shadow-card ${className}`}
     >
       {children}
     </Tag>
@@ -233,7 +233,7 @@ export function SelectField({
           id={id}
           {...rest}
           value={value}
-          className={`h-11 w-full appearance-none rounded-[12px] border bg-white pl-3.5 pr-10 text-sm font-medium text-ink transition-colors hover:border-muted focus:border-primary focus:outline-none ${
+          className={`h-11 w-full appearance-none rounded-[12px] border bg-raised pl-3.5 pr-10 text-sm font-medium text-ink transition-colors hover:border-muted focus:border-primary focus:outline-none ${
             error ? "border-danger" : "border-border-strong"
           }`}
         >
@@ -285,7 +285,7 @@ export function TextAreaField({
         placeholder={placeholder}
         aria-invalid={error ? true : undefined}
         onChange={(e) => onChange(e.target.value)}
-        className={`w-full resize-y rounded-[12px] border bg-white px-3.5 py-3 text-sm leading-relaxed text-ink placeholder:text-muted focus:border-primary focus:outline-none ${
+        className={`w-full resize-y rounded-[12px] border bg-raised px-3.5 py-3 text-sm leading-relaxed text-ink placeholder:text-muted focus:border-primary focus:outline-none ${
           error ? "border-danger" : "border-border-strong"
         }`}
       />
@@ -326,7 +326,7 @@ export function Toggle({
         }`}
       >
         <span
-          className={`absolute top-0.5 size-5 rounded-full bg-white shadow-sm transition-all ${
+          className={`absolute top-0.5 size-5 rounded-full bg-raised shadow-sm transition-all ${
             checked ? "left-[22px]" : "left-0.5"
           }`}
         />
@@ -372,7 +372,7 @@ export function Segmented<T extends string>({
             } ${
               active
                 ? "bg-primary text-white shadow-sm"
-                : "text-ink-soft hover:bg-white"
+                : "text-ink-soft hover:bg-raised"
             }`}
           >
             {option.icon && <Icon name={option.icon} size={14} />}
@@ -430,7 +430,7 @@ function ToastRow({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   const [entered, setEntered] = useState(false);
   useEffect(() => setEntered(true), []);
   const tone = {
-    info: "border-border bg-white text-ink",
+    info: "border-border bg-raised text-ink",
     success: "border-[#bbf7d0] bg-[#f0fdf4] text-ink",
     error: "border-[#fecaca] bg-danger-soft text-ink",
   }[toast.tone];
@@ -475,7 +475,7 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center rounded-[20px] border border-dashed border-border-strong bg-surface px-6 py-14 text-center">
-      <span className="mb-4 inline-flex size-12 items-center justify-center rounded-full bg-white text-muted shadow-card">
+      <span className="mb-4 inline-flex size-12 items-center justify-center rounded-full bg-raised text-muted shadow-card">
         <Icon name={icon} size={22} />
       </span>
       <h3 className="text-base font-bold text-ink">{title}</h3>
@@ -506,9 +506,9 @@ export function ConfirmDialog({
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
     >
-      <div className="w-full max-w-sm rounded-[20px] border border-border bg-white p-6 shadow-lift">
+      <div className="w-full max-w-sm rounded-[20px] border border-border bg-raised p-6 shadow-lift">
         <h2 className="text-base font-bold text-ink">{title}</h2>
         <p className="mt-2 text-sm text-muted">{body}</p>
         <div className="mt-5 flex justify-end gap-2">

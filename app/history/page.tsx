@@ -155,7 +155,7 @@ export default function HistoryPage() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search titles and prompts"
             aria-label="Search history"
-            className="h-11 w-full rounded-[12px] border border-border-strong bg-white pl-9 pr-3 text-sm text-ink placeholder:text-muted focus:border-primary focus:outline-none"
+            className="h-11 w-full rounded-[12px] border border-border-strong bg-raised pl-9 pr-3 text-sm text-ink placeholder:text-muted focus:border-primary focus:outline-none"
           />
         </div>
 
@@ -165,7 +165,7 @@ export default function HistoryPage() {
             value={sort}
             onChange={(e) => setSort(e.target.value as Sort)}
             aria-label="Sort history"
-            className="h-11 rounded-[12px] border border-border-strong bg-white px-3 text-sm font-medium text-ink focus:border-primary focus:outline-none"
+            className="h-11 rounded-[12px] border border-border-strong bg-raised px-3 text-sm font-medium text-ink focus:border-primary focus:outline-none"
           >
             <option value="newest">Newest first</option>
             <option value="oldest">Oldest first</option>
@@ -265,7 +265,7 @@ export default function HistoryPage() {
           {visible.map((asset) => (
             <li
               key={asset.id}
-              className={`relative flex items-center gap-4 rounded-[16px] border bg-white p-3 shadow-card transition-shadow hover:shadow-lift ${
+              className={`relative flex items-center gap-4 rounded-[16px] border bg-raised p-3 shadow-card transition-shadow hover:shadow-lift ${
                 manage && selected.has(asset.id)
                   ? "border-primary"
                   : "border-border"
@@ -281,7 +281,7 @@ export default function HistoryPage() {
                   className={`flex size-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
                     selected.has(asset.id)
                       ? "border-primary bg-primary text-white"
-                      : "border-border-strong bg-white text-transparent hover:border-muted"
+                      : "border-border-strong bg-raised text-transparent hover:border-muted"
                   }`}
                 >
                   <Icon name="check" size={13} />
@@ -362,7 +362,7 @@ export default function HistoryPage() {
                         />
                         <div
                           role="menu"
-                          className="absolute right-0 top-11 z-20 w-52 rounded-[14px] border border-border bg-white p-1.5 shadow-lift"
+                          className="absolute right-0 top-11 z-20 w-52 rounded-[14px] border border-border bg-raised p-1.5 shadow-lift"
                         >
                           <MenuItem
                             icon="image"

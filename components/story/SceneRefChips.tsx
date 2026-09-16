@@ -92,7 +92,7 @@ export function SceneRefChips({
             type="button"
             disabled={disabled || busy !== null}
             onClick={() => input.current?.click()}
-            className="flex aspect-video w-full flex-col items-center justify-center gap-1 rounded-[10px] border border-dashed border-border-strong bg-white text-muted transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
+            className="flex aspect-video w-full flex-col items-center justify-center gap-1 rounded-[10px] border border-dashed border-border-strong bg-raised text-muted transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
           >
             <Icon name={busy === slot ? "clock" : "upload"} size={14} />
             <span className="text-[10px] font-semibold">

@@ -21,7 +21,7 @@ export default function NotFound() {
         </Link>
         <Link
           href="/history"
-          className="inline-flex h-11 items-center rounded-[12px] border border-border-strong bg-white px-4 text-sm font-semibold text-ink hover:border-muted"
+          className="inline-flex h-11 items-center rounded-[12px] border border-border-strong bg-raised px-4 text-sm font-semibold text-ink hover:border-muted"
         >
           Open History
         </Link>

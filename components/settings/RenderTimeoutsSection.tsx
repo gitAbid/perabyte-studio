@@ -71,7 +71,7 @@ function TimeoutField({
               commit();
             }
           }}
-          className="h-8 w-16 rounded-[9px] border border-border-strong bg-white px-2.5 text-right text-[12.5px] tabular-nums text-ink focus:border-primary focus:outline-none"
+          className="h-8 w-16 rounded-[9px] border border-border-strong bg-raised px-2.5 text-right text-[12.5px] tabular-nums text-ink focus:border-primary focus:outline-none"
         />
         <span className="text-[11.5px] text-muted">min</span>
       </span>

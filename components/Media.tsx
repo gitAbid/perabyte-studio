@@ -64,8 +64,8 @@ function SensitiveVeil({
   }
 
   return (
-    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-ink/25 text-center">
-      <span className="rounded-full bg-ink/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white">
+    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black/25 text-center">
+      <span className="rounded-full bg-black/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-white">
         18+
       </span>
       {detailed && (
@@ -81,7 +81,7 @@ function SensitiveVeil({
         onKeyDown={(event) => {
           if (event.key === "Enter" || event.key === " ") reveal(event);
         }}
-        className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[12px] font-semibold text-ink shadow-card transition-colors hover:bg-surface-2"
+        className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-raised px-3 py-1.5 text-[12px] font-semibold text-ink shadow-card transition-colors hover:bg-surface-2"
       >
         <Icon name="eye" size={13} />
         Show
@@ -181,7 +181,7 @@ function VideoFrame({
 
   return (
     <div
-      className={`relative overflow-hidden bg-ink ${
+      className={`relative overflow-hidden bg-black ${
         fit ? "flex h-full w-full items-center justify-center" : "bg-surface-2"
       } ${rounded} ${className}`}
       style={fit ? undefined : { aspectRatio: ratio }}
@@ -329,7 +329,7 @@ function ImageFrame({
                   retry();
                 }
               }}
-              className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-border-strong bg-white px-2.5 py-1 text-[12px] font-semibold text-ink hover:border-muted"
+              className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-border-strong bg-raised px-2.5 py-1 text-[12px] font-semibold text-ink hover:border-muted"
             >
               <Icon name="refresh" size={13} />
               Retry
@@ -416,7 +416,7 @@ export function VideoStage({
     return (
       <div
         ref={shellRef}
-        className={`relative overflow-hidden rounded-[20px] bg-ink ${className}`}
+        className={`relative overflow-hidden rounded-[20px] bg-black ${className}`}
         style={
           fit
             ? (fitStyle ?? {
@@ -438,7 +438,7 @@ export function VideoStage({
           preload="metadata"
           aria-label={title}
           onError={() => setVideoFailed(true)}
-          className={`size-full bg-ink object-contain ${masked ? BLUR_CLASSES : ""}`}
+          className={`size-full bg-black object-contain ${masked ? BLUR_CLASSES : ""}`}
         />
         {videoFailed && <VideoUnavailable hint="This video could not be loaded — regenerate it." />}
         {masked && <SensitiveVeil onReveal={reveal} detailed />}
@@ -451,7 +451,7 @@ export function VideoStage({
   return (
     <div
       ref={shellRef}
-      className={`group relative overflow-hidden rounded-[20px] bg-ink ${className}`}
+      className={`group relative overflow-hidden rounded-[20px] bg-black ${className}`}
       style={
         fit
           ? (fitStyle ?? {
@@ -491,7 +491,7 @@ export function VideoStage({
           }}
         >
           <span
-            className="absolute inset-y-0 left-0 rounded-full bg-white"
+            className="absolute inset-y-0 left-0 rounded-full bg-raised"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -529,7 +529,7 @@ export function VideoStage({
         </div>
       </div>
 
-      <span className="absolute left-3 top-3 rounded-full bg-ink/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white/90 backdrop-blur">
+      <span className="absolute left-3 top-3 rounded-full bg-black/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white/90 backdrop-blur">
         Preview render · {duration}s
       </span>
 

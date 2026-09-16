@@ -341,7 +341,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
             <Link
               href="/"
               aria-label="Back to home"
-              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-white text-ink-soft transition-colors hover:border-border-strong hover:text-ink"
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-raised text-ink-soft transition-colors hover:border-border-strong hover:text-ink"
             >
               <Icon name="arrow-left" size={16} />
             </Link>
@@ -463,7 +463,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
                 className="relative flex flex-col items-center justify-center rounded-[16px] border border-dashed border-border-strong px-6 text-center"
                 style={fitBox}
               >
-                <span className="inline-flex size-12 items-center justify-center rounded-full bg-white text-muted shadow-card">
+                <span className="inline-flex size-12 items-center justify-center rounded-full bg-raised text-muted shadow-card">
                   <Icon name={kind === "video" ? "video" : "image"} size={22} />
                 </span>
                 <p className="mt-3.5 text-[15px] font-bold text-ink">
@@ -472,7 +472,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
                 <p className="mt-1 max-w-xs text-[13px] text-muted">
                   Add a prompt and configure your settings to get started.
                 </p>
-                <span className="absolute bottom-3 right-3 rounded-full bg-white px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-wide text-muted shadow-card">
+                <span className="absolute bottom-3 right-3 rounded-full bg-raised px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-wide text-muted shadow-card">
                   {settings.aspect} · {settings.resolution}
                 </span>
               </div>
@@ -487,7 +487,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
 
             {job.phase === "failed" && (
               <div className="flex flex-col items-center px-6 text-center">
-                <span className="inline-flex size-11 items-center justify-center rounded-full bg-white text-danger shadow-card">
+                <span className="inline-flex size-11 items-center justify-center rounded-full bg-raised text-danger shadow-card">
                   <Icon name="alert" size={20} />
                 </span>
                 <p className="mt-3 text-[14px] font-bold text-ink">

@@ -174,7 +174,7 @@ export default function ResultsPage() {
             alt={asset.title}
             ratio={ratio}
             rounded="rounded-[20px]"
-            className="bg-ink"
+            className="bg-black"
             priority
             sensitive={isSensitiveAsset(asset)}
             detailed
@@ -258,7 +258,7 @@ export default function ResultsPage() {
             )}
           </dl>
           {isStory && (
-            <p className="mt-4 rounded-[12px] border border-border bg-white p-3 text-[12.5px] text-muted">
+            <p className="mt-4 rounded-[12px] border border-border bg-raised p-3 text-[12.5px] text-muted">
               This is a story project: open History to revisit every scene or
               regenerate individual frames.
             </p>

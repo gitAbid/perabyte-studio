@@ -126,3 +126,21 @@ Primary buttons are reserved for the main action, especially Generate, Create St
 - **Don't** hide essential errors inside a toast that disappears.
 - **Don't** use multiple competing primary buttons in one viewport.
 - **Don't** rely on color alone for status or selection.
+
+## App Shell
+
+Navigation lives in a floating capsule sidebar, not a top bar:
+
+- **Desktop (md+):** sticky left capsule (28px radius, raised surface, border + card shadow). Expanded 248px with icon + label rows; collapses to a 76px icon rail with dark hover tooltips. Collapse state persists in `localStorage` (`perabyte.sidebar-collapsed`).
+- **Groups:** primary routes (Home, Generate, Story, Character, History), a hairline divider, then Settings and Style guide. Theme toggle and collapse toggle sit at the bottom above the user block.
+- **Mobile:** slim blurred top bar with logo, theme toggle, and a hamburger that opens the same sidebar as a slide-over drawer (backdrop click, route change, or Escape closes it).
+- Active items use the primary-soft wash with primary text; hover uses surface-2.
+
+## Dark Mode
+
+Dark mode is token-driven: a `.dark` class on `<html>` re-points every semantic token in `globals.css`, so components never branch per theme.
+
+- **Toggle:** sun/moon button in the sidebar (and mobile top bar). Preference persists in `localStorage` (`perabyte.theme`); unset falls back to the OS preference. An inline pre-paint script applies the class before first render — no flash.
+- **Palette:** canvas #0B1220, surface #0F172A, raised #16213A, surface-2 #1E293B, border #24324A / strong #3B4D6B, ink #F1F5F9, ink-soft #CBD5E1, muted #94A3B8, primary #3B82F6, primary-soft #14284E, accent #A78BFA, danger #F87171 on danger-soft #3C1A1E. Shadows deepen rather than disappear.
+- **Raised token:** card/elevated surfaces use `bg-raised` (white in light, a step above canvas in dark) instead of literal `bg-white`.
+- **Literal blacks:** media letterboxes, scrims, and text-on-media chips stay literal black (`bg-black…`) in both themes so overlays over imagery remain readable.

@@ -119,7 +119,7 @@ export function StyleGuideView() {
               <span className="text-[13px] font-semibold text-ink-soft">
                 Text area
               </span>
-              <div className="rounded-[12px] border border-border-strong bg-white px-3.5 py-3">
+              <div className="rounded-[12px] border border-border-strong bg-raised px-3.5 py-3">
                 <p className="text-[13px] text-muted">
                   Describe what you want to create
                 </p>
@@ -149,7 +149,7 @@ export function StyleGuideView() {
         <Card>
           <h2 className="text-[15px] font-bold text-ink">Cards &amp; Containers</h2>
           <div className="mt-4 rounded-[16px] border border-border bg-surface p-5">
-            <span className="inline-flex size-10 items-center justify-center rounded-[12px] bg-white text-primary shadow-card">
+            <span className="inline-flex size-10 items-center justify-center rounded-[12px] bg-raised text-primary shadow-card">
               <Icon name="sparkle" size={19} />
             </span>
             <h3 className="mt-4 text-[14.5px] font-bold text-ink">Card Title</h3>

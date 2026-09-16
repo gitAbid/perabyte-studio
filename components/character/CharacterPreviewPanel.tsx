@@ -96,7 +96,7 @@ export function CharacterPreviewPanel({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="rounded-[20px] border border-border bg-white p-4 shadow-card">
+      <div className="rounded-[20px] border border-border bg-raised p-4 shadow-card">
         <div className="flex items-center gap-2">
           <span className="inline-flex size-8 items-center justify-center rounded-[9px] bg-primary-soft text-primary">
             <Icon name="user" size={15} />
@@ -137,7 +137,7 @@ export function CharacterPreviewPanel({
       </div>
 
       {/* Quick preview — a real one-image render of the current character. */}
-      <div className="rounded-[20px] border border-border bg-white p-4 shadow-card">
+      <div className="rounded-[20px] border border-border bg-raised p-4 shadow-card">
         <div className="flex items-center justify-between gap-2">
           <div>
             <p className="text-[13.5px] font-bold text-ink">Quick preview</p>

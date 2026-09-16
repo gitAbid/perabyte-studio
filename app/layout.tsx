@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { ConditionalFooter, SiteHeader } from "@/components/SiteChrome";
+import { ConditionalFooter, SiteSidebar } from "@/components/SiteChrome";
 import { StoreBootstrap } from "@/components/StoreBootstrap";
 import { ToastProvider } from "@/components/ui";
+import { themeInitScript } from "@/lib/theme";
 
 export const metadata: Metadata = {
   title: {
@@ -15,7 +16,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#ffffff",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b1220" },
+  ],
   width: "device-width",
   initialScale: 1,
 };
@@ -26,22 +30,29 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="flex min-h-dvh flex-col">
+    // suppressHydrationWarning: the inline theme script below adds `.dark`
+    // to <html> before React hydrates, which is an expected mismatch.
+    <html lang="en" suppressHydrationWarning>
+      <body className="flex min-h-dvh">
+        {/* Runs before first paint: applies the stored (or OS) theme and
+            avoids a light→dark flash on load. */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript() }} />
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-ink focus:px-4 focus:py-2 focus:text-sm focus:text-white"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-ink focus:px-4 focus:py-2 focus:text-sm focus:text-canvas"
         >
           Skip to content
         </a>
-        <ToastProvider>
-          <StoreBootstrap />
-          <SiteHeader />
-          <main id="main" className="flex flex-1 flex-col">
-            {children}
-          </main>
-          <ConditionalFooter />
-        </ToastProvider>
+        <SiteSidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <ToastProvider>
+            <StoreBootstrap />
+            <main id="main" className="flex flex-1 flex-col">
+              {children}
+            </main>
+            <ConditionalFooter />
+          </ToastProvider>
+        </div>
       </body>
     </html>
   );

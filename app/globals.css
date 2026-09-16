@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Class-based dark mode: `dark:` utilities respond to `.dark` on <html>. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ------------------------------------------------------------------
    PeraByte Studio design tokens (mirrors /DESIGN.md)
    ------------------------------------------------------------------ */
@@ -16,6 +19,7 @@
   --color-canvas: #ffffff;
   --color-surface: #f8fafc;
   --color-surface-2: #f1f5f9;
+  --color-raised: #ffffff;
   --color-border: #e2e8f0;
   --color-border-strong: #cbd5e1;
 
@@ -39,6 +43,41 @@
 
   --animate-fade-up: fade-up 0.35s ease-out both;
   --animate-shimmer: shimmer 1.6s linear infinite;
+}
+
+/* ------------------------------------------------------------------
+   Dark theme — every semantic token flips; components never need
+   per-element dark: overrides. Scrim/media blacks use literal black,
+   so text-on-media chips stay readable in both themes.
+   ------------------------------------------------------------------ */
+.dark {
+  color-scheme: dark;
+
+  --color-primary: #3b82f6;
+  --color-primary-dark: #2563eb;
+  --color-primary-soft: #14284e;
+  --color-accent: #a78bfa;
+
+  --color-ink: #f1f5f9;
+  --color-ink-soft: #cbd5e1;
+  --color-muted: #94a3b8;
+
+  --color-canvas: #0b1220;
+  --color-surface: #0f172a;
+  --color-surface-2: #1e293b;
+  --color-raised: #16213a;
+  --color-border: #24324a;
+  --color-border-strong: #3b4d6b;
+
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-danger: #f87171;
+  --color-danger-soft: #3c1a1e;
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.45),
+    0 8px 24px -12px rgba(0, 0, 0, 0.55);
+  --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.4),
+    0 18px 40px -18px rgba(0, 0, 0, 0.7);
 }
 
 @keyframes fade-up {
@@ -111,6 +150,24 @@ body {
   );
   background-size: 480px 100%;
   animation: var(--animate-shimmer);
+}
+
+.dark .skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-2) 0%,
+    #2a3a56 40%,
+    var(--color-surface-2) 80%
+  );
+}
+
+@keyframes drawer-in {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 .kenburns {

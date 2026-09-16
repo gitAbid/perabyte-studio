@@ -177,7 +177,7 @@ function ReviewCard({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-[16px] border border-border bg-white p-4">
+    <section className="rounded-[16px] border border-border bg-raised p-4">
       <h3 className="text-[13.5px] font-bold text-ink">{title}</h3>
       <div className="mt-1.5 divide-y divide-border/70">{children}</div>
     </section>
@@ -283,7 +283,7 @@ function TemplateChips({
             className={`rounded-full border px-2.5 py-1 text-[12px] font-semibold transition-colors ${
               active
                 ? "border-primary bg-primary-soft text-primary"
-                : "border-border bg-white text-ink-soft hover:border-border-strong hover:text-ink"
+                : "border-border bg-raised text-ink-soft hover:border-border-strong hover:text-ink"
             }`}
           >
             {template.label}
@@ -381,7 +381,7 @@ export function StepDetails({
               className={`rounded-full border px-2.5 py-1 text-[12px] font-semibold transition-colors ${
                 spec.prompt === example
                   ? "border-primary bg-primary-soft text-primary"
-                  : "border-border bg-white text-ink-soft hover:border-border-strong hover:text-ink"
+                  : "border-border bg-raised text-ink-soft hover:border-border-strong hover:text-ink"
               }`}
             >
               {["Artist", "Warrior", "Barista"][index]}
@@ -537,7 +537,7 @@ export function StepAppearance({
                     className={`shrink-0 rounded-[9px] px-3 py-1.5 text-[12.5px] font-semibold transition-colors ${
                       active
                         ? "bg-primary text-white shadow-sm"
-                        : "text-ink-soft hover:bg-white"
+                        : "text-ink-soft hover:bg-raised"
                     }`}
                   >
                     {item}
@@ -691,7 +691,7 @@ export function StepAppearance({
                       <Icon name="check" size={12} />
                     </span>
                   )}
-                  <span className="absolute inset-x-1.5 bottom-1.5 truncate rounded-md bg-ink/60 px-1.5 py-0.5 text-center text-[10px] font-semibold text-white backdrop-blur">
+                  <span className="absolute inset-x-1.5 bottom-1.5 truncate rounded-md bg-black/60 px-1.5 py-0.5 text-center text-[10px] font-semibold text-white backdrop-blur">
                     {look.label}
                   </span>
                 </button>
@@ -726,7 +726,7 @@ function Disclosure({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-[14px] border border-border bg-white">
+    <div className="rounded-[14px] border border-border bg-raised">
       <button
         type="button"
         aria-expanded={open}
@@ -966,7 +966,7 @@ export function StepAdvanced({
                   : "border-border-strong bg-surface hover:border-muted"
               }`}
             >
-              <span className="inline-flex size-10 items-center justify-center rounded-full bg-white text-primary shadow-card">
+              <span className="inline-flex size-10 items-center justify-center rounded-full bg-raised text-primary shadow-card">
                 <Icon name="upload" size={18} />
               </span>
               <p className="text-[13px] font-semibold text-ink">
@@ -1033,7 +1033,7 @@ export function StepReview({
               aria-label="Aspect ratio"
               value={renderParams.aspect}
               onChange={(e) => onRenderParamsChange({ aspect: e.target.value as AspectKey })}
-              className="h-8 max-w-[220px] appearance-none rounded-[9px] border border-border-strong bg-white pl-2.5 pr-6 text-[12px] font-semibold text-ink transition-colors hover:border-muted focus:border-primary focus:outline-none"
+              className="h-8 max-w-[220px] appearance-none rounded-[9px] border border-border-strong bg-raised pl-2.5 pr-6 text-[12px] font-semibold text-ink transition-colors hover:border-muted focus:border-primary focus:outline-none"
             >
               {Object.keys(ASPECTS).map((key) => (
                 <option key={key} value={key}>
@@ -1049,7 +1049,7 @@ export function StepReview({
               onChange={(e) =>
                 onRenderParamsChange({ resolution: e.target.value as ResolutionKey })
               }
-              className="h-8 max-w-[220px] appearance-none rounded-[9px] border border-border-strong bg-white pl-2.5 pr-6 text-[12px] font-semibold text-ink transition-colors hover:border-muted focus:border-primary focus:outline-none"
+              className="h-8 max-w-[220px] appearance-none rounded-[9px] border border-border-strong bg-raised pl-2.5 pr-6 text-[12px] font-semibold text-ink transition-colors hover:border-muted focus:border-primary focus:outline-none"
             >
               {Object.keys(RESOLUTIONS).map((key) => (
                 <option key={key} value={key}>
@@ -1065,7 +1065,7 @@ export function StepReview({
                 aria-label="Image model"
                 value={modelId ?? models[0].id}
                 onChange={(event) => onModelChange(event.target.value)}
-                className="h-8 max-w-[220px] appearance-none rounded-[9px] border border-border-strong bg-white pl-2.5 pr-6 text-[12px] font-semibold text-ink transition-colors hover:border-muted focus:border-primary focus:outline-none"
+                className="h-8 max-w-[220px] appearance-none rounded-[9px] border border-border-strong bg-raised pl-2.5 pr-6 text-[12px] font-semibold text-ink transition-colors hover:border-muted focus:border-primary focus:outline-none"
                 style={{
                   backgroundImage:
                     "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9.5l6 6 6-6'/%3E%3C/svg%3E\")",

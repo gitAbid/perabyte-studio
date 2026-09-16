@@ -14,7 +14,7 @@ import type { LoraSelection } from "@/lib/types";
  */
 
 const PILL_IDLE =
-  "border-border bg-white text-ink-soft hover:border-border-strong hover:text-ink";
+  "border-border bg-raised text-ink-soft hover:border-border-strong hover:text-ink";
 
 function LoraRow({
   entry,
@@ -30,7 +30,7 @@ function LoraRow({
   const active = Boolean(selected);
   return (
     <div className={`rounded-[10px] border px-2.5 py-2 transition-colors ${
-      active ? "border-primary/40 bg-primary-soft/40" : "border-border bg-white"
+      active ? "border-primary/40 bg-primary-soft/40" : "border-border bg-raised"
     }`}>
       <button
         type="button"
@@ -40,7 +40,7 @@ function LoraRow({
       >
         <span
           className={`inline-flex size-4 shrink-0 items-center justify-center rounded-[5px] border transition-colors ${
-            active ? "border-primary bg-primary text-white" : "border-border-strong bg-white text-transparent"
+            active ? "border-primary bg-primary text-white" : "border-border-strong bg-raised text-transparent"
           }`}
         >
           <Icon name="check" size={10} />
@@ -158,7 +158,7 @@ export function LoraPicker({
       {open && (
         // Same shell as the advanced panel: inline block on mobile, popover
         // above the badge row from sm up.
-        <div className="order-last w-full rounded-[14px] border border-border bg-white p-3.5 shadow-card sm:absolute sm:bottom-full sm:right-0 sm:z-30 sm:mb-2 sm:w-80 sm:shadow-lift">
+        <div className="order-last w-full rounded-[14px] border border-border bg-raised p-3.5 shadow-card sm:absolute sm:bottom-full sm:right-0 sm:z-30 sm:mb-2 sm:w-80 sm:shadow-lift">
           <div className="flex items-baseline justify-between gap-2">
             <p className="text-[11px] font-bold uppercase tracking-wide text-muted">
               LoRA adapters

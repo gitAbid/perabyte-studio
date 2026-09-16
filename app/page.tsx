@@ -34,7 +34,7 @@ export default function HomePage() {
     // The landing page is designed to fit the viewport on desktop: the hero
     // centres in the space left over after the slim footer, and the page
     // simply scrolls on short or mobile screens.
-    <div className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-4 pb-8 pt-4 sm:px-6 sm:pt-5 lg:min-h-[calc(100dvh-9rem)]">
+    <div className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-4 pb-8 pt-4 sm:px-6 sm:pt-5 lg:min-h-[calc(100dvh-5rem)]">
       <section className="grid flex-1 items-center gap-10 py-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-14 lg:py-0">
         <div className="animate-[fade-up_0.4s_ease-out_both]">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
@@ -54,7 +54,7 @@ export default function HomePage() {
               <Link
                 key={mode.title}
                 href={mode.href}
-                className="group flex items-center gap-3.5 rounded-[16px] border border-border bg-white p-3.5 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-card"
+                className="group flex items-center gap-3.5 rounded-[16px] border border-border bg-raised p-3.5 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-card"
               >
                 <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-[11px] bg-primary-soft text-primary">
                   <Icon name={mode.icon} size={18} />
@@ -86,7 +86,7 @@ export default function HomePage() {
                 alt="Example render: a mountain lake at sunrise"
                 className="aspect-[16/10] w-full object-cover"
               />
-              <span className="absolute bottom-3 left-3 rounded-full bg-ink/55 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
+              <span className="absolute bottom-3 left-3 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
                 Text-to-image &amp; video
               </span>
               <span className="absolute left-1/2 top-1/2 inline-flex size-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-ink shadow-lift backdrop-blur">

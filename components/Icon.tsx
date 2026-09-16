@@ -39,6 +39,9 @@ export type IconName =
   | "sliders"
   | "chip"
   | "eye"
+  | "sun"
+  | "moon"
+  | "chevrons-left"
   | "link";
 
 const PATHS: Record<IconName, string> = {
@@ -86,6 +89,9 @@ const PATHS: Record<IconName, string> = {
   eye: "M3 12s3-5.8 9-5.8S21 12 21 12s-3 5.8-9 5.8S3 12 3 12Zm9-2.6a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 0 0 0-5.2Z",
   link:
     "M9.5 14.5 14.5 9.5M8 11 5.5 13.5a3.5 3.5 0 0 0 5 5L13 16m3-3 2.5-2.5a3.5 3.5 0 0 0-5-5L11 8",
+  sun: "M12 16.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM12 3v1.8M12 19.2V21M3 12h1.8M19.2 12H21M5.6 5.6l1.3 1.3M17.1 17.1l1.3 1.3M18.4 5.6l-1.3 1.3M6.9 17.1l-1.3 1.3",
+  moon: "M20.2 14.2A8.2 8.2 0 0 1 9.8 3.8a8.2 8.2 0 1 0 10.4 10.4Z",
+  "chevrons-left": "M11.5 7l-5 5 5 5M17.5 7l-5 5 5 5",
 };
 
 interface IconProps extends Omit<SVGProps<SVGSVGElement>, "name"> {
@@ -113,11 +119,17 @@ export function Icon({ name, size = 20, ...rest }: IconProps) {
   );
 }
 
-export function Logo({ size = 28 }: { size?: number }) {
+export function Logo({
+  size = 28,
+  wordmark = true,
+}: {
+  size?: number;
+  wordmark?: boolean;
+}) {
   return (
     <span className="inline-flex items-center gap-2">
       <span
-        className="inline-flex items-center justify-center rounded-[10px] bg-ink text-white"
+        className="inline-flex items-center justify-center rounded-[10px] bg-ink text-canvas"
         style={{ width: size, height: size }}
       >
         <svg
@@ -135,9 +147,11 @@ export function Logo({ size = 28 }: { size?: number }) {
           <path d="M16 7.4l3 1.9v5.2l-3 1.9" opacity="0.65" />
         </svg>
       </span>
-      <span className="text-[15px] font-bold tracking-tight text-ink">
-        PeraByte
-      </span>
+      {wordmark && (
+        <span className="text-[15px] font-bold tracking-tight text-ink">
+          PeraByte
+        </span>
+      )}
     </span>
   );
 }

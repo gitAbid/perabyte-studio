@@ -29,7 +29,7 @@ import type { GenerationSettings } from "@/lib/types";
 const PILL_BASE =
   "inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12.5px] font-semibold transition-colors";
 const PILL_IDLE =
-  "border-border bg-white text-ink-soft hover:border-border-strong hover:text-ink";
+  "border-border bg-raised text-ink-soft hover:border-border-strong hover:text-ink";
 
 /* ------------------------------------------------------------------ */
 /* Advanced ("more options")                                           */
@@ -84,7 +84,7 @@ function AdvancedPanel({
       {open && (
         // Mobile: a full-width block that expands inline under the badges (no
         // viewport overflow). sm and up: a popover anchored above the badges.
-        <div className="order-last w-full rounded-[14px] border border-border bg-white p-3.5 shadow-card sm:absolute sm:bottom-full sm:right-0 sm:z-30 sm:mb-2 sm:w-72 sm:shadow-lift">
+        <div className="order-last w-full rounded-[14px] border border-border bg-raised p-3.5 shadow-card sm:absolute sm:bottom-full sm:right-0 sm:z-30 sm:mb-2 sm:w-72 sm:shadow-lift">
           <p className="text-[11px] font-bold uppercase tracking-wide text-muted">
             More options
           </p>
@@ -102,7 +102,7 @@ function AdvancedPanel({
                     className={`h-7 flex-1 rounded-[9px] border text-[12px] font-semibold transition-colors ${
                       settings.count === n
                         ? "border-primary bg-primary text-white"
-                        : "border-border bg-white text-ink-soft hover:border-border-strong"
+                        : "border-border bg-raised text-ink-soft hover:border-border-strong"
                     }`}
                   >
                     {n}
@@ -124,7 +124,7 @@ function AdvancedPanel({
                 onChange={(e) =>
                   onChange({ seed: e.target.value.replace(/[^\d]/g, "") })
                 }
-                className="h-8 w-28 rounded-[9px] border border-border-strong bg-white px-2.5 text-[12.5px] tabular-nums text-ink placeholder:text-muted focus:border-primary focus:outline-none"
+                className="h-8 w-28 rounded-[9px] border border-border-strong bg-raised px-2.5 text-[12.5px] tabular-nums text-ink placeholder:text-muted focus:border-primary focus:outline-none"
               />
             </label>
 
@@ -139,7 +139,7 @@ function AdvancedPanel({
                 aria-label="Negative prompt"
                 placeholder="blurry, watermark, low detail"
                 onChange={(e) => onChange({ negativePrompt: e.target.value })}
-                className="mt-1.5 w-full resize-none rounded-[9px] border border-border-strong bg-white px-2.5 py-2 text-[12.5px] text-ink placeholder:text-muted focus:border-primary focus:outline-none"
+                className="mt-1.5 w-full resize-none rounded-[9px] border border-border-strong bg-raised px-2.5 py-2 text-[12.5px] text-ink placeholder:text-muted focus:border-primary focus:outline-none"
               />
             </div>
 
@@ -250,7 +250,7 @@ export function PromptComposer({
     // prompt area absorbs the available height instead of leaving dead space.
     // The card keeps a static border; focusing the prompt only shifts its
     // surface tone slightly — no selection ring.
-    <div className="flex h-full min-h-0 flex-col rounded-[20px] border border-border bg-white p-4 shadow-card sm:p-5">
+    <div className="flex h-full min-h-0 flex-col rounded-[20px] border border-border bg-raised p-4 shadow-card sm:p-5">
       <div className="flex shrink-0 items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[13px] font-bold text-ink">{title}</p>
@@ -277,7 +277,7 @@ export function PromptComposer({
             aria-label={`Detach ${attachedCharacter.name}`}
             title={`Detach ${attachedCharacter.name}`}
             onClick={() => onCharacterChange(null)}
-            className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-primary transition-colors hover:bg-white"
+            className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-primary transition-colors hover:bg-raised"
           >
             <Icon name="close" size={11} />
           </button>
@@ -290,7 +290,7 @@ export function PromptComposer({
       {/* Tinted prompt surface; focus eases the tint instead of drawing a ring. */}
       <div
         className={`mt-3 flex min-h-0 flex-1 flex-col rounded-[12px] border px-3.5 pb-2 pt-3 transition-colors ${
-          promptError ? "border-danger bg-surface" : "border-border bg-surface focus-within:bg-white"
+          promptError ? "border-danger bg-surface" : "border-border bg-surface focus-within:bg-raised"
         }`}
       >
         <textarea
