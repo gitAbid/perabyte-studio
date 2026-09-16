@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SectionShell } from "@/components/settings/shared";
 import type { ProviderSettingsUpdate } from "@/lib/services/provider-settings.service";
 
 type OnUpdate = (patch: ProviderSettingsUpdate) => Promise<void>;
@@ -54,7 +55,9 @@ function TimeoutField({
   return (
     <label className="flex items-center justify-between gap-3">
       <span className="min-w-0">
-        <span className="block text-[12px] font-semibold text-ink-soft">{label}</span>
+        <span className="block text-[12px] font-semibold text-ink-soft">
+          {label}
+        </span>
         <span className="block text-[11px] leading-snug text-muted">{hint}</span>
       </span>
       <span className="flex shrink-0 items-center gap-1.5">
@@ -79,7 +82,7 @@ function TimeoutField({
   );
 }
 
-export function RenderTimeoutsSection({
+export function AdvancedSection({
   renderTimeouts,
   onUpdate,
 }: {
@@ -87,17 +90,16 @@ export function RenderTimeoutsSection({
   onUpdate: OnUpdate;
 }) {
   return (
-    <section>
-      <p className="text-[11px] font-bold uppercase tracking-wide text-muted">
-        Render timeouts
-      </p>
-      <div className="mt-3 space-y-4 rounded-[14px] border border-border bg-surface p-4">
+    <SectionShell icon="clock" title="Advanced" description="Render timeouts">
+      <div className="space-y-4 rounded-[14px] border border-border bg-surface p-4">
         <TimeoutField
           label="Image renders"
           hint="How long an image may take before it stops as retryable."
           valueSeconds={renderTimeouts.image}
           onCommit={(seconds) =>
-            onUpdate({ renderTimeouts: { image: seconds } }).catch(() => undefined)
+            onUpdate({ renderTimeouts: { image: seconds } }).catch(
+              () => undefined,
+            )
           }
         />
         <TimeoutField
@@ -105,7 +107,9 @@ export function RenderTimeoutsSection({
           hint="Raise this for long clips — a timed-out job is retried, not lost."
           valueSeconds={renderTimeouts.video}
           onCommit={(seconds) =>
-            onUpdate({ renderTimeouts: { video: seconds } }).catch(() => undefined)
+            onUpdate({ renderTimeouts: { video: seconds } }).catch(
+              () => undefined,
+            )
           }
         />
         <p className="border-t border-border pt-3 text-[11.5px] leading-snug text-muted">
@@ -113,6 +117,6 @@ export function RenderTimeoutsSection({
           provider; the platform hosting the studio can still cap it lower.
         </p>
       </div>
-    </section>
+    </SectionShell>
   );
 }
