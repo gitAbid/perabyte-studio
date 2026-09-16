@@ -24,26 +24,31 @@ const PRIMARY_NAV: NavItem[] = [
   { href: "/stories", label: "Stories", icon: "grid" },
 ];
 
-/** Gradient tile per destination — a white glyph on a saturated ramp reads
- * in both themes, and gives every section its own color signature. */
-const NAV_TILE: Record<string, string> = {
-  "/": "from-slate-400 to-slate-600",
-  "/generate/image": "from-indigo-400 to-violet-600",
-  "/character": "from-fuchsia-400 to-purple-600",
-  "/images": "from-amber-400 to-orange-600",
-  "/stories": "from-emerald-400 to-teal-600",
-  "/settings": "from-sky-400 to-blue-600",
+/** Springy per-icon morph poses: hovering shifts the glyph, and an active
+ * section holds its pose — navigation feels alive without any tile chrome.
+ * The overshoot easing sells the morph; stroke swells slightly on hover. */
+const NAV_POSE: Record<string, { hover: string; active: string }> = {
+  "/": { hover: "group-hover:-translate-y-0.5", active: "" },
+  "/generate/image": {
+    hover: "group-hover:rotate-12 group-hover:scale-110",
+    active: "rotate-45",
+  },
+  "/character": { hover: "group-hover:scale-125", active: "scale-110" },
+  "/images": {
+    hover: "group-hover:-rotate-6 group-hover:scale-110",
+    active: "-rotate-3",
+  },
+  "/stories": {
+    hover: "group-hover:rotate-6 group-hover:scale-110",
+    active: "rotate-3",
+  },
+  "/settings": { hover: "group-hover:rotate-90", active: "rotate-45" },
 };
 
-/** Per-icon hover flourish on top of the tile's shared scale-pop. */
-const NAV_ICON_HOVER: Record<string, string> = {
-  "/": "group-hover:-translate-y-0.5",
-  "/generate/image": "group-hover:rotate-12",
-  "/character": "group-hover:scale-125",
-  "/images": "group-hover:-rotate-6",
-  "/stories": "group-hover:rotate-6",
-  "/settings": "group-hover:rotate-90",
-};
+function navIconClass(href: string, active: boolean): string {
+  const pose = NAV_POSE[href] ?? { hover: "", active: "" };
+  return `shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:[stroke-width:2.2] motion-reduce:transition-none ${pose.hover} ${active ? pose.active : ""}`;
+}
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
@@ -52,28 +57,6 @@ function isActive(pathname: string, href: string) {
     return pathname.startsWith("/generate") || pathname === "/story" || pathname.startsWith("/story/");
   }
   return pathname.startsWith(href);
-}
-
-/** The colored icon tile every nav row renders. */
-function NavTile({ item, active, size = "md" }: { item: NavItem; active: boolean; size?: "md" | "lg" }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={`flex shrink-0 items-center justify-center bg-gradient-to-br text-white shadow-sm transition-transform duration-200 ease-out group-hover:scale-110 group-active:scale-90 motion-reduce:transition-none ${
-        size === "lg" ? "size-9 rounded-[11px]" : "size-7 rounded-[9px]"
-      } ${NAV_TILE[item.href] ?? "from-slate-400 to-slate-600"} ${
-        active ? "scale-105 ring-2 ring-primary/35" : ""
-      }`}
-    >
-      <Icon
-        name={item.icon}
-        size={size === "lg" ? 18 : 15}
-        className={`transition-transform duration-200 ease-out motion-reduce:transition-none ${
-          NAV_ICON_HOVER[item.href] ?? ""
-        }`}
-      />
-    </span>
-  );
 }
 
 /**
@@ -109,7 +92,11 @@ function SidebarInner({
             : "text-ink-soft hover:bg-surface-2 hover:text-ink"
         }`}
       >
-        <NavTile item={item} active={active} size={collapsed ? "lg" : "md"} />
+        <Icon
+          name={item.icon}
+          size={collapsed ? 21 : 19}
+          className={navIconClass(item.href, active)}
+        />
         <span className={collapsed ? "sr-only" : "whitespace-nowrap"}>
           {item.label}
         </span>
@@ -178,40 +165,44 @@ function SidebarFoot({
           <RendersTray />
         </div>
       )}
-      {/* Bottom-anchored settings — always the last nav destination. */}
-      <Link
-        href="/settings"
-        aria-current={settingsActive ? "page" : undefined}
-        className={`group relative flex h-10 items-center rounded-[12px] text-[13px] font-semibold transition-colors ${
-          collapsed ? "w-full justify-center px-0" : "w-full gap-2.5 px-3"
-        } ${
-          settingsActive
-            ? "bg-primary-soft text-primary"
-            : "text-ink-soft hover:bg-surface-2 hover:text-ink"
-        }`}
-      >
-        <NavTile
-          item={{ href: "/settings", label: "Settings", icon: "sliders" }}
-          active={settingsActive}
-          size={collapsed ? "lg" : "md"}
-        />
-        <span className={collapsed ? "sr-only" : "whitespace-nowrap"}>Settings</span>
-        {collapsed && (
-          <span
-            role="tooltip"
-            className="pointer-events-none absolute left-full top-1/2 z-50 ml-2.5 -translate-y-1/2 whitespace-nowrap rounded-lg bg-ink px-2.5 py-1.5 text-[11.5px] font-semibold text-canvas opacity-0 shadow-lift transition-opacity duration-150 group-hover:opacity-100"
-          >
-            Settings
-          </span>
-        )}
-      </Link>
+      {/* Bottom cluster: settings + utilities on one anchored line. */}
       <div
-        className={`flex items-center gap-1.5 ${
-          collapsed ? "flex-col" : "justify-between"
+        className={`flex w-full items-center gap-1 ${
+          collapsed
+            ? "flex-col border-t border-border px-0 pt-3"
+            : "justify-between border-t border-border pt-3"
         }`}
       >
-        <ThemeToggle />
-        {showCollapseToggle && <CollapseToggle collapsed={collapsed} />}
+        <Link
+          href="/settings"
+          aria-current={settingsActive ? "page" : undefined}
+          className={`group relative flex h-9 items-center rounded-[10px] text-[13px] font-semibold transition-colors ${
+            collapsed ? "w-full justify-center" : "min-w-0 flex-1 gap-2 px-2"
+          } ${
+            settingsActive
+              ? "bg-primary-soft text-primary"
+              : "text-muted hover:bg-surface-2 hover:text-ink"
+          }`}
+        >
+          <Icon
+            name="sliders"
+            size={17}
+            className={navIconClass("/settings", settingsActive)}
+          />
+          <span className={collapsed ? "sr-only" : ""}>Settings</span>
+          {collapsed && (
+            <span
+              role="tooltip"
+              className="pointer-events-none absolute left-full top-1/2 z-50 ml-2.5 -translate-y-1/2 whitespace-nowrap rounded-lg bg-ink px-2.5 py-1.5 text-[11.5px] font-semibold text-canvas opacity-0 shadow-lift transition-opacity duration-150 group-hover:opacity-100"
+            >
+              Settings
+            </span>
+          )}
+        </Link>
+        <div className={`flex items-center gap-1 ${collapsed ? "flex-col" : ""}`}>
+          <ThemeToggle />
+          {showCollapseToggle && <CollapseToggle collapsed={collapsed} />}
+        </div>
       </div>
 
       <div
