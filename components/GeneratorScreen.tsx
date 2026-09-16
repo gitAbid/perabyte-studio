@@ -339,10 +339,14 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
   }, [assets, assetId]);
 
   return (
-    // `main` is a flex column: on desktop the workspace stretches to fill the
-    // viewport under the header; on mobile the stack flows naturally and the
-    // page scrolls instead of crushing the panels.
-    <div className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-4 py-4 sm:px-6 sm:py-5 lg:min-h-0">
+    // `main` is a flex column: on desktop the workspace stretches to exactly
+    // the viewport (h-dvh is the hard boundary — the body only has
+    // min-h-dvh, so min-h-0 alone would let tall content grow the page) and
+    // nothing may spill past it (overflow hidden) — the composer and preview
+    // panels scroll inside themselves instead of scrolling the page; on
+    // mobile the stack flows naturally and the page scrolls instead of
+    // crushing the panels.
+    <div className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-4 py-4 sm:px-6 sm:py-5 lg:h-dvh lg:flex-none lg:overflow-hidden">
       <div className="relative flex shrink-0 flex-col gap-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2.5">
@@ -403,8 +407,10 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
       {/* ---------------------------- Workspace ---------------------------- */}
       <div className="mt-3 grid min-w-0 gap-4 lg:mt-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(330px,400px)_minmax(0,1fr)] lg:items-stretch">
         {/* Composer — first in the stack on every size; it fills its column
-            on desktop so no space is wasted above or below it. */}
-        <div className="order-1 flex min-h-0 min-w-0 flex-col">
+            on desktop so no space is wasted above or below it. On short
+            desktop viewports the column scrolls internally (expanded picker
+            sections) rather than growing the page. */}
+        <div className="order-1 flex min-h-0 min-w-0 flex-col thin-scrollbar lg:overflow-y-auto">
           <PromptComposer
             kind={kind}
             prompt={prompt}

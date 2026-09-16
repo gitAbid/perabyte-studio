@@ -68,7 +68,13 @@ export default function ResultsPage() {
     );
   }
 
-  const ratio = `${ASPECTS[asset.settings.aspect]?.width ?? 16}/${ASPECTS[asset.settings.aspect]?.height ?? 9}`;
+  const aspect = ASPECTS[asset.settings.aspect];
+  const ratio = `${aspect?.width ?? 16}/${aspect?.height ?? 9}`;
+  // The stage honours the render's native aspect ratio but never exceeds the
+  // viewport height: maxWidth = the width at which the stage is ~72dvh tall,
+  // so a portrait render centres at a sane size instead of producing a
+  // multiple-of-viewport-tall page.
+  const stageMaxWidth = `calc(72dvh * ${aspect?.width ?? 16} / ${aspect?.height ?? 9})`;
   const currentUrl = asset.variants[variant] ?? asset.url;
   // Video player selection follows the media itself, not just the asset kind:
   // story assets persist kind "story" even when every scene is a rendered
@@ -160,26 +166,31 @@ export default function ResultsPage() {
       </div>
 
       <div className="mt-6 space-y-4">
-        {isVideo ? (
-          <VideoStage
-            posterUrl={currentUrl}
-            videoUrl={isVideoSource(currentUrl) ? currentUrl : undefined}
-            title={asset.title}
-            durationSeconds={Number(String(asset.settings.duration).replace("s", "")) || 5}
-            sensitive={isSensitiveAsset(asset)}
-          />
-        ) : (
-          <MediaFrame
-            src={currentUrl}
-            alt={asset.title}
-            ratio={ratio}
-            rounded="rounded-[20px]"
-            className="bg-black"
-            priority
-            sensitive={isSensitiveAsset(asset)}
-            detailed
-          />
-        )}
+        {/* Media stage centred and capped to the render's native ratio within
+            the viewport height — page content below keeps the page scrolling. */}
+        <div className="mx-auto w-full" style={{ maxWidth: stageMaxWidth }}>
+          {isVideo ? (
+            <VideoStage
+              posterUrl={currentUrl}
+              videoUrl={isVideoSource(currentUrl) ? currentUrl : undefined}
+              title={asset.title}
+              durationSeconds={Number(String(asset.settings.duration).replace("s", "")) || 5}
+              ratio={ratio}
+              sensitive={isSensitiveAsset(asset)}
+            />
+          ) : (
+            <MediaFrame
+              src={currentUrl}
+              alt={asset.title}
+              ratio={ratio}
+              rounded="rounded-[20px]"
+              className="bg-black"
+              priority
+              sensitive={isSensitiveAsset(asset)}
+              detailed
+            />
+          )}
+        </div>
 
         {asset.variants.length > 1 && (
           <div className="flex gap-2.5 overflow-x-auto no-scrollbar">

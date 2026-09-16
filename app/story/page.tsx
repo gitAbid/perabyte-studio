@@ -227,6 +227,12 @@ export default function StoryPage() {
     ) {
       setKind(storyMediaKind);
     }
+    // Adopt the story's native aspect so scene tiles show what was actually
+    // rendered (a 9:16 story must not present 16:9 tiles after a reload).
+    const storyAspect = story.settings?.aspect;
+    if (storyAspect && storyAspect in ASPECTS) {
+      setSettings((s) => ({ ...s, aspect: storyAspect as typeof s.aspect }));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [story?.id]);
 
@@ -688,9 +694,12 @@ export default function StoryPage() {
 
   return (
     // Same workspace contract as the solo generator: on desktop the two panels
-    // stretch to fill the viewport; on mobile the stack flows and the page
-    // scrolls when scenes grow beyond it.
-    <div className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-4 py-4 sm:px-6 sm:py-5 lg:min-h-0">
+    // stretch to exactly the viewport (h-dvh is the hard boundary — the body
+    // only has min-h-dvh, so min-h-0 alone would let tall content grow the
+    // page) and nothing may spill past it (overflow hidden) — the scenes grid
+    // and composer scroll inside their own panels instead. On mobile the
+    // stack flows and the page scrolls when scenes grow beyond it.
+    <div className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-4 py-4 sm:px-6 sm:py-5 lg:h-dvh lg:flex-none lg:overflow-hidden">
       <div className="relative flex shrink-0 flex-col gap-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2.5">
@@ -755,8 +764,9 @@ export default function StoryPage() {
 
       {/* ---------------------------- Workspace ---------------------------- */}
       <div className="mt-3 grid min-w-0 gap-4 sm:mt-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(330px,400px)_minmax(0,1fr)] lg:items-stretch">
-        {/* Composer column */}
-        <div className="order-1 flex min-h-0 min-w-0 flex-col">
+        {/* Composer column — scrolls internally at lg when the picker sections
+            outgrow a short viewport, so the page itself never scrolls. */}
+        <div className="order-1 flex min-h-0 min-w-0 flex-col thin-scrollbar lg:overflow-y-auto">
           <div className="flex min-h-0 flex-1 flex-col">
             <PromptComposer
               kind={kind}
@@ -887,8 +897,9 @@ export default function StoryPage() {
           </span>
         </div>
 
-        {/* Scenes column */}
-        <div className="order-2 relative flex min-h-[300px] min-w-0 flex-col rounded-[20px] border border-border bg-surface p-4 sm:min-h-[360px] lg:min-h-0">
+        {/* Scenes column — the panel keeps the viewport height at lg and the
+            scene grid scrolls inside it; the action bar stays pinned below. */}
+        <div className="order-2 relative flex min-h-[300px] min-w-0 flex-col rounded-[20px] border border-border bg-surface p-4 sm:min-h-[360px] lg:min-h-0 lg:overflow-hidden">
           {convertOpen && (
             <ConvertDialog
               clipCount={clipCount}
@@ -898,8 +909,10 @@ export default function StoryPage() {
               onClose={() => setConvertOpen(false)}
             />
           )}
-          {/* Scenes flow top-left, left to right, wrapping downward. */}
-          <div className="grid flex-1 content-start gap-4 sm:grid-cols-2">
+          {/* Scenes flow top-left, left to right, wrapping downward. At lg the
+              grid scrolls within the panel instead of growing the page — no
+              matter how many scenes there are or which aspect ratio they use. */}
+          <div className="thin-scrollbar grid flex-1 content-start gap-4 sm:grid-cols-2 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
             {Array.from({ length: Math.max(2, scenes.length) }, (_, index) => {
               const typed = scenes[index] as StoryScene | undefined;
               const ratioStyle = {
@@ -935,6 +948,7 @@ export default function StoryPage() {
                           }
                           title={typed.prompt}
                           durationSeconds={Number(String(settings.duration).replace("s", "")) || 5}
+                          ratio={`${ASPECTS[settings.aspect].width}/${ASPECTS[settings.aspect].height}`}
                           sensitive={typed.safe === false}
                         />
                       ) : (
