@@ -733,11 +733,11 @@ describe("requeueScene", () => {
   it("picks the requeued scene up when a chained run is in flight", async () => {
     const deps = makeDeps();
     const runner = createStoryRunner(deps);
-    let release: (() => void) | null = null;
+    const gate: { release?: () => void } = {};
     deps.requestGeneration = vi.fn(
       () =>
         new Promise((resolve) => {
-          release = () =>
+          gate.release = () =>
             resolve({
               requestId: "r",
               status: "completed",
@@ -746,7 +746,7 @@ describe("requeueScene", () => {
               media: [{ id: "m", url: "/api/media?f=new.png", width: 8, height: 8, seed: 1 }],
             });
         }),
-    );
+    ) as unknown as typeof deps.requestGeneration;
     deps.assets.set("story1", story([
       scene({ id: "s1", status: "completed", url: "a", endFrameRef: "f1.png" }),
       scene({ id: "s2" }),
@@ -760,7 +760,7 @@ describe("requeueScene", () => {
     runner.requeueScene("story1", "s1");
     expect(deps.requestGeneration).toHaveBeenCalledTimes(1);
 
-    release?.(); // s2 settles → schedule → s1 (re-queued) renders next
+    gate.release?.(); // s2 settles → schedule → s1 (re-queued) renders next
     await vi.waitFor(() => expect(deps.requestGeneration).toHaveBeenCalledTimes(2));
     // s1 renders as scene 1 — no chained start frame.
     const call = deps.requestGeneration.mock.calls[1] as unknown as [
