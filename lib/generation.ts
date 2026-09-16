@@ -40,10 +40,14 @@ export interface GenerationProgress {
 }
 
 /**
- * Call our own render API. All provider access stays server-side. The server
- * streams NDJSON progress lines (then the result) whenever we advertise
- * support via the accept header; plain-JSON replies still work.
+ * Submit a durable render job and poll it to completion (Phase B). Same
+ * signature and request body as the legacy call — solo, story, and
+ * character renders all keep working — but the render now lives on the
+ * server: navigating away, closing the tab, or a provider backlog never
+ * loses it. Progress ticks come from the job record.
  */
+const JOB_POLL_INTERVAL_MS = 2_000;
+
 export async function requestGeneration(
   {
     settings,
@@ -56,14 +60,11 @@ export async function requestGeneration(
     onProgress,
   }: GenerateInput & { onProgress?: (progress: GenerationProgress) => void },
 ): Promise<GenerationResponse> {
-  let response: Response;
+  let submit: Response;
   try {
-    response = await fetch("/api/generate", {
+    submit = await fetch("/api/jobs", {
       method: "POST",
-      headers: {
-        "content-type": "application/json",
-        accept: "application/x-ndjson, application/json",
-      },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({
         kind: settings.kind,
         prompt,
@@ -97,8 +98,8 @@ export async function requestGeneration(
     );
   }
 
-  if (!response.ok) {
-    const body = (await response.json().catch(() => ({}))) as {
+  if (!submit.ok) {
+    const body = (await submit.json().catch(() => ({}))) as {
       error?: string;
       field?: string;
       retryable?: boolean;
@@ -106,80 +107,106 @@ export async function requestGeneration(
     throw new GenerationError(
       body.error ?? "Something went wrong while generating.",
       body.field,
-      body.retryable ?? response.status >= 500,
+      body.retryable ?? submit.status >= 500,
     );
   }
 
-  const contentType = response.headers.get("content-type") ?? "";
-  if (contentType.includes("application/x-ndjson")) {
-    return consumeProgressStream(response, onProgress);
-  }
-  return (await response.json()) as GenerationResponse;
-}
-
-/**
- * Reads the NDJSON progress stream: every `progress` line feeds `onProgress`,
- * the `result` line resolves, an `error` line throws. A stream that ends
- * without a result is a failed generation, not a success.
- */
-async function consumeProgressStream(
-  response: Response,
-  onProgress?: (progress: GenerationProgress) => void,
-): Promise<GenerationResponse> {
-  const reader = response.body?.getReader();
-  if (!reader) {
-    throw new GenerationError("The render stream could not be read. Please retry.", undefined, true);
+  const { job } = (await submit.json()) as { job?: { id: string } };
+  if (!job?.id) {
+    throw new GenerationError("The render job could not be created. Please retry.", undefined, true);
   }
 
-  const decoder = new TextDecoder();
-  let buffer = "";
-  let result: GenerationResponse | null = null;
+  // Persist the job id so a page that reopens later can find the render
+  // (the story page absorbs scene results via its own job poller instead).
+  try {
+    sessionStorage.setItem("perabyte.job_latest", job.id);
+  } catch {
+    /* storage blocked — polling still works in this session */
+  }
 
-  const handleLine = (line: string) => {
-    let event: Record<string, unknown>;
-    try {
-      event = JSON.parse(line) as Record<string, unknown>;
-    } catch {
-      return; // Ignore partial/garbage lines rather than failing the render.
-    }
-    if (event.type === "progress") {
-      onProgress?.({
-        stage: (event.stage as GenerationProgress["stage"]) ?? "rendering",
-        message: String(event.message ?? ""),
-        percent: typeof event.percent === "number" ? Math.round(event.percent) : undefined,
-      });
-    } else if (event.type === "result") {
-      result = event as unknown as GenerationResponse;
-    } else if (event.type === "error") {
-      throw new GenerationError(
-        String(event.error ?? "Generation failed."),
-        typeof event.field === "string" ? event.field : undefined,
-        (event.retryable as boolean | undefined) ?? true,
-      );
-    }
-  };
+  // Cancel is best-effort on abort: the server job is asked to stop, and the
+  // caller's AbortError propagates so the UI unwinds.
+  signal?.addEventListener(
+    "abort",
+    () => {
+      void fetch(`/api/jobs/${encodeURIComponent(job.id)}?action=cancel`, {
+        method: "POST",
+        keepalive: true,
+      }).catch(() => {});
+    },
+    { once: true },
+  );
 
   while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    let newlineAt = buffer.indexOf("\n");
-    while (newlineAt !== -1) {
-      const line = buffer.slice(0, newlineAt).trim();
-      buffer = buffer.slice(newlineAt + 1);
-      if (line) handleLine(line);
-      newlineAt = buffer.indexOf("\n");
+    if (signal?.aborted) throw signal.reason ?? new DOMException("aborted", "AbortError");
+    await new Promise((resolve) => setTimeout(resolve, JOB_POLL_INTERVAL_MS));
+    if (signal?.aborted) throw signal.reason ?? new DOMException("aborted", "AbortError");
+
+    let response: Response;
+    try {
+      response = await fetch(`/api/jobs/${encodeURIComponent(job.id)}`, { cache: "no-store" });
+    } catch {
+      continue; // transient network blip — the job is durable, keep polling
+    }
+    if (response.status === 404) {
+      throw new GenerationError("That render job no longer exists. Please retry.", undefined, true);
+    }
+    if (!response.ok) continue;
+
+    const record = (await response.json()) as { job?: JobRecordClient };
+    const current = record.job;
+    if (!current) continue;
+
+    if (current.progress) {
+      onProgress?.({
+        stage: current.progress.stage,
+        message: current.progress.message,
+        percent:
+          typeof current.progress.percent === "number"
+            ? Math.round(current.progress.percent)
+            : undefined,
+      });
+    }
+    if (current.status === "completed" && current.result?.length) {
+      return {
+        requestId: current.id,
+        status: "completed",
+        kind: current.kind,
+        elapsedMs: (current.finishedAt ?? Date.now()) - current.createdAt,
+        media: current.result,
+        ...(current.effectiveModelId
+          ? { effectiveModelId: current.effectiveModelId, effectiveModelLabel: current.effectiveModelLabel }
+          : {}),
+        ...(current.frameUsed === undefined ? {} : { frameUsed: current.frameUsed }),
+      };
+    }
+    if (current.status === "failed") {
+      throw new GenerationError(
+        current.error ?? "Generation failed.",
+        undefined,
+        current.retryable ?? true,
+      );
+    }
+    if (current.status === "canceled") {
+      throw new DOMException("aborted", "AbortError");
     }
   }
+}
 
-  if (!result) {
-    throw new GenerationError(
-      "The render stream ended before the render finished. Please retry.",
-      undefined,
-      true,
-    );
-  }
-  return result;
+/** Subset of the server JobRecord the poller consumes. */
+interface JobRecordClient {
+  id: string;
+  kind: "image" | "video";
+  status: "queued" | "running" | "completed" | "failed" | "canceled";
+  progress?: { stage: "submitted" | "rendering" | "downloading"; message: string; percent?: number };
+  result?: GenerationResponse["media"];
+  error?: string;
+  retryable?: boolean;
+  effectiveModelId?: string;
+  effectiveModelLabel?: string;
+  frameUsed?: boolean;
+  createdAt: number;
+  finishedAt?: number;
 }
 
 /** Job lifecycle states surfaced in the UI while a request is in flight. */

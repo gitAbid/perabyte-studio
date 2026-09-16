@@ -9,6 +9,10 @@ import {
   type JobRecord,
 } from "@/lib/repositories/jobs.repository";
 import { getProviderConfig } from "@/lib/repositories/provider-config.repository";
+import { getStoriesRepository, patchStoryRepository } from "@/lib/repositories/stories.repository";
+import { putRecord } from "@/lib/services/records.service";
+import { titleFromPrompt } from "@/lib/constants";
+import type { Asset, GenerationSettings } from "@/lib/types";
 import {
   GenerationServiceError,
   persistArtifacts,
@@ -353,6 +357,7 @@ export class JobExecutor {
         prepared.normalized.resolution,
         log,
       );
+      const job = getJobsRepository(jobId);
       patchJobRepository(jobId, {
         status: "completed",
         result: media,
@@ -366,9 +371,121 @@ export class JobExecutor {
               : undefined,
       });
       log.info("job completed", { jobId, media: media.length });
+
+      // Server-side absorption (Phase B): a completed job lands in its
+      // consumer even when no browser is watching — a story scene patch for
+      // tagged jobs, a History asset for solo renders. Idempotent with the
+      // client runner's own writes (same values, same ids).
+      if (!job) return;
+      const sceneTag = job.clientTag?.match(/^s_([^:]+):(.+)$/);
+      if (sceneTag) {
+        this.absorbStoryScene(jobId, sceneTag[1], sceneTag[2], media, prepared, log);
+      } else {
+        const assetId = this.absorbSoloAsset(jobId, job, media, prepared, log);
+        patchJobRepository(jobId, { assetId });
+      }
     } catch (error) {
       this.failFromError(jobId, error, log);
     }
+  }
+
+  /** Attach a finished job's media to its story scene — only while the
+   * scene is still generating (a re-queued scene wants the NEW render). */
+  private absorbStoryScene(
+    jobId: string,
+    storyId: string,
+    sceneId: string,
+    media: Awaited<ReturnType<typeof this.persist>>,
+    prepared: Awaited<ReturnType<typeof prepareGeneration>>,
+    log: Logger,
+  ): void {
+    const story = getStoriesRepository(storyId);
+    if (!story?.scenes) return;
+    const scene = story.scenes.find((sc) => sc.id === sceneId);
+    if (!scene || scene.status !== "generating") {
+      log.info("scene absorb skipped (scene not generating)", { jobId, sceneId });
+      return;
+    }
+    const primary = media[0];
+    // Chain end frame: provider export when available, the image itself for
+    // image scenes; video canvas extraction stays client-side (backfill).
+    const endFrameRef =
+      primary?.endFrameUrl ?? (prepared.normalized.kind === "image" ? primary?.url : undefined);
+    patchStoryRepository(storyId, {
+      scenes: story.scenes.map((sc) =>
+        sc.id === sceneId
+          ? {
+              ...sc,
+              url: primary?.url ?? null,
+              mime: primary?.mime,
+              status: "completed" as const,
+              error: undefined,
+              progress: undefined,
+              safe: prepared.normalized.safe,
+              ...(prepared.model.id ? { effectiveModelId: prepared.model.id } : {}),
+              ...(endFrameRef ? { endFrameRef } : {}),
+            }
+          : sc,
+      ),
+    });
+    log.info("job absorbed into story scene", { jobId, storyId, sceneId });
+  }
+
+  /** Solo renders become History assets server-side, so closing the tab
+   * never loses a finished render. Clients reuse this exact id. */
+  private absorbSoloAsset(
+    jobId: string,
+    job: JobRecord,
+    media: Awaited<ReturnType<typeof this.persist>>,
+    prepared: Awaited<ReturnType<typeof prepareGeneration>>,
+    log: Logger,
+  ): string {
+    const request = job.request as {
+      rawPrompt?: string;
+      style?: string;
+      aspect?: string;
+      resolution?: string;
+      duration?: string;
+      count?: number;
+      negativePrompt?: string;
+      enhance?: boolean;
+      modelId?: string | null;
+    };
+    const primary = media[0];
+    const settings = {
+      kind: job.kind,
+      aspect: (request.aspect ?? "16:9") as GenerationSettings["aspect"],
+      resolution: (request.resolution ?? "1080p") as GenerationSettings["resolution"],
+      style: request.style ?? "None",
+      duration: (request.duration ?? "5s") as GenerationSettings["duration"],
+      count: request.count ?? 1,
+      negativePrompt: request.negativePrompt ?? "",
+      enhance: request.enhance ?? false,
+      safe: prepared.normalized.safe,
+      seed: String(prepared.normalized.seed ?? ""),
+      modelId: request.modelId ?? undefined,
+    } satisfies GenerationSettings;
+    const asset: Asset = {
+      id: `a_${job.id}`,
+      kind: job.kind,
+      title: titleFromPrompt(request.rawPrompt ?? prepared.normalized.prompt),
+      prompt: request.rawPrompt ?? prepared.normalized.prompt,
+      url: primary?.url ?? "",
+      variants: media.map((m) => m.url),
+      ...(primary?.url ? { posterUrl: primary.url } : {}),
+      settings,
+      createdAt: job.createdAt,
+      favorite: false,
+      mode: job.kind === "video" ? "Solo Mode (Video)" : "Solo Mode (Image)",
+      meta: {
+        requestId: jobId,
+        seeds: media.map((m) => m.seed).join(", "),
+        example: false,
+      },
+    };
+    putRecord(asset);
+    log.info("solo job absorbed into history", { jobId, assetId: asset.id });
+    return asset.id;
   }
 
   private failFromError(jobId: string, error: unknown, log: Logger): void {

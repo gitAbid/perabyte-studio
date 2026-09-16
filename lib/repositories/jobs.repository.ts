@@ -36,6 +36,8 @@ export interface JobRecord {
   frameUsed?: boolean;
   /** `s_<storyId>:<sceneId>` for story scenes; absent for solo renders. */
   clientTag?: string;
+  /** Set on solo completion: the server-created History asset id. */
+  assetId?: string;
   createdAt: number;
   startedAt?: number;
   finishedAt?: number;
