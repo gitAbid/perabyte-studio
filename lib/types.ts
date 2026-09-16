@@ -39,6 +39,10 @@ export interface GenerationSettings {
   safe?: boolean;
   /** Selected model id (`<provider>:<model>`). Falls back to the kind's default. */
   modelId?: string;
+  /** Chain preset override (video stories): the model frame-carrying scenes
+   * (chained or manual start frame) render with. Unset = Auto — the service
+   * swaps chained scenes to the picked model's family i2v sibling. */
+  chainModelId?: string;
   /** Sogni LoRA adapters (order = application order). Ignored by models
    * without LoRA support; story scenes inherit them with the settings. */
   loras?: LoraSelection[];

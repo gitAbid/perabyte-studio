@@ -8,6 +8,7 @@ import { SceneRefChips } from "@/components/story/SceneRefChips";
 import { Icon } from "@/components/Icon";
 import { MediaFrame, VideoStage } from "@/components/Media";
 import { PromptComposer } from "@/components/PromptComposer";
+import { PillSelect } from "@/components/PillSelect";
 import { RenderProgress } from "@/components/RenderProgress";
 import { StoryPlayer } from "@/components/StoryPlayer";
 import { Badge, Button, Segmented, useToast } from "@/components/ui";
@@ -223,11 +224,37 @@ export default function StoryPage() {
   // Style presets are per-model: provider-workflow models take only the raw prompt.
   const stylesSupported = selectedModel?.stylesSupported ?? true;
 
+  // Chain preset: which model frame-carrying scenes (chained or manual start)
+  // render with. Only a decision when the picked model can't chain itself —
+  // Seedance/Grok render every scene on the pick, so no pill then.
+  const chainPlan =
+    kind === "video" && selectedModel && !startCatalog.loading
+      ? resolveChainModelPlan({ picked: selectedModel, startCapable: startCatalog.models })
+      : null;
+  const showChainPill = chainPlan !== null;
+  const autoChainLabel =
+    chainPlan?.action === "swap" ? `Auto · ${chainPlan.label}` : "Auto · none";
+  const chainOptions = [
+    { value: "", label: autoChainLabel },
+    ...startCatalog.models
+      .filter((model) => !model.model.toLowerCase().includes("flf2v"))
+      .map((model) => ({ value: model.id, label: model.label, group: model.providerLabel })),
+  ];
+  /** The override when still valid against the catalog — stale ids drop to
+   * Auto instead of failing the run. Unjudged while the catalog loads. */
+  function resolvedChainModelId(): string | undefined {
+    const override = settings.chainModelId;
+    if (!override) return undefined;
+    if (startCatalog.loading) return override;
+    return startCatalog.models.some((model) => model.id === override) ? override : undefined;
+  }
+
   function currentSettings(): GenerationSettings {
     return {
       ...settings,
       kind,
       modelId: modelId ?? undefined,
+      chainModelId: resolvedChainModelId(),
       safe: !userSettings.uncensoredEnabled,
     };
   }
@@ -235,12 +262,11 @@ export default function StoryPage() {
   /* ------------------------- queue integration ------------------------- */
 
   /**
-   * Say up front which model chained scenes will really render with. A t2v
-   * pick can't take the chain's start frame, so the service swaps every
-   * chained scene to the family's hidden i2v sibling (i2v requires a
-   * reference image, so scene 1 stays on the pick). Skipped while the
-   * start-capable catalog is still loading — a wrong "frames dropped" claim
-   * is worse than no notice.
+   * Say up front which model chained scenes will really render with: the
+   * explicit chain override when set, else the picked model's family i2v
+   * sibling (i2v requires a reference image, so scene 1 stays on the pick).
+   * Skipped while the start-capable catalog is still loading — a wrong
+   * "frames dropped" claim is worse than no notice.
    */
   function announceChainModel(draft: StoryScene[]) {
     if (kind !== "video" || !selectedModel || startCatalog.loading) return;
@@ -249,6 +275,15 @@ export default function StoryPage() {
       Boolean(draftRefs.startImageRef) ||
       draft.some((scene) => scene.startImageRef);
     if (!framesFlow) return;
+    const override = resolvedChainModelId();
+    if (override) {
+      const label =
+        startCatalog.models.find((model) => model.id === override)?.label ?? override;
+      toast.push(
+        `Chained scenes render with ${label} — ${selectedModel.label} can't take a start frame.`,
+      );
+      return;
+    }
     const plan = resolveChainModelPlan({
       picked: selectedModel,
       startCapable: startCatalog.models,
@@ -656,11 +691,15 @@ export default function StoryPage() {
               allowNsfwLoras={userSettings.uncensoredEnabled}
               onModelChange={(nextModel) => {
                 setSelectedModel(kind, nextModel);
-                // Drop LoRA selections the new model doesn't accept so the
-                // queued scenes never render with a dead adapter set.
+                const nextPicked = catalog.models.find((m) => m.id === nextModel);
                 setSettings((s) => ({
                   ...s,
                   modelId: nextModel,
+                  // A self-chaining pick ends the chain decision — the
+                  // override (if any) is meaningless then.
+                  ...(nextPicked?.frameInput?.start ? { chainModelId: undefined } : {}),
+                  // Drop LoRA selections the new model doesn't accept so the
+                  // queued scenes never render with a dead adapter set.
                   ...(catalog.loras.length
                     ? {
                         loras: snapLorasForModel(
@@ -708,7 +747,7 @@ export default function StoryPage() {
             />
           </div>
 
-          <div className="mt-3 flex shrink-0 items-center gap-2">
+          <div className="mt-3 flex shrink-0 flex-wrap items-center gap-2">
             <Button
               variant="secondary"
               size="sm"
@@ -733,6 +772,20 @@ export default function StoryPage() {
               <Icon name="link" size={13} />
               Continuity: {continuityOn ? "On" : "Off"}
             </button>
+            {/* Chain preset: scene 1 renders on the picked model, every
+                frame-carrying scene on this. Auto = the family's i2v sibling
+                (the service swaps); a pick here overrides it for this story. */}
+            {showChainPill && (
+              <PillSelect
+                icon="link"
+                label="Chain model"
+                value={resolvedChainModelId() ?? ""}
+                options={chainOptions}
+                onChange={(next) =>
+                  setSettings((s) => ({ ...s, chainModelId: next || undefined }))
+                }
+              />
+            )}
           </div>
           <span className="mt-1.5 shrink-0 text-[11px] text-muted">
             {continuityOn

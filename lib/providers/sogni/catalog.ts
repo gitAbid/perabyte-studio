@@ -79,9 +79,13 @@ export function frameCapability(modelId: string): ModelFrameInput | undefined {
   return undefined;
 }
 
-/** The i2v sibling of a t2v workflow model, or null. */
+/** The i2v sibling of a t2v workflow model, or null. Covers both the
+ * underscore families (WAN/LTX/MiniMax) and the dashed vendor families
+ * (HappyHorse). */
 export function i2vSiblingId(modelId: string): string | null {
-  return modelId.includes("_t2v") ? modelId.replace("_t2v", "_i2v") : null;
+  if (modelId.includes("_t2v")) return modelId.replace("_t2v", "_i2v");
+  if (modelId.includes("-t2v")) return modelId.replace("-t2v", "-i2v");
+  return null;
 }
 
 export interface SogniCatalog {

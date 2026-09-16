@@ -189,6 +189,12 @@ export function createStoryRunner(deps: StoryRunnerDeps) {
       const scenes = deps.getStory(storyId)?.scenes ?? [];
       const predecessor = scene.startImageRef ? undefined : chainPredecessor(scenes, index);
       const startRef = scene.startImageRef ?? predecessor?.endFrameRef;
+      // Chain preset: a frame-carrying scene (chained or manual start) renders
+      // with the story's chain model when one is set; scene 1 and frame-less
+      // scenes stay on the picked model. Unset ⇒ Auto — the picked model goes
+      // out as-is and the service swaps to the family i2v sibling.
+      const chainModelId =
+        startRef && story.settings.chainModelId ? story.settings.chainModelId : undefined;
       // Attached saved character: its sanitized anchor leads every scene
       // prompt (scene prompts stay clean in the UI). safe=false marks the
       // story as rendered under the Uncensored gate.
@@ -197,7 +203,11 @@ export function createStoryRunner(deps: StoryRunnerDeps) {
       const character = characterId ? deps.getCharacter?.(characterId) : undefined;
       const uncensored = story.settings.safe === false;
       const response = await deps.requestGeneration({
-        settings: { ...story.settings, kind: scene.kind },
+        settings: {
+          ...story.settings,
+          kind: scene.kind,
+          ...(chainModelId ? { modelId: chainModelId } : {}),
+        },
         prompt: composeSceneWithCharacter(scene.prompt, character?.spec ?? null, uncensored),
         ...(startRef ? { startImageRef: startRef } : {}),
         ...(scene.endImageRef ? { endImageRef: scene.endImageRef } : {}),
@@ -216,7 +226,10 @@ export function createStoryRunner(deps: StoryRunnerDeps) {
         // reloads exactly like the solo generator's saves.
         safe: story.settings.safe,
         status: "completed",
-        effectiveModelId: response.effectiveModelId,
+        // Chain-model scenes record the model they rendered with (the service
+        // only echoes effectiveModelId when IT swapped) so the tile chip
+        // stays truthful on both paths.
+        effectiveModelId: response.effectiveModelId ?? (chainModelId ?? undefined),
         effectiveModelLabel: response.effectiveModelLabel,
         frameUsed: response.frameUsed,
         ...(endFrameRef ? { endFrameRef } : {}),

@@ -50,4 +50,20 @@ describe("sogni model meta", () => {
     expect(byId.get("seedance-2-0")?.stylesSupported).toBe(false);
     expect(byId.get("seedance-2-0-mini")?.stylesSupported).toBe(false);
   });
+
+  it("links cold-start t2v picks to their registered i2v sibling", () => {
+    const byId = new Map(SOGNI_VIDEO_MODELS.map((m) => [m.model, m]));
+    expect(byId.get("wan_v2.2-14b-fp8_t2v_lightx2v")?.i2vModelId).toBe(
+      "sogni:wan_v2.2-14b-fp8_i2v_lightx2v",
+    );
+    expect(byId.get("ltx25-22b-int8_t2v_distilled")?.i2vModelId).toBe(
+      "sogni:ltx25-22b-int8_i2v_distilled",
+    );
+  });
+
+  it("leaves self-chaining picks (Seedance) without a sibling link", () => {
+    const byId = new Map(SOGNI_VIDEO_MODELS.map((m) => [m.model, m]));
+    expect(byId.get("seedance-2-0")?.i2vModelId).toBeUndefined();
+    expect(byId.get("seedance-2-0-mini")?.i2vModelId).toBeUndefined();
+  });
 });
