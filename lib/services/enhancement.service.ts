@@ -18,9 +18,8 @@ import {
 import type { Logger } from "@/lib/logging/logger";
 import { logger as rootLogger } from "@/lib/logging/logger";
 import { ProviderError } from "@/lib/providers/types";
-import { sogniTextComplete, SOGNI_TEXT_MODELS } from "@/lib/providers/sogni/sogni.text";
-import { pollinationsTextComplete, POLLINATIONS_TEXT_MODELS } from "@/lib/providers/pollinations/pollinations.text";
 import { getProviderConfig } from "@/lib/repositories/provider-config.repository";
+import { resolveTextEngines } from "@/lib/services/text-engine-chain";
 
 /**
  * Prompt-enhancement orchestration (Facade): validate the raw request, ask the
@@ -118,61 +117,6 @@ function cacheKey(request: ValidatedEnhancement, taskEnhanceModel: string | null
     .digest("hex");
 }
 
-interface EngineEntry {
-  providerId: "sogni" | "pollinations";
-  modelId?: string;
-  complete: (instruction: string, options?: { signal?: AbortSignal; modelId?: string }) => Promise<string>;
-}
-
-function resolveEnhanceEngines(): EngineEntry[] {
-  const config = getProviderConfig();
-  const selectedModel = config.tasks.enhance;
-
-  const sogniEnabled =
-    config.providers.sogni?.enabled !== false &&
-    !config.providers.sogni?.disabledModels?.includes(selectedModel ?? "");
-  const pollinationsEnabled =
-    config.providers.pollinations?.enabled !== false &&
-    !config.providers.pollinations?.disabledModels?.includes(selectedModel ?? "");
-
-  const sogniModels = SOGNI_TEXT_MODELS.map((m) => m.id);
-  const pollinationsModels = POLLINATIONS_TEXT_MODELS.map((m) => m.id);
-
-  const engines: EngineEntry[] = [];
-
-  if (selectedModel) {
-    if (sogniModels.includes(selectedModel) && sogniEnabled) {
-      engines.push({
-        providerId: "sogni",
-        modelId: selectedModel,
-        complete: sogniTextComplete,
-      });
-    } else if (pollinationsModels.includes(selectedModel) && pollinationsEnabled) {
-      engines.push({
-        providerId: "pollinations",
-        modelId: selectedModel,
-        complete: pollinationsTextComplete,
-      });
-    }
-  }
-
-  // Fallback chain in priority order (excluding the already-selected engine).
-  if (config.providers.sogni?.enabled !== false && !engines.some((e) => e.providerId === "sogni")) {
-    engines.push({
-      providerId: "sogni",
-      complete: sogniTextComplete,
-    });
-  }
-  if (config.providers.pollinations?.enabled !== false && !engines.some((e) => e.providerId === "pollinations")) {
-    engines.push({
-      providerId: "pollinations",
-      complete: pollinationsTextComplete,
-    });
-  }
-
-  return engines;
-}
-
 export async function runPromptEnhancement(
   body: Record<string, unknown>,
   options: { signal?: AbortSignal; logger?: Logger } = {},
@@ -198,7 +142,7 @@ export async function runPromptEnhancement(
   try {
     const instruction = enhancementInstruction(request.prompt, request);
     let lastError: unknown;
-    const engines = resolveEnhanceEngines();
+    const engines = resolveTextEngines(config.tasks.enhance);
     for (const engine of engines) {
       try {
         const reply = await engine.complete(instruction, {
