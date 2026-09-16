@@ -90,7 +90,8 @@ export function CharacterStudio() {
 
   // LoRA selections snap to the render model: entries it doesn't accept drop
   // (same policy as Solo/Story), so the Review step never shows a count the
-  // server would silently discard.
+  // server would silently discard. Adult picks drop with the Uncensored gate
+  // too — same reactive snap the other surfaces apply.
   useEffect(() => {
     if (!characterModel?.model || !catalog.loras.length) return;
     setRenderParams((params) => {
@@ -100,13 +101,14 @@ export function CharacterStudio() {
         catalog.loras,
         characterModel.model,
         catalog.loraMaxPerRequest,
+        uncensored,
       );
       return JSON.stringify(snapped) === JSON.stringify(params.loras)
         ? params
         : { ...params, loras: snapped };
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only when the model identity or catalog changes
-  }, [characterModelId, catalog.models, catalog.loras, catalog.loraMaxPerRequest]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only when the model identity, catalog, or gate changes
+  }, [characterModelId, catalog.models, catalog.loras, catalog.loraMaxPerRequest, uncensored]);
 
   // The Settings gate is the single switch: when Uncensored Mode is off, an
   // adult selection anywhere in the spec falls back to its safe equivalent

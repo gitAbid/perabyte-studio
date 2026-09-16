@@ -108,3 +108,22 @@ describe("snapLorasForModel", () => {
     expect(snapped.map((s) => s.loraId)).not.toContain("ghost-lora");
   });
 });
+
+describe("snapLorasForModel — content gate", () => {
+  it("drops nsfw/sexual selections when the gate is off, keeping clean ones", () => {
+    const selection = [
+      { loraId: "krea2-warm-light", strength: 2 },
+      { loraId: "krea2-mystic-x", strength: 1 },
+    ];
+    expect(
+      snapLorasForModel(selection, CATALOG, "krea2_turbo_fp8_scaled", 8, false),
+    ).toEqual([{ loraId: "krea2-warm-light", strength: 2 }]);
+  });
+
+  it("keeps adult selections when the gate is on", () => {
+    const selection = [{ loraId: "krea2-mystic-x", strength: 1 }];
+    expect(snapLorasForModel(selection, CATALOG, "krea2_turbo_fp8_scaled", 8, true)).toEqual([
+      { loraId: "krea2-mystic-x", strength: 1 },
+    ]);
+  });
+});

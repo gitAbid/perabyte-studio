@@ -1,4 +1,7 @@
-import type { StoryScene } from "@/lib/types";
+import type { GenerationSettings, StoryScene } from "@/lib/types";
+import { VIDEO_STYLES } from "@/lib/constants";
+import { snapLorasForModel } from "@/lib/lora-options";
+import type { LoraOption } from "@/lib/providers/sogni/lora-catalog";
 
 /**
  * Image-story → video-story conversion (spec §9): consecutive images become
@@ -68,4 +71,43 @@ export function resolveEndCapableModel(
     if (endCapableIds.has(candidate) && availableIds.includes(candidate)) return candidate;
   }
   return null;
+}
+
+/** Catalog slice the converted story's settings are validated against. */
+export interface ConvertSettingsCatalog {
+  models: ReadonlyArray<{ id: string; model?: string }>;
+  loras: ReadonlyArray<LoraOption>;
+  loraMaxPerRequest?: number;
+}
+
+/**
+ * Settings for the converted video story. The composer state they derive from
+ * is image-kind state, so two things must not ride along: a chain-model
+ * override (every clip carries explicit frames — the dialog's chosen model IS
+ * the frame-model decision) and LoRA selections the chosen model doesn't
+ * accept (image-session adapters, silently dropped server-side otherwise).
+ * Unlike the solo snap, an unavailable LoRA catalog wipes selections: the
+ * conversion model was chosen explicitly, so dead adapters are never worth
+ * carrying.
+ */
+export function buildConvertSettings(
+  base: GenerationSettings,
+  chosenModelId: string,
+  catalog: ConvertSettingsCatalog,
+): GenerationSettings {
+  const rawModelId =
+    catalog.models.find((model) => model.id === chosenModelId)?.model ?? "";
+  return {
+    ...base,
+    kind: "video",
+    style: Object.keys(VIDEO_STYLES)[0],
+    modelId: chosenModelId,
+    chainModelId: undefined,
+    loras: snapLorasForModel(
+      base.loras ?? [],
+      catalog.loras,
+      rawModelId,
+      catalog.loraMaxPerRequest,
+    ),
+  };
 }
