@@ -359,7 +359,7 @@ export function CharacterStudio() {
                       <span
                         className={`inline-flex size-5 shrink-0 items-center justify-center rounded-full ${
                           done
-                            ? "bg-primary text-white"
+                            ? "bg-primary-strong text-white"
                             : active
                               ? "bg-primary-soft text-primary"
                               : "bg-surface-2 text-muted"
@@ -416,7 +416,7 @@ export function CharacterStudio() {
       >
         <div className="rounded-[20px] border border-border bg-raised p-5 shadow-card sm:p-7">
           <div className="flex items-center gap-2.5">
-            <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-white">
+            <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-strong text-white">
               <Icon name="check" size={16} />
             </span>
             <div className="min-w-0">

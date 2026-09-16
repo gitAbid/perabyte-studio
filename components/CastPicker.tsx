@@ -72,7 +72,7 @@ export function CastPicker({
         <Icon name="user" size={13} />
         Cast
         {selectedIds.length > 0 && (
-          <span className="inline-flex min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10.5px] font-bold leading-4 text-white">
+          <span className="inline-flex min-w-4 items-center justify-center rounded-full bg-primary-strong px-1 text-[10.5px] font-bold leading-4 text-white">
             {selectedIds.length}
           </span>
         )}
@@ -133,7 +133,7 @@ export function CastPicker({
                     <span
                       className={`inline-flex size-4 shrink-0 items-center justify-center rounded-[5px] border transition-colors ${
                         active
-                          ? "border-primary bg-primary text-white"
+                          ? "border-primary bg-primary-strong text-white"
                           : "border-border-strong bg-raised text-transparent"
                       }`}
                     >

@@ -964,7 +964,7 @@ export default function StoryPage() {
                         aria-label={`Re-render scene ${index + 1}`}
                         title="Render this scene again (later scenes keep their current results)"
                         onClick={() => handleRerunScene(typed.id)}
-                        className="absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-full bg-white/95 text-ink-soft opacity-0 shadow-card transition-opacity hover:text-ink focus:opacity-100 group-hover:opacity-100"
+                        className="absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-full border border-white/25 bg-black/55 text-white opacity-0 shadow-card transition-opacity hover:bg-black/70 focus:opacity-100 group-hover:opacity-100"
                       >
                         <Icon name="refresh" size={13} />
                       </button>
@@ -996,7 +996,7 @@ export default function StoryPage() {
                         aria-label={`Cancel scene ${index + 1}`}
                         title="Cancel this scene"
                         onClick={() => handleCancelScene(typed.id)}
-                        className="absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-full bg-white/95 text-ink-soft shadow-card transition-colors hover:text-ink"
+                        className="absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-full border border-white/25 bg-black/55 text-white shadow-card transition-colors hover:bg-black/70"
                       >
                         <Icon name="close" size={13} />
                       </button>
@@ -1006,7 +1006,7 @@ export default function StoryPage() {
                       <div className="skeleton w-full rounded-[14px]" style={ratioStyle} />
                       <div className="absolute inset-0 flex items-center justify-center">
                         {waitingFor ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-[11px] font-semibold text-ink shadow-card">
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/55 px-3 py-1.5 text-[11px] font-semibold text-white shadow-card backdrop-blur-sm">
                             <Icon name="link" size={12} /> Waiting for Scene {chainPredIndex + 1}
                           </span>
                         ) : (
@@ -1024,7 +1024,7 @@ export default function StoryPage() {
                         aria-label={`Remove scene ${index + 1} from the queue`}
                         title="Remove from queue"
                         onClick={() => handleRemoveScene(typed.id)}
-                        className="absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-full bg-white/95 text-ink-soft shadow-card transition-colors hover:text-ink"
+                        className="absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-full border border-white/25 bg-black/55 text-white shadow-card transition-colors hover:bg-black/70"
                       >
                         <Icon name="close" size={13} />
                       </button>
@@ -1047,7 +1047,7 @@ export default function StoryPage() {
                         aria-label={`Remove scene ${index + 1}`}
                         title="Remove scene"
                         onClick={() => handleRemoveScene(typed.id)}
-                        className="absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-full bg-white/95 text-ink-soft shadow-card transition-colors hover:text-ink"
+                        className="absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-full border border-white/25 bg-black/55 text-white shadow-card transition-colors hover:bg-black/70"
                       >
                         <Icon name="close" size={13} />
                       </button>
@@ -1055,10 +1055,10 @@ export default function StoryPage() {
                   ) : typed && typed.status === "failed" ? (
                     <div className="relative">
                       <div
-                        className="flex w-full flex-col items-center justify-center rounded-[14px] border border-dashed border-red-200 bg-white px-3 text-center"
+                        className="flex w-full flex-col items-center justify-center rounded-[14px] border border-dashed border-danger/40 bg-danger-soft px-3 text-center"
                         style={ratioStyle}
                       >
-                        <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-wide text-red-600 shadow-card">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-danger/15 px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-wide text-danger shadow-card">
                           <Icon name="alert" size={10} /> Failed
                         </span>
                         <p className="mt-2 line-clamp-2 text-[11px] text-muted">
@@ -1070,7 +1070,7 @@ export default function StoryPage() {
                         aria-label={`Re-render scene ${index + 1}`}
                         title="Render this scene again"
                         onClick={() => handleRerunScene(typed.id)}
-                        className="absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-full bg-white/95 text-ink-soft shadow-card transition-colors hover:text-ink"
+                        className="absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-full border border-white/25 bg-black/55 text-white shadow-card transition-colors hover:bg-black/70"
                       >
                         <Icon name="refresh" size={13} />
                       </button>
@@ -1191,7 +1191,7 @@ export default function StoryPage() {
                             setEditingSceneId(null);
                           }
                         }}
-                        className="mt-0.5 w-full resize-none rounded-[8px] border border-primary/40 bg-white px-2 py-1.5 text-[12px] leading-snug text-ink outline-none"
+                        className="mt-0.5 w-full resize-none rounded-[8px] border border-primary/40 bg-raised px-2 py-1.5 text-[12px] leading-snug text-ink outline-none"
                       />
                     ) : (
                       <p

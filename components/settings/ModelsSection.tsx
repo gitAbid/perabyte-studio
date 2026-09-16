@@ -225,7 +225,7 @@ function ModelPill({
       <span
         className={`grid size-4 shrink-0 place-items-center rounded-full ${
           model.enabled
-            ? "bg-primary text-white"
+            ? "bg-primary-strong text-white"
             : "border border-border-strong bg-transparent"
         }`}
       >

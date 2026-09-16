@@ -102,7 +102,7 @@ function AdvancedPanel({
                     onClick={() => onChange({ count: n })}
                     className={`h-7 flex-1 rounded-[9px] border text-[12px] font-semibold transition-colors ${
                       settings.count === n
-                        ? "border-primary bg-primary text-white"
+                        ? "border-primary bg-primary-strong text-white"
                         : "border-border bg-raised text-ink-soft hover:border-border-strong"
                     }`}
                   >
@@ -271,7 +271,7 @@ export function PromptComposer({
           {attachedCharacters.map((character) => (
             <span
               key={character.id}
-              className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full bg-white/70 px-2 py-0.5"
+              className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5"
             >
               <Icon name="user" size={12} className="shrink-0 text-primary" />
               <span className="min-w-0 truncate text-[12px] font-semibold text-primary">

@@ -55,7 +55,7 @@ export default function ResultsPage() {
             action={
               <Link
                 href="/history"
-                className="inline-flex h-11 items-center gap-2 rounded-[12px] bg-primary px-4 text-sm font-semibold text-white"
+                className="inline-flex h-11 items-center gap-2 rounded-[12px] bg-primary-strong px-4 text-sm font-semibold text-white"
               >
                 Back to History
               </Link>
@@ -223,7 +223,7 @@ export default function ResultsPage() {
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href={`/generate/${isVideo ? "video" : "image"}?prompt=${encodeURIComponent(asset.prompt)}&style=${encodeURIComponent(String(asset.settings.style))}&aspect=${asset.settings.aspect}`}
-            className="inline-flex h-11 items-center gap-2 rounded-[12px] bg-primary px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-dark"
+            className="inline-flex h-11 items-center gap-2 rounded-[12px] bg-primary-strong px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-dark"
           >
             <Icon name="refresh" size={16} />
             Regenerate
