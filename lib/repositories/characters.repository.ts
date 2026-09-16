@@ -1,120 +1,97 @@
-"use client";
-
-import { useEffect, useState, useSyncExternalStore } from "react";
-import type { CharacterSpec } from "@/lib/character";
+import * as fs from "node:fs";
+import * as path from "node:path";
+import {
+  parseCharacterRow,
+  parseCharacterRows,
+  type CharacterRow,
+} from "@/lib/repositories/character-row";
 
 /**
- * Saved-character repository (localStorage), following the same
- * external-store pattern as the settings repository. A saved character is a
- * named CharacterSpec plus an optional thumbnail from the render that
- * defined it, so Solo and Story can reuse one identity across scenes.
+ * Server-side saved characters (`.studio/characters.json`) — thin fs-backed
+ * JSON repository in the assets-repository style: in-memory cache, sanitize
+ * on load, sync writes. Deliberately pure storage; the characters service
+ * owns row validation on writes.
  */
-export interface SavedCharacter {
-  id: string;
-  name: string;
-  spec: CharacterSpec;
-  /** Primary render URL from the generation that defined the character. */
-  thumbnail?: string;
-  createdAt: number;
-  updatedAt: number;
+
+let overridePath: string | null = null;
+let cache: CharacterRow[] | null = null;
+
+function resolvePath(): string {
+  if (overridePath) return overridePath;
+  return path.join(/*turbopackIgnore: true*/ process.cwd(), ".studio", "characters.json");
 }
 
-const STORAGE_KEY = "perabyte.characters.v1";
-
-const listeners = new Set<() => void>();
-let cache: SavedCharacter[] | null = null;
-
-function emit() {
-  listeners.forEach((listener) => listener());
-}
-
-function persist(next: SavedCharacter[]) {
-  cache = next;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  } catch {
-    /* storage full or blocked — the session still works in memory */
-  }
-  emit();
-}
-
-function read(): SavedCharacter[] {
+function load(): CharacterRow[] {
   if (cache) return cache;
-  if (typeof window === "undefined") return [];
+  const target = resolvePath();
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? (JSON.parse(raw) as SavedCharacter[]) : [];
-    cache = Array.isArray(parsed) ? parsed : [];
+    if (!fs.existsSync(/*turbopackIgnore: true*/ target)) {
+      cache = [];
+    } else {
+      cache = parseCharacterRows(JSON.parse(fs.readFileSync(/*turbopackIgnore: true*/ target, "utf-8")));
+    }
   } catch {
-    cache = [];
+    cache = []; // unreadable/corrupt file beats a crashed server
   }
   return cache;
 }
 
-export function getCharacters(): SavedCharacter[] {
-  return read();
+function persist(rows: CharacterRow[]): void {
+  cache = rows;
+  const target = resolvePath();
+  const dir = path.dirname(target);
+  try {
+    if (!fs.existsSync(/*turbopackIgnore: true*/ dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(/*turbopackIgnore: true*/ target, JSON.stringify(rows, null, 2), "utf-8");
+  } catch (error) {
+    // A full disk must not crash the API route — memory stays authoritative
+    // for this process and the next successful write re-syncs the file.
+    console.error("[characters-repository] persist failed", error);
+  }
 }
 
-export function getCharacter(id: string): SavedCharacter | undefined {
-  return read().find((character) => character.id === id);
+export function listCharactersRepository(): CharacterRow[] {
+  return load();
 }
 
-export function addCharacter(
-  name: string,
-  spec: CharacterSpec,
-  thumbnail?: string,
-): SavedCharacter {
-  const character: SavedCharacter = {
-    id: `ch_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
-    name: name.trim() || "Untitled character",
-    spec,
-    ...(thumbnail ? { thumbnail } : {}),
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  };
-  persist([character, ...read()]);
-  return character;
+export function getCharactersRepository(id: string): CharacterRow | undefined {
+  return load().find((c) => c.id === id);
 }
 
-export function updateCharacter(id: string, patch: Partial<Omit<SavedCharacter, "id">>): void {
+/** Upsert (create or replace), newest first. */
+export function putCharacterRepository(row: CharacterRow): CharacterRow {
+  persist([row, ...load().filter((c) => c.id !== row.id)]);
+  return row;
+}
+
+/** Merge a patch onto one row; returns the patched row or null when absent. */
+export function patchCharacterRepository(
+  id: string,
+  patch: Partial<CharacterRow>,
+): CharacterRow | null {
+  let patched: CharacterRow | null = null;
   persist(
-    read().map((character) =>
-      character.id === id
-        ? { ...character, ...patch, updatedAt: Date.now() }
-        : character,
-    ),
+    load().map((c) => {
+      if (c.id !== id) return c;
+      patched = { ...c, ...patch };
+      return patched;
+    }),
   );
+  return patched;
 }
 
-export function removeCharacter(id: string): void {
-  persist(read().filter((character) => character.id !== id));
+/** Delete by ids; returns how many rows were actually removed. */
+export function deleteCharactersRepository(ids: string[]): number {
+  const doomed = new Set(ids);
+  const rows = load();
+  const kept = rows.filter((c) => !doomed.has(c.id));
+  persist(kept);
+  return rows.length - kept.length;
 }
 
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
-
-const EMPTY: SavedCharacter[] = [];
-
-/** Cached empty snapshot — a fresh array here would loop useSyncExternalStore. */
-function getServerSnapshot(): SavedCharacter[] {
-  return EMPTY;
-}
-
-function useHydrated(): boolean {
-  const [ready, setReady] = useState(false);
-  useEffect(() => setReady(true), []);
-  return ready;
-}
-
-export function useCharacters(): { characters: SavedCharacter[]; ready: boolean } {
-  const characters = useSyncExternalStore(subscribe, read, getServerSnapshot);
-  const ready = useHydrated();
-  return { characters, ready };
-}
-
-/** Test hook: reset the in-memory cache. */
-export function resetCharactersForTests(): void {
+export function setCharactersPathForTests(customPath: string | null): void {
+  overridePath = customPath;
   cache = null;
 }

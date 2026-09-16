@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "./Icon";
 import { MAX_SCENE_CHARACTERS } from "@/lib/character";
-import type { SavedCharacter } from "@/lib/repositories/characters.repository";
+import type { SavedCharacter } from "@/lib/character-store";
 
 /**
  * Cast picker pill + popover for the composer's badge row. Multi-select over

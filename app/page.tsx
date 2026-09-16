@@ -32,10 +32,10 @@ const FEATURES = [
     cta: "Open Character Studio",
   },
   {
-    icon: "history" as const,
+    icon: "image" as const,
     title: "Library",
     body: "Every render is saved automatically. Browse, favourite, re-open and reuse past work across modes.",
-    href: "/history",
+    href: "/images",
     cta: "Browse the library",
   },
 ];

@@ -14,8 +14,10 @@ import {
   DEFAULT_VIDEO_SETTINGS,
   IMAGE_STYLES,
   PROMPT_MAX,
+  RESOLUTIONS,
   VIDEO_STYLES,
   type AspectKey,
+  type ResolutionKey,
 } from "@/lib/constants";
 import { isSensitiveAsset } from "@/lib/domain/models";
 import { downloadMedia, useGeneration } from "@/lib/generation";
@@ -29,7 +31,7 @@ import {
   setSoloCharacters,
   useSettings,
 } from "@/lib/repositories/settings.repository";
-import { useCharacters } from "@/lib/repositories/characters.repository";
+import { useCharacters } from "@/lib/character-store";
 import { addAsset, assetFromResponse, DEMO_SPECS, toggleFavorite, useAssets } from "@/lib/store";
 import type { DemoSpec } from "@/lib/store";
 import type { GenerationSettings } from "@/lib/types";
@@ -100,6 +102,10 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
     }
     if (aspect && aspect in ASPECTS) {
       setSettings((s) => ({ ...s, aspect: aspect as AspectKey }));
+    }
+    const resolution = params.get("resolution");
+    if (resolution && resolution in RESOLUTIONS) {
+      setSettings((s) => ({ ...s, resolution: resolution as ResolutionKey }));
     }
   }, [kind]);
 

@@ -20,10 +20,10 @@ export default function NotFound() {
           Back home
         </Link>
         <Link
-          href="/history"
+          href="/images"
           className="inline-flex h-11 items-center rounded-[12px] border border-border-strong bg-raised px-4 text-sm font-semibold text-ink hover:border-muted"
         >
-          Open History
+          Open the library
         </Link>
       </div>
     </div>

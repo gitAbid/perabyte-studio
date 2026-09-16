@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { MediaFrame } from "@/components/Media";
-import { Badge, Button, useToast } from "@/components/ui";
+import { Badge, Button, EmptyState, LinkButton, useToast } from "@/components/ui";
 import {
   CHARACTER_STEPS,
   StepAppearance,
@@ -14,7 +14,6 @@ import {
   Stepper,
   type ReferenceImage,
 } from "@/components/character/CharacterSteps";
-import { CharacterLanding } from "@/components/character/CharacterLanding";
 import { CharacterPreviewPanel } from "@/components/character/CharacterPreviewPanel";
 import {
   DEFAULT_CHARACTER_SPEC,
@@ -28,23 +27,18 @@ import {
 import { downloadMedia, useGeneration } from "@/lib/generation";
 import { useModelCatalog } from "@/lib/model-catalog";
 import { snapLorasForModel } from "@/lib/lora-options";
-import {
-  setSelectedModel,
-  setSoloCharacters,
-  setStoryCharacters,
-  useSettings,
-} from "@/lib/repositories/settings.repository";
+import { setSelectedModel, useSettings } from "@/lib/repositories/settings.repository";
 import {
   addCharacter,
+  ensureCharactersHydrated,
   getCharacter,
-  removeCharacter,
-  useCharacters,
-} from "@/lib/repositories/characters.repository";
-import { addAsset } from "@/lib/store";
+  updateCharacter,
+} from "@/lib/character-store";
+import { addAsset, updateAsset, useAssets } from "@/lib/store";
 import { titleFromPrompt } from "@/lib/constants";
-import type { GenerationResponse } from "@/lib/types";
+import type { Asset, GenerationResponse } from "@/lib/types";
 
-type Phase = "landing" | "wizard" | "generating" | "ready";
+type Phase = "wizard" | "generating" | "ready";
 
 const GENERATING_STAGES = [
   "Processing your prompt",
@@ -54,15 +48,26 @@ const GENERATING_STAGES = [
 ];
 
 /**
- * The Character studio: a landing screen followed by a four-step wizard,
- * the generating progress view and the ready view. State lives here; the
- * step components stay presentational. Adult options across the wizard
- * follow the global Uncensored Mode gate from Settings.
+ * The Character wizard: four steps, the generating progress view and the
+ * ready view. Mounted at /character/new (create, optionally seeded from a
+ * parent = variation) and /character/[id] (edit an existing character —
+ * "Save changes" persists spec edits back). State lives here; the step
+ * components stay presentational. Adult options across the wizard follow
+ * the global Uncensored Mode gate from Settings.
  */
-export function CharacterStudio() {
+export function CharacterStudio({
+  mode = "new",
+  parentId,
+  characterId,
+}: {
+  mode?: "new" | "edit";
+  parentId?: string;
+  characterId?: string;
+}) {
   const toast = useToast();
+  const router = useRouter();
 
-  const [phase, setPhase] = useState<Phase>("landing");
+  const [phase, setPhase] = useState<Phase>("wizard");
   const [step, setStep] = useState(1);
   const [maxVisited, setMaxVisited] = useState(1);
   const [spec, setSpec] = useState<CharacterSpec>({ ...DEFAULT_CHARACTER_SPEC });
@@ -79,14 +84,73 @@ export function CharacterStudio() {
   const [saveName, setSaveName] = useState("");
   const [savedCharacterId, setSavedCharacterId] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [savingChanges, setSavingChanges] = useState(false);
+
+  /** Library-mode init: prefill from the saved record or the variation parent. */
+  const [initialized, setInitialized] = useState(mode === "new" && !parentId);
+  const [missing, setMissing] = useState(false);
+  const [parentName, setParentName] = useState<string | null>(null);
+  /** The History asset this session produced, for post-save character tagging. */
+  const [lastSavedAsset, setLastSavedAsset] = useState<{ id: string; meta: Asset["meta"] } | null>(null);
 
   const { job, run, cancel, reset } = useGeneration();
   const { settings: userSettings, ready: settingsReady } = useSettings();
-  const { characters, ready: charactersReady } = useCharacters();
+  const { assets } = useAssets();
   const catalog = useModelCatalog("image");
   const characterModelId = userSettings.imageModel ?? catalog.defaultModelId;
   const characterModel = catalog.models.find((model) => model.id === characterModelId);
   const uncensored = userSettings.uncensoredEnabled;
+
+  /** The character this session renders belong to (edit id or just-saved id). */
+  const galleryId = characterId ?? savedCharacterId;
+  const renders =
+    galleryId
+      ? assets.filter((a) => {
+          const ids = a.meta?.characterIds;
+          return Array.isArray(ids) && (ids as string[]).includes(galleryId);
+        })
+      : [];
+
+  useEffect(() => {
+    if (initialized) return;
+    if (!settingsReady) return;
+    let cancelled = false;
+    // Hydration is async (server store) — resolve it before the one-shot
+    // lookup, otherwise a not-yet-loaded cache reads as "character missing".
+    void ensureCharactersHydrated().then((rows) => {
+      if (cancelled) return;
+      if (mode === "edit") {
+        const character = characterId
+          ? rows.find((r) => r.id === characterId) ?? getCharacter(characterId)
+          : undefined;
+        if (!character) {
+          setMissing(true);
+          setInitialized(true);
+          return;
+        }
+        setSpec(sanitizeSpec({ ...DEFAULT_CHARACTER_SPEC, ...character.spec }, uncensored));
+        setSaveName(character.name);
+        setInitialized(true);
+        return;
+      }
+      if (parentId) {
+        const parent =
+          rows.find((r) => r.id === parentId) ?? getCharacter(parentId);
+        if (parent) {
+          setSpec(sanitizeSpec({ ...DEFAULT_CHARACTER_SPEC, ...parent.spec }, uncensored));
+          setSaveName("");
+          setParentName(parent.name);
+        } else {
+          toast.push("Parent character not found — starting fresh.");
+        }
+      }
+      setInitialized(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time library-mode init
+  }, [initialized, mode, characterId, parentId, settingsReady]);
 
   // LoRA selections snap to the render model: entries it doesn't accept drop
   // (same policy as Solo/Story), so the Review step never shows a count the
@@ -154,38 +218,8 @@ export function CharacterStudio() {
     setMaxVisited((m) => Math.max(m, next));
   }
 
-  function startWizard() {
-    setSpec({ ...DEFAULT_CHARACTER_SPEC });
-    setRenderParams({ aspect: "9:16", resolution: "1080p" });
-    setReference(null);
-    setSaveName("");
-    setSavedCharacterId(null);
-    goToStep(1);
-    setPhase("wizard");
-  }
-
-  function handleOpenCharacter(id: string) {
-    const character = getCharacter(id);
-    if (!character) return;
-    // Sanitize in case the gate has moved since the character was saved.
-    setSpec(sanitizeSpec({ ...DEFAULT_CHARACTER_SPEC, ...character.spec }, uncensored));
-    setReference(null);
-    setSaveName(character.name);
-    setSavedCharacterId(character.id);
-    goToStep(1);
-    setPhase("wizard");
-  }
-
-  function handleDeleteCharacter(id: string) {
-    removeCharacter(id);
-    // Detach the character from the Solo/Story casts if attached there.
-    if (userSettings.soloCharacterIds.includes(id)) {
-      setSoloCharacters(userSettings.soloCharacterIds.filter((cid) => cid !== id));
-    }
-    if (userSettings.storyCharacterIds.includes(id)) {
-      setStoryCharacters(userSettings.storyCharacterIds.filter((cid) => cid !== id));
-    }
-    toast.push("Character deleted.");
+  function backToLibrary() {
+    router.push("/character");
   }
 
   function handleDetailsNext() {
@@ -255,22 +289,68 @@ export function CharacterStudio() {
         nsfwLevel: spec.nsfwLevel,
         rating: uncensored ? "Uncensored" : "Regular",
         referenceThumb: reference?.dataUrl ?? "",
-      },
+        // Tag the render to this character so the library renders strip and
+        // the gallery derive from it (meta passes through the row parser).
+        ...(galleryId ? { characterIds: [galleryId] } : {}),
+      } as Asset["meta"],
     };
     addAsset(asset);
+    setLastSavedAsset({ id: asset.id, meta: asset.meta });
     setSaved(true);
-    toast.push("Character saved to History.", "success");
+    toast.push("Render saved to your library.", "success");
   }
 
   function handleSaveCharacter() {
     if (!result || savedCharacterId) return;
     const primary = result.media[activeVariant] ?? result.media[0];
-    const character = addCharacter(saveName, spec, primary?.url);
+    const character = addCharacter(
+      saveName,
+      spec,
+      primary?.url,
+      parentId ? { parentId } : undefined,
+    );
     setSavedCharacterId(character.id);
+    // If the render was already saved to History, tag it to the character so
+    // the gallery picks it up even though the save order was reversed.
+    if (lastSavedAsset) {
+      updateAsset(lastSavedAsset.id, {
+        meta: { ...lastSavedAsset.meta, characterIds: [character.id] },
+      });
+    }
     toast.push(
       `“${character.name}” saved — attach it from the Character pill in Solo or Story.`,
       "success",
     );
+  }
+
+  /** Edit mode: persist spec/name edits back to the saved record. */
+  async function handleSaveChanges() {
+    if (!characterId || !saveName.trim() || savingChanges) return;
+    setSavingChanges(true);
+    updateCharacter(characterId, { name: saveName.trim(), spec });
+    setSavingChanges(false);
+    setSavedCharacterId(characterId);
+    toast.push("Character updated.", "success");
+  }
+
+  /** Edit mode: branch a copy from the current state. */
+  function handleSaveAsCopy() {
+    if (!result) return;
+    const primary = result.media[activeVariant] ?? result.media[0];
+    const character = addCharacter(
+      `${saveName || "Character"} (copy)`,
+      spec,
+      primary?.url,
+    );
+    toast.push(`“${character.name}” created.`, "success");
+    router.push(`/character/${character.id}`);
+  }
+
+  /** Promote a gallery render to the character's poster image. */
+  function handleSetThumbnail(url: string) {
+    if (!galleryId) return;
+    updateCharacter(galleryId, { thumbnail: url });
+    toast.push("Thumbnail updated.", "success");
   }
 
   function handleDownload() {
@@ -287,16 +367,21 @@ export function CharacterStudio() {
     setPhase("wizard");
   }
 
-  /* ------------------------------- Landing ------------------------------- */
-  if (phase === "landing") {
+  /* ------------------------------ Not found ------------------------------ */
+  if (missing) {
     return (
-      <CharacterLanding
-        characters={characters}
-        charactersReady={charactersReady}
-        onStart={startWizard}
-        onOpenCharacter={handleOpenCharacter}
-        onDeleteCharacter={handleDeleteCharacter}
-      />
+      <div className="mx-auto w-full max-w-[720px] px-4 py-16 sm:px-6">
+        <EmptyState
+          icon="character"
+          title="Character not found"
+          body="This character may have been deleted, or the link is out of date."
+          action={
+            <LinkButton href="/character" variant="secondary">
+              Back to library
+            </LinkButton>
+          }
+        />
+      </div>
     );
   }
 
@@ -478,8 +563,52 @@ export function CharacterStudio() {
             </div>
 
             <div className="flex min-w-0 flex-col gap-2.5">
-              {/* Save as a reusable character — the reuse path for Solo/Story. */}
-              {savedCharacterId ? (
+              {/* Library actions: edit mode persists back to the record; new
+                  mode saves a reusable character (variation when parented). */}
+              {mode === "edit" && characterId ? (
+                savedCharacterId ? (
+                  <p className="flex items-center gap-2 rounded-[12px] border border-primary/30 bg-primary-soft/60 px-3 py-2.5 text-[12.5px] font-semibold text-primary">
+                    <Icon name="check" size={14} />
+                    Changes saved to the character.
+                  </p>
+                ) : (
+                  <div className="rounded-[14px] border border-primary/30 bg-primary-soft/40 p-3">
+                    <p className="text-[12.5px] font-bold text-ink">Update this character</p>
+                    <p className="mt-0.5 text-[11.5px] text-muted">
+                      Save the edited look back to “{saveName}”.
+                    </p>
+                    <div className="mt-2 flex gap-2">
+                      <input
+                        type="text"
+                        value={saveName}
+                        onChange={(e) => setSaveName(e.target.value)}
+                        placeholder="Character name"
+                        aria-label="Character name"
+                        maxLength={40}
+                        className="h-9 min-w-0 flex-1 rounded-[10px] border border-border-strong bg-raised px-2.5 text-[12.5px] text-ink placeholder:text-muted focus:border-primary focus:outline-none"
+                      />
+                      <Button
+                        size="sm"
+                        icon="check"
+                        loading={savingChanges}
+                        disabled={!saveName.trim()}
+                        onClick={handleSaveChanges}
+                      >
+                        Save changes
+                      </Button>
+                    </div>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      icon="copy"
+                      className="mt-2 w-full"
+                      onClick={handleSaveAsCopy}
+                    >
+                      Save as copy
+                    </Button>
+                  </div>
+                )
+              ) : savedCharacterId ? (
                 <p className="flex items-center gap-2 rounded-[12px] border border-primary/30 bg-primary-soft/60 px-3 py-2.5 text-[12.5px] font-semibold text-primary">
                   <Icon name="check" size={14} />
                   Saved — attach it from the Character pill in Solo or Story.
@@ -490,7 +619,9 @@ export function CharacterStudio() {
                     Save this character for reuse
                   </p>
                   <p className="mt-0.5 text-[11.5px] text-muted">
-                    Keeps the exact look for Solo scenes and Story frames.
+                    {parentName
+                      ? `Will be saved as a variation of ${parentName}.`
+                      : "Keeps the exact look for Solo scenes and Story frames."}
                   </p>
                   <div className="mt-2 flex gap-2">
                     <input
@@ -514,6 +645,43 @@ export function CharacterStudio() {
                 </div>
               )}
 
+              {/* Renders strip: every render tagged to this character. */}
+              {galleryId && renders.length > 0 && (
+                <div className="rounded-[14px] border border-border bg-surface p-3">
+                  <p className="text-[12px] font-bold text-ink">
+                    Renders ({renders.length})
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {renders.map((render) => (
+                      <button
+                        key={render.id}
+                        type="button"
+                        onClick={() => handleSetThumbnail(render.url)}
+                        title="Set as thumbnail"
+                        aria-label={`Set render of ${render.title} as thumbnail`}
+                        className={`relative overflow-hidden rounded-[10px] border-2 transition-all ${
+                          render.url === (getCharacter(galleryId)?.thumbnail ?? null)
+                            ? "border-primary"
+                            : "border-transparent hover:border-border-strong"
+                        }`}
+                      >
+                        <MediaFrame
+                          src={render.url}
+                          alt={render.title}
+                          ratio="4/5"
+                          rounded="rounded-[8px]"
+                          className="w-[64px]"
+                          sensitive
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-1.5 text-[11px] text-muted">
+                    Click a render to set it as the character's thumbnail.
+                  </p>
+                </div>
+              )}
+
               <Button icon="download" onClick={handleDownload}>
                 Download
               </Button>
@@ -526,16 +694,11 @@ export function CharacterStudio() {
                 disabled={saved}
                 onClick={handleSave}
               >
-                {saved ? "Saved to History" : "Save to History"}
+                {saved ? "Saved to library" : "Save to library"}
               </Button>
-              {saved && (
-                <Link
-                  href="/history"
-                  className="text-center text-[12.5px] font-semibold text-primary underline-offset-4 hover:underline"
-                >
-                  Open in History →
-                </Link>
-              )}
+              <LinkButton href="/character" variant="ghost" size="sm" iconRight="arrow-right">
+                Open library
+              </LinkButton>
 
               <div className="mt-2 rounded-[14px] border border-border bg-surface p-4">
                 <h3 className="text-[13px] font-bold text-ink">Character Details</h3>
@@ -572,6 +735,19 @@ export function CharacterStudio() {
   }
 
   /* -------------------------------- Wizard ------------------------------- */
+  if (!initialized) {
+    return (
+      <div className="mx-auto w-full max-w-[720px] px-4 py-16 sm:px-6">
+        <div className="flex justify-center">
+          <div
+            aria-hidden
+            className="size-10 animate-spin rounded-full border-[3px] border-primary-soft border-t-primary"
+          />
+        </div>
+      </div>
+    );
+  }
+
   const previewPanel = (
     <CharacterPreviewPanel
       spec={spec}
@@ -591,15 +767,26 @@ export function CharacterStudio() {
           <div className="flex items-center gap-2.5">
             <button
               type="button"
-              aria-label="Back to character overview"
-              onClick={() => setPhase("landing")}
+              aria-label="Back to character library"
+              onClick={backToLibrary}
               className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-raised text-ink-soft transition-colors hover:border-border-strong hover:text-ink"
             >
               <Icon name="arrow-left" size={16} />
             </button>
-            <h1 className="min-w-0 truncate text-[17px] font-extrabold tracking-[-0.02em] text-ink sm:text-[19px]">
-              Character Studio
-            </h1>
+            <div className="min-w-0">
+              <h1 className="min-w-0 truncate text-[17px] font-extrabold tracking-[-0.02em] text-ink sm:text-[19px]">
+                {mode === "edit" && characterId
+                  ? saveName || "Edit character"
+                  : parentName
+                    ? `Variation of ${parentName}`
+                    : "Character Studio"}
+              </h1>
+              {parentName && (
+                <p className="text-[11.5px] text-muted">
+                  Seeded from {parentName} — tweak anything, then save as a new variation.
+                </p>
+              )}
+            </div>
             <button
               type="button"
               onClick={() => setPreviewOpen(true)}
@@ -624,7 +811,7 @@ export function CharacterStudio() {
                 spec={spec}
                 patch={patchSpec}
                 promptError={promptError}
-                onBack={() => setPhase("landing")}
+                onBack={backToLibrary}
                 onNext={handleDetailsNext}
               />
             )}

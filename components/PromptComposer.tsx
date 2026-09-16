@@ -24,7 +24,7 @@ import { LORA_PRESETS, matchLoraPreset } from "@/lib/lora-presets";
 import type { LoraOption } from "@/lib/providers/sogni/lora-catalog";
 import { LoraPicker } from "./LoraPicker";
 import type { ModelVideoLimits } from "@/lib/domain/models";
-import type { SavedCharacter } from "@/lib/repositories/characters.repository";
+import type { SavedCharacter } from "@/lib/character-store";
 import type { GenerationSettings } from "@/lib/types";
 
 const PILL_BASE =

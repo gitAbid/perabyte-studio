@@ -16,20 +16,46 @@ type NavItem = { href: string; label: string; icon: IconName };
 
 const PRIMARY_NAV: NavItem[] = [
   { href: "/", label: "Home", icon: "home" },
+  // Main menu — opens the generation studio. Story mode lives inside it
+  // (the composer's Solo/Story toggle); /story stays for toggle + deep links.
   { href: "/generate/image", label: "Generate", icon: "sparkle" },
-  { href: "/story", label: "Story", icon: "story" },
-  { href: "/character", label: "Character", icon: "character" },
-  { href: "/history", label: "History", icon: "history" },
+  { href: "/character", label: "Characters", icon: "character" },
+  { href: "/images", label: "Images", icon: "image" },
+  { href: "/stories", label: "Stories", icon: "grid" },
 ];
 
-const SECONDARY_NAV: NavItem[] = [
-  { href: "/settings", label: "Settings", icon: "sliders" },
-  { href: "/styleguide", label: "Style guide", icon: "layers" },
-];
+/** Springy per-icon morph poses: hovering shifts the glyph, and an active
+ * section holds its pose — navigation feels alive without any tile chrome.
+ * The overshoot easing sells the morph; stroke swells slightly on hover. */
+const NAV_POSE: Record<string, { hover: string; active: string }> = {
+  "/": { hover: "group-hover:-translate-y-0.5", active: "" },
+  "/generate/image": {
+    hover: "group-hover:rotate-12 group-hover:scale-110",
+    active: "rotate-45",
+  },
+  "/character": { hover: "group-hover:scale-125", active: "scale-110" },
+  "/images": {
+    hover: "group-hover:-rotate-6 group-hover:scale-110",
+    active: "-rotate-3",
+  },
+  "/stories": {
+    hover: "group-hover:rotate-6 group-hover:scale-110",
+    active: "rotate-3",
+  },
+  "/settings": { hover: "group-hover:rotate-90", active: "rotate-45" },
+};
+
+function navIconClass(href: string, active: boolean): string {
+  const pose = NAV_POSE[href] ?? { hover: "", active: "" };
+  return `shrink-0 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:[stroke-width:2.2] motion-reduce:transition-none ${pose.hover} ${active ? pose.active : ""}`;
+}
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
-  if (href === "/generate/image") return pathname.startsWith("/generate");
+  // Solo mode (/generate/*) and story mode (/story) both belong to Generate.
+  if (href === "/generate/image") {
+    return pathname.startsWith("/generate") || pathname === "/story" || pathname.startsWith("/story/");
+  }
   return pathname.startsWith(href);
 }
 
@@ -66,7 +92,11 @@ function SidebarInner({
             : "text-ink-soft hover:bg-surface-2 hover:text-ink"
         }`}
       >
-        <Icon name={item.icon} size={19} className="shrink-0" />
+        <Icon
+          name={item.icon}
+          size={collapsed ? 21 : 19}
+          className={navIconClass(item.href, active)}
+        />
         <span className={collapsed ? "sr-only" : "whitespace-nowrap"}>
           {item.label}
         </span>
@@ -103,16 +133,6 @@ function SidebarInner({
         }`}
       >
         <div className="flex flex-col gap-1.5">{PRIMARY_NAV.map(renderLink)}</div>
-
-        <div
-          className={`my-4 h-px bg-border ${
-            collapsed ? "mx-auto w-8" : "mx-2"
-          }`}
-        />
-
-        <div className="flex flex-col gap-1.5">
-          {SECONDARY_NAV.map(renderLink)}
-        </div>
       </nav>
 
       <SidebarFoot
@@ -130,6 +150,8 @@ function SidebarFoot({
   collapsed: boolean;
   showCollapseToggle: boolean;
 }) {
+  const pathname = usePathname();
+  const settingsActive = pathname.startsWith("/settings");
   return (
     <div
       className={`shrink-0 pb-4 ${
@@ -143,13 +165,44 @@ function SidebarFoot({
           <RendersTray />
         </div>
       )}
+      {/* Bottom cluster: settings + utilities on one anchored line. */}
       <div
-        className={`flex items-center gap-1.5 ${
-          collapsed ? "flex-col" : "justify-between"
+        className={`flex w-full items-center gap-1 ${
+          collapsed
+            ? "flex-col border-t border-border px-0 pt-3"
+            : "justify-between border-t border-border pt-3"
         }`}
       >
-        <ThemeToggle />
-        {showCollapseToggle && <CollapseToggle collapsed={collapsed} />}
+        <Link
+          href="/settings"
+          aria-current={settingsActive ? "page" : undefined}
+          className={`group relative flex h-9 items-center rounded-[10px] text-[13px] font-semibold transition-colors ${
+            collapsed ? "w-full justify-center" : "min-w-0 flex-1 gap-2 px-2"
+          } ${
+            settingsActive
+              ? "bg-primary-soft text-primary"
+              : "text-muted hover:bg-surface-2 hover:text-ink"
+          }`}
+        >
+          <Icon
+            name="sliders"
+            size={17}
+            className={navIconClass("/settings", settingsActive)}
+          />
+          <span className={collapsed ? "sr-only" : ""}>Settings</span>
+          {collapsed && (
+            <span
+              role="tooltip"
+              className="pointer-events-none absolute left-full top-1/2 z-50 ml-2.5 -translate-y-1/2 whitespace-nowrap rounded-lg bg-ink px-2.5 py-1.5 text-[11.5px] font-semibold text-canvas opacity-0 shadow-lift transition-opacity duration-150 group-hover:opacity-100"
+            >
+              Settings
+            </span>
+          )}
+        </Link>
+        <div className={`flex items-center gap-1 ${collapsed ? "flex-col" : ""}`}>
+          <ThemeToggle />
+          {showCollapseToggle && <CollapseToggle collapsed={collapsed} />}
+        </div>
       </div>
 
       <div
@@ -339,9 +392,8 @@ const FOOTER_LINKS = [
   { href: "/generate/image", label: "Solo Mode" },
   { href: "/story", label: "Story Mode" },
   { href: "/character", label: "Character Studio" },
-  { href: "/history", label: "History" },
+  { href: "/images", label: "Images & videos" },
   { href: "/settings", label: "Settings" },
-  { href: "/styleguide", label: "Style guide" },
 ] as const;
 
 export function SiteFooter() {
@@ -380,12 +432,8 @@ export function SiteFooter() {
  */
 export function ConditionalFooter() {
   const pathname = usePathname();
-  if (
-    pathname?.startsWith("/generate") ||
-    pathname?.startsWith("/story") ||
-    pathname?.startsWith("/character")
-  ) {
-    return null;
-  }
+  // The footer is a marketing-sitemap element — only the landing page keeps
+  // it. Every studio surface (generator, libraries, settings) is footer-free.
+  if (pathname !== "/") return null;
   return <SiteFooter />;
 }
