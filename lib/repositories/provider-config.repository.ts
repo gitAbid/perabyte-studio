@@ -23,6 +23,110 @@ export interface TaskModelConfig {
   enhance: string | null;
 }
 
+/* ------------------------------------------------------------------ */
+/* Custom (user-registered) providers                                  */
+/* ------------------------------------------------------------------ */
+
+export const CUSTOM_FORMATS = ["openai", "google", "anthropic"] as const;
+export type CustomProviderFormat = (typeof CUSTOM_FORMATS)[number];
+export type CustomModelKind = "image" | "video" | "text" | "off";
+
+export interface CustomModelEntry {
+  model: string;
+  label?: string;
+  kind: CustomModelKind;
+  enabled: boolean;
+}
+
+export interface CustomProviderEntry {
+  /** URL-safe slug, unique, never a built-in provider id. */
+  id: string;
+  label: string;
+  format: CustomProviderFormat;
+  baseUrl: string;
+  apiKey: string | null;
+  enabled: boolean;
+  models: CustomModelEntry[];
+  lastDiscoveredAt?: string;
+}
+
+/** Op-based patch for the custom provider list (validated in the settings
+ * service; the repository applies the ops verbatim). */
+export interface CustomProvidersPatch {
+  upsert?: CustomProviderEntry;
+  remove?: string;
+  setModel?: {
+    providerId: string;
+    model: string;
+    kind?: CustomModelKind;
+    enabled?: boolean;
+  };
+}
+
+const CUSTOM_SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{1,31}$/;
+
+export function isValidCustomSlug(id: string): boolean {
+  return CUSTOM_SLUG_PATTERN.test(id);
+}
+
+function sanitizeCustomModel(raw: unknown): CustomModelEntry | null {
+  if (!raw || typeof raw !== "object") return null;
+  const m = raw as Record<string, unknown>;
+  if (typeof m.model !== "string" || !m.model.trim()) return null;
+  const kind: CustomModelKind =
+    m.kind === "image" || m.kind === "video" || m.kind === "text" || m.kind === "off"
+      ? m.kind
+      : "off";
+  return {
+    model: m.model.trim(),
+    ...(typeof m.label === "string" && m.label.trim() ? { label: m.label.trim() } : {}),
+    kind,
+    enabled: m.enabled === true,
+  };
+}
+
+function sanitizeCustomProvider(raw: unknown): CustomProviderEntry | null {
+  if (!raw || typeof raw !== "object") return null;
+  const e = raw as Record<string, unknown>;
+  if (typeof e.id !== "string" || !isValidCustomSlug(e.id)) return null;
+  if (typeof e.format !== "string" || !CUSTOM_FORMATS.includes(e.format as CustomProviderFormat)) {
+    return null;
+  }
+  if (typeof e.baseUrl !== "string" || !e.baseUrl.trim()) return null;
+  const models = Array.isArray(e.models)
+    ? e.models.map(sanitizeCustomModel).filter((m): m is CustomModelEntry => m !== null)
+    : [];
+  return {
+    id: e.id,
+    label: typeof e.label === "string" && e.label.trim() ? e.label.trim() : e.id,
+    format: e.format as CustomProviderFormat,
+    baseUrl: e.baseUrl.trim(),
+    apiKey: typeof e.apiKey === "string" && e.apiKey.trim() ? e.apiKey.trim() : null,
+    enabled: e.enabled !== false,
+    models,
+    ...(typeof e.lastDiscoveredAt === "string" && e.lastDiscoveredAt
+      ? { lastDiscoveredAt: e.lastDiscoveredAt }
+      : {}),
+  };
+}
+
+function sanitizeCustomProviders(raw: unknown): CustomProviderEntry[] {
+  if (!Array.isArray(raw)) return [];
+  const byId = new Map<string, CustomProviderEntry>();
+  for (const item of raw) {
+    const entry = sanitizeCustomProvider(item);
+    if (entry) byId.set(entry.id, entry);
+  }
+  return [...byId.values()];
+}
+
+function cloneCustomProviders(entries: CustomProviderEntry[]): CustomProviderEntry[] {
+  return entries.map((entry) => ({
+    ...entry,
+    models: entry.models.map((model) => ({ ...model })),
+  }));
+}
+
 /** Overall render deadlines in seconds, configurable from Settings. */
 export interface RenderTimeoutsConfig {
   image: number;
@@ -40,6 +144,7 @@ export interface ProviderConfig {
   providers: Record<KnownProviderId, ProviderEntryConfig>;
   tasks: TaskModelConfig;
   renderTimeouts: RenderTimeoutsConfig;
+  customProviders: CustomProviderEntry[];
 }
 
 export interface ProviderConfigPatch {
@@ -53,6 +158,7 @@ export interface ProviderConfigPatch {
   >;
   tasks?: Partial<TaskModelConfig>;
   renderTimeouts?: Partial<RenderTimeoutsConfig>;
+  customProviders?: CustomProvidersPatch;
 }
 
 /** Defaults: images 5 minutes, videos 10 minutes, staleness 5 minutes. */
@@ -76,6 +182,21 @@ const KNOWN_PROVIDERS: readonly KnownProviderId[] = [
 let overridePath: string | null = null;
 let cachedConfig: ProviderConfig | null = null;
 
+/**
+ * Monotonic counter bumped whenever the config may have changed. The provider
+ * registry compares it to rebuild custom-provider adapters after a Settings
+ * save without a process restart.
+ */
+let configRevision = 0;
+
+export function getConfigRevision(): number {
+  return configRevision;
+}
+
+function bumpConfigRevision(): void {
+  configRevision += 1;
+}
+
 function resolveConfigPath(): string {
   if (overridePath) return overridePath;
   return path.join(process.cwd(), ".studio", "settings.json");
@@ -93,6 +214,7 @@ export function getDefaultProviderConfig(): ProviderConfig {
       enhance: null,
     },
     renderTimeouts: { ...RENDER_TIMEOUT_DEFAULTS },
+    customProviders: [],
   };
 }
 
@@ -175,6 +297,7 @@ function sanitizeLoadedConfig(raw: unknown): ProviderConfig {
     timeoutsObj.staleness,
     defaults.renderTimeouts.staleness,
   );
+  defaults.customProviders = sanitizeCustomProviders(obj.customProviders);
 
   return defaults;
 }
@@ -211,6 +334,7 @@ export function mergeProviderConfigPatch(patch: ProviderConfigPatch): ProviderCo
     },
     tasks: { ...current.tasks },
     renderTimeouts: { ...current.renderTimeouts },
+    customProviders: cloneCustomProviders(current.customProviders),
   };
 
   if (patch.providers) {
@@ -241,6 +365,28 @@ export function mergeProviderConfigPatch(patch: ProviderConfigPatch): ProviderCo
         patch.tasks.enhance.trim().length > 0
           ? patch.tasks.enhance.trim()
           : null;
+    }
+  }
+
+  if (patch.customProviders) {
+    const list = next.customProviders;
+    const ops = patch.customProviders;
+    if (ops.upsert) {
+      const index = list.findIndex((entry) => entry.id === ops.upsert!.id);
+      if (index >= 0) list[index] = cloneCustomProviders([ops.upsert])[0];
+      else list.push(cloneCustomProviders([ops.upsert])[0]);
+    }
+    if (ops.remove) {
+      const index = list.findIndex((entry) => entry.id === ops.remove);
+      if (index >= 0) list.splice(index, 1);
+    }
+    if (ops.setModel) {
+      const entry = list.find((e) => e.id === ops.setModel!.providerId);
+      const model = entry?.models.find((m) => m.model === ops.setModel!.model);
+      if (entry && model) {
+        if (ops.setModel.kind !== undefined) model.kind = ops.setModel.kind;
+        if (ops.setModel.enabled !== undefined) model.enabled = ops.setModel.enabled;
+      }
     }
   }
 
@@ -279,11 +425,13 @@ export function updateProviderConfig(patch: ProviderConfigPatch): ProviderConfig
 
   fs.writeFileSync(target, JSON.stringify(next, null, 2), "utf-8");
   cachedConfig = next;
+  bumpConfigRevision();
   return next;
 }
 
 export function invalidateProviderConfigCache(): void {
   cachedConfig = null;
+  bumpConfigRevision();
 }
 
 /** Test hook: alias for cache invalidation. */

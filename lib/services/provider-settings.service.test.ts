@@ -242,3 +242,182 @@ describe("provider settings service", () => {
     expect(getProviderSettings().renderTimeouts).toEqual({ image: 300, video: 900, staleness: 300 });
   });
 });
+
+describe("custom provider settings", () => {
+  const relay = {
+    id: "my-relay",
+    label: "My Relay",
+    format: "openai" as const,
+    baseUrl: "https://relay.example/v1",
+    apiKey: "sk-secret-9999",
+    enabled: true,
+    models: [
+      { model: "gpt-image-1", label: "GPT Image", kind: "image" as const, enabled: true },
+      { model: "sora-2", kind: "video" as const, enabled: true },
+      { model: "grok-4.5", kind: "text" as const, enabled: true },
+      { model: "mystery", kind: "off" as const, enabled: false },
+    ],
+  };
+
+  it("surfaces custom providers in both views with masked keys", () => {
+    wireRegistry();
+    applyProviderSettingsUpdate({ customProviders: { upsert: relay } });
+    const payload = getProviderSettings();
+
+    expect(payload.customProviders).toHaveLength(1);
+    expect(payload.customProviders[0]).toMatchObject({
+      id: "my-relay",
+      format: "openai",
+      baseUrl: "https://relay.example/v1",
+      keyMasked: "••••9999",
+    });
+    expect(payload.customProviders[0].models).toHaveLength(4);
+    expect(JSON.stringify(payload)).not.toContain("sk-secret-9999");
+
+    const view = payload.providers.find((p) => p.id === "my-relay");
+    expect(view).toMatchObject({
+      label: "My Relay",
+      enabled: true,
+      keySupported: true,
+      keyOptional: true,
+      keySource: "settings",
+    });
+    expect(view!.models.map((m) => m.id)).toEqual([
+      "my-relay:gpt-image-1",
+      "my-relay:sora-2",
+    ]);
+    expect(view!.textModels.map((m) => m.id)).toEqual(["my-relay:grok-4.5"]);
+  });
+
+  it("marks google/anthropic customs as key-required", () => {
+    wireRegistry();
+    applyProviderSettingsUpdate({
+      customProviders: {
+        upsert: { ...relay, id: "gcp", format: "google" as const },
+      },
+    });
+    expect(getProviderSettings().providers.find((p) => p.id === "gcp")?.keyOptional).toBe(false);
+  });
+
+  it("persists a valid upsert and normalizes fields", () => {
+    wireRegistry();
+    applyProviderSettingsUpdate({
+      customProviders: {
+        upsert: { ...relay, id: "  spaced  ", label: "  Trimmed  ", models: [
+          { model: " m1 ", kind: "image" as const, enabled: false },
+        ] },
+      },
+    });
+    const stored = getProviderSettings().customProviders[0];
+    expect(stored.id).toBe("spaced");
+    expect(stored.label).toBe("Trimmed");
+    expect(stored.models[0].model).toBe("m1");
+  });
+
+  it("rejects invalid upserts", () => {
+    wireRegistry();
+    expect(() =>
+      applyProviderSettingsUpdate({ customProviders: { upsert: { ...relay, id: "BAD" } } }),
+    ).toThrow(ProviderSettingsError);
+    expect(() =>
+      applyProviderSettingsUpdate({ customProviders: { upsert: { ...relay, id: "sogni" } } }),
+    ).toThrow(/built-in/);
+    expect(() =>
+      applyProviderSettingsUpdate({ customProviders: { upsert: { ...relay, format: "soap" as "openai" } } }),
+    ).toThrow(/format/);
+    expect(() =>
+      applyProviderSettingsUpdate({ customProviders: { upsert: { ...relay, baseUrl: "not-a-url" } } }),
+    ).toThrow(/base URL/);
+    expect(() =>
+      applyProviderSettingsUpdate({
+        customProviders: {
+          upsert: {
+            ...relay,
+            models: [
+              { model: "dup", kind: "image" as const, enabled: true },
+              { model: "dup", kind: "text" as const, enabled: true },
+            ],
+          },
+        },
+      }),
+    ).toThrow(/Duplicate/);
+    // none of the failures may have persisted anything
+    expect(getProviderSettings().customProviders).toHaveLength(0);
+  });
+
+  it("re-upserting preserves models and key when omitted", () => {
+    wireRegistry();
+    applyProviderSettingsUpdate({ customProviders: { upsert: relay } });
+    applyProviderSettingsUpdate({
+      customProviders: { upsert: { ...relay, label: "Renamed", apiKey: undefined } },
+    });
+    const stored = getProviderSettings().customProviders[0];
+    expect(stored.label).toBe("Renamed");
+    expect(stored.models).toHaveLength(4);
+    expect(stored.keyMasked).toBe("••••9999");
+  });
+
+  it("setModel changes one model and rejects unknowns", () => {
+    wireRegistry();
+    applyProviderSettingsUpdate({ customProviders: { upsert: relay } });
+    applyProviderSettingsUpdate({
+      customProviders: {
+        setModel: { providerId: "my-relay", model: "gpt-image-1", enabled: false },
+      },
+    });
+    expect(
+      getProviderSettings().customProviders[0].models.find((m) => m.model === "gpt-image-1"),
+    ).toMatchObject({ enabled: false });
+
+    expect(() =>
+      applyProviderSettingsUpdate({
+        customProviders: { setModel: { providerId: "ghost", model: "x", enabled: false } },
+      }),
+    ).toThrow(/Unknown provider/);
+    expect(() =>
+      applyProviderSettingsUpdate({
+        customProviders: { setModel: { providerId: "my-relay", model: "ghost", enabled: false } },
+      }),
+    ).toThrow(/Unknown model/);
+  });
+
+  it("removes providers and tolerates repeated removes", () => {
+    wireRegistry();
+    applyProviderSettingsUpdate({ customProviders: { upsert: relay } });
+    applyProviderSettingsUpdate({ customProviders: { remove: "my-relay" } });
+    expect(getProviderSettings().customProviders).toHaveLength(0);
+    expect(() =>
+      applyProviderSettingsUpdate({ customProviders: { remove: "my-relay" } }),
+    ).not.toThrow();
+  });
+
+  it("accepts a custom text model as the enhance task model", () => {
+    wireRegistry();
+    applyProviderSettingsUpdate({ customProviders: { upsert: relay } });
+    expect(() =>
+      applyProviderSettingsUpdate({ tasks: { enhance: "my-relay:grok-4.5" } }),
+    ).not.toThrow();
+    expect(() =>
+      applyProviderSettingsUpdate({ tasks: { enhance: "my-relay:nope" } }),
+    ).toThrow(/Unknown enhancement model/);
+  });
+
+  it("counts enabled customs toward the last-provider rule", () => {
+    wireRegistry();
+    applyProviderSettingsUpdate({ customProviders: { upsert: relay } });
+    // disabling every built-in still leaves the custom provider
+    expect(() =>
+      applyProviderSettingsUpdate({
+        providers: {
+          "apikey-fan": { enabled: false },
+          sogni: { enabled: false },
+          pollinations: { enabled: false },
+        },
+      }),
+    ).not.toThrow();
+    // and disabling the custom too trips the rule
+    expect(() =>
+      applyProviderSettingsUpdate({ customProviders: { upsert: { ...relay, enabled: false } } }),
+    ).toThrow(/at least one provider/);
+  });
+});

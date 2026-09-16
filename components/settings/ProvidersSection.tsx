@@ -16,7 +16,7 @@ function statusOf(provider: ProviderView): {
   tone: "success" | "warning" | "neutral";
 } {
   if (!provider.enabled) return { label: "Off", tone: "neutral" };
-  return provider.keySource || !provider.keySupported
+  return provider.keySource || !provider.keySupported || provider.keyOptional
     ? { label: "Active", tone: "success" }
     : { label: "Needs API key", tone: "warning" };
 }
