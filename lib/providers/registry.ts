@@ -167,9 +167,11 @@ export function getGenerationRegistry(): ProviderRegistry {
   return registry;
 }
 
-/** Test hook: swap the app registry. */
+/** Test hook: swap the app registry. Marked current so the revision check
+ * does not immediately rebuild over the injected fake. */
 export function setRegistryForTests(fake: ProviderRegistry | null): void {
   registry = fake;
+  registryRevision = fake ? getConfigRevision() : -1;
 }
 
 /** Test hook: swap the provider list and drop the cached registry. */

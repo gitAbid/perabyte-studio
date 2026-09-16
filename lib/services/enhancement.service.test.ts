@@ -238,7 +238,7 @@ describe("custom provider enhancement engines", () => {
   it("runs the selected custom engine through its wire format", async () => {
     seedCustomProvider();
     updateProviderConfig({ tasks: { enhance: "my-relay:grok-4.5" } });
-    const fetchMock = vi.fn(async () =>
+    const fetchMock = vi.fn(async (_url: string | URL | Request, _init?: RequestInit) =>
       new Response(
         JSON.stringify({
           choices: [{ message: { content: "A relay-rewritten harbor scene." } }],
@@ -250,8 +250,9 @@ describe("custom provider enhancement engines", () => {
     const result = await runPromptEnhancement({ prompt: "a quiet harbor", kind: "image" });
     expect(result.source).toBe("ai");
     expect(result.enhanced).toBe("A relay-rewritten harbor scene.");
-    expect(String(fetchMock.mock.calls[0][0])).toBe("https://relay.example/v1/chat/completions");
-    const sent = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    const firstCall = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(firstCall[0]).toBe("https://relay.example/v1/chat/completions");
+    const sent = JSON.parse(firstCall[1].body as string);
     expect(sent.model).toBe("grok-4.5");
   });
 
@@ -293,10 +294,11 @@ describe("custom provider enhancement engines", () => {
         { model: "gpt-image-1", kind: "image", enabled: true },
       ],
     });
-    const fetchMock2 = vi.fn(async () => new Response("x", { status: 500 }));
+    const fetchMock2 = vi.fn(async (_url: string | URL | Request) => new Response("x", { status: 500 }));
     vi.stubGlobal("fetch", fetchMock2);
     const result2 = await runPromptEnhancement({ prompt: "a quiet harbor", kind: "image" });
     expect(result2.source).toBe("fallback");
-    expect(String(fetchMock2.mock.calls.at(-1)![0])).not.toContain("relay.example");
+    const lastCall = fetchMock2.mock.calls.at(-1) as unknown as [string] | undefined;
+    expect(lastCall ? String(lastCall[0]) : "").not.toContain("relay.example");
   });
 });

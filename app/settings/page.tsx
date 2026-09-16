@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { AdvancedSection } from "@/components/settings/AdvancedSection";
+import {
+  CustomProvidersSection,
+  type DiscoverInput,
+  type DiscoverResultView,
+} from "@/components/settings/CustomProvidersSection";
 import { GeneralSection } from "@/components/settings/GeneralSection";
 import { ModelsSection } from "@/components/settings/ModelsSection";
 import { ProvidersSection } from "@/components/settings/ProvidersSection";
@@ -88,6 +93,17 @@ export default function SettingsPage() {
     [data, toast],
   );
 
+  const onDiscover = useCallback(async (input: DiscoverInput): Promise<DiscoverResultView> => {
+    const response = await fetch("/api/providers/discover", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    const payload = (await response.json()) as DiscoverResultView & { error?: string };
+    if (!response.ok) throw new Error(payload.error ?? "Could not discover models.");
+    return payload;
+  }, []);
+
   return (
     <div className="mx-auto flex w-full max-w-[980px] flex-1 flex-col gap-4 px-4 py-8 sm:px-6 md:flex-row md:gap-8">
       <SettingsNav section={section} onSelect={onSection} />
@@ -120,9 +136,22 @@ export default function SettingsPage() {
             !data ? (
               <p className="text-[13px] text-muted">Loading settings…</p>
             ) : section === "providers" ? (
-              <ProvidersSection providers={data.providers} onUpdate={onUpdate} />
+              <div className="space-y-4">
+                <ProvidersSection
+                  providers={data.providers.filter((provider) => !provider.format)}
+                  onUpdate={onUpdate}
+                />
+                <CustomProvidersSection
+                  providers={data.customProviders}
+                  onUpdate={onUpdate}
+                  onDiscover={onDiscover}
+                />
+              </div>
             ) : section === "models" ? (
-              <ModelsSection providers={data.providers} onUpdate={onUpdate} />
+              <ModelsSection
+                providers={data.providers.filter((provider) => !provider.format)}
+                onUpdate={onUpdate}
+              />
             ) : (
               <AdvancedSection
                 renderTimeouts={data.renderTimeouts}
