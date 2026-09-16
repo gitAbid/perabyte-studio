@@ -69,12 +69,12 @@ export function SceneChainBadge({
         ) : (
           <span
             title={`Continues from Scene ${resolution.state === "pending" ? resolution.predecessorIndex + 1 : ""}'s final frame`}
-            className="inline-flex size-[52px] shrink-0 items-center justify-center rounded-[10px] border border-dashed border-border-strong bg-white/90"
+            className="inline-flex size-[52px] shrink-0 items-center justify-center rounded-[10px] border border-dashed border-white/40 bg-black/55"
           >
-            <Icon name="link" size={16} className="animate-pulse text-primary" />
+            <Icon name="link" size={16} className="animate-pulse text-white" />
           </span>
         )}
-        <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-white/95 px-2 py-1 text-[10.5px] font-semibold text-ink-soft shadow-card">
+        <span className="inline-flex min-w-0 items-center gap-1 rounded-full border border-white/20 bg-black/55 px-2 py-1 text-[10.5px] font-semibold text-white shadow-card backdrop-blur-sm">
           <Icon name="link" size={11} className="shrink-0" />
           <span className="truncate">{label}</span>
         </span>
@@ -84,21 +84,21 @@ export function SceneChainBadge({
           role="dialog"
           aria-modal="true"
           aria-label="Reference frame"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-6"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6"
           onClick={() => setZoomed(false)}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={`/api/media?f=${ref}`}
             alt="Reference frame"
-            className="max-h-full max-w-full rounded-[16px] border border-border bg-white object-contain shadow-lift"
+            className="max-h-full max-w-full rounded-[16px] border border-white/10 bg-white object-contain shadow-lift"
             onClick={(event) => event.stopPropagation()}
           />
           <button
             type="button"
             aria-label="Close"
             onClick={() => setZoomed(false)}
-            className="absolute right-4 top-4 inline-flex size-9 items-center justify-center rounded-full bg-white/95 text-ink-soft shadow-card transition-colors hover:text-ink"
+            className="absolute right-4 top-4 inline-flex size-9 items-center justify-center rounded-full border border-white/25 bg-black/55 text-white shadow-card transition-colors hover:bg-black/70"
           >
             <Icon name="close" size={16} />
           </button>

@@ -43,7 +43,7 @@ export function ConvertDialog({
 
   return (
     <div
-      className="absolute inset-0 z-30 flex items-center justify-center rounded-[20px] bg-black/20 p-4 backdrop-blur-[2px]"
+      className="absolute inset-0 z-30 flex items-center justify-center rounded-[20px] bg-black/50 p-4 backdrop-blur-[2px]"
       role="dialog"
       aria-modal="true"
       aria-label="Convert image story to video"

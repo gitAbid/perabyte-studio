@@ -85,9 +85,9 @@ export function Stepper({
               <span
                 className={`inline-flex size-7 shrink-0 items-center justify-center rounded-full text-[12px] font-bold transition-colors ${
                   done
-                    ? "bg-primary text-white"
+                    ? "bg-primary-strong text-white"
                     : active
-                      ? "bg-primary text-white ring-4 ring-primary-soft"
+                      ? "bg-primary-strong text-white ring-4 ring-primary-soft"
                       : "bg-surface-2 text-muted"
                 }`}
               >
@@ -511,10 +511,10 @@ export function StepAppearance({
                     aria-pressed={active}
                     title={tone.prompt}
                     onClick={() => patch({ skinTone: tone.id })}
-                    className={`size-8 rounded-full border border-black/10 transition-shadow ${
+                    className={`size-8 rounded-full border border-ink/10 transition-shadow ${
                       active
-                        ? "ring-2 ring-primary ring-offset-2 ring-offset-white"
-                        : "hover:ring-2 hover:ring-border-strong hover:ring-offset-2 hover:ring-offset-white"
+                        ? "ring-2 ring-primary ring-offset-2 ring-offset-canvas"
+                        : "hover:ring-2 hover:ring-border-strong hover:ring-offset-2 hover:ring-offset-canvas"
                     }`}
                     style={{ backgroundColor: tone.hex }}
                   />
@@ -540,7 +540,7 @@ export function StepAppearance({
                     onClick={() => setTab(item)}
                     className={`shrink-0 rounded-[9px] px-3 py-1.5 text-[12.5px] font-semibold transition-colors ${
                       active
-                        ? "bg-primary text-white shadow-sm"
+                        ? "bg-primary-strong text-white shadow-sm"
                         : "text-ink-soft hover:bg-raised"
                     }`}
                   >
@@ -691,7 +691,7 @@ export function StepAppearance({
                     className="w-full"
                   />
                   {active && (
-                    <span className="absolute right-1.5 top-1.5 inline-flex size-5 items-center justify-center rounded-full bg-primary text-white shadow-sm">
+                    <span className="absolute right-1.5 top-1.5 inline-flex size-5 items-center justify-center rounded-full bg-primary-strong text-white shadow-sm">
                       <Icon name="check" size={12} />
                     </span>
                   )}
@@ -1132,7 +1132,7 @@ export function StepReview({
               {tone && (
                 <span
                   aria-hidden
-                  className="inline-block size-3.5 rounded-full border border-black/10"
+                  className="inline-block size-3.5 rounded-full border border-ink/10"
                   style={{ backgroundColor: tone.hex }}
                 />
               )}

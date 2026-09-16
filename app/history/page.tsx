@@ -249,7 +249,7 @@ export default function HistoryPage() {
               ) : (
                 <Link
                   href="/generate/image"
-                  className="inline-flex h-11 items-center gap-2 rounded-[12px] bg-primary px-4 text-sm font-semibold text-white"
+                  className="inline-flex h-11 items-center gap-2 rounded-[12px] bg-primary-strong px-4 text-sm font-semibold text-white"
                 >
                   <Icon name="sparkle" size={16} />
                   Create something
@@ -280,7 +280,7 @@ export default function HistoryPage() {
                   onClick={() => toggleSelected(asset.id)}
                   className={`flex size-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
                     selected.has(asset.id)
-                      ? "border-primary bg-primary text-white"
+                      ? "border-primary bg-primary-strong text-white"
                       : "border-border-strong bg-raised text-transparent hover:border-muted"
                   }`}
                 >

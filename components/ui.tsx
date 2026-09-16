@@ -23,11 +23,11 @@ type Size = "sm" | "md" | "lg";
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    "bg-primary text-white hover:bg-primary-dark active:bg-primary-dark shadow-[0_1px_2px_rgba(37,99,235,0.35)]",
+    "bg-primary-strong text-white hover:bg-primary-dark active:bg-primary-dark shadow-[0_1px_2px_rgba(37,99,235,0.35)]",
   secondary:
     "bg-raised text-ink border border-border-strong hover:border-muted hover:bg-surface",
   ghost: "bg-transparent text-ink hover:bg-surface-2",
-  danger: "bg-danger text-white hover:brightness-110",
+  danger: "bg-danger-strong text-white hover:brightness-110",
   text: "bg-transparent text-primary hover:underline underline-offset-4 px-0",
 };
 
@@ -152,8 +152,8 @@ export function Badge({
   const tones = {
     neutral: "bg-surface-2 text-ink-soft",
     primary: "bg-primary-soft text-primary",
-    success: "bg-[#f0fdf4] text-success",
-    warning: "bg-[#fffbeb] text-warning",
+    success: "bg-success-soft text-success",
+    warning: "bg-warning-soft text-warning",
     danger: "bg-danger-soft text-danger",
   } as const;
   return (
@@ -371,7 +371,7 @@ export function Segmented<T extends string>({
               size === "sm" ? "h-7 px-2.5 text-[12px]" : "h-8 px-3 text-[13px]"
             } ${
               active
-                ? "bg-primary text-white shadow-sm"
+                ? "bg-primary-strong text-white shadow-sm"
                 : "text-ink-soft hover:bg-raised"
             }`}
           >
@@ -431,8 +431,8 @@ function ToastRow({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   useEffect(() => setEntered(true), []);
   const tone = {
     info: "border-border bg-raised text-ink",
-    success: "border-[#bbf7d0] bg-[#f0fdf4] text-ink",
-    error: "border-[#fecaca] bg-danger-soft text-ink",
+    success: "border-success/30 bg-success-soft text-ink",
+    error: "border-danger/30 bg-danger-soft text-ink",
   }[toast.tone];
   const iconName: IconName =
     toast.tone === "success" ? "check" : toast.tone === "error" ? "alert" : "sparkle";

@@ -572,7 +572,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
                       href={`/results?id=${assetId}`}
                       aria-label="Open in Results"
                       title="Open in Results"
-                      className="inline-flex size-8 items-center justify-center rounded-full border border-border bg-white/90 text-ink-soft backdrop-blur transition-colors hover:text-ink"
+                      className="inline-flex size-8 items-center justify-center rounded-full border border-white/25 bg-black/55 text-white backdrop-blur transition-colors hover:bg-black/70"
                     >
                       <Icon name="arrow-right" size={15} />
                     </Link>
@@ -647,8 +647,8 @@ function OverlayButton({
       disabled={disabled}
       className={`inline-flex size-8 items-center justify-center rounded-full border backdrop-blur transition-colors disabled:opacity-50 ${
         active
-          ? "border-warning bg-white/90 text-warning"
-          : "border-border bg-white/90 text-ink-soft hover:text-ink"
+          ? "border-warning/70 bg-black/55 text-warning"
+          : "border-white/25 bg-black/55 text-white hover:bg-black/70"
       }`}
     >
       <Icon name={icon} size={15} />
