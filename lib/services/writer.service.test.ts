@@ -116,6 +116,14 @@ describe("writer service", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it("requests a larger output budget for split than the 700-token default", async () => {
+    const fetchMock = stubReplies([SPLIT_JSON]);
+    await runWriterAction({ action: "split", draft: "prose", sceneCount: 3 });
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    const body = JSON.parse(String(init.body));
+    expect(body.max_tokens).toBeGreaterThanOrEqual(2048);
+  });
+
   it("surfaces a retryable error when every engine fails", async () => {
     vi.stubGlobal(
       "fetch",

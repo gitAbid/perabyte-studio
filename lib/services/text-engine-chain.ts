@@ -16,7 +16,7 @@ export interface TextEngineEntry {
   modelId?: string;
   complete: (
     instruction: string,
-    options?: { signal?: AbortSignal; modelId?: string },
+    options?: { signal?: AbortSignal; modelId?: string; maxTokens?: number },
   ) => Promise<string>;
 }
 

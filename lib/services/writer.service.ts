@@ -64,9 +64,13 @@ function engineLabel(entry: {
   };
 }
 
+/** Sogni's chat endpoint defaults to 700 output tokens; a 12-scene JSON
+ * reply needs far more, and truncation is unrepairable. */
+const SPLIT_MAX_TOKENS = 2048;
+
 async function completeViaChain(
   instruction: string,
-  options: { signal?: AbortSignal; logger: Logger },
+  options: { signal?: AbortSignal; maxTokens?: number; logger: Logger },
 ): Promise<{ text: string; engine: { providerId: string; modelId?: string } }> {
   const taskModel = getProviderConfig().tasks.writer;
   const engines = resolveTextEngines(taskModel);
@@ -82,6 +86,7 @@ async function completeViaChain(
       const reply = await engine.complete(instruction, {
         signal: options.signal,
         modelId: engine.modelId,
+        ...(options.maxTokens ? { maxTokens: options.maxTokens } : {}),
       });
       if (!reply.trim()) throw new Error("Empty reply");
       return { text: reply, engine };
@@ -148,6 +153,7 @@ export async function runWriterAction(
         attempt === 0 ? base : `${base}\n${STRICT_SPLIT_SUFFIX}`;
       const { text, engine } = await completeViaChain(instruction, {
         signal: options.signal,
+        maxTokens: SPLIT_MAX_TOKENS,
         logger: log,
       });
       const parsed = extractStoryScenes(text, request.sceneCount);

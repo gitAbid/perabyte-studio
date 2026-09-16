@@ -36,6 +36,7 @@ export interface TextCompletionOptions {
   signal?: AbortSignal;
   modelId?: string;
   systemPrompt?: string;
+  maxTokens?: number;
 }
 
 export async function sogniTextComplete(
@@ -51,5 +52,6 @@ export async function sogniTextComplete(
     systemPrompt: options.systemPrompt ?? DEFAULT_TEXT_SYSTEM,
     timeoutMs: TIMEOUT_MS,
     label: "Sogni enhancer",
+    ...(options.maxTokens ? { maxTokens: options.maxTokens } : {}),
   });
 }
