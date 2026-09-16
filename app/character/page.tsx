@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { CharacterStudio } from "@/components/character/CharacterStudio";
+import { CharacterLibrary } from "@/components/character/CharacterLibrary";
 
 export const metadata: Metadata = {
-  title: "Character Studio",
+  title: "Characters",
   description:
-    "Create unique AI characters for your images and videos. Design every detail — from appearance to personality.",
+    "Your character library: browse, search, tag, and create variations of every AI character you've saved.",
 };
 
 export default function CharacterPage() {
-  return <CharacterStudio />;
+  return <CharacterLibrary />;
 }
