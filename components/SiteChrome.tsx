@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Icon, Logo, type IconName } from "./Icon";
+import { RendersTray } from "./RendersTray";
 import {
   THEME_STORAGE_KEY,
   type ThemePreference,
@@ -135,6 +136,13 @@ function SidebarFoot({
         collapsed ? "flex flex-col items-center gap-2 px-3" : "px-4"
       }`}
     >
+      {collapsed ? (
+        <RendersTray collapsed />
+      ) : (
+        <div className="mb-2 w-full">
+          <RendersTray />
+        </div>
+      )}
       <div
         className={`flex items-center gap-1.5 ${
           collapsed ? "flex-col" : "justify-between"

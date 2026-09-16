@@ -669,58 +669,330 @@ describe("story queue controls", () => {
     expect(deps.assets.get("story1")!.scenes![0].status).toBe("queued");
   });
 
-  it("absorbs a recovered detached render and re-chains its successor", async () => {
+
+  it("a canceled middle scene is transparent to the chain — its successor chains across it", async () => {
+    const deps = makeDeps();
+    mockWithHang(deps, "p");
+    const runner = createStoryRunner(deps);
+    deps.assets.set(
+      "story1",
+      story(
+        [
+          scene({ id: "s1", status: "completed", url: "/api/media?f=a.png" }),
+          scene({ id: "s2" }),
+          scene({ id: "s3" }),
+        ],
+        { continuity: true },
+      ),
+    );
+
+    runner.start("story1");
+    await vi.waitFor(() => expect(deps.requestGeneration).toHaveBeenCalledTimes(1));
+
+    runner.cancelScene("story1", "s2"); // skip the in-flight middle scene
+
+    await vi.waitFor(() => expect(deps.requestGeneration).toHaveBeenCalledTimes(2));
+    const calls = deps.requestGeneration.mock.calls as unknown as [
+      { startImageRef?: string },
+    ][];
+    // s3 continues from s1's frame, skipping the canceled s2 entirely.
+    expect(calls[1][0].startImageRef).toBe("a.png");
+    expect(deps.assets.get("story1")!.scenes!.map((s) => s.status)).toEqual([
+      "completed",
+      "canceled",
+      "generating",
+    ]);
+  });
+
+  it("removeScene drops a queued scene without starting anything; the chain skips it on Generate", async () => {
     const deps = makeDeps();
     const runner = createStoryRunner(deps);
     deps.assets.set(
       "story1",
       story(
         [
-          scene({ id: "s1", status: "failed", error: "render timeout" }),
+          scene({ id: "s1", status: "completed", url: "/api/media?f=a.png" }),
           scene({ id: "s2" }),
+          scene({ id: "s3" }),
         ],
         { continuity: true },
       ),
     );
 
-    const absorbed = await runner.absorbRecovered("story1", "s1", {
-      url: "/api/media?f=late.png",
-      mime: "image/png",
-    });
+    runner.removeScene("story1", "s2");
 
-    expect(absorbed).toBe(true);
-    const scenes = deps.assets.get("story1")!.scenes!;
-    expect(scenes[0].status).toBe("completed");
-    expect(scenes[0].url).toBe("/api/media?f=late.png");
-    // The successor was stuck behind the failed predecessor; absorbing it
-    // schedules the queue, and s2 chains from the recovered frame.
+    expect(deps.assets.get("story1")!.scenes!.map((s) => s.id)).toEqual(["s1", "s3"]);
+    expect(deps.requestGeneration).not.toHaveBeenCalled();
+
+    runner.start("story1");
     await vi.waitFor(() => expect(deps.requestGeneration).toHaveBeenCalledTimes(1));
     const calls = deps.requestGeneration.mock.calls as unknown as [
-      { startImageRef?: string; clientTag?: string },
+      { startImageRef?: string },
     ][];
-    expect(calls[0][0].startImageRef).toBe("late.png");
-    expect(calls[0][0].clientTag).toBe("story1:s2");
+    // s3 now chains straight from s1's frame.
+    expect(calls[0][0].startImageRef).toBe("a.png");
   });
 
-  it("absorbRecovered no-ops for completed or missing scenes", async () => {
+  it("Generate re-queues canceled scenes for a fresh run", async () => {
+    const deps = makeDeps();
+    let calls = 0;
+    deps.requestGeneration = vi.fn((input: { prompt?: string; signal?: AbortSignal }) => {
+      calls += 1;
+      if (calls === 1) {
+        return new Promise((_resolve, reject) => {
+          input.signal?.addEventListener("abort", () =>
+            reject(new DOMException("aborted", "AbortError")),
+          );
+        }) as never;
+      }
+      return Promise.resolve({
+        requestId: "r",
+        status: "completed",
+        kind: "image",
+        elapsedMs: 1,
+        media: [{ id: "m", url: "/api/media?f=done.png", width: 8, height: 8, seed: 1 }],
+      }) as never;
+    }) as never;
+    const runner = createStoryRunner(deps);
+    deps.assets.set("story1", story([scene({ id: "s1" })], { continuity: true }));
+
+    runner.start("story1");
+    await vi.waitFor(() => expect(deps.assets.get("story1")!.scenes![0].status).toBe("generating"));
+    runner.cancelScene("story1", "s1");
+    await vi.waitFor(() => expect(deps.assets.get("story1")!.scenes![0].status).toBe("canceled"));
+
+    runner.start("story1"); // Generate again — the canceled scene re-runs
+    await vi.waitFor(() => expect(deps.assets.get("story1")!.scenes![0].status).toBe("completed"));
+    expect(deps.requestGeneration).toHaveBeenCalledTimes(2);
+  });
+
+  it("rehydrate leaves a paused queue alone — only stories that were running resume", async () => {
+    const deps = makeDeps();
+    const runner = createStoryRunner(deps);
+    deps.assets.set("story1", story([scene({ id: "s1" })], { running: false }));
+
+    runner.rehydrate(["story1"]);
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(deps.requestGeneration).not.toHaveBeenCalled();
+    expect(deps.assets.get("story1")!.scenes![0].status).toBe("queued");
+  });
+
+  it("a canceled middle scene is transparent to the chain — its successor chains across it", async () => {
+    const deps = makeDeps();
+    mockWithHang(deps, "p");
+    const runner = createStoryRunner(deps);
+    deps.assets.set(
+      "story1",
+      story(
+        [
+          scene({ id: "s1", status: "completed", url: "/api/media?f=a.png" }),
+          scene({ id: "s2" }),
+          scene({ id: "s3" }),
+        ],
+        { continuity: true },
+      ),
+    );
+
+    runner.start("story1");
+    await vi.waitFor(() => expect(deps.requestGeneration).toHaveBeenCalledTimes(1));
+
+    runner.cancelScene("story1", "s2"); // skip the in-flight middle scene
+
+    await vi.waitFor(() => expect(deps.requestGeneration).toHaveBeenCalledTimes(2));
+    const calls = deps.requestGeneration.mock.calls as unknown as [
+      { startImageRef?: string },
+    ][];
+    // s3 continues from s1's frame, skipping the canceled s2 entirely.
+    expect(calls[1][0].startImageRef).toBe("a.png");
+    expect(deps.assets.get("story1")!.scenes!.map((s) => s.status)).toEqual([
+      "completed",
+      "canceled",
+      "generating",
+    ]);
+  });
+
+  it("removeScene drops a queued scene without starting anything; the chain skips it on Generate", async () => {
     const deps = makeDeps();
     const runner = createStoryRunner(deps);
     deps.assets.set(
       "story1",
-      story([
-        scene({ id: "s1", status: "completed", url: "/api/media?f=a.png" }),
-        scene({ id: "s2" }),
-      ]),
+      story(
+        [
+          scene({ id: "s1", status: "completed", url: "/api/media?f=a.png" }),
+          scene({ id: "s2" }),
+          scene({ id: "s3" }),
+        ],
+        { continuity: true },
+      ),
     );
 
-    expect(await runner.absorbRecovered("story1", "s1", { url: "/api/media?f=late.png" })).toBe(
-      false,
-    );
-    expect(await runner.absorbRecovered("story1", "sc_missing", { url: "/api/media?f=x.png" })).toBe(
-      false,
-    );
-    expect(deps.assets.get("story1")!.scenes![0].url).toBe("/api/media?f=a.png");
+    runner.removeScene("story1", "s2");
+
+    expect(deps.assets.get("story1")!.scenes!.map((s) => s.id)).toEqual(["s1", "s3"]);
     expect(deps.requestGeneration).not.toHaveBeenCalled();
+
+    runner.start("story1");
+    await vi.waitFor(() => expect(deps.requestGeneration).toHaveBeenCalledTimes(1));
+    const calls = deps.requestGeneration.mock.calls as unknown as [
+      { startImageRef?: string },
+    ][];
+    // s3 now chains straight from s1's frame.
+    expect(calls[0][0].startImageRef).toBe("a.png");
+  });
+
+  it("Generate re-queues canceled scenes for a fresh run", async () => {
+    const deps = makeDeps();
+    let calls = 0;
+    deps.requestGeneration = vi.fn((input: { prompt?: string; signal?: AbortSignal }) => {
+      calls += 1;
+      if (calls === 1) {
+        return new Promise((_resolve, reject) => {
+          input.signal?.addEventListener("abort", () =>
+            reject(new DOMException("aborted", "AbortError")),
+          );
+        }) as never;
+      }
+      return Promise.resolve({
+        requestId: "r",
+        status: "completed",
+        kind: "image",
+        elapsedMs: 1,
+        media: [{ id: "m", url: "/api/media?f=done.png", width: 8, height: 8, seed: 1 }],
+      }) as never;
+    }) as never;
+    const runner = createStoryRunner(deps);
+    deps.assets.set("story1", story([scene({ id: "s1" })], { continuity: true }));
+
+    runner.start("story1");
+    await vi.waitFor(() => expect(deps.assets.get("story1")!.scenes![0].status).toBe("generating"));
+    runner.cancelScene("story1", "s1");
+    await vi.waitFor(() => expect(deps.assets.get("story1")!.scenes![0].status).toBe("canceled"));
+
+    runner.start("story1"); // Generate again — the canceled scene re-runs
+    await vi.waitFor(() => expect(deps.assets.get("story1")!.scenes![0].status).toBe("completed"));
+    expect(deps.requestGeneration).toHaveBeenCalledTimes(2);
+  });
+
+  it("rehydrate leaves a paused queue alone — only stories that were running resume", async () => {
+    const deps = makeDeps();
+    const runner = createStoryRunner(deps);
+    deps.assets.set("story1", story([scene({ id: "s1" })], { running: false }));
+
+    runner.rehydrate(["story1"]);
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(deps.requestGeneration).not.toHaveBeenCalled();
+    expect(deps.assets.get("story1")!.scenes![0].status).toBe("queued");
+  });
+
+
+  it("a canceled middle scene is transparent to the chain — its successor chains across it", async () => {
+    const deps = makeDeps();
+    mockWithHang(deps, "p");
+    const runner = createStoryRunner(deps);
+    deps.assets.set(
+      "story1",
+      story(
+        [
+          scene({ id: "s1", status: "completed", url: "/api/media?f=a.png" }),
+          scene({ id: "s2" }),
+          scene({ id: "s3" }),
+        ],
+        { continuity: true },
+      ),
+    );
+
+    runner.start("story1");
+    await vi.waitFor(() => expect(deps.requestGeneration).toHaveBeenCalledTimes(1));
+
+    runner.cancelScene("story1", "s2"); // skip the in-flight middle scene
+
+    await vi.waitFor(() => expect(deps.requestGeneration).toHaveBeenCalledTimes(2));
+    const calls = deps.requestGeneration.mock.calls as unknown as [
+      { startImageRef?: string },
+    ][];
+    // s3 continues from s1's frame, skipping the canceled s2 entirely.
+    expect(calls[1][0].startImageRef).toBe("a.png");
+    expect(deps.assets.get("story1")!.scenes!.map((s) => s.status)).toEqual([
+      "completed",
+      "canceled",
+      "generating",
+    ]);
+  });
+
+  it("removeScene drops a queued scene without starting anything; the chain skips it on Generate", async () => {
+    const deps = makeDeps();
+    const runner = createStoryRunner(deps);
+    deps.assets.set(
+      "story1",
+      story(
+        [
+          scene({ id: "s1", status: "completed", url: "/api/media?f=a.png" }),
+          scene({ id: "s2" }),
+          scene({ id: "s3" }),
+        ],
+        { continuity: true },
+      ),
+    );
+
+    runner.removeScene("story1", "s2");
+
+    expect(deps.assets.get("story1")!.scenes!.map((s) => s.id)).toEqual(["s1", "s3"]);
+    expect(deps.requestGeneration).not.toHaveBeenCalled();
+
+    runner.start("story1");
+    await vi.waitFor(() => expect(deps.requestGeneration).toHaveBeenCalledTimes(1));
+    const calls = deps.requestGeneration.mock.calls as unknown as [
+      { startImageRef?: string },
+    ][];
+    // s3 now chains straight from s1's frame.
+    expect(calls[0][0].startImageRef).toBe("a.png");
+  });
+
+  it("Generate re-queues canceled scenes for a fresh run", async () => {
+    const deps = makeDeps();
+    let calls = 0;
+    deps.requestGeneration = vi.fn((input: { prompt?: string; signal?: AbortSignal }) => {
+      calls += 1;
+      if (calls === 1) {
+        return new Promise((_resolve, reject) => {
+          input.signal?.addEventListener("abort", () =>
+            reject(new DOMException("aborted", "AbortError")),
+          );
+        }) as never;
+      }
+      return Promise.resolve({
+        requestId: "r",
+        status: "completed",
+        kind: "image",
+        elapsedMs: 1,
+        media: [{ id: "m", url: "/api/media?f=done.png", width: 8, height: 8, seed: 1 }],
+      }) as never;
+    }) as never;
+    const runner = createStoryRunner(deps);
+    deps.assets.set("story1", story([scene({ id: "s1" })], { continuity: true }));
+
+    runner.start("story1");
+    await vi.waitFor(() => expect(deps.assets.get("story1")!.scenes![0].status).toBe("generating"));
+    runner.cancelScene("story1", "s1");
+    await vi.waitFor(() => expect(deps.assets.get("story1")!.scenes![0].status).toBe("canceled"));
+
+    runner.start("story1"); // Generate again — the canceled scene re-runs
+    await vi.waitFor(() => expect(deps.assets.get("story1")!.scenes![0].status).toBe("completed"));
+    expect(deps.requestGeneration).toHaveBeenCalledTimes(2);
+  });
+
+  it("rehydrate leaves a paused queue alone — only stories that were running resume", async () => {
+    const deps = makeDeps();
+    const runner = createStoryRunner(deps);
+    deps.assets.set("story1", story([scene({ id: "s1" })], { running: false }));
+
+    runner.rehydrate(["story1"]);
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(deps.requestGeneration).not.toHaveBeenCalled();
+    expect(deps.assets.get("story1")!.scenes![0].status).toBe("queued");
   });
 
   it("tags every scene render with a story:scene clientTag for recovery", async () => {

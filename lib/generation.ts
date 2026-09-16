@@ -47,6 +47,11 @@ export interface GenerationProgress {
  * loses it. Progress ticks come from the job record.
  */
 const JOB_POLL_INTERVAL_MS = 2_000;
+/** Test hook: shrink the poll cadence so suites run instantly. */
+let jobPollIntervalMs = JOB_POLL_INTERVAL_MS;
+export function setJobPollIntervalForTests(ms: number): void {
+  jobPollIntervalMs = ms;
+}
 
 export async function requestGeneration(
   {
@@ -139,7 +144,7 @@ export async function requestGeneration(
 
   while (true) {
     if (signal?.aborted) throw signal.reason ?? new DOMException("aborted", "AbortError");
-    await new Promise((resolve) => setTimeout(resolve, JOB_POLL_INTERVAL_MS));
+    await new Promise((resolve) => setTimeout(resolve, jobPollIntervalMs));
     if (signal?.aborted) throw signal.reason ?? new DOMException("aborted", "AbortError");
 
     let response: Response;
@@ -173,6 +178,7 @@ export async function requestGeneration(
         status: "completed",
         kind: current.kind,
         elapsedMs: (current.finishedAt ?? Date.now()) - current.createdAt,
+        ...(current.assetId ? { assetId: current.assetId } : {}),
         media: current.result,
         ...(current.effectiveModelId
           ? { effectiveModelId: current.effectiveModelId, effectiveModelLabel: current.effectiveModelLabel }
@@ -200,6 +206,7 @@ interface JobRecordClient {
   status: "queued" | "running" | "completed" | "failed" | "canceled";
   progress?: { stage: "submitted" | "rendering" | "downloading"; message: string; percent?: number };
   result?: GenerationResponse["media"];
+  assetId?: string;
   error?: string;
   retryable?: boolean;
   effectiveModelId?: string;

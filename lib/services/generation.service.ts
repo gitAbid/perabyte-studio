@@ -590,7 +590,7 @@ export async function runGeneration(
       const minutes = Math.round(budgetMs / 60_000);
       log.warn("generation hit the render timeout", { budgetMs });
       throw new GenerationServiceError(
-        `Your ${request.kind} render hit the ${minutes}-minute time limit and is still running on the provider. You can retry, or raise the limit in Settings → Render timeouts.`,
+        `Your ${request.kind} render hit the ${minutes}-minute time limit. It may still be running on the provider — the durable job queue handles long renders better than this legacy path. You can retry, or raise the limit in Settings → Render timeouts.`,
         { retryable: true, status: 504, pending: true },
       );
     }

@@ -181,15 +181,18 @@ export function clearAssets(): void {
   persist([], (t) => t.clear());
 }
 
-/** Build a storable asset from a completed API response. */
+/** Build a storable asset from a completed API response. Durable jobs carry
+ * the server-created asset id — reuse it so the optimistic row and the
+ * server row are the same record (upsert dedupes). */
 export function assetFromResponse(
   response: GenerationResponse,
   settings: GenerationSettings,
   prompt: string,
+  idOverride?: string,
 ): Asset {
   const primary = response.media[0];
   return {
-    id: `a_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
+    id: idOverride ?? `a_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
     kind: response.kind,
     title: titleFromPrompt(prompt),
     prompt,

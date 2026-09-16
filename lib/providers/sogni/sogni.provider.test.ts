@@ -17,11 +17,6 @@ import {
   updateProviderConfig,
 } from "@/lib/repositories/provider-config.repository";
 import {
-  listPendingRenders,
-  resetPendingRendersForTests,
-  setPendingRendersPathForTests,
-} from "@/lib/repositories/pending-renders.repository";
-import {
   setMediaRepositoryForTests,
   type MediaRepository,
 } from "@/lib/repositories/media.repository";
@@ -105,8 +100,6 @@ beforeEach(() => {
   configDir = mkdtempSync(join(tmpdir(), "sogni-provider-test-"));
   setProviderConfigPathForTests(join(configDir, "settings.json"));
   resetProviderConfigForTests();
-  setPendingRendersPathForTests(join(configDir, "pending.json"));
-  resetPendingRendersForTests();
   setMediaRepositoryForTests(mediaFake);
   process.env.SOGNI_API_KEY = "test-sogni-key";
   resetStudioEnvForTests();
@@ -118,8 +111,6 @@ afterEach(() => {
   delete process.env.SOGNI_APP_ID;
   setProviderConfigPathForTests(null);
   resetProviderConfigForTests();
-  setPendingRendersPathForTests(null);
-  resetPendingRendersForTests();
   setMediaRepositoryForTests(null);
   resetStudioEnvForTests();
   if (configDir) {
@@ -259,7 +250,6 @@ describe("sogni provider", () => {
     await assertion;
 
     // No detached registry — the durable job engine superseded it.
-    expect(listPendingRenders()).toHaveLength(0);
   });
 
   it("exposes submit/poll: ref on submit, artifacts on settle", async () => {
