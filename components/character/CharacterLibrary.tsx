@@ -55,6 +55,7 @@ import {
   setStoryCharacters,
   useSettings,
 } from "@/lib/repositories/settings.repository";
+import { useAssets } from "@/lib/store";
 
 /**
  * The character library: server-backed poster grid with search, tag/family
@@ -67,6 +68,19 @@ export function CharacterLibrary() {
   const router = useRouter();
   const { characters, ready } = useCharacters();
   const { settings, ready: settingsReady } = useSettings();
+  const { assets } = useAssets();
+
+  // Characters with at least one uncensored render get the sensitive flag on
+  // their poster — smart-mask verdicts then unblur the tame ones per image.
+  const uncensoredIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const asset of assets) {
+      if (asset.settings?.safe !== false) continue;
+      const tagged = asset.meta?.characterIds;
+      if (Array.isArray(tagged)) for (const id of tagged) ids.add(id);
+    }
+    return ids;
+  }, [assets]);
 
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortMode>("newest");
@@ -365,7 +379,9 @@ export function CharacterLibrary() {
             ]
               .filter(Boolean)
               .join(" \u00b7 ");
-            const media = <CharacterThumb character={character} />;
+            const media = (
+              <CharacterThumb character={character} sensitive={uncensoredIds.has(character.id)} />
+            );
             return (
               <div
                 key={character.id}
@@ -573,7 +589,14 @@ export function CharacterLibrary() {
 }
 
 /** Portrait thumbnail with a letter-tile fallback and lineage chip. */
-function CharacterThumb({ character }: { character: SavedCharacter }) {
+function CharacterThumb({
+  character,
+  sensitive,
+}: {
+  character: SavedCharacter;
+  /** True when any render tagged to this character came from Uncensored Mode. */
+  sensitive?: boolean;
+}) {
   if (character.thumbnail) {
     return (
       <MediaFrame
@@ -582,6 +605,7 @@ function CharacterThumb({ character }: { character: SavedCharacter }) {
         ratio="4/5"
         rounded="rounded-[15px]"
         className={CARD_MEDIA}
+        sensitive={sensitive}
       />
     );
   }

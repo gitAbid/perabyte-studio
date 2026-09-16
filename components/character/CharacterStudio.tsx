@@ -43,6 +43,14 @@ import type { Asset } from "@/lib/types";
 
 type CreationMode = "simple" | "details";
 
+/** Minimal model-picker entry shared by Simple mode and the Review step. */
+export interface ModelOption {
+  id: string;
+  label: string;
+  hint?: string;
+  providerLabel: string;
+}
+
 /**
  * The Character studio: a Simple mode (one prompt, straight to the sheet) and
  * a Detailed mode (the four-step wizard), both rendering into the same
@@ -371,6 +379,14 @@ export function CharacterStudio({
     toast.push("Poster updated.", "success");
   }
 
+  /** Sheet renders use the Review step's knobs plus the task model — the
+   * model is resolved here (settings pill) and handed to the panel. Kept
+   * with the other hooks: it must run before any early return. */
+  const sheetParams: CharacterRenderParams = useMemo(
+    () => ({ ...renderParams, modelId: characterModelId ?? undefined }),
+    [renderParams, characterModelId],
+  );
+
   /* ------------------------------ Not found ------------------------------ */
   if (missing) {
     return (
@@ -404,12 +420,6 @@ export function CharacterStudio({
 
   const canRender = spec.prompt.trim().length > 0;
 
-  /** Sheet renders use the Review step's knobs plus the task model — the
-   * model is resolved here (settings pill) and handed to the panel. */
-  const sheetParams: CharacterRenderParams = useMemo(
-    () => ({ ...renderParams, modelId: characterModelId ?? undefined }),
-    [renderParams, characterModelId],
-  );
 
   return (
     <div
@@ -477,6 +487,9 @@ export function CharacterStudio({
                 patch={patchSpec}
                 promptError={promptError}
                 onSwitchToDetailed={() => switchMode("details")}
+                models={catalog.models}
+                modelId={characterModelId}
+                onModelChange={(nextModel) => setSelectedModel("image", nextModel)}
               />
             ) : (
               <>
