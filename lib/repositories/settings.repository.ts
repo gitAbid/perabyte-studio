@@ -13,6 +13,8 @@ export interface UserSettings {
   uncensoredEnabled: boolean;
   /** Blur 18+/uncensored media in the UI until the user reveals it. On by default. */
   maskUncensored: boolean;
+  /** Judge 18+ masking from the pixels (vision LLM) instead of the render flag. On by default. */
+  smartMask: boolean;
   imageModel: string | null;
   videoModel: string | null;
   /** Saved characters attached in Solo Mode — anchor order follows the array. */
@@ -24,6 +26,7 @@ export interface UserSettings {
 export const DEFAULT_USER_SETTINGS: UserSettings = {
   uncensoredEnabled: false,
   maskUncensored: true,
+  smartMask: true,
   imageModel: null,
   videoModel: null,
   soloCharacterIds: [],
@@ -108,6 +111,10 @@ export function setStoryCharacters(characterIds: string[]) {
 
 export function setMaskUncensored(value: boolean) {
   update({ maskUncensored: value });
+}
+
+export function setSmartMask(value: boolean) {
+  update({ smartMask: value });
 }
 
 export function setSelectedModel(kind: GenerationKind, modelId: string | null) {

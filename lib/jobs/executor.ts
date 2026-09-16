@@ -13,6 +13,7 @@ import { getStoriesRepository, patchStoryRepository } from "@/lib/repositories/s
 import { deriveEndFrameRefServerSide } from "@/lib/media/frame-server";
 import { advanceStoryChain } from "@/lib/story/server-runner";
 import { putRecord } from "@/lib/services/records.service";
+import { warmModeration } from "@/lib/services/moderation.service";
 import { titleFromPrompt } from "@/lib/constants";
 import type { Asset, GenerationSettings } from "@/lib/types";
 import {
@@ -437,6 +438,7 @@ export class JobExecutor {
       ),
     });
     log.info("job absorbed into story scene", { jobId, storyId, sceneId });
+    warmModeration(primary?.url ?? null, log);
     await advanceStoryChain(storyId);
   }
 
@@ -494,6 +496,7 @@ export class JobExecutor {
     };
     putRecord(asset);
     log.info("solo job absorbed into history", { jobId, assetId: asset.id });
+    warmModeration(primary?.url ?? null, log);
     return asset.id;
   }
 

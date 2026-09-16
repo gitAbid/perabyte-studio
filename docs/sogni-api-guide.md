@@ -189,6 +189,29 @@ This guide unlocks, with named parameters:
   Tight `max_tokens` spends on hidden reasoning → empty `content` (treated as
   engine failure by the Enhance chain).
 
+### Vision input (probed live 2026-09-16; verdict round-trip pending gateway recovery)
+
+`deepseek-v4-flash-vision-exp-dspark-1m` takes OpenAI-style multimodal parts
+on `POST /v1/chat/completions` — `content: [{type: "text", …}, {type:
+"image_url", image_url: {url: "data:image/png;base64,…"}}]` reached the
+model API and was parsed (the API answered with a typed
+`invalid_request_error`, i.e. the shape itself is accepted, not rejected).
+
+- **Inline-image cap (verified live)** — `400 invalid_request_error`:
+  *"Inline image exceeds maximum dimensions of 1024px on its longest side"*.
+  Anything larger must be downscaled before send — the moderation service
+  (`lib/services/moderation.service.ts`) and `scripts/verify-moderation.mjs`
+  fit the longest side to 1024px with sharp first.
+- **Gateway outage during the probe window** — after the cap errors, the
+  entire LLM surface (text + vision) returned `502` Cloudflare HTML for
+  20+ minutes. The studio degraded exactly as designed: `The Sogni vision
+  replied 502.` warn → `source: "static"` → the render flag rules (verified
+  end-to-end through `/api/moderate` on a live History grid).
+- **Pending** — a successful classification round-trip (safe + explicit
+  images → JSON verdicts; refusal behavior on explicit imagery). Re-run
+  when the gateway is back:
+  `npm run verify:moderation <safe.png> <explicit.png>`.
+
 ## 8. LoRAs (verified live 2026-09-15; shipped in the studio)
 
 - **Catalog** — `GET /v1/loras/comfy?modelId=<raw model>`: public (no key),

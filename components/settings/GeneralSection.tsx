@@ -7,6 +7,7 @@ import { useModelCatalog } from "@/lib/model-catalog";
 import {
   setMaskUncensored,
   setSelectedModel,
+  setSmartMask,
   setUncensoredEnabled,
   useSettings,
 } from "@/lib/repositories/settings.repository";
@@ -90,6 +91,22 @@ function ContentPreferencesCard() {
               next
                 ? "18+ content is masked again."
                 : "Masking off — uncensored renders now show directly.",
+            );
+          }}
+        />
+      </div>
+
+      <div className="mt-4 border-t border-border pt-4">
+        <Toggle
+          label="AI smart masking"
+          description="Judge each render's actual content with a vision model instead of trusting the Uncensored Mode flag — tame uncensored renders stop being blurred and explicit safe-mode renders get masked. Falls back to the render flag when the vision model is unavailable."
+          checked={settings.smartMask}
+          onChange={(next) => {
+            setSmartMask(next);
+            toast.push(
+              next
+                ? "Smart masking on — previews are judged by content."
+                : "Smart masking off — the render flag decides masking.",
             );
           }}
         />

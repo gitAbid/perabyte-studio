@@ -12,13 +12,15 @@
     "verify": "node scripts/verify.mjs",
     "deploy:vercel": "bash scripts/deploy-vercel.sh",
     "verify:generator": "node scripts/verify-generator.mjs",
-    "verify:provider": "node scripts/verify-provider-ui.mjs"
+    "verify:provider": "node scripts/verify-provider-ui.mjs",
+    "verify:moderation": "node scripts/verify-moderation.mjs"
   },
   "dependencies": {
     "@sogni-ai/sogni-client": "^5.49.0",
     "next": "^16.3.5",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "sharp": "^0.35.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
