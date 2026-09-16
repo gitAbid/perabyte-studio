@@ -216,6 +216,14 @@ describe("provider settings service", () => {
     expect(getProviderSettings().tasks.writer).toBe("sogni:qwen-a"); // unchanged on rejection
   });
 
+  it("preserves the other task key when both are patched together", () => {
+    wireRegistry();
+    applyProviderSettingsUpdate({ tasks: { enhance: "sogni:qwen-a", writer: "sogni:qwen-b" } });
+    const tasks = getProviderSettings().tasks;
+    expect(tasks.enhance).toBe("sogni:qwen-a");
+    expect(tasks.writer).toBe("sogni:qwen-b");
+  });
+
   it("accepts text models in a provider's disabled list", () => {
     wireRegistry();
     const payload = applyProviderSettingsUpdate({

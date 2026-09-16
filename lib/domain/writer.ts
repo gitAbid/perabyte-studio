@@ -62,7 +62,7 @@ export function parseWriteBody(body: Record<string, unknown>): WriterBrief {
     `Your story idea is too long — keep it under ${WRITER_IDEA_MAX} characters.`,
   );
   const tone =
-    typeof brief.tone === "string" && brief.tone in WRITER_TONES
+    typeof brief.tone === "string" && brief.tone in WRITER_TONES && brief.tone !== "none"
       ? (brief.tone as WriterToneKey)
       : null;
   return {

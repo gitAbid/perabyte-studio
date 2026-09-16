@@ -37,6 +37,11 @@ describe("writer request validation", () => {
     expect(parsed.characterNames).toEqual(["Ada", "Riven"]);
   });
 
+  it("normalizes the 'none' tone to null", () => {
+    expect(parseWriteBody({ action: "write", brief: { idea: "a", tone: "none" } }).tone).toBeNull();
+    expect(parseWriteBody({ action: "write", brief: { idea: "a", tone: "dark" } }).tone).toBe("dark");
+  });
+
   it("validates enhance and split bodies", () => {
     expect(() => parseEnhanceBody({ action: "enhance", draft: "", instruction: "x" })).toThrow();
     expect(() => parseEnhanceBody({ action: "enhance", draft: "ok", instruction: "" })).toThrow();
