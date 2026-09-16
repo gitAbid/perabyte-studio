@@ -49,24 +49,8 @@ try {
   await page.waitForSelector('button:has-text("First frame")', { timeout: 20_000 });
   check("solo video: First frame slot renders", true);
 
-  // The Last frame slot is always visible: active on end-capable models,
-  // locked (with an explanation) otherwise — never silently hidden.
-  await page.waitForSelector(
-    '[aria-label="Add last frame"], [aria-label="Last frame — unavailable for this model"]',
-    { timeout: 10_000 },
-  );
-  const lastLocked = await page
-    .locator('[aria-label="Last frame — unavailable for this model"]')
-    .count();
-  if (lastLocked > 0) {
-    const hint = await page
-      .locator('[aria-label="Last frame — unavailable for this model"]')
-      .getAttribute("title");
-    check("solo video: Last frame slot visible but LOCKED on this model", true, hint ?? "");
-    check("solo video: lock hint names an unlock model", /switch to .+ to unlock/.test(hint ?? ""));
-  } else {
-    check("solo video: Last frame slot active (end-capable default model)", true);
-  }
+  const lastVisible = await page.locator('button:has-text("Last frame")').count();
+  console.log(`  (info) Last frame slot visible: ${lastVisible > 0}`);
 
   // File upload via the dock's hidden input → chip appears.
   await page.setInputFiles('input[type="file"][accept^="image/"]', {
@@ -146,17 +130,13 @@ try {
   await page.waitForSelector('button:has-text("Reference image")', { timeout: 10_000 });
   check("story: dock resets for the next draft scene", true);
 
-  // Switch to video kind: First frame appears, the Last frame slot shows
-  // (active or locked, never hidden), and the continuity-override hint
-  // shows for a fresh start frame.
+  // Switch to video kind: First frame appears (Last frame per model), and
+  // the continuity-override hint shows for a fresh start frame.
   await page.click('button[aria-label="Story media type"]:has-text("Video"), button:has-text("Video")');
   await page.waitForSelector('button:has-text("First frame")', { timeout: 20_000 });
   check("story (video): First frame slot renders", true);
-  await page.waitForSelector(
-    '[aria-label="Add last frame"], [aria-label="Last frame — unavailable for this model"]',
-    { timeout: 10_000 },
-  );
-  check("story (video): Last frame slot visible (active or locked)", true);
+  const storyLast = await page.locator('button:has-text("Last frame")').count();
+  console.log(`  (info) story Last frame slot visible: ${storyLast > 0}`);
   await page.setInputFiles('input[type="file"][accept^="image/"]', {
     name: "scene-start.png",
     mimeType: "image/png",

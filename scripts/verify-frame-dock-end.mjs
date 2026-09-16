@@ -16,15 +16,6 @@ try {
   await page.goto(`${BASE}/generate/video`, { waitUntil: "domcontentloaded" });
   await page.waitForSelector('button:has-text("First frame")', { timeout: 20_000 });
 
-  // On a non-end-capable model the Last frame slot renders LOCKED with a
-  // hint naming the unlock model — visible, never silently hidden.
-  const locked = page.locator('[aria-label="Last frame — unavailable for this model"]');
-  await locked.waitFor({ timeout: 10_000 });
-  const hint = await locked.getAttribute("title");
-  check("start-only model shows the Last frame slot LOCKED", true, hint ?? "");
-  check("lock hint names an unlock model", /switch to .+ to unlock/.test(hint ?? ""));
-  await page.screenshot({ path: "gui-test-screenshots/frame-dock/last-frame-locked.png" });
-
   // Switch the model pill to Seedance 2.5 (end-capable). It may sit in the
   // collapsed provider tail — expand that section when needed.
   await page.click('button[aria-label^="Model:"]');
@@ -37,10 +28,8 @@ try {
     await page.waitForTimeout(300);
   }
   await seedance.first().click({ timeout: 10_000 });
-  // The lock lifts: the slot becomes an active add-pill.
-  await locked.waitFor({ state: "detached", timeout: 10_000 });
-  await page.waitForSelector('[aria-label="Add last frame"]', { timeout: 10_000 });
-  check("end-capable model unlocks the Last frame slot", true);
+  await page.waitForSelector('button:has-text("Last frame")', { timeout: 10_000 });
+  check("end-capable model reveals the Last frame slot", true);
 
   // Fill both slots: the end-frame note appears.
   const png = Buffer.from(

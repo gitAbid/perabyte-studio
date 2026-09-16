@@ -268,33 +268,16 @@ export function PromptComposer({
     characterIds?.includes(character.id),
   );
   // Frame slots follow the kind and the model's capability: video takes a
-  // first frame, and the last frame renders active (model can end on one) or
-  // LOCKED (it can't) — hiding the slot made the capability gap undiscoverable.
-  // The lock hint names an end-capable model from the live catalog.
-  const modelLabel = models?.find((model) => model.id === modelId)?.label;
-  const endModelLabel = models?.find((model) => model.frameInput?.end === true)?.label;
-  const lastSlot: FrameSlotSpec = frameEndSupported
-    ? { key: "endImageRef", label: "Last frame" }
-    : {
-        key: "endImageRef",
-        label: "Last frame",
-        locked: true,
-        lockHint: `${modelLabel ?? "This model"} can't end on a last frame${
-          endModelLabel
-            ? ` — switch to ${endModelLabel} to unlock`
-            : " — switch to an end-frame model to unlock"
-        }.`,
-      };
-  // While the catalog is still loading (no models) the last frame's state is
-  // unknown — omit it rather than flash a wrong "locked" hint.
-  const frameSlots: FrameSlotSpec[] = !onFramesChange
-    ? []
-    : kind === "image"
-      ? [{ key: "startImageRef", label: "Reference image" }]
-      : [
-          { key: "startImageRef", label: "First frame" },
-          ...(models?.length ? [lastSlot] : []),
-        ];
+  // first frame (plus a last frame when the model can end on one); image
+  // takes a single img2img reference.
+  const lastSlot: FrameSlotSpec[] = frameEndSupported
+    ? [{ key: "endImageRef", label: "Last frame" }]
+    : [];
+  const frameSlots: FrameSlotSpec[] = onFramesChange
+    ? kind === "video"
+      ? [{ key: "startImageRef", label: "First frame" }, ...lastSlot]
+      : [{ key: "startImageRef", label: "Reference image" }]
+    : [];
 
   return (
     // The composer is the panel itself and stretches with its column, so the
