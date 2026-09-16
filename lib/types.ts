@@ -122,7 +122,8 @@ export interface Asset {
   favorite: boolean;
   mode: string;
   scenes?: StoryScene[];
-  meta?: Record<string, string | number | boolean>;
+  /** Free-form asset metadata; `characterIds` carries the attached cast. */
+  meta?: Record<string, string | number | boolean | string[]>;
 }
 
 export interface ApiError {

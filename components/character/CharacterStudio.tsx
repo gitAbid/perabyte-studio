@@ -27,10 +27,11 @@ import {
 } from "@/lib/character";
 import { downloadMedia, useGeneration } from "@/lib/generation";
 import { useModelCatalog } from "@/lib/model-catalog";
+import { snapLorasForModel } from "@/lib/lora-options";
 import {
   setSelectedModel,
-  setSoloCharacter,
-  setStoryCharacter,
+  setSoloCharacters,
+  setStoryCharacters,
   useSettings,
 } from "@/lib/repositories/settings.repository";
 import {
@@ -84,7 +85,28 @@ export function CharacterStudio() {
   const { characters, ready: charactersReady } = useCharacters();
   const catalog = useModelCatalog("image");
   const characterModelId = userSettings.imageModel ?? catalog.defaultModelId;
+  const characterModel = catalog.models.find((model) => model.id === characterModelId);
   const uncensored = userSettings.uncensoredEnabled;
+
+  // LoRA selections snap to the render model: entries it doesn't accept drop
+  // (same policy as Solo/Story), so the Review step never shows a count the
+  // server would silently discard.
+  useEffect(() => {
+    if (!characterModel?.model || !catalog.loras.length) return;
+    setRenderParams((params) => {
+      if (!params.loras?.length) return params;
+      const snapped = snapLorasForModel(
+        params.loras,
+        catalog.loras,
+        characterModel.model,
+        catalog.loraMaxPerRequest,
+      );
+      return JSON.stringify(snapped) === JSON.stringify(params.loras)
+        ? params
+        : { ...params, loras: snapped };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only when the model identity or catalog changes
+  }, [characterModelId, catalog.models, catalog.loras, catalog.loraMaxPerRequest]);
 
   // The Settings gate is the single switch: when Uncensored Mode is off, an
   // adult selection anywhere in the spec falls back to its safe equivalent
@@ -154,9 +176,13 @@ export function CharacterStudio() {
 
   function handleDeleteCharacter(id: string) {
     removeCharacter(id);
-    // Detach the character from Solo/Story if it was attached there.
-    if (userSettings.soloCharacterId === id) setSoloCharacter(null);
-    if (userSettings.storyCharacterId === id) setStoryCharacter(null);
+    // Detach the character from the Solo/Story casts if attached there.
+    if (userSettings.soloCharacterIds.includes(id)) {
+      setSoloCharacters(userSettings.soloCharacterIds.filter((cid) => cid !== id));
+    }
+    if (userSettings.storyCharacterIds.includes(id)) {
+      setStoryCharacters(userSettings.storyCharacterIds.filter((cid) => cid !== id));
+    }
     toast.push("Character deleted.");
   }
 
@@ -549,6 +575,7 @@ export function CharacterStudio() {
       spec={spec}
       uncensored={uncensored}
       modelId={characterModelId}
+      loras={renderParams.loras}
     />
   );
 
@@ -629,6 +656,13 @@ export function CharacterStudio() {
                 models={catalog.models}
                 modelId={characterModelId}
                 onModelChange={(nextModel) => setSelectedModel("image", nextModel)}
+                loraCatalog={catalog.loras}
+                loraMaxPerRequest={catalog.loraMaxPerRequest}
+                loraCapable={characterModel?.loraCapable === true}
+                loraModel={characterModel?.model}
+                allowNsfwLoras={uncensored}
+                loras={renderParams.loras}
+                onLorasChange={(loras) => patchRenderParams({ loras })}
                 onBack={() => goToStep(3)}
                 onGenerate={handleGenerate}
               />

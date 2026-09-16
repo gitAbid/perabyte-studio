@@ -15,10 +15,10 @@ export interface UserSettings {
   maskUncensored: boolean;
   imageModel: string | null;
   videoModel: string | null;
-  /** Saved character attached in Solo Mode, or null for prompt-only scenes. */
-  soloCharacterId: string | null;
-  /** Saved character attached in Story Mode, or null for prompt-only scenes. */
-  storyCharacterId: string | null;
+  /** Saved characters attached in Solo Mode — anchor order follows the array. */
+  soloCharacterIds: string[];
+  /** Saved characters attached in Story Mode — anchor order follows the array. */
+  storyCharacterIds: string[];
 }
 
 export const DEFAULT_USER_SETTINGS: UserSettings = {
@@ -26,8 +26,8 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   maskUncensored: true,
   imageModel: null,
   videoModel: null,
-  soloCharacterId: null,
-  storyCharacterId: null,
+  soloCharacterIds: [],
+  storyCharacterIds: [],
 };
 
 const STORAGE_KEY = "perabyte.settings.v1";
@@ -49,13 +49,35 @@ function persist(next: UserSettings) {
   emit();
 }
 
+/** Single-character fields from before the cast feature — promoted to the
+ * array fields so an existing attach survives the upgrade. */
+function migrateLegacyCharacters(
+  parsed: Record<string, unknown>,
+): Partial<UserSettings> {
+  const patch: Partial<UserSettings> = {};
+  const pairs = [
+    ["soloCharacterId", "soloCharacterIds"],
+    ["storyCharacterId", "storyCharacterIds"],
+  ] as const;
+  for (const [legacyKey, idsKey] of pairs) {
+    if (!Array.isArray(parsed[idsKey]) && typeof parsed[legacyKey] === "string") {
+      patch[idsKey] = [parsed[legacyKey] as string].filter(Boolean);
+    }
+  }
+  return patch;
+}
+
 function read(): UserSettings {
   if (cache) return cache;
   if (typeof window === "undefined") return DEFAULT_USER_SETTINGS;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? (JSON.parse(raw) as Partial<UserSettings>) : {};
-    cache = { ...DEFAULT_USER_SETTINGS, ...parsed };
+    const parsed = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+    cache = {
+      ...DEFAULT_USER_SETTINGS,
+      ...parsed,
+      ...migrateLegacyCharacters(parsed),
+    } as UserSettings;
   } catch {
     cache = { ...DEFAULT_USER_SETTINGS };
   }
@@ -74,14 +96,14 @@ export function setUncensoredEnabled(value: boolean) {
   update({ uncensoredEnabled: value });
 }
 
-/** Attach or detach the saved character used by Solo Mode. */
-export function setSoloCharacter(characterId: string | null) {
-  update({ soloCharacterId: characterId });
+/** Attach or detach the saved-character cast used by Solo Mode. */
+export function setSoloCharacters(characterIds: string[]) {
+  update({ soloCharacterIds: characterIds });
 }
 
-/** Attach or detach the saved character used by Story Mode. */
-export function setStoryCharacter(characterId: string | null) {
-  update({ storyCharacterId: characterId });
+/** Attach or detach the saved-character cast used by Story Mode. */
+export function setStoryCharacters(characterIds: string[]) {
+  update({ storyCharacterIds: characterIds });
 }
 
 export function setMaskUncensored(value: boolean) {
