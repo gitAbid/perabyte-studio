@@ -271,6 +271,10 @@ export function SiteSidebar() {
     return () => window.removeEventListener("keydown", onKey);
   }, [drawerOpen]);
 
+  // The landing page is a nav-free marketing surface; every other route
+  // gets the full shell (desktop capsule / mobile top bar + drawer).
+  if (pathname === "/") return null;
+
   return (
     <>
       {/* Desktop capsule */}
