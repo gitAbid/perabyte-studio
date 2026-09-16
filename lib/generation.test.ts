@@ -78,6 +78,37 @@ describe("requestGeneration progress stream", () => {
     expect(response.requestId).toBe("req_1");
   });
 
+  it("sends LoRA selections in the request body when set", async () => {
+    const fetchMock = vi.fn(async () =>
+      ndjsonResponse([{ type: "result", ...RESULT }]),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const loras = [
+      { loraId: "mystic-x", strength: 80 },
+      { loraId: "filter-bypass-2", strength: 55 },
+    ];
+    await requestGeneration({
+      settings: { ...settings, loras },
+      prompt: "x",
+    });
+
+    const body = JSON.parse((fetchMock.mock.calls[0] as unknown as [string, { body: string }])[1].body);
+    expect(body.loras).toEqual(loras);
+  });
+
+  it("omits the loras field when no adapters are selected", async () => {
+    const fetchMock = vi.fn(async () =>
+      ndjsonResponse([{ type: "result", ...RESULT }]),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await requestGeneration({ settings, prompt: "x" });
+
+    const body = JSON.parse((fetchMock.mock.calls[0] as unknown as [string, { body: string }])[1].body);
+    expect(body.loras).toBeUndefined();
+  });
+
   it("throws a retryable GenerationError on an error line", async () => {
     vi.stubGlobal(
       "fetch",

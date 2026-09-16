@@ -6,7 +6,7 @@ import {
 } from "@/lib/generation";
 import { extractLastFrame, refFromMediaUrl, uploadFrameRef } from "@/lib/media/frame";
 import { getAsset, updateStoryScenes } from "@/lib/store";
-import { composeSceneWithCharacter } from "@/lib/character";
+import { composeSceneWithCharacters } from "@/lib/character";
 import {
   getCharacter,
   type SavedCharacter,
@@ -47,6 +47,15 @@ interface ActiveStory {
   /** Scenes whose abort was user-requested — they settle as "canceled"
    * instead of requeueing. */
   canceled: Set<string>;
+}
+
+/** The story's attached cast, in anchor order. Stories persisted before the
+ * cast feature carry a single `characterId` — promoted to a one-entry list. */
+function storyCharacterIds(meta: Asset["meta"]): string[] {
+  const ids = meta?.characterIds;
+  if (Array.isArray(ids)) return ids.filter((id): id is string => typeof id === "string");
+  const legacy = meta?.characterId;
+  return typeof legacy === "string" && legacy ? [legacy] : [];
 }
 
 /** Optional UI hooks — the page subscribes for live render ticks. */
@@ -195,12 +204,12 @@ export function createStoryRunner(deps: StoryRunnerDeps) {
       // out as-is and the service swaps to the family i2v sibling.
       const chainModelId =
         startRef && story.settings.chainModelId ? story.settings.chainModelId : undefined;
-      // Attached saved character: its sanitized anchor leads every scene
+      // Attached saved cast: their sanitized anchors lead every scene
       // prompt (scene prompts stay clean in the UI). safe=false marks the
       // story as rendered under the Uncensored gate.
-      const characterId =
-        typeof story.meta?.characterId === "string" ? story.meta.characterId : "";
-      const character = characterId ? deps.getCharacter?.(characterId) : undefined;
+      const cast = storyCharacterIds(story.meta)
+        .map((id) => deps.getCharacter?.(id))
+        .filter((character): character is SavedCharacter => Boolean(character));
       const uncensored = story.settings.safe === false;
       const response = await deps.requestGeneration({
         settings: {
@@ -208,7 +217,11 @@ export function createStoryRunner(deps: StoryRunnerDeps) {
           kind: scene.kind,
           ...(chainModelId ? { modelId: chainModelId } : {}),
         },
-        prompt: composeSceneWithCharacter(scene.prompt, character?.spec ?? null, uncensored),
+        prompt: composeSceneWithCharacters(
+          scene.prompt,
+          cast.map((character) => character.spec),
+          uncensored,
+        ),
         ...(startRef ? { startImageRef: startRef } : {}),
         ...(scene.endImageRef ? { endImageRef: scene.endImageRef } : {}),
         // Lets a detached render (provider outlived our timeout) be attached

@@ -23,10 +23,10 @@ import { requestPromptEnhancement } from "@/lib/enhancement";
 import { useModelCatalog } from "@/lib/model-catalog";
 import { snapSettingsForModel } from "@/lib/render-options";
 import { snapLorasForModel } from "@/lib/lora-options";
-import { composeSceneWithCharacter } from "@/lib/character";
+import { composeSceneWithCharacters } from "@/lib/character";
 import {
   setSelectedModel,
-  setSoloCharacter,
+  setSoloCharacters,
   useSettings,
 } from "@/lib/repositories/settings.repository";
 import { useCharacters } from "@/lib/repositories/characters.repository";
@@ -70,10 +70,11 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
   const { characters } = useCharacters();
   const catalog = useModelCatalog(kind);
 
-  // Character reuse: the attached saved character's identity is folded into
-  // the prompt at generate time; the textarea keeps holding only the scene.
-  const attachedCharacter =
-    characters.find((character) => character.id === userSettings.soloCharacterId) ?? null;
+  // Character reuse: the attached cast's identities are folded into the
+  // prompt at generate time; the textarea keeps holding only the scene.
+  const attachedCharacters = characters.filter((character) =>
+    userSettings.soloCharacterIds.includes(character.id),
+  );
 
   // Active model: the user's stored pick for this kind, else the catalog default.
   const modelId =
@@ -237,8 +238,12 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
 
     const response = await run({
       settings: nextSettings,
-      // The saved character's (sanitized) anchor leads; the scene follows.
-      prompt: composeSceneWithCharacter(prompt.trim(), attachedCharacter?.spec ?? null, uncensored),
+      // The attached cast's (sanitized) anchors lead; the scene follows.
+      prompt: composeSceneWithCharacters(
+        prompt.trim(),
+        attachedCharacters.map((character) => character.spec),
+        uncensored,
+      ),
       uncensored,
     });
     if (!response) return;
@@ -434,8 +439,8 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
             allowNsfwLoras={userSettings.uncensoredEnabled}
             onSettingsChange={patchSettings}
             characters={characters}
-            characterId={userSettings.soloCharacterId}
-            onCharacterChange={setSoloCharacter}
+            characterIds={userSettings.soloCharacterIds}
+            onCharactersChange={setSoloCharacters}
             busy={busy}
             onGenerate={handleGenerate}
             onCancel={cancel}

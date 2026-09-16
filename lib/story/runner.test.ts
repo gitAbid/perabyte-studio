@@ -421,6 +421,59 @@ describe("story runner character reuse", () => {
     const calls = deps.requestGeneration.mock.calls as unknown as [{ prompt: string }][];
     expect(calls[0][0].prompt).toBe("a quiet cafe");
   });
+
+  it("labels every cast member in order for a multi-character story", async () => {
+    const deps = makeDeps();
+    const baseSpec = {
+      prompt: "",
+      style: "Realistic",
+      gender: "Female",
+      age: 25,
+      ethnicity: "Not specified",
+      country: "Not specified",
+      skinTone: "medium",
+      faceShape: "Oval",
+      facialFeatures: "Natural",
+      expression: "Neutral",
+      hairColor: "Black",
+      hairStyle: "Braided",
+      eyeColor: "Brown",
+      eyeShape: "Almond",
+      outfit: "Fantasy armor",
+      accessories: "None",
+      build: "Athletic",
+      bodyDetails: "Normal proportions",
+      tattoos: false,
+      piercings: false,
+      facialHair: false,
+      personality: "",
+      nsfwLevel: 0,
+      look: "",
+    };
+    deps.getCharacter = vi.fn((id: string) => ({
+      id,
+      name: id === "ch_1" ? "Maya" : "Ines",
+      spec: { ...baseSpec, hairColor: id === "ch_1" ? "Black" : "Blonde" },
+      createdAt: 0,
+      updatedAt: 0,
+    })) as never;
+    const runner = createStoryRunner(deps);
+    deps.assets.set("story1", story([scene({ id: "s1", prompt: "walking through rain" })], {
+      continuity: true,
+      characterIds: ["ch_1", "ch_2"],
+    }));
+
+    runner.start("story1");
+
+    await vi.waitFor(() => expect(deps.requestGeneration).toHaveBeenCalledTimes(1));
+    const calls = deps.requestGeneration.mock.calls as unknown as [{ prompt: string }][];
+    expect(calls[0][0].prompt).toContain("Scene with two characters.");
+    expect(calls[0][0].prompt).toContain("First: an adult 25-year-old woman");
+    expect(calls[0][0].prompt).toContain("Second: an adult 25-year-old woman");
+    expect(calls[0][0].prompt).toContain("black hair");
+    expect(calls[0][0].prompt).toContain("blonde hair");
+    expect(calls[0][0].prompt.endsWith("walking through rain")).toBe(true);
+  });
 });
 
 describe("story queue controls", () => {

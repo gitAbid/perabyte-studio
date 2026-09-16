@@ -78,6 +78,9 @@ export async function requestGeneration(
         safe: settings.safe,
         modelId: settings.modelId,
         uncensored: uncensored ?? false,
+        // LoRA selections ride with the request; the server re-validates them
+        // against the model's capability band, so stale entries are safe.
+        ...(settings.loras?.length ? { loras: settings.loras } : {}),
         ...(startImageRef ? { startImageRef } : {}),
         ...(endImageRef ? { endImageRef } : {}),
         ...(clientTag ? { clientTag } : {}),

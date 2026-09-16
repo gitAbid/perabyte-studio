@@ -10,7 +10,7 @@ import {
   type CharacterSpec,
 } from "@/lib/character";
 import { GenerationError, requestGeneration } from "@/lib/generation";
-import type { GenerationResponse } from "@/lib/types";
+import type { GenerationResponse, LoraSelection } from "@/lib/types";
 
 /**
  * The wizard's live preview: an attribute summary, the composed prompt that
@@ -21,11 +21,14 @@ export function CharacterPreviewPanel({
   spec,
   uncensored,
   modelId,
+  loras,
 }: {
   spec: CharacterSpec;
   /** Global Uncensored Mode gate — shapes the quick render's safety. */
   uncensored: boolean;
   modelId?: string | null;
+  /** LoRA selections from the Review step — the preview matches the render. */
+  loras?: LoraSelection[];
 }) {
   const composed = composeCharacterPrompt(spec);
   const [copied, setCopied] = useState(false);
@@ -49,7 +52,12 @@ export function CharacterPreviewPanel({
       const settings = {
         ...characterGenerationSettings(
           spec,
-          { aspect: "9:16", resolution: "720p", modelId: modelId ?? undefined },
+          {
+            aspect: "9:16",
+            resolution: "720p",
+            modelId: modelId ?? undefined,
+            ...(loras?.length ? { loras } : {}),
+          },
           uncensored,
         ),
         count: 1,

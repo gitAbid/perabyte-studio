@@ -8,8 +8,8 @@ import {
   resetSettingsForTests,
   setSelectedModel,
   setMaskUncensored,
-  setSoloCharacter,
-  setStoryCharacter,
+  setSoloCharacters,
+  setStoryCharacters,
   setUncensoredEnabled,
 } from "@/lib/repositories/settings.repository";
 
@@ -78,19 +78,30 @@ describe("settings repository", () => {
     expect((settings as unknown as Record<string, unknown>).futureField).toBe(42);
   });
 
-  it("defaults the attached characters to null", () => {
-    expect(getSettings().soloCharacterId).toBeNull();
-    expect(getSettings().storyCharacterId).toBeNull();
+  it("defaults the attached casts to empty", () => {
+    expect(getSettings().soloCharacterIds).toEqual([]);
+    expect(getSettings().storyCharacterIds).toEqual([]);
   });
 
-  it("persists attached characters per surface", () => {
-    setSoloCharacter("ch_abc");
-    setStoryCharacter("ch_def");
-    expect(getSettings().soloCharacterId).toBe("ch_abc");
-    expect(getSettings().storyCharacterId).toBe("ch_def");
-    setSoloCharacter(null);
-    expect(getSettings().soloCharacterId).toBeNull();
-    expect(getSettings().storyCharacterId).toBe("ch_def");
+  it("persists attached casts per surface and preserves order", () => {
+    setSoloCharacters(["ch_a", "ch_b"]);
+    setStoryCharacters(["ch_c"]);
+    expect(getSettings().soloCharacterIds).toEqual(["ch_a", "ch_b"]);
+    expect(getSettings().storyCharacterIds).toEqual(["ch_c"]);
+    setSoloCharacters([]);
+    expect(getSettings().soloCharacterIds).toEqual([]);
+    expect(getSettings().storyCharacterIds).toEqual(["ch_c"]);
+  });
+
+  it("promotes a legacy single-character attach to a one-entry cast", () => {
+    window.localStorage.setItem(
+      "perabyte.settings.v1",
+      JSON.stringify({ soloCharacterId: "ch_legacy", storyCharacterId: "" }),
+    );
+    resetSettingsForTests();
+    const settings = getSettings();
+    expect(settings.soloCharacterIds).toEqual(["ch_legacy"]);
+    expect(settings.storyCharacterIds).toEqual([]);
   });
 
   it("bumps the catalog version on demand", () => {

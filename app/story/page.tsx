@@ -46,7 +46,7 @@ import {
 import { isVideoSource } from "@/lib/renderer";
 import {
   setSelectedModel,
-  setStoryCharacter,
+  setStoryCharacters,
   useSettings,
 } from "@/lib/repositories/settings.repository";
 import { useCharacters } from "@/lib/repositories/characters.repository";
@@ -204,10 +204,11 @@ export default function StoryPage() {
 
   const { settings: userSettings } = useSettings();
   const { characters } = useCharacters();
-  // Character reuse: the runner folds the attached saved character's
-  // sanitized anchor into every scene prompt at render time.
-  const attachedCharacter =
-    characters.find((character) => character.id === userSettings.storyCharacterId) ?? null;
+  // Character reuse: the runner folds the attached cast's sanitized anchors
+  // into every scene prompt at render time.
+  const attachedCharacters = characters.filter((character) =>
+    userSettings.storyCharacterIds.includes(character.id),
+  );
   const catalog = useModelCatalog(kind);
   const modelId =
     (kind === "video" ? userSettings.videoModel : userSettings.imageModel) ??
@@ -344,7 +345,7 @@ export default function StoryPage() {
         continuity: continuityOn,
         running: true,
         style: currentSettings().style,
-        characterId: attachedCharacter?.id ?? "",
+        characterIds: attachedCharacters.map((c) => c.id),
       },
     };
     addAsset(asset);
@@ -462,7 +463,7 @@ export default function StoryPage() {
           running: true,
           convertedFrom: storyId ?? "",
           style: currentSettings().style,
-          characterId: attachedCharacter?.id ?? "",
+          characterIds: attachedCharacters.map((c) => c.id),
         },
       };
       addAsset(asset);
@@ -518,7 +519,7 @@ export default function StoryPage() {
           continuity: continuityOn,
           running: false,
           style: currentSettings().style,
-          characterId: attachedCharacter?.id ?? "",
+          characterIds: attachedCharacters.map((c) => c.id),
         },
       };
       addAsset(asset);
@@ -713,8 +714,8 @@ export default function StoryPage() {
                 }));
               }}
               characters={characters}
-              characterId={userSettings.storyCharacterId}
-              onCharacterChange={setStoryCharacter}
+              characterIds={userSettings.storyCharacterIds}
+              onCharactersChange={setStoryCharacters}
               busy={running}
               onGenerate={handleGenerateAll}
               onCancel={handleCancel}
