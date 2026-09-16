@@ -8,6 +8,7 @@ import {
   resetSettingsForTests,
   setSelectedModel,
   setMaskUncensored,
+  setSmartMask,
   setSoloCharacters,
   setStoryCharacters,
   setUncensoredEnabled,
@@ -58,6 +59,14 @@ describe("settings repository", () => {
     expect(getSettings().maskUncensored).toBe(false);
     const raw = window.localStorage.getItem("perabyte.settings.v1");
     expect(JSON.parse(raw as string).maskUncensored).toBe(false);
+  });
+
+  it("defaults smart masking on and persists the toggle", () => {
+    expect(getSettings().smartMask).toBe(true);
+    setSmartMask(false);
+    expect(getSettings().smartMask).toBe(false);
+    const raw = window.localStorage.getItem("perabyte.settings.v1");
+    expect(JSON.parse(raw as string).smartMask).toBe(false);
   });
 
   it("stores model selections per kind and reports them back", () => {
