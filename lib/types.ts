@@ -98,6 +98,9 @@ export interface StoryScene {
   progress?: StorySceneProgress;
   /** Manual reference frame uploaded by the user (media-cache ref). */
   startImageRef?: string;
+  /** Anchor-composed prompt snapshotted at Generate — what the server run
+   * actually renders (the tile keeps the clean prompt). */
+  runPrompt?: string;
   endImageRef?: string;
   /** Derived final frame of this scene, chaining to the next scene. */
   endFrameRef?: string;

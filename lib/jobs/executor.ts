@@ -10,6 +10,8 @@ import {
 } from "@/lib/repositories/jobs.repository";
 import { getProviderConfig } from "@/lib/repositories/provider-config.repository";
 import { getStoriesRepository, patchStoryRepository } from "@/lib/repositories/stories.repository";
+import { deriveEndFrameRefServerSide } from "@/lib/media/frame-server";
+import { advanceStoryChain } from "@/lib/story/server-runner";
 import { putRecord } from "@/lib/services/records.service";
 import { titleFromPrompt } from "@/lib/constants";
 import type { Asset, GenerationSettings } from "@/lib/types";
@@ -390,15 +392,16 @@ export class JobExecutor {
   }
 
   /** Attach a finished job's media to its story scene — only while the
-   * scene is still generating (a re-queued scene wants the NEW render). */
-  private absorbStoryScene(
+   * scene is still generating (a re-queued scene wants the NEW render) —
+   * then advance the server-side chain. */
+  private async absorbStoryScene(
     jobId: string,
     storyId: string,
     sceneId: string,
     media: Awaited<ReturnType<typeof this.persist>>,
     prepared: Awaited<ReturnType<typeof prepareGeneration>>,
     log: Logger,
-  ): void {
+  ): Promise<void> {
     const story = getStoriesRepository(storyId);
     if (!story?.scenes) return;
     const scene = story.scenes.find((sc) => sc.id === sceneId);
@@ -407,10 +410,15 @@ export class JobExecutor {
       return;
     }
     const primary = media[0];
-    // Chain end frame: provider export when available, the image itself for
-    // image scenes; video canvas extraction stays client-side (backfill).
-    const endFrameRef =
-      primary?.endFrameUrl ?? (prepared.normalized.kind === "image" ? primary?.url : undefined);
+    // Chain end frame, server-side: provider export → the image itself →
+    // ffmpeg grab; null degrades to prompt-only chaining (the client
+    // backfill semantics). A bare cache ref, never the full URL.
+    const endFrameRef = primary
+      ? await deriveEndFrameRefServerSide(
+          { url: primary.url, ...(primary.endFrameUrl ? { endFrameUrl: primary.endFrameUrl } : {}) },
+          prepared.normalized.kind,
+        )
+      : null;
     patchStoryRepository(storyId, {
       scenes: story.scenes.map((sc) =>
         sc.id === sceneId
@@ -429,6 +437,7 @@ export class JobExecutor {
       ),
     });
     log.info("job absorbed into story scene", { jobId, storyId, sceneId });
+    await advanceStoryChain(storyId);
   }
 
   /** Solo renders become History assets server-side, so closing the tab
