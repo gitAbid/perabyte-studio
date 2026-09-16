@@ -22,7 +22,9 @@ interface AnthropicMessageResponse {
 
 const ANTHROPIC_VERSION = "2023-06-01";
 
-export function createAnthropicFormat(fetchImpl: FetchImpl = fetch): ProviderFormat {
+export function createAnthropicFormat(fetchImpl?: FetchImpl): ProviderFormat {
+  // Resolved per call so a stubbed global fetch (tests) is always picked up.
+  const doFetch: FetchImpl = (...args) => (fetchImpl ?? fetch)(...args);
   function target(cfg: CustomProviderEntry) {
     return {
       baseUrl: cfg.baseUrl.replace(/\/+$/, ""),
@@ -47,7 +49,7 @@ export function createAnthropicFormat(fetchImpl: FetchImpl = fetch): ProviderFor
       const list = await httpJson<AnthropicModelList>(
         target(cfg),
         { path: "/v1/models", headers: headers(cfg), timeoutMs: 20_000 },
-        fetchImpl,
+        doFetch,
       );
       return (list.data ?? [])
         .filter((model): model is { id: string; display_name?: string } =>
@@ -85,7 +87,7 @@ export function createAnthropicFormat(fetchImpl: FetchImpl = fetch): ProviderFor
           timeoutMs: 25_000,
           retries: 1,
         },
-        fetchImpl,
+        doFetch,
       );
       const text = (reply.content ?? [])
         .filter((block) => block.type === "text" && typeof block.text === "string")

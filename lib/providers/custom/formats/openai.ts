@@ -78,7 +78,9 @@ function clampDuration(seconds: number): number {
   return Math.min(15, Math.max(1, Math.round(seconds)));
 }
 
-export function createOpenAiFormat(fetchImpl: FetchImpl = fetch): ProviderFormat {
+export function createOpenAiFormat(fetchImpl?: FetchImpl): ProviderFormat {
+  // Resolved per call so a stubbed global fetch (tests) is always picked up.
+  const doFetch: FetchImpl = (...args) => (fetchImpl ?? fetch)(...args);
   async function postJson<T>(
     cfg: CustomProviderEntry,
     path: string,
@@ -88,7 +90,7 @@ export function createOpenAiFormat(fetchImpl: FetchImpl = fetch): ProviderFormat
     return httpJson<T>(
       { baseUrl: resolveOpenAiBase(cfg.baseUrl), apiKey: cfg.apiKey, label: cfg.label },
       { method: "POST", path, body, ...options },
-      fetchImpl,
+      doFetch,
     );
   }
 
@@ -100,7 +102,7 @@ export function createOpenAiFormat(fetchImpl: FetchImpl = fetch): ProviderFormat
     return httpJson<T>(
       { baseUrl: resolveOpenAiBase(cfg.baseUrl), apiKey: cfg.apiKey, label: cfg.label },
       { path, ...options },
-      fetchImpl,
+      doFetch,
     );
   }
 
@@ -117,13 +119,13 @@ export function createOpenAiFormat(fetchImpl: FetchImpl = fetch): ProviderFormat
   ): Promise<Buffer | null> {
     const target = imageTarget(cfg);
     const url = new URL(rawUrl, `${resolveOpenAiBase(cfg.baseUrl)}/`).toString();
-    let bytes = await httpBytes(target, url, { signal }, fetchImpl);
+    let bytes = await httpBytes(target, url, { signal }, doFetch);
     if (bytes && !isPlausibleMp4(bytes)) {
       // Object storage can serve a placeholder right after "done" — one
       // propagation retry before failing loudly.
       log.debug("custom video download failed validation — retrying once", { id });
       await new Promise((resolve) => setTimeout(resolve, 5_000));
-      bytes = await httpBytes(target, url, { signal }, fetchImpl);
+      bytes = await httpBytes(target, url, { signal }, doFetch);
     }
     if (!bytes) {
       log.warn("custom provider video download failed", { id });

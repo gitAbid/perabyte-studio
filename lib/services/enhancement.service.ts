@@ -20,6 +20,7 @@ import { logger as rootLogger } from "@/lib/logging/logger";
 import { ProviderError } from "@/lib/providers/types";
 import { sogniTextComplete, SOGNI_TEXT_MODELS } from "@/lib/providers/sogni/sogni.text";
 import { pollinationsTextComplete, POLLINATIONS_TEXT_MODELS } from "@/lib/providers/pollinations/pollinations.text";
+import { customTextComplete } from "@/lib/providers/custom/custom.text";
 import { getProviderConfig } from "@/lib/repositories/provider-config.repository";
 
 /**
@@ -119,9 +120,59 @@ function cacheKey(request: ValidatedEnhancement, taskEnhanceModel: string | null
 }
 
 interface EngineEntry {
-  providerId: "sogni" | "pollinations";
+  providerId: string;
   modelId?: string;
   complete: (instruction: string, options?: { signal?: AbortSignal; modelId?: string }) => Promise<string>;
+}
+
+/** The enabled custom provider + text model owning `modelId`, if any. */
+function customEngineFor(
+  config: ReturnType<typeof getProviderConfig>,
+  modelId: string,
+): EngineEntry | null {
+  const sep = modelId.indexOf(":");
+  if (sep <= 0) return null;
+  const providerId = modelId.slice(0, sep);
+  const rawModel = modelId.slice(sep + 1);
+  const entry = config.customProviders.find(
+    (e) =>
+      e.id === providerId &&
+      e.enabled &&
+      e.models.some((m) => m.kind === "text" && m.enabled && m.model === rawModel),
+  );
+  if (!entry) return null;
+  return {
+    providerId: entry.id,
+    modelId,
+    complete: (instruction, options) =>
+      customTextComplete(entry.id, instruction, {
+        signal: options?.signal,
+        modelId: options?.modelId ?? modelId,
+      }),
+  };
+}
+
+/** First enabled text engine of each enabled custom provider, in list order. */
+function customFallbackEngines(
+  config: ReturnType<typeof getProviderConfig>,
+): EngineEntry[] {
+  const engines: EngineEntry[] = [];
+  for (const entry of config.customProviders) {
+    if (!entry.enabled) continue;
+    const model = entry.models.find((m) => m.kind === "text" && m.enabled);
+    if (!model) continue;
+    const modelId = `${entry.id}:${model.model}`;
+    engines.push({
+      providerId: entry.id,
+      modelId,
+      complete: (instruction, options) =>
+        customTextComplete(entry.id, instruction, {
+          signal: options?.signal,
+          modelId,
+        }),
+    });
+  }
+  return engines;
 }
 
 function resolveEnhanceEngines(): EngineEntry[] {
@@ -141,7 +192,10 @@ function resolveEnhanceEngines(): EngineEntry[] {
   const engines: EngineEntry[] = [];
 
   if (selectedModel) {
-    if (sogniModels.includes(selectedModel) && sogniEnabled) {
+    const customSelected = customEngineFor(config, selectedModel);
+    if (customSelected) {
+      engines.push(customSelected);
+    } else if (sogniModels.includes(selectedModel) && sogniEnabled) {
       engines.push({
         providerId: "sogni",
         modelId: selectedModel,
@@ -156,7 +210,8 @@ function resolveEnhanceEngines(): EngineEntry[] {
     }
   }
 
-  // Fallback chain in priority order (excluding the already-selected engine).
+  // Fallback chain in priority order (excluding the already-selected engine):
+  // the free built-ins first, then the user's keyed custom providers.
   if (config.providers.sogni?.enabled !== false && !engines.some((e) => e.providerId === "sogni")) {
     engines.push({
       providerId: "sogni",
@@ -168,6 +223,11 @@ function resolveEnhanceEngines(): EngineEntry[] {
       providerId: "pollinations",
       complete: pollinationsTextComplete,
     });
+  }
+  for (const engine of customFallbackEngines(config)) {
+    if (!engines.some((e) => e.providerId === engine.providerId)) {
+      engines.push(engine);
+    }
   }
 
   return engines;

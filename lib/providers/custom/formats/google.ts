@@ -70,7 +70,9 @@ function extForMimeType(mimeType: string | undefined): string {
   return "png";
 }
 
-export function createGoogleFormat(fetchImpl: FetchImpl = fetch): ProviderFormat {
+export function createGoogleFormat(fetchImpl?: FetchImpl): ProviderFormat {
+  // Resolved per call so a stubbed global fetch (tests) is always picked up.
+  const doFetch: FetchImpl = (...args) => (fetchImpl ?? fetch)(...args);
   async function postJson<T>(
     cfg: CustomProviderEntry,
     path: string,
@@ -80,7 +82,7 @@ export function createGoogleFormat(fetchImpl: FetchImpl = fetch): ProviderFormat
     return httpJson<T>(
       googleTarget(cfg),
       { method: "POST", path, body, headers: authHeaders(cfg), ...options },
-      fetchImpl,
+      doFetch,
     );
   }
 
@@ -106,7 +108,7 @@ export function createGoogleFormat(fetchImpl: FetchImpl = fetch): ProviderFormat
       const list = await httpJson<GoogleModelList>(
         googleTarget(cfg),
         { path: "/v1beta/models?pageSize=200", headers: authHeaders(cfg), timeoutMs: 20_000 },
-        fetchImpl,
+        doFetch,
       );
       return (list.models ?? [])
         .filter((model) => typeof model.name === "string" && model.name.includes("/"))
@@ -258,7 +260,7 @@ export function createGoogleFormat(fetchImpl: FetchImpl = fetch): ProviderFormat
                   signal: ctx.signal,
                   timeoutMs: 20_000,
                 },
-                fetchImpl,
+                doFetch,
               );
             } catch (error) {
               ctx.logger.debug("custom provider poll hiccup", {
@@ -314,7 +316,7 @@ export function createGoogleFormat(fetchImpl: FetchImpl = fetch): ProviderFormat
                 googleTarget(cfg),
                 sources[index].uri!,
                 { headers: authHeaders(cfg), signal: ctx.signal },
-                fetchImpl,
+                doFetch,
               );
             }
             if (!bytes || !isPlausibleMp4(bytes)) {
