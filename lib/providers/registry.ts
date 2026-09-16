@@ -4,7 +4,8 @@ import { ProviderError } from "@/lib/providers/types";
 import { apiKeyFanProvider } from "@/lib/providers/apikey-fan/apikey-fan.provider";
 import { sogniProvider } from "@/lib/providers/sogni/sogni.provider";
 import { pollinationsProvider } from "@/lib/providers/pollinations/pollinations.provider";
-import { getProviderConfig } from "@/lib/repositories/provider-config.repository";
+import { getProviderConfig, getConfigRevision } from "@/lib/repositories/provider-config.repository";
+import { createCustomProvider } from "@/lib/providers/custom/custom-provider.factory";
 
 /**
  * Gate interface for runtime provider/model enablement.
@@ -129,6 +130,22 @@ export function getRegisteredProviders(): AnyProvider[] {
   return registeredProviders;
 }
 
+/**
+ * Full adapter list for the registry: keyed built-ins, then the custom
+ * providers from config (rebuilt when the config revision moves — a Settings
+ * save applies instantly), then the keyless Pollinations fallback.
+ */
+function buildProviderList(): AnyProvider[] {
+  const keyed = registeredProviders.filter((p) => p.id !== "pollinations");
+  const fallback = registeredProviders.filter((p) => p.id === "pollinations");
+  const customs = getProviderConfig().customProviders.map((entry) =>
+    createCustomProvider(entry),
+  );
+  return [...keyed, ...customs, ...fallback];
+}
+
+let registryRevision = -1;
+
 export function getGenerationRegistry(): ProviderRegistry {
   const dynamicGate: ProviderGate = {
     isEnabled: (providerId) => {
@@ -142,7 +159,11 @@ export function getGenerationRegistry(): ProviderRegistry {
       return p ? !p.disabledModels.includes(modelId) : true;
     },
   };
-  registry ??= createRegistry(registeredProviders, dynamicGate);
+  const revision = getConfigRevision();
+  if (!registry || registryRevision !== revision) {
+    registryRevision = revision;
+    registry = createRegistry(buildProviderList(), dynamicGate);
+  }
   return registry;
 }
 
@@ -159,4 +180,5 @@ export function setProvidersForTests(list: AnyProvider[] | null): void {
     pollinationsProvider,
   ];
   registry = null;
+  registryRevision = -1;
 }

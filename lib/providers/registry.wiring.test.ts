@@ -6,6 +6,8 @@ import { resetStudioEnvForTests } from "@/lib/config/env";
 import {
   resetProviderConfigForTests,
   setProviderConfigPathForTests,
+  updateProviderConfig,
+  type CustomProviderEntry,
 } from "@/lib/repositories/provider-config.repository";
 import { getGenerationRegistry } from "@/lib/providers/registry";
 
@@ -61,5 +63,76 @@ describe("app registry wiring", () => {
     );
     expect(registry.findAnywhere("sogni:flux1-schnell-fp8")?.provider.id).toBe("sogni");
     expect(registry.resolve("sogni:flux1-schnell-fp8")).toBeNull();
+  });
+});
+
+describe("custom providers in the registry", () => {
+  let configDir: string;
+
+  beforeEach(() => {
+    configDir = mkdtempSync(path.join(tmpdir(), "perabyte-registry-custom-"));
+    setProviderConfigPathForTests(path.join(configDir, "settings.json"));
+  });
+
+  afterEach(() => {
+    delete process.env.APIKEY_FAN_API_KEY;
+    delete process.env.SOGNI_API_KEY;
+    resetStudioEnvForTests();
+    setProviderConfigPathForTests(null);
+    resetProviderConfigForTests();
+    rmSync(configDir, { recursive: true, force: true });
+  });
+
+  const custom: CustomProviderEntry = {
+    id: "my-relay",
+    label: "My Relay",
+    format: "openai",
+    baseUrl: "https://relay.example/v1",
+    apiKey: "sk-x",
+    enabled: true,
+    models: [
+      { model: "gpt-image-1", kind: "image", enabled: true },
+      { model: "sora-2", kind: "video", enabled: true },
+    ],
+  };
+
+  it("resolves custom models without a process restart", () => {
+    process.env.APIKEY_FAN_API_KEY = "k";
+    resetStudioEnvForTests();
+    updateProviderConfig({ customProviders: { upsert: custom } });
+
+    const registry = getGenerationRegistry();
+    expect(registry.listModels("image").map((m) => m.id)).toContain("my-relay:gpt-image-1");
+    expect(registry.listModels("video").map((m) => m.id)).toContain("my-relay:sora-2");
+
+    const resolved = registry.resolve("my-relay:gpt-image-1");
+    expect(resolved?.provider.id).toBe("my-relay");
+    expect(resolved?.provider.label).toBe("My Relay");
+  });
+
+  it("sits keyed built-ins before custom providers before the keyless fallback", () => {
+    process.env.APIKEY_FAN_API_KEY = "k";
+    process.env.SOGNI_API_KEY = "k";
+    resetStudioEnvForTests();
+    updateProviderConfig({ customProviders: { upsert: custom } });
+
+    const ids = getGenerationRegistry().listModels("image").map((m) => m.id);
+    const customIndex = ids.indexOf("my-relay:gpt-image-1");
+    expect(customIndex).toBeGreaterThan(ids.indexOf("apikey-fan:grok-imagine-image"));
+    expect(ids[ids.length - 1]).toBe("pollinations:flux");
+  });
+
+  it("drops a disabled custom provider on the next config revision", () => {
+    process.env.APIKEY_FAN_API_KEY = "k";
+    resetStudioEnvForTests();
+    updateProviderConfig({ customProviders: { upsert: custom } });
+    expect(getGenerationRegistry().resolve("my-relay:gpt-image-1")).not.toBeNull();
+
+    updateProviderConfig({ customProviders: { setModel: { providerId: "my-relay", model: "gpt-image-1", enabled: false } } });
+    expect(getGenerationRegistry().resolve("my-relay:gpt-image-1")).toBeNull();
+    expect(getGenerationRegistry().findAnywhere("my-relay:gpt-image-1")).toBeNull();
+
+    updateProviderConfig({ customProviders: { remove: "my-relay" } });
+    expect(getGenerationRegistry().findAnywhere("my-relay:sora-2")).toBeNull();
   });
 });
