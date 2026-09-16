@@ -58,6 +58,46 @@ export interface GeneratedArtifact {
   companionFrameUrl?: string | null;
 }
 
+/**
+ * Result of one executor poll against a durable provider job (Phase B).
+ * Terminal states carry everything the executor needs to finish the record.
+ */
+export type JobPollResult =
+  | { status: "running"; progress?: ProviderProgress }
+  | { status: "completed"; artifacts: GeneratedArtifact[] }
+  | { status: "failed"; retryable: boolean; message: string };
+
+/**
+ * Providers whose renders live server-side under a persistent reference
+ * (Sogni project id, relay request id). The durable job engine submits and
+ * polls through this contract instead of holding a request open, so a
+ * restart re-attaches from the persisted ref instead of orphaning the
+ * render. `cancelJob` is best-effort — a provider without it simply lets
+ * the render finish unretrieved.
+ */
+export interface JobProvider {
+  submitJob(
+    request: NormalizedGenerationRequest,
+    model: ModelDescriptor,
+    ctx: ProviderContext,
+  ): Promise<{ ref: string }>;
+  pollJob(ref: string, model: ModelDescriptor, ctx: ProviderContext): Promise<JobPollResult>;
+  cancelJob?(ref: string): Promise<void>;
+}
+
+/** Structural cast — providers opt in by shape, not by registration. */
+export function asJobProvider(provider: unknown): JobProvider | null {
+  if (
+    provider &&
+    typeof provider === "object" &&
+    typeof (provider as JobProvider).submitJob === "function" &&
+    typeof (provider as JobProvider).pollJob === "function"
+  ) {
+    return provider as JobProvider;
+  }
+  return null;
+}
+
 export interface ImageProvider {
   readonly id: string;
   readonly label: string;
