@@ -81,7 +81,12 @@ export interface JobProvider {
     model: ModelDescriptor,
     ctx: ProviderContext,
   ): Promise<{ ref: string }>;
-  pollJob(ref: string, model: ModelDescriptor, ctx: ProviderContext): Promise<JobPollResult>;
+  pollJob(
+    ref: string,
+    request: NormalizedGenerationRequest,
+    model: ModelDescriptor,
+    ctx: ProviderContext,
+  ): Promise<JobPollResult>;
   cancelJob?(ref: string): Promise<void>;
 }
 

@@ -48,6 +48,15 @@ export interface SogniClient {
   projects: {
     create(params: SogniImageParams | SogniVideoParams): Promise<SogniProject>;
     getAvailableModels(network: "fast"): Promise<SogniAvailableModel[]>;
+    /**
+     * Server-side project lookup, used by the durable job engine to
+     * re-attach a render after a process restart (optional — feature-
+     * detected; older SDK slices and test fakes may omit it).
+     */
+    get?(projectId: string): Promise<{
+      status?: string;
+      workerJobs?: { resultUrl?: string | null }[];
+    }>;
   };
 }
 

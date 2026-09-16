@@ -80,8 +80,10 @@ function fakeClient(completion: Promise<string[]>) {
   const client: SogniClient = {
     projects: {
       create(params) {
+        const id = `proj_${created.length}`;
         created.push({ params: params as unknown as Record<string, unknown>, completion });
         return Promise.resolve({
+          id,
           waitForCompletion: () => completion,
           on: (
             event: "progress" | "jobCompleted",
@@ -176,6 +178,7 @@ describe("sogni provider", () => {
     vi.useFakeTimers();
     const completion = new Promise<string[]>(() => {});
     const project = {
+      id: "proj_readout",
       waitForCompletion: () => completion,
       on: () => undefined,
       status: "queued" as const,
@@ -241,40 +244,90 @@ describe("sogni provider", () => {
     expect((error as ProviderError).message).toContain("worker ran out of memory");
   });
 
-  it("detaches a deadline-hit render and recovers it when Sogni finishes", async () => {
+  it("times out retryably at the deadline without detaching", async () => {
     vi.useFakeTimers();
-    let resolveCompletion: (urls: string[]) => void = () => {};
-    const completion = new Promise<string[]>((resolve) => {
-      resolveCompletion = resolve;
-    });
+    const completion = new Promise<string[]>(() => {});
     setSogniClientForTests(fakeClient(completion).client);
 
     const pending = sogniProvider.generateImage(imageRequest(), imageModel, { logger });
     const assertion = expect(pending).rejects.toMatchObject({
       retryable: true,
-      message: expect.stringContaining("detached"),
+      status: 504,
+      message: expect.stringContaining("time limit"),
     });
-    await vi.advanceTimersByTimeAsync(imageDeadlineMs() + 1);
+    await vi.advanceTimersByTimeAsync(imageDeadlineMs() + 2_100);
     await assertion;
 
-    // The abandoned render is registered as detached.
-    const records = listPendingRenders();
-    expect(records).toHaveLength(1);
-    expect(records[0].provider).toBe("sogni");
-    expect(records[0].status).toBe("detached");
+    // No detached registry — the durable job engine superseded it.
+    expect(listPendingRenders()).toHaveLength(0);
+  });
 
-    // Sogni finishes anyway: the detached continuation caches the media and
-    // flips the record to recovered for the studio to attach.
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => new Response(PNG_BYTES, { status: 200 })),
-    );
-    resolveCompletion(["https://cdn.sogni.ai/late.png"]);
-    await vi.advanceTimersByTimeAsync(1);
-    const recovered = listPendingRenders()[0];
-    expect(recovered.status).toBe("recovered");
-    expect(recovered.media?.url).toBe("/api/media?f=fake.png");
-    expect(recovered.media?.mime).toBe("image/png");
+  it("exposes submit/poll: ref on submit, artifacts on settle", async () => {
+    let resolveCompletion: (urls: string[]) => void = () => {};
+    const completion = new Promise<string[]>((resolve) => {
+      resolveCompletion = resolve;
+    });
+    const fake = fakeClient(completion);
+    // The remote lookup (restart path) reports the project still processing.
+    (fake.client.projects as { get?: unknown }).get = async () => ({
+      status: "processing",
+    });
+    setSogniClientForTests(fake.client);
+
+    const { ref } = await sogniProvider.submitJob(imageRequest({ count: 2 }), imageModel, {
+      logger,
+    });
+    expect(ref).toBe("proj_0"); // first create in this fresh fake
+
+    const running = await sogniProvider.pollJob(ref, imageRequest({ count: 2 }), imageModel, {
+      logger,
+    });
+    expect(running.status).toBe("running");
+
+    resolveCompletion(["https://cdn.sogni.ai/a.png", "https://cdn.sogni.ai/b.png"]);
+    await vi.waitFor(() => {});
+    await new Promise((r) => setImmediate(r));
+    const done = await sogniProvider.pollJob(ref, imageRequest({ count: 2 }), imageModel, {
+      logger,
+    });
+    expect(done.status).toBe("completed");
+    if (done.status === "completed") {
+      expect(done.artifacts.map((a) => a.seed)).toEqual([42, 43]);
+    }
+
+    // Terminal poll consumes the continuation; a later poll re-attaches
+    // remotely (the project is gone from this process's memory).
+    const again = await sogniProvider.pollJob(ref, imageRequest({ count: 2 }), imageModel, {
+      logger,
+    });
+    expect(again.status).toBe("running");
+  });
+
+  it("re-attaches a project after a restart via the server-side lookup", async () => {
+    setSogniClientForTests({
+      projects: {
+        create: async () => {
+          throw new Error("should not create for a re-attach");
+        },
+        getAvailableModels: async () => [],
+        get: async (id: string) => ({
+          status: "completed",
+          workerJobs: [{ resultUrl: "https://cdn.sogni.ai/late.png" }],
+        }),
+      },
+    });
+
+    const done = await sogniProvider.pollJob("proj_lost", imageRequest(), imageModel, {
+      logger,
+    });
+    expect(done.status).toBe("completed");
+    if (done.status === "completed") {
+      expect(done.artifacts[0]).toMatchObject({
+        url: "https://cdn.sogni.ai/late.png",
+        ext: "png",
+        seed: 42,
+      });
+    }
   });
 
   it("aborts promptly when the caller cancels", async () => {
@@ -329,6 +382,7 @@ describe("continuity frames + last frame export", () => {
       projects: {
         create(params) {
           const project = {
+            id: `proj_${created.length}`,
             // The provider registers its jobCompleted listener before calling
             // waitForCompletion — fire the hook there, like the SDK order.
             waitForCompletion: () => {
