@@ -24,6 +24,11 @@ describe("chainPredecessor", () => {
     expect(chainPredecessor(scenes, 0)).toBeUndefined();
     expect(chainPredecessorIndex(scenes, 0)).toBe(-1);
   });
+
+  it("tolerates out-of-range scans (placeholder slots past the last scene)", () => {
+    expect(chainPredecessorIndex([], 1)).toBe(0);
+    expect(chainPredecessorIndex([refScene({ id: "s1" })], 2)).toBe(1);
+  });
 });
 
 describe("effectiveChainRef", () => {

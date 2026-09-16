@@ -47,7 +47,8 @@ export function chainPredecessorIndex(
   index: number,
 ): number {
   for (let i = index - 1; i >= 0; i -= 1) {
-    if (scenes[i].status !== "canceled") return i;
+    // Optional chain: the page scans placeholder slots past the last scene.
+    if (scenes[i]?.status !== "canceled") return i;
   }
   return -1;
 }
