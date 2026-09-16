@@ -97,6 +97,12 @@ export default function StoryPage() {
   // the scene when it is committed (Generate or Add scene), then reset for
   // the next draft.
   const [draftRefs, setDraftRefs] = useState<{ startImageRef?: string; endImageRef?: string }>({});
+  // Inline scene-prompt editing: one scene at a time, queued/canceled only.
+  const [editingSceneId, setEditingSceneId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
+  // Guards against Escape unmounting the textarea and its blur committing
+  // the edit anyway.
+  const editCancelingRef = useRef(false);
 
   function setStoryId(id: string | null) {
     setStoryIdState(id);
@@ -402,6 +408,25 @@ export default function StoryPage() {
     appRunner.removeScene(storyId, sceneId);
   }
 
+  /** Commit an inline prompt edit. Empty prompts can never render, so they're
+   * refused (composer parity); the runner reads prompts at run time, so edits
+   * land for any scene that hasn't started. */
+  function commitScenePromptEdit(sceneId: string) {
+    setEditingSceneId(null);
+    if (!storyId) return;
+    const next = editDraft.trim();
+    if (!next) {
+      toast.push("A scene needs a prompt before it can render.", "error");
+      return;
+    }
+    updateStoryScenes(storyId, (list) =>
+      list.map((scene) =>
+        scene.id === sceneId ? { ...scene, prompt: next.slice(0, PROMPT_MAX) } : scene,
+      ),
+    );
+    toast.push("Scene prompt updated.");
+  }
+
   function toggleContinuity() {
     const next = !continuityOn;
     setContinuityOn(next);
@@ -555,6 +580,8 @@ export default function StoryPage() {
     setPromptError(undefined);
     setDraftRefs({});
     setSceneProgress({});
+    setEditingSceneId(null);
+    setEditDraft("");
   }
 
   async function handleEnhancePrompt() {
@@ -846,6 +873,7 @@ export default function StoryPage() {
               const chainResolution: EffectiveChainRef = typed
                 ? effectiveChainRef(scenes, index, continuityOn)
                 : { state: "none" };
+              const editable = typed?.status === "queued" || typed?.status === "canceled";
               return (
                 <div key={typed?.id ?? `slot-${index}`} className="min-w-0">
                   {typed?.url ? (
@@ -1028,11 +1056,47 @@ export default function StoryPage() {
                         <Icon name="link" size={11} className="text-muted" />
                       )}
                   </div>
-                  {typed?.prompt && (
-                    <p className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-ink-soft">
-                      {typed.prompt}
-                    </p>
-                  )}
+                  {typed?.prompt &&
+                    (editingSceneId === typed.id && editable ? (
+                      <textarea
+                        autoFocus
+                        rows={2}
+                        maxLength={PROMPT_MAX}
+                        value={editDraft}
+                        onChange={(event) => setEditDraft(event.target.value)}
+                        onBlur={() => {
+                          if (editCancelingRef.current) {
+                            editCancelingRef.current = false;
+                            return;
+                          }
+                          commitScenePromptEdit(typed.id);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "Escape") {
+                            editCancelingRef.current = true;
+                            setEditingSceneId(null);
+                          }
+                        }}
+                        className="mt-0.5 w-full resize-none rounded-[8px] border border-primary/40 bg-white px-2 py-1.5 text-[12px] leading-snug text-ink outline-none"
+                      />
+                    ) : (
+                      <p
+                        onClick={
+                          editable
+                            ? () => {
+                                setEditDraft(typed.prompt);
+                                setEditingSceneId(typed.id);
+                              }
+                            : undefined
+                        }
+                        title={editable ? "Click to edit the prompt" : undefined}
+                        className={`mt-0.5 line-clamp-2 text-[12px] leading-snug text-ink-soft ${
+                          editable ? "cursor-text hover:text-ink" : ""
+                        }`}
+                      >
+                        {typed.prompt}
+                      </p>
+                    ))}
                 </div>
               );
             })}
