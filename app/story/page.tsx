@@ -29,6 +29,7 @@ import {
 } from "@/lib/enhancement";
 import { useModelCatalog, type ModelOption } from "@/lib/model-catalog";
 import { snapLorasForModel } from "@/lib/lora-options";
+import { composeSceneWithCharacters } from "@/lib/character";
 import { refFromMediaUrl, uploadFrameRef } from "@/lib/media/frame";
 import {
   addAsset,
@@ -36,7 +37,6 @@ import {
   updateStoryScenes,
   useAssets,
 } from "@/lib/store";
-import { appRunner } from "@/lib/story/runner";
 import {
   chainPredecessorIndex,
   effectiveChainRef,
@@ -138,59 +138,62 @@ export default function StoryPage() {
   const [sceneProgress, setSceneProgress] = useState<Record<string, GenerationProgress>>({});
 
   const { assets } = useAssets();
-  const story = storyId ? assets.find((a) => a.id === storyId) : undefined;
+  // Live view over the SERVER run (Phase C): while a run is in flight the
+  // page polls the story record + its active jobs — the tab is only a
+  // console now, and closing it never stops the renders. Server truth wins
+  // over the (stale-able) local store copy while it exists.
+  const [liveStory, setLiveStory] = useState<Asset | undefined>();
+  const story = (storyId ? liveStory ?? assets.find((a) => a.id === storyId) : undefined) as Asset | undefined;
   const scenes: StoryScene[] = useMemo(() => story?.scenes ?? [], [story]);
-
-  // The runner owns execution: the page is "busy" exactly while a scene is
-  // in flight. Queued-but-blocked scenes don't count (their Generate press
-  // retries/resumes).
   const running = scenes.some((s) => s.status === "generating");
-
-  // Live provider ticks flow through the runner's hooks; a settled scene
-  // never leaves a stale readout behind.
   useEffect(() => {
-    appRunner.setHooks({
-      onSceneProgress: (sceneId, progress) =>
-        setSceneProgress((prev) => ({ ...prev, [sceneId]: progress })),
-      onSceneSettled: (sceneId) =>
-        setSceneProgress((prev) => {
-          if (!(sceneId in prev)) return prev;
-          const { [sceneId]: _drop, ...rest } = prev;
-          return rest;
-        }),
-    });
-  }, []);
-
-  // Sync continuity, prompt and media kind when the active story loads.
-  useEffect(() => {
-    if (!story) return;
-    if (story.meta && typeof story.meta.continuity === "boolean") {
-      setContinuityOn(story.meta.continuity);
+    if (!storyId) return;
+    let stop = false;
+    async function tick() {
+      try {
+        const response = await fetch(`/api/stories/${storyId}`, { cache: "no-store" });
+        if (!response.ok) return;
+        const data = (await response.json()) as {
+          story?: Asset;
+          jobs?: {
+            sceneId?: string;
+            progress?: { stage: "submitted" | "rendering" | "downloading"; message: string; percent?: number };
+          }[];
+        };
+        if (stop || !data.story) return;
+        setLiveStory(data.story);
+        const next: Record<string, GenerationProgress> = {};
+        for (const job of data.jobs ?? []) {
+          if (job.sceneId && job.progress) {
+            next[job.sceneId] = {
+              stage: job.progress.stage,
+              message: job.progress.message,
+              percent:
+                typeof job.progress.percent === "number"
+                  ? Math.round(job.progress.percent)
+                  : undefined,
+            };
+          }
+        }
+        setSceneProgress(next);
+      } catch {
+        /* offline — the next tick retries; the server run continues */
+      }
     }
-    if (story.prompt && !prompt) {
-      setPrompt(story.prompt);
-    }
-    const storyMediaKind = story.settings?.kind;
-    if (
-      storyMediaKind &&
-      (storyMediaKind === "image" || storyMediaKind === "video") &&
-      storyMediaKind !== kind
-    ) {
-      setKind(storyMediaKind);
-    }
-    // Adopt the story's native aspect so scene tiles show what was actually
-    // rendered (a 9:16 story must not present 16:9 tiles after a reload).
-    const storyAspect = story.settings?.aspect;
-    if (storyAspect && storyAspect in ASPECTS) {
-      setSettings((s) => ({ ...s, aspect: storyAspect as typeof s.aspect }));
-    }
+    void tick();
+    const timer = setInterval(tick, 2_500);
+    return () => {
+      stop = true;
+      clearInterval(timer);
+    };
+    // Re-poll only while a run is active or scenes are pending.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [story?.id]);
+  }, [storyId, running, scenes.some((s) => s.status === "queued")]);
 
+  // Character reuse: the SERVER run folds the attached cast's sanitized
+  // anchors into every scene prompt (snapshotted at Generate).
   const { settings: userSettings } = useSettings();
   const { characters } = useCharacters();
-  // Character reuse: the runner folds the attached cast's sanitized anchors
-  // into every scene prompt at render time.
   const attachedCharacters = characters.filter((character) =>
     userSettings.storyCharacterIds.includes(character.id),
   );
@@ -307,6 +310,48 @@ export default function StoryPage() {
     }
   }
 
+  /* --------------------------- server run API --------------------------- */
+
+  /** The anchor-composed prompts the server run will render, snapshotted at
+   * Generate (the tiles keep the clean prompts). */
+  function composeRunPrompts(sceneList: StoryScene[]): Record<string, string> {
+    const specs = attachedCharacters.map((c) => c.spec);
+    const uncensored = userSettings.uncensoredEnabled;
+    const out: Record<string, string> = {};
+    for (const scene of sceneList) {
+      out[scene.id] = composeSceneWithCharacters(scene.prompt, specs, uncensored);
+    }
+    return out;
+  }
+
+  async function runStoryAction(
+    action: "generate" | "cancel" | "rerun",
+    sceneId?: string,
+    body?: Record<string, unknown>,
+  ): Promise<boolean> {
+    if (!storyId) return false;
+    const params = new URLSearchParams({ action });
+    if (sceneId) params.set("sceneId", sceneId);
+    try {
+      const response = await fetch(`/api/stories/${storyId}?${params}`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body ?? {}),
+      });
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as { error?: string };
+        toast.push(payload.error ?? "The story run could not be started.", "error");
+        return false;
+      }
+      const data = (await response.json()) as { story?: Asset };
+      if (data.story) setLiveStory(data.story);
+      return true;
+    } catch {
+      toast.push("We could not reach the studio service. Check your connection and retry.", "error");
+      return false;
+    }
+  }
+
   async function handleGenerateAll() {
     // A blank composer is fine when scenes are already queued — but a typed
     // draft joins the queue as one more scene instead of being dropped.
@@ -335,45 +380,48 @@ export default function StoryPage() {
     setDraftRefs({});
     const id =
       storyId ?? `s_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
-    const asset: Asset = {
-      id,
-      kind: "story",
-      title: story?.title ?? (draftPrompt.slice(0, 40) || "Untitled story"),
-      prompt: story?.prompt ?? prompt,
-      url: draft.find((s) => s.url)?.url ?? "",
-      variants: [],
-      settings: currentSettings(),
-      createdAt: Date.now(),
-      favorite: false,
-      mode: "Story Mode",
-      scenes: draft,
-      meta: {
-        continuity: continuityOn,
-        running: true,
-        style: currentSettings().style,
-        characterIds: attachedCharacters.map((c) => c.id),
-      },
-    };
-    addAsset(asset);
-    setStoryId(id);
+    if (!storyId) {
+      const asset: Asset = {
+        id,
+        kind: "story",
+        title: draftPrompt.slice(0, 40) || "Untitled story",
+        prompt,
+        url: draft.find((s) => s.url)?.url ?? "",
+        variants: [],
+        settings: currentSettings(),
+        createdAt: Date.now(),
+        favorite: false,
+        mode: "Story Mode",
+        scenes: draft,
+        meta: {
+          continuity: continuityOn,
+          running: false,
+          style: currentSettings().style,
+          characterIds: attachedCharacters.map((c) => c.id),
+        },
+      };
+      addAsset(asset);
+      setStoryId(id);
+    }
     announceChainModel(draft);
-    appRunner.start(id);
-    toast.push(
-      `Rendering ${draft.length} scene${draft.length === 1 ? "" : "s"} — one after another.`,
-    );
-  }
-
-  function setStoryRunning(running: boolean) {
-    if (!storyId) return;
-    const meta = { ...(story?.meta ?? {}), continuity: continuityOn, running };
-    updateAsset(storyId, { meta });
+    // The SERVER runs the story now (Phase C): prompts are snapshotted with
+    // the cast anchors, the settings snapshot follows the current pickers,
+    // and the chain advances server-side — the tab can close freely.
+    const started = await runStoryAction("generate", undefined, {
+      settingsPatch: currentSettings(),
+      runPrompts: composeRunPrompts(draft),
+    });
+    if (started) {
+      toast.push(
+        `Rendering ${draft.length} scene${draft.length === 1 ? "" : "s"} — one after another, on the server.`,
+      );
+    }
   }
 
   function handleCancel() {
-    if (storyId) {
-      appRunner.cancel(storyId);
-      setStoryRunning(false);
-    }
+    if (!storyId) return;
+    void runStoryAction("cancel");
+    toast.push("Story run stopped — the scenes stay in the queue.");
   }
 
   /** Stop one scene: aborts it if rendering, parks it as canceled otherwise.
@@ -381,13 +429,37 @@ export default function StoryPage() {
    * chain (successors continue from the last completed scene). */
   function handleCancelScene(sceneId: string) {
     if (!storyId) return;
-    appRunner.cancelScene(storyId, sceneId);
+    void fetch(`/api/stories/${storyId}?sceneId=${encodeURIComponent(sceneId)}`, {
+      method: "DELETE",
+    })
+      .then(() => void runStoryRefresh())
+      .catch(() => toast.push("That scene could not be stopped. Please retry.", "error"));
   }
 
   /** Take a queued/canceled scene back out of the queue. */
   function handleRemoveScene(sceneId: string) {
     if (!storyId) return;
-    appRunner.removeScene(storyId, sceneId);
+    // A generating scene's job is canceled first; then the scene leaves the
+    // record. Queued scenes drop silently — the chain skips them.
+    const scene = scenes.find((s) => s.id === sceneId);
+    const stop = scene?.status === "generating"
+      ? fetch(`/api/stories/${storyId}?sceneId=${encodeURIComponent(sceneId)}`, { method: "DELETE" }).catch(() => undefined)
+      : Promise.resolve();
+    void stop.then(() => {
+      updateStoryScenes(storyId, (list) => list.filter((s) => s.id !== sceneId));
+      void runStoryRefresh();
+    });
+  }
+
+  /** Re-read the story record (server truth) into the console view. */
+  function runStoryRefresh() {
+    if (!storyId) return Promise.resolve();
+    return fetch(`/api/stories/${storyId}`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { story?: Asset } | null) => {
+        if (data?.story) setLiveStory(data.story);
+      })
+      .catch(() => undefined);
   }
 
   /** Commit an inline prompt edit. Empty prompts can never render, so they're
@@ -415,12 +487,14 @@ export default function StoryPage() {
    * semantics as cancel. */
   function handleRerunScene(sceneId: string) {
     if (!storyId) return;
-    appRunner.requeueScene(storyId, sceneId);
-    toast.push(
-      scenes.some((scene) => scene.status === "generating")
-        ? "Scene re-queued — it renders after the current scene."
-        : "Scene re-queued — press Generate to render it.",
-    );
+    void runStoryAction("rerun", sceneId).then((ok) => {
+      if (!ok) return;
+      toast.push(
+        running
+          ? "Scene re-queued — it renders after the current scene."
+          : "Scene re-queued — press Generate to render it.",
+      );
+    });
   }
 
   /** Swap a scene with its neighbor. Purely an ordering edit — the chain
@@ -445,7 +519,7 @@ export default function StoryPage() {
       // paused queue keeps waiting — only a run in flight continues.
       const meta = { ...(story?.meta ?? {}), continuity: next };
       updateAsset(storyId, { meta });
-      if (scenes.some((s) => s.status === "generating")) appRunner.start(storyId);
+      void runStoryRefresh();
     }
   }
 
@@ -516,7 +590,11 @@ export default function StoryPage() {
       addAsset(asset);
       setStoryId(id);
       setKind("video");
-      appRunner.start(id);
+      void fetch(`/api/stories/${id}?action=generate`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ settingsPatch: asset.settings }),
+      }).catch(() => undefined);
       toast.push(`Animating ${clips.length} clip${clips.length === 1 ? "" : "s"}…`, "success");
     } catch (error) {
       toast.push((error as Error).message ?? "Conversion failed. Please retry.", "error");
@@ -577,7 +655,7 @@ export default function StoryPage() {
 
   /** Start a fresh story: stops any run and clears the queue from the UI. */
   function reset() {
-    if (storyId) appRunner.cancel(storyId);
+    if (storyId) void runStoryAction("cancel");
     setStoryId(null);
     setPlayOpen(false);
     setPrompt("");
