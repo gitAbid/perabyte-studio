@@ -3,10 +3,9 @@ import { createCustomProvider } from "./custom-provider.factory";
 import { newImageRef, parkImage, takeParkedImage } from "./parked-images";
 import type { CustomProviderEntry } from "@/lib/repositories/provider-config.repository";
 import type { ProviderFormat } from "./formats/types";
+import type { ModelDescriptor, NormalizedGenerationRequest } from "@/lib/domain/models";
 import type {
   GeneratedArtifact,
-  ModelDescriptor,
-  NormalizedGenerationRequest,
   ProviderContext,
 } from "@/lib/providers/types";
 import { logger } from "@/lib/logging/logger";

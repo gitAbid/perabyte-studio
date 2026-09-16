@@ -21,13 +21,16 @@ export function classifyModelId(modelId: string): CustomModelKind {
 }
 
 /**
- * Maps a freshly discovered listing onto storable model entries. Confident
- * image/video guesses start enabled so a saved provider is immediately
- * usable; text and unclassifiable models wait for the user.
+ * Maps a discovered listing onto storable model entries. Adapter-supplied
+ * kinds win (Gemini's capability metadata, Anthropic's text-only listing);
+ * a name guess fills the gaps. Confident image/video guesses start enabled
+ * so a saved provider is immediately usable; text and unclassifiable models
+ * wait for the user.
  */
 export function guessEntry(discovered: DiscoveredModel[]): CustomModelEntry[] {
   return discovered.map((model) => {
-    const kind = classifyModelId(model.model);
+    const kind: CustomModelKind =
+      model.kind !== "off" ? model.kind : classifyModelId(model.model);
     return {
       model: model.model,
       ...(model.label ? { label: model.label } : {}),

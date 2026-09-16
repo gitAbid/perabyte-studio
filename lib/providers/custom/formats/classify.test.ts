@@ -31,10 +31,10 @@ describe("classifyModelId", () => {
 describe("guessEntry", () => {
   it("enables guessed image/video models and holds text/off back", () => {
     const models = guessEntry([
-      { model: "flux-pro" },
-      { model: "veo-3" },
-      { model: "grok-4.5" },
-      { model: "mystery" },
+      { model: "flux-pro", kind: "off" },
+      { model: "veo-3", kind: "off" },
+      { model: "grok-4.5", kind: "off" },
+      { model: "mystery", kind: "off" },
     ]);
     expect(models).toEqual([
       { model: "flux-pro", kind: "image", enabled: true },
@@ -44,8 +44,15 @@ describe("guessEntry", () => {
     ]);
   });
 
+  it("trusts adapter-supplied kinds over name guessing", () => {
+    const models = guessEntry([{ model: "chat-bison", label: "Bison", kind: "text" }]);
+    expect(models).toEqual([
+      { model: "chat-bison", label: "Bison", kind: "text", enabled: false },
+    ]);
+  });
+
   it("keeps the listing's display name as label", () => {
-    const models = guessEntry([{ model: "sora-2", label: "Sora 2" }]);
+    const models = guessEntry([{ model: "sora-2", label: "Sora 2", kind: "off" }]);
     expect(models[0].label).toBe("Sora 2");
   });
 });

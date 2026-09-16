@@ -177,6 +177,7 @@ function optimisticMerge(
   });
   return {
     providers,
+    customProviders: current.customProviders,
     tasks:
       patch.tasks?.enhance !== undefined
         ? { enhance: patch.tasks.enhance }

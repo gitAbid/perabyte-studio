@@ -3,12 +3,19 @@ import type { ModelDescriptor } from "@/lib/domain/models";
 import { getRegisteredProviders } from "@/lib/providers/registry";
 import { isTextProvider } from "@/lib/providers/types";
 import {
+  CUSTOM_FORMATS,
   PROVIDER_IDS,
   getProviderConfig,
+  isValidCustomSlug,
   mergeProviderConfigPatch,
   updateProviderConfig,
+  type CustomModelEntry,
+  type CustomModelKind,
+  type CustomProviderEntry,
+  type CustomProviderFormat,
+  type CustomProvidersPatch,
+  type KnownProviderId,
   type ProviderConfigPatch,
-  type ProviderId,
 } from "@/lib/repositories/provider-config.repository";
 
 /**
@@ -34,19 +41,38 @@ export interface ProviderTextModelView {
 }
 
 export interface ProviderView {
-  id: ProviderId;
+  /** Built-in ids or a custom provider's slug. */
+  id: string;
   label: string;
   enabled: boolean;
+  /** Wire format — set on custom provider views only. */
+  format?: CustomProviderFormat;
   /** Whether this provider takes an API key at all (Pollinations is keyless). */
   keySupported: boolean;
+  /** True when the provider works without a key (OpenAI-compatible local
+   * servers); the status badge shows Active instead of Needs API key. */
+  keyOptional?: boolean;
   keySource: "settings" | "env" | null;
   keyMasked: string | null;
   models: ProviderModelView[];
   textModels: ProviderTextModelView[];
 }
 
+/** Full-fidelity view of a custom provider for the management UI. */
+export interface CustomProviderView {
+  id: string;
+  label: string;
+  format: CustomProviderFormat;
+  baseUrl: string;
+  enabled: boolean;
+  keyMasked: string | null;
+  models: CustomModelEntry[];
+  lastDiscoveredAt?: string;
+}
+
 export interface ProviderSettingsPayload {
   providers: ProviderView[];
+  customProviders: CustomProviderView[];
   tasks: { enhance: string | null };
   /** Overall render deadlines in seconds (Settings → Render timeouts). */
   renderTimeouts: { image: number; video: number; staleness: number };
@@ -57,6 +83,7 @@ export interface ProviderSettingsUpdate {
     string,
     { enabled?: boolean; apiKey?: string | null; disabledModels?: string[] }
   >;
+  customProviders?: CustomProvidersPatch;
   tasks?: { enhance?: string | null };
   renderTimeouts?: { image?: number; video?: number; staleness?: number };
 }
@@ -72,7 +99,7 @@ export class ProviderSettingsError extends Error {
   }
 }
 
-const KEY_ENV_FIELD: Partial<Record<ProviderId, "apiKeyFanApiKey" | "sogniApiKey">> = {
+const KEY_ENV_FIELD: Partial<Record<KnownProviderId, "apiKeyFanApiKey" | "sogniApiKey">> = {
   "apikey-fan": "apiKeyFanApiKey",
   sogni: "sogniApiKey",
 };
@@ -82,7 +109,7 @@ function maskKey(key: string): string {
 }
 
 function keyView(
-  id: ProviderId,
+  id: KnownProviderId,
 ): Pick<ProviderView, "keySupported" | "keySource" | "keyMasked"> {
   const envField = KEY_ENV_FIELD[id];
   const stored = getProviderConfig().providers[id]?.apiKey;
@@ -102,6 +129,48 @@ function listableModels(provider: RegisteredProvider): ModelDescriptor[] {
   ];
   const hidden = provider.listHiddenModels?.() ?? [];
   return [...visible, ...hidden.filter((model) => model.frameInput)];
+}
+
+function customKeyView(entry: CustomProviderEntry): {
+  keyMasked: string | null;
+  keySource: "settings" | null;
+  keyOptional: boolean;
+} {
+  return {
+    keyMasked: entry.apiKey ? maskKey(entry.apiKey) : null,
+    keySource: entry.apiKey ? "settings" : null,
+    // OpenAI-compatible servers are often keyless (Ollama, LM Studio, vLLM).
+    keyOptional: entry.format === "openai",
+  };
+}
+
+function customProviderView(entry: CustomProviderEntry): ProviderView {
+  const textModels: ProviderTextModelView[] = entry.models
+    .filter((m) => m.kind === "text")
+    .map((m) => ({
+      id: `${entry.id}:${m.model}`,
+      label: m.label ?? m.model,
+      enabled: m.enabled,
+    }));
+  const models: ProviderModelView[] = entry.models
+    .filter((m) => m.kind === "image" || m.kind === "video")
+    .map((m) => ({
+      id: `${entry.id}:${m.model}`,
+      kind: m.kind === "video" ? "video" : "image",
+      label: m.label ?? m.model,
+      enabled: m.enabled,
+      frameInput: { start: true, end: false },
+    }));
+  return {
+    id: entry.id,
+    label: entry.label,
+    enabled: entry.enabled,
+    format: entry.format,
+    keySupported: true,
+    ...customKeyView(entry),
+    models,
+    textModels,
+  };
 }
 
 export function getProviderSettings(): ProviderSettingsPayload {
@@ -136,8 +205,22 @@ export function getProviderSettings(): ProviderSettingsPayload {
       textModels,
     });
   }
+  const customProviders: CustomProviderView[] = config.customProviders.map((entry) => ({
+    id: entry.id,
+    label: entry.label,
+    format: entry.format,
+    baseUrl: entry.baseUrl,
+    enabled: entry.enabled,
+    ...customKeyView(entry),
+    models: entry.models,
+    ...(entry.lastDiscoveredAt ? { lastDiscoveredAt: entry.lastDiscoveredAt } : {}),
+  }));
+  for (const entry of config.customProviders) {
+    providers.push(customProviderView(entry));
+  }
   return {
     providers,
+    customProviders,
     tasks: { enhance: config.tasks.enhance },
     renderTimeouts: {
       image: config.renderTimeouts.image,
@@ -166,7 +249,178 @@ function allTextModelIds(): Set<string> {
       provider.listTextModels().forEach((model) => ids.add(model.id));
     }
   }
+  for (const entry of getProviderConfig().customProviders) {
+    entry.models
+      .filter((model) => model.kind === "text")
+      .forEach((model) => ids.add(`${entry.id}:${model.model}`));
+  }
   return ids;
+}
+
+/* ------------------------------------------------------------------ */
+/* customProviders op validation                                       */
+/* ------------------------------------------------------------------ */
+
+function parseCustomModels(raw: unknown, providerId: string): CustomModelEntry[] {
+  if (!Array.isArray(raw)) {
+    throw new ProviderSettingsError(`Invalid model list for "${providerId}".`, {
+      field: "customProviders",
+    });
+  }
+  const seen = new Set<string>();
+  const models: CustomModelEntry[] = [];
+  for (const item of raw) {
+    if (typeof item !== "object" || item === null) {
+      throw new ProviderSettingsError(`Invalid model entry for "${providerId}".`, {
+        field: "customProviders",
+      });
+    }
+    const m = item as Record<string, unknown>;
+    if (typeof m.model !== "string" || !m.model.trim() || m.model.trim().length > 200) {
+      throw new ProviderSettingsError(`Invalid model id for "${providerId}".`, {
+        field: "customProviders",
+      });
+    }
+    const model = m.model.trim();
+    if (seen.has(model)) {
+      throw new ProviderSettingsError(
+        `Duplicate model "${model}" on provider "${providerId}".`,
+        { field: "customProviders" },
+      );
+    }
+    seen.add(model);
+    const kind: CustomModelKind =
+      m.kind === "image" || m.kind === "video" || m.kind === "text" || m.kind === "off"
+        ? m.kind
+        : "off";
+    models.push({
+      model,
+      ...(typeof m.label === "string" && m.label.trim()
+        ? { label: m.label.trim().slice(0, 120) }
+        : {}),
+      kind,
+      enabled: m.enabled === true,
+    });
+  }
+  return models;
+}
+
+function parseCustomUpsert(raw: unknown, config: ReturnType<typeof getProviderConfig>): CustomProviderEntry {
+  if (typeof raw !== "object" || raw === null) {
+    throw new ProviderSettingsError("Invalid custom provider payload.", {
+      field: "customProviders",
+    });
+  }
+  const e = raw as Record<string, unknown>;
+  const id = typeof e.id === "string" ? e.id.trim() : "";
+  if (!isValidCustomSlug(id)) {
+    throw new ProviderSettingsError(
+      "The provider id must be 2–32 lowercase letters, digits, or dashes.",
+      { field: "customProviders" },
+    );
+  }
+  if ((PROVIDER_IDS as readonly string[]).includes(id)) {
+    throw new ProviderSettingsError(`"${id}" is a built-in provider id.`, {
+      field: "customProviders",
+    });
+  }
+  if (
+    typeof e.format !== "string" ||
+    !CUSTOM_FORMATS.includes(e.format as CustomProviderFormat)
+  ) {
+    throw new ProviderSettingsError(
+      `The format must be one of: ${CUSTOM_FORMATS.join(", ")}.`,
+      { field: "customProviders" },
+    );
+  }
+  const baseUrl = typeof e.baseUrl === "string" ? e.baseUrl.trim() : "";
+  try {
+    const url = new URL(baseUrl);
+    if (url.protocol !== "http:" && url.protocol !== "https:") throw new Error("protocol");
+  } catch {
+    throw new ProviderSettingsError("Enter a valid http(s) base URL.", {
+      field: "customProviders",
+    });
+  }
+  const existing = config.customProviders.find((entry) => entry.id === id);
+  const models =
+    e.models === undefined && existing
+      ? existing.models
+      : parseCustomModels(e.models ?? [], id);
+  return {
+    id,
+    label:
+      typeof e.label === "string" && e.label.trim()
+        ? e.label.trim().slice(0, 80)
+        : id,
+    format: e.format as CustomProviderFormat,
+    baseUrl,
+    apiKey:
+      e.apiKey === undefined
+        ? (existing?.apiKey ?? null)
+        : typeof e.apiKey === "string" && e.apiKey.trim()
+          ? e.apiKey.trim()
+          : null,
+    enabled: e.enabled === undefined ? (existing?.enabled ?? true) : e.enabled === true,
+    models,
+    ...(typeof e.lastDiscoveredAt === "string" && e.lastDiscoveredAt
+      ? { lastDiscoveredAt: e.lastDiscoveredAt }
+      : existing?.lastDiscoveredAt
+        ? { lastDiscoveredAt: existing.lastDiscoveredAt }
+        : {}),
+  };
+}
+
+function parseCustomProvidersPatch(
+  raw: unknown,
+  config: ReturnType<typeof getProviderConfig>,
+): CustomProvidersPatch {
+  if (typeof raw !== "object" || raw === null) {
+    throw new ProviderSettingsError("Invalid custom providers payload.", {
+      field: "customProviders",
+    });
+  }
+  const ops = raw as CustomProvidersPatch;
+  const patch: CustomProvidersPatch = {};
+  if (ops.upsert !== undefined) {
+    patch.upsert = parseCustomUpsert(ops.upsert, config);
+  }
+  if (ops.remove !== undefined) {
+    if (typeof ops.remove !== "string") {
+      throw new ProviderSettingsError("Invalid remove op.", { field: "customProviders" });
+    }
+    patch.remove = ops.remove;
+  }
+  if (ops.setModel !== undefined) {
+    const op = ops.setModel;
+    if (
+      typeof op !== "object" ||
+      op === null ||
+      typeof (op as CustomProvidersPatch["setModel"])?.providerId !== "string" ||
+      typeof (op as CustomProvidersPatch["setModel"])?.model !== "string"
+    ) {
+      throw new ProviderSettingsError("Invalid model update.", { field: "customProviders" });
+    }
+    const entry = config.customProviders.find((e) => e.id === op.providerId);
+    if (!entry) {
+      throw new ProviderSettingsError(`Unknown provider "${op.providerId}".`, {
+        field: "customProviders",
+      });
+    }
+    if (!entry.models.some((m) => m.model === op.model)) {
+      throw new ProviderSettingsError(
+        `Unknown model "${op.model}" on "${op.providerId}".`,
+        { field: "customProviders" },
+      );
+    }
+    patch.setModel = {
+      providerId: op.providerId,
+      model: op.model,
+      ...(op.kind !== undefined ? { kind: op.kind } : {}),
+      ...(op.enabled !== undefined ? { enabled: op.enabled } : {}),
+    };
+  }
+  return patch;
 }
 
 export function applyProviderSettingsUpdate(body: unknown): ProviderSettingsPayload {
@@ -183,7 +437,7 @@ export function applyProviderSettingsUpdate(body: unknown): ProviderSettingsPayl
     }
     const providerPatch: NonNullable<ProviderConfigPatch["providers"]> = {};
     for (const [id, change] of Object.entries(raw.providers)) {
-      if (!PROVIDER_IDS.includes(id as ProviderId)) {
+      if (!(PROVIDER_IDS as readonly string[]).includes(id)) {
         throw new ProviderSettingsError(`Unknown provider "${id}".`, { field: "providers" });
       }
       if (typeof change !== "object" || change === null) {
@@ -224,7 +478,7 @@ export function applyProviderSettingsUpdate(body: unknown): ProviderSettingsPayl
           (m) => typeof m === "string",
         );
       }
-      providerPatch[id as ProviderId] = entry;
+      providerPatch[id as KnownProviderId] = entry;
     }
     patch.providers = providerPatch;
   }
@@ -270,9 +524,15 @@ export function applyProviderSettingsUpdate(body: unknown): ProviderSettingsPayl
     patch.renderTimeouts = timeoutPatch;
   }
 
+  if (raw.customProviders !== undefined) {
+    patch.customProviders = parseCustomProvidersPatch(raw.customProviders, getProviderConfig());
+  }
+
   // The last enabled provider is load-bearing: renders need at least one.
   const preview = mergeProviderConfigPatch(patch);
-  const enabledCount = PROVIDER_IDS.filter((id) => preview.providers[id].enabled).length;
+  const enabledCount =
+    PROVIDER_IDS.filter((id) => preview.providers[id].enabled).length +
+    preview.customProviders.filter((entry) => entry.enabled).length;
   if (enabledCount === 0) {
     throw new ProviderSettingsError("Keep at least one provider enabled.", {
       field: "providers",
