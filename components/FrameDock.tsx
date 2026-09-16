@@ -16,6 +16,11 @@ export interface FrameSlotSpec {
   key: keyof FrameRefs;
   /** User-facing name — "First frame", "Last frame", "Reference image". */
   label: string;
+  /** The active model can't take this frame — render a locked, inert pill
+   * instead of hiding it, so the capability gap stays visible. */
+  locked?: boolean;
+  /** Why the slot is locked and what unlocks it (tooltip). */
+  lockHint?: string;
 }
 
 const ACCEPTED = "image/png,image/jpeg,image/webp";
@@ -64,12 +69,12 @@ export function FrameDock({
     }
   }
 
-  /** First empty slot; a lone slot also takes replacements, a full multi-slot
-   * dock asks the user to clear one first. */
+  /** First EMPTY, unlocked slot; a lone slot also takes replacements, a full
+   * multi-slot dock asks the user to clear one first. */
   function targetSlot(): keyof FrameRefs | null {
-    const empty = slots.find((slot) => !refs[slot.key]);
+    const empty = slots.find((slot) => !slot.locked && !refs[slot.key]);
     if (empty) return empty.key;
-    if (slots.length === 1) return slots[0].key;
+    if (slots.length === 1 && !slots[0].locked) return slots[0].key;
     return null;
   }
 
@@ -140,6 +145,21 @@ export function FrameDock({
       />
 
       {slots.map((slot) => {
+        // Locked slot: visible but inert — hiding it made the capability gap
+        // undiscoverable ("where is the last frame option?").
+        if (slot.locked) {
+          return (
+            <span
+              key={slot.key}
+              title={slot.lockHint}
+              aria-label={`${slot.label} — unavailable for this model`}
+              className="inline-flex h-8 shrink-0 cursor-not-allowed items-center gap-1.5 rounded-full border border-dashed border-border px-3 text-[11.5px] font-semibold text-muted opacity-60"
+            >
+              <Icon name="lock" size={12} />
+              {slot.label}
+            </span>
+          );
+        }
         const ref = refs[slot.key];
         const slotBusy = busySlot === slot.key;
         return ref ? (
