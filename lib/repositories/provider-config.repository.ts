@@ -21,6 +21,8 @@ export interface ProviderEntryConfig {
 
 export interface TaskModelConfig {
   enhance: string | null;
+  /** Story Writer default text model (`<provider>:<model>`), null = chain order. */
+  writer: string | null;
 }
 
 /** Overall render deadlines in seconds, configurable from Settings. */
@@ -91,6 +93,7 @@ export function getDefaultProviderConfig(): ProviderConfig {
     },
     tasks: {
       enhance: null,
+      writer: null,
     },
     renderTimeouts: { ...RENDER_TIMEOUT_DEFAULTS },
   };
@@ -157,6 +160,12 @@ function sanitizeLoadedConfig(raw: unknown): ProviderConfig {
     defaults.tasks.enhance = tasksObj.enhance.trim();
   } else {
     defaults.tasks.enhance = null;
+  }
+
+  if (typeof tasksObj.writer === "string" && tasksObj.writer.trim().length > 0) {
+    defaults.tasks.writer = tasksObj.writer.trim();
+  } else {
+    defaults.tasks.writer = null;
   }
 
   const timeoutsObj =
@@ -240,6 +249,13 @@ export function mergeProviderConfigPatch(patch: ProviderConfigPatch): ProviderCo
         typeof patch.tasks.enhance === "string" &&
         patch.tasks.enhance.trim().length > 0
           ? patch.tasks.enhance.trim()
+          : null;
+    }
+    if (patch.tasks.writer !== undefined) {
+      next.tasks.writer =
+        typeof patch.tasks.writer === "string" &&
+        patch.tasks.writer.trim().length > 0
+          ? patch.tasks.writer.trim()
           : null;
     }
   }

@@ -164,6 +164,18 @@ describe("provider-config.repository", () => {
     expect(config.renderTimeouts.image).toBe(30);
     expect(config.renderTimeouts.video).toBe(600);
   });
+
+  it("persists and preserves a writer task model pick", () => {
+    updateProviderConfig({ tasks: { writer: "sogni:qwen3.6-35b-a3b-gguf-iq4xs" } });
+    let config = getProviderConfig();
+    expect(config.tasks.writer).toBe("sogni:qwen3.6-35b-a3b-gguf-iq4xs");
+    expect(config.tasks.enhance).toBeNull();
+
+    // An unrelated patch must not clobber the writer pick.
+    updateProviderConfig({ renderTimeouts: { image: 420 } });
+    config = getProviderConfig();
+    expect(config.tasks.writer).toBe("sogni:qwen3.6-35b-a3b-gguf-iq4xs");
+  });
 });
 
 describe("render staleness knob", () => {
