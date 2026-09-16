@@ -16,8 +16,9 @@ type NavItem = { href: string; label: string; icon: IconName };
 
 const PRIMARY_NAV: NavItem[] = [
   { href: "/", label: "Home", icon: "home" },
+  // Story mode lives inside Generate (the composer's Solo/Story toggle);
+  // the editor route /story stays for the toggle and /story?id= deep links.
   { href: "/generate/image", label: "Generate", icon: "sparkle" },
-  { href: "/story", label: "Story", icon: "story" },
   { href: "/character", label: "Character", icon: "character" },
   { href: "/images", label: "Images", icon: "image" },
   { href: "/stories", label: "Stories", icon: "grid" },
@@ -30,9 +31,10 @@ const SECONDARY_NAV: NavItem[] = [
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
-  if (href === "/generate/image") return pathname.startsWith("/generate");
-  // /story (editor) must not light up for /stories (library) and vice versa.
-  if (href === "/story") return pathname === "/story" || pathname.startsWith("/story/");
+  // Solo mode (/generate/*) and story mode (/story) both belong to Generate.
+  if (href === "/generate/image") {
+    return pathname.startsWith("/generate") || pathname === "/story" || pathname.startsWith("/story/");
+  }
   return pathname.startsWith(href);
 }
 
