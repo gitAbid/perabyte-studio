@@ -5,9 +5,7 @@ import { useEffect, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { MediaFrame, VideoStage } from "@/components/Media";
 import {
-  Badge,
   Button,
-  Card,
   ConfirmDialog,
   EmptyState,
   formatDate,
@@ -22,6 +20,11 @@ import { getAsset, removeAsset, toggleFavorite, useAssets } from "@/lib/store";
 import type { Asset } from "@/lib/types";
 import { StoryPlayer } from "@/components/StoryPlayer";
 
+/**
+ * Asset detail viewer: an immersive dark media stage beside a sticky info
+ * panel (title, prompt, actions, render details). Story assets keep the
+ * full-story player and editor entry point.
+ */
 export default function ResultsPage() {
   const { assets, ready } = useAssets();
   const toast = useToast();
@@ -71,10 +74,9 @@ export default function ResultsPage() {
   const aspect = ASPECTS[asset.settings.aspect];
   const ratio = `${aspect?.width ?? 16}/${aspect?.height ?? 9}`;
   // The stage honours the render's native aspect ratio but never exceeds the
-  // viewport height: maxWidth = the width at which the stage is ~72dvh tall,
-  // so a portrait render centres at a sane size instead of producing a
-  // multiple-of-viewport-tall page.
-  const stageMaxWidth = `calc(72dvh * ${aspect?.width ?? 16} / ${aspect?.height ?? 9})`;
+  // viewport height: maxWidth = the width at which the stage is ~64dvh tall
+  // inside its dark mat, so a portrait render centres at a sane size.
+  const stageMaxWidth = `calc(64dvh * ${aspect?.width ?? 16} / ${aspect?.height ?? 9})`;
   const currentUrl = asset.variants[variant] ?? asset.url;
   // Video player selection follows the media itself, not just the asset kind:
   // story assets persist kind "story" even when every scene is a rendered
@@ -107,183 +109,230 @@ export default function ResultsPage() {
     if (!asset) return;
     removeAsset(asset.id);
     setConfirmOpen(false);
-    toast.push("Render deleted from this browser.", "success");
+    toast.push("Render deleted.", "success");
     setAsset(null);
   }
 
+  function handleCopyPrompt() {
+    void navigator.clipboard
+      ?.writeText(asset!.prompt)
+      .then(() => toast.push("Prompt copied.", "success"))
+      .catch(() => toast.push("Could not copy the prompt.", "error"));
+  }
+
   return (
-    <div className="mx-auto w-full max-w-[1100px] px-4 pb-12 pt-8 sm:px-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="mx-auto w-full max-w-[1280px] px-4 pb-12 pt-6 sm:px-6">
+      {/* Top bar */}
+      <div className="flex items-center justify-between gap-3">
         <Link
           href="/images"
-          className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted transition-colors hover:text-ink"
+          className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border bg-raised pl-2.5 pr-3.5 text-[12.5px] font-semibold text-ink-soft transition-colors hover:border-border-strong hover:text-ink"
         >
-          <Icon name="arrow-left" size={15} />
-          Back
+          <Icon name="arrow-left" size={14} />
+          Library
         </Link>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            icon="download"
-            onClick={() => {
-              downloadMedia(currentUrl, `perabyte-${asset.kind}-${Date.now()}`);
-              toast.push("Your download has started.", "success");
-            }}
+        {isStory && (
+          <Link
+            href={`/story?id=${asset.id}`}
+            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border bg-raised px-3.5 text-[12.5px] font-semibold text-ink-soft transition-colors hover:border-primary hover:text-primary"
           >
-            Download
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            icon="share"
-            onClick={() => {
-              const url = `${window.location.origin}/results?id=${asset.id}`;
-              void navigator.clipboard
-                ?.writeText(url)
-                .then(() => toast.push("Share link copied to clipboard.", "success"))
-                .catch(() => toast.push("Could not copy the link.", "error"));
-            }}
-          >
-            Share
-          </Button>
-        </div>
-      </div>
-
-      <h1 className="mt-4 text-[26px] font-extrabold tracking-[-0.03em] text-ink sm:text-[30px]">
-        {asset.title}
-      </h1>
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        <Badge tone="primary">{asset.mode}</Badge>
-        <Badge>{formatDate(asset.createdAt)}</Badge>
-        <Badge>{formatTime(asset.createdAt)}</Badge>
-        {asset.meta?.example === true && <Badge tone="warning">Example render</Badge>}
-        {asset.favorite && (
-          <Badge tone="success">
-            <Icon name="heart" size={12} /> Favourite
-          </Badge>
+            <Icon name="video" size={14} />
+            Open in editor
+          </Link>
         )}
       </div>
 
-      <div className="mt-6 space-y-4">
-        {/* Media stage centred and capped to the render's native ratio within
-            the viewport height — page content below keeps the page scrolling. */}
-        <div className="mx-auto w-full" style={{ maxWidth: stageMaxWidth }}>
-          {isVideo ? (
-            <VideoStage
-              posterUrl={currentUrl}
-              videoUrl={isVideoSource(currentUrl) ? currentUrl : undefined}
-              title={asset.title}
-              durationSeconds={Number(String(asset.settings.duration).replace("s", "")) || 5}
-              ratio={ratio}
-              sensitive={isSensitiveAsset(asset)}
-            />
-          ) : (
-            <MediaFrame
-              src={currentUrl}
-              alt={asset.title}
-              ratio={ratio}
-              rounded="rounded-[20px]"
-              className="bg-black"
-              priority
-              sensitive={isSensitiveAsset(asset)}
-              detailed
-            />
-          )}
-        </div>
-
-        {asset.variants.length > 1 && (
-          <div className="flex gap-2.5 overflow-x-auto no-scrollbar">
-            {asset.variants.map((url, index) => (
-              <button
-                key={`${url}-${index}`}
-                type="button"
-                onClick={() => setVariant(index)}
-                aria-label={`Variation ${index + 1}`}
-                aria-pressed={index === variant}
-                className={`shrink-0 overflow-hidden rounded-[14px] border-2 transition-all ${
-                  index === variant
-                    ? "border-primary"
-                    : "border-transparent hover:border-border-strong"
-                }`}
-              >
-                <MediaFrame
-                  src={url}
-                  alt=""
-                  ratio="1/1"
-                  rounded="rounded-[12px]"
-                  className="w-[92px]"
+      <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+        {/* ── Media stage ─────────────────────────────────────────── */}
+        <div className="min-w-0">
+          <div className="mx-auto w-fit max-w-full rounded-[24px] bg-black p-3 shadow-lift sm:p-4">
+            <div className="mx-auto w-full" style={{ maxWidth: stageMaxWidth }}>
+              {isVideo ? (
+                <VideoStage
+                  posterUrl={currentUrl}
+                  videoUrl={isVideoSource(currentUrl) ? currentUrl : undefined}
+                  title={asset.title}
+                  durationSeconds={Number(String(asset.settings.duration).replace("s", "")) || 5}
+                  ratio={ratio}
                   sensitive={isSensitiveAsset(asset)}
                 />
-              </button>
-            ))}
+              ) : (
+                <MediaFrame
+                  src={currentUrl}
+                  alt={asset.title}
+                  ratio={ratio}
+                  rounded="rounded-[16px]"
+                  className="bg-black"
+                  priority
+                  sensitive={isSensitiveAsset(asset)}
+                  detailed
+                />
+              )}
+            </div>
           </div>
-        )}
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href={`/generate/${isVideo ? "video" : "image"}?prompt=${encodeURIComponent(asset.prompt)}&style=${encodeURIComponent(String(asset.settings.style))}&aspect=${asset.settings.aspect}`}
-            className="inline-flex h-11 items-center gap-2 rounded-[12px] bg-primary-strong px-4 text-sm font-semibold text-white transition-colors hover:bg-primary-dark"
-          >
-            <Icon name="refresh" size={16} />
-            Regenerate
-          </Link>
-          <Button
-            variant="secondary"
-            icon="sparkle"
-            onClick={() => toast.push("Draft a fresh variation from the generator — your settings are carried over.")}
-          >
-            Generate Another
-          </Button>
-          {isStory && storyScenes.length > 0 && (
-            <Button variant="secondary" icon="play" onClick={() => setPlayOpen(true)}>
-              Play story
-            </Button>
+          {asset.variants.length > 1 && (
+            <div className="mt-3 flex justify-center gap-2.5 overflow-x-auto no-scrollbar">
+              {asset.variants.map((url, index) => (
+                <button
+                  key={`${url}-${index}`}
+                  type="button"
+                  onClick={() => setVariant(index)}
+                  aria-label={`Variation ${index + 1}`}
+                  aria-pressed={index === variant}
+                  className={`shrink-0 overflow-hidden rounded-[12px] transition-all duration-150 ${
+                    index === variant
+                      ? "ring-2 ring-primary ring-offset-2 ring-offset-canvas"
+                      : "opacity-70 hover:opacity-100"
+                  }`}
+                >
+                  <MediaFrame
+                    src={url}
+                    alt=""
+                    ratio="1/1"
+                    rounded="rounded-[10px]"
+                    className="w-[84px]"
+                    sensitive={isSensitiveAsset(asset)}
+                  />
+                </button>
+              ))}
+            </div>
           )}
-          {isStory && (
-            <Link
-              href={`/story?id=${asset.id}`}
-              className="inline-flex h-11 items-center gap-2 rounded-[12px] border border-border-strong bg-raised px-4 text-sm font-semibold text-ink transition-colors hover:border-primary hover:text-primary"
-            >
-              <Icon name="video" size={16} />
-              Continue in editor
-            </Link>
-          )}
-          <Button variant="secondary" icon="heart" onClick={handleFavorite}>
-            {asset.favorite ? "Unsave" : "Save"}
-          </Button>
-          <Button
-            variant="secondary"
-            icon="trash"
-            onClick={() => setConfirmOpen(true)}
-          >
-            Delete
-          </Button>
         </div>
 
-        <Card className="bg-surface">
-          <h2 className="text-[14px] font-bold text-ink">Render details</h2>
-          <dl className="mt-4 grid gap-x-8 gap-y-3 text-[13px] sm:grid-cols-2">
-            <Row label="Prompt" value={asset.prompt} span />
-            <Row label="Mode" value={asset.mode} />
-            <Row label="Style" value={String(asset.settings.style)} />
-            <Row label="Aspect" value={asset.settings.aspect} />
-            <Row label="Resolution" value={asset.settings.resolution} />
-            {asset.meta?.requestId && (
-              <Row label="Request ID" value={String(asset.meta.requestId)} />
-            )}
-            {asset.meta?.seeds && <Row label="Seed(s)" value={String(asset.meta.seeds)} />}
-            {isStory && asset.meta?.scenes && (
-              <Row label="Scenes" value={String(asset.meta.scenes)} />
-            )}
-          </dl>
-          {isStory && (
-            <p className="mt-4 rounded-[12px] border border-border bg-raised p-3 text-[12.5px] text-muted">
-              This is a story project: open History to revisit every scene or
-              regenerate individual frames.
-            </p>
+        {/* ── Info panel ──────────────────────────────────────────── */}
+        <aside className="flex min-w-0 flex-col gap-4 rounded-[24px] border border-border bg-raised p-5 shadow-card lg:sticky lg:top-6">
+          {/* Title + favourite */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="break-words text-[19px] font-extrabold leading-tight tracking-[-0.02em] text-ink">
+                {asset.title}
+              </h1>
+              <p className="mt-1 text-[12px] text-muted">
+                {asset.mode} · {formatDate(asset.createdAt)}{" "}
+                {formatTime(asset.createdAt)}
+              </p>
+            </div>
+            <button
+              type="button"
+              aria-label={asset.favorite ? "Remove favourite" : "Save to favourites"}
+              aria-pressed={asset.favorite}
+              onClick={handleFavorite}
+              className={`flex size-9 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                asset.favorite
+                  ? "border-warning/40 bg-warning/10 text-warning"
+                  : "border-border bg-surface text-muted hover:border-border-strong hover:text-ink"
+              }`}
+            >
+              <Icon name="star" size={16} />
+            </button>
+          </div>
+
+          {asset.meta?.example === true && (
+            <span className="inline-flex w-fit items-center rounded-md bg-warning/10 px-2 py-1 text-[11px] font-semibold text-warning">
+              Example render
+            </span>
           )}
-        </Card>
+
+          {/* Prompt */}
+          <div className="rounded-[14px] border border-border bg-surface p-3">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
+                Prompt
+              </span>
+              <button
+                type="button"
+                aria-label="Copy prompt"
+                onClick={handleCopyPrompt}
+                className="rounded-md p-1 text-muted transition-colors hover:bg-surface-2 hover:text-ink"
+              >
+                <Icon name="copy" size={14} />
+              </button>
+            </div>
+            <p className="mt-1.5 whitespace-pre-wrap text-[12.5px] leading-relaxed text-ink-soft">
+              {asset.prompt}
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex flex-col gap-2">
+            <Link
+              href={`/generate/${isVideo ? "video" : "image"}?prompt=${encodeURIComponent(asset.prompt)}&style=${encodeURIComponent(String(asset.settings.style))}&aspect=${asset.settings.aspect}`}
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-primary-strong text-sm font-semibold text-white transition-colors hover:bg-primary-dark"
+            >
+              <Icon name="refresh" size={16} />
+              Regenerate
+            </Link>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="secondary"
+                icon="download"
+                onClick={() => {
+                  downloadMedia(currentUrl, `perabyte-${asset.kind}-${Date.now()}`);
+                  toast.push("Your download has started.", "success");
+                }}
+              >
+                Download
+              </Button>
+              <Button
+                variant="secondary"
+                icon="share"
+                onClick={() => {
+                  const url = `${window.location.origin}/results?id=${asset.id}`;
+                  void navigator.clipboard
+                    ?.writeText(url)
+                    .then(() => toast.push("Share link copied to clipboard.", "success"))
+                    .catch(() => toast.push("Could not copy the link.", "error"));
+                }}
+              >
+                Share
+              </Button>
+              {isStory && storyScenes.length > 0 && (
+                <Button variant="secondary" icon="play" onClick={() => setPlayOpen(true)}>
+                  Play story
+                </Button>
+              )}
+              {isStory && (
+                <Link
+                  href={`/story?id=${asset.id}`}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-[12px] border border-border-strong bg-surface text-[13px] font-semibold text-ink transition-colors hover:border-primary hover:text-primary"
+                >
+                  <Icon name="video" size={15} />
+                  Editor
+                </Link>
+              )}
+            </div>
+          </div>
+
+          {/* Render details */}
+          <div className="rounded-[14px] border border-border bg-surface p-3.5">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
+              Render details
+            </span>
+            <dl className="mt-2.5 space-y-2 text-[12.5px]">
+              <Row label="Style" value={String(asset.settings.style)} />
+              <Row label="Aspect" value={asset.settings.aspect} />
+              <Row label="Resolution" value={asset.settings.resolution} />
+              {asset.meta?.seeds && <Row label="Seed(s)" value={String(asset.meta.seeds)} />}
+              {isStory && asset.meta?.scenes && (
+                <Row label="Scenes" value={String(asset.meta.scenes)} />
+              )}
+              {asset.meta?.requestId && (
+                <Row label="Request ID" value={String(asset.meta.requestId)} />
+              )}
+            </dl>
+          </div>
+
+          {/* Danger zone */}
+          <Button
+            variant="ghost"
+            icon="trash"
+            className="text-danger hover:bg-danger-soft hover:text-danger"
+            onClick={() => setConfirmOpen(true)}
+          >
+            Delete render
+          </Button>
+        </aside>
       </div>
 
       {playOpen && storyScenes.length > 0 && (
@@ -297,7 +346,7 @@ export default function ResultsPage() {
       <ConfirmDialog
         open={confirmOpen}
         title="Delete this render?"
-        body="It will be removed from this browser's history. This cannot be undone."
+        body="It will be removed from your library. This cannot be undone."
         onCancel={() => setConfirmOpen(false)}
         onConfirm={handleDelete}
       />
@@ -308,18 +357,14 @@ export default function ResultsPage() {
 function Row({
   label,
   value,
-  span,
 }: {
   label: string;
   value: string;
-  span?: boolean;
 }) {
   return (
-    <div className={span ? "sm:col-span-2" : ""}>
-      <dt className="text-[11.5px] font-semibold uppercase tracking-wide text-muted">
-        {label}
-      </dt>
-      <dd className="mt-0.5 break-words text-ink-soft">{value}</dd>
+    <div className="flex items-baseline justify-between gap-3">
+      <dt className="shrink-0 text-muted">{label}</dt>
+      <dd className="min-w-0 break-words text-right font-medium text-ink">{value}</dd>
     </div>
   );
 }
