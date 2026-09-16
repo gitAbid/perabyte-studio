@@ -16,18 +16,34 @@ type NavItem = { href: string; label: string; icon: IconName };
 
 const PRIMARY_NAV: NavItem[] = [
   { href: "/", label: "Home", icon: "home" },
-  // Story mode lives inside Generate (the composer's Solo/Story toggle);
-  // the editor route /story stays for the toggle and /story?id= deep links.
+  // Main menu — opens the generation studio. Story mode lives inside it
+  // (the composer's Solo/Story toggle); /story stays for toggle + deep links.
   { href: "/generate/image", label: "Generate", icon: "sparkle" },
-  { href: "/character", label: "Character", icon: "character" },
+  { href: "/character", label: "Characters", icon: "character" },
   { href: "/images", label: "Images", icon: "image" },
   { href: "/stories", label: "Stories", icon: "grid" },
 ];
 
-const SECONDARY_NAV: NavItem[] = [
-  { href: "/settings", label: "Settings", icon: "sliders" },
-  { href: "/styleguide", label: "Style guide", icon: "layers" },
-];
+/** Gradient tile per destination — a white glyph on a saturated ramp reads
+ * in both themes, and gives every section its own color signature. */
+const NAV_TILE: Record<string, string> = {
+  "/": "from-slate-400 to-slate-600",
+  "/generate/image": "from-indigo-400 to-violet-600",
+  "/character": "from-fuchsia-400 to-purple-600",
+  "/images": "from-amber-400 to-orange-600",
+  "/stories": "from-emerald-400 to-teal-600",
+  "/settings": "from-sky-400 to-blue-600",
+};
+
+/** Per-icon hover flourish on top of the tile's shared scale-pop. */
+const NAV_ICON_HOVER: Record<string, string> = {
+  "/": "group-hover:-translate-y-0.5",
+  "/generate/image": "group-hover:rotate-12",
+  "/character": "group-hover:scale-125",
+  "/images": "group-hover:-rotate-6",
+  "/stories": "group-hover:rotate-6",
+  "/settings": "group-hover:rotate-90",
+};
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
@@ -36,6 +52,28 @@ function isActive(pathname: string, href: string) {
     return pathname.startsWith("/generate") || pathname === "/story" || pathname.startsWith("/story/");
   }
   return pathname.startsWith(href);
+}
+
+/** The colored icon tile every nav row renders. */
+function NavTile({ item, active, size = "md" }: { item: NavItem; active: boolean; size?: "md" | "lg" }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`flex shrink-0 items-center justify-center bg-gradient-to-br text-white shadow-sm transition-transform duration-200 ease-out group-hover:scale-110 group-active:scale-90 motion-reduce:transition-none ${
+        size === "lg" ? "size-9 rounded-[11px]" : "size-7 rounded-[9px]"
+      } ${NAV_TILE[item.href] ?? "from-slate-400 to-slate-600"} ${
+        active ? "scale-105 ring-2 ring-primary/35" : ""
+      }`}
+    >
+      <Icon
+        name={item.icon}
+        size={size === "lg" ? 18 : 15}
+        className={`transition-transform duration-200 ease-out motion-reduce:transition-none ${
+          NAV_ICON_HOVER[item.href] ?? ""
+        }`}
+      />
+    </span>
+  );
 }
 
 /**
@@ -71,7 +109,7 @@ function SidebarInner({
             : "text-ink-soft hover:bg-surface-2 hover:text-ink"
         }`}
       >
-        <Icon name={item.icon} size={19} className="shrink-0" />
+        <NavTile item={item} active={active} size={collapsed ? "lg" : "md"} />
         <span className={collapsed ? "sr-only" : "whitespace-nowrap"}>
           {item.label}
         </span>
@@ -108,16 +146,6 @@ function SidebarInner({
         }`}
       >
         <div className="flex flex-col gap-1.5">{PRIMARY_NAV.map(renderLink)}</div>
-
-        <div
-          className={`my-4 h-px bg-border ${
-            collapsed ? "mx-auto w-8" : "mx-2"
-          }`}
-        />
-
-        <div className="flex flex-col gap-1.5">
-          {SECONDARY_NAV.map(renderLink)}
-        </div>
       </nav>
 
       <SidebarFoot
@@ -135,6 +163,8 @@ function SidebarFoot({
   collapsed: boolean;
   showCollapseToggle: boolean;
 }) {
+  const pathname = usePathname();
+  const settingsActive = pathname.startsWith("/settings");
   return (
     <div
       className={`shrink-0 pb-4 ${
@@ -148,6 +178,33 @@ function SidebarFoot({
           <RendersTray />
         </div>
       )}
+      {/* Bottom-anchored settings — always the last nav destination. */}
+      <Link
+        href="/settings"
+        aria-current={settingsActive ? "page" : undefined}
+        className={`group relative flex h-10 items-center rounded-[12px] text-[13px] font-semibold transition-colors ${
+          collapsed ? "w-full justify-center px-0" : "w-full gap-2.5 px-3"
+        } ${
+          settingsActive
+            ? "bg-primary-soft text-primary"
+            : "text-ink-soft hover:bg-surface-2 hover:text-ink"
+        }`}
+      >
+        <NavTile
+          item={{ href: "/settings", label: "Settings", icon: "sliders" }}
+          active={settingsActive}
+          size={collapsed ? "lg" : "md"}
+        />
+        <span className={collapsed ? "sr-only" : "whitespace-nowrap"}>Settings</span>
+        {collapsed && (
+          <span
+            role="tooltip"
+            className="pointer-events-none absolute left-full top-1/2 z-50 ml-2.5 -translate-y-1/2 whitespace-nowrap rounded-lg bg-ink px-2.5 py-1.5 text-[11.5px] font-semibold text-canvas opacity-0 shadow-lift transition-opacity duration-150 group-hover:opacity-100"
+          >
+            Settings
+          </span>
+        )}
+      </Link>
       <div
         className={`flex items-center gap-1.5 ${
           collapsed ? "flex-col" : "justify-between"
@@ -346,7 +403,6 @@ const FOOTER_LINKS = [
   { href: "/character", label: "Character Studio" },
   { href: "/images", label: "Images & videos" },
   { href: "/settings", label: "Settings" },
-  { href: "/styleguide", label: "Style guide" },
 ] as const;
 
 export function SiteFooter() {
