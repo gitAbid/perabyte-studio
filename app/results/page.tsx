@@ -181,7 +181,7 @@ export default function ResultsPage() {
       <div className="mt-4 grid min-h-0 flex-1 gap-6 overflow-y-auto lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:pr-1">
         {/* ── Media stage ─────────────────────────────────────────── */}
         <div className="min-w-0">
-          <div className="mx-auto w-fit max-w-full rounded-[24px] bg-black p-3 shadow-lift sm:p-4">
+          <div className="mx-auto w-fit max-w-full rounded-[20px] bg-black p-2.5 shadow-lift sm:p-3">
             <div className="mx-auto w-full" style={{ maxWidth: stageMaxWidth }}>
               {isVideo ? (
                 <VideoStage
@@ -240,16 +240,17 @@ export default function ResultsPage() {
         </div>
 
         {/* ── Info panel ──────────────────────────────────────────── */}
-        <aside className="flex min-w-0 flex-col gap-4 rounded-[24px] border border-border bg-raised p-5 shadow-card">
+        <aside className="flex min-w-0 flex-col gap-3 rounded-[20px] border border-border bg-raised p-4 shadow-card">
           {/* Title + favourite */}
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h1 className="break-words text-[19px] font-extrabold leading-tight tracking-[-0.02em] text-ink">
+              <h1 className="break-words text-[18px] font-extrabold leading-tight tracking-[-0.02em] text-ink">
                 {asset.title}
               </h1>
-              <p className="mt-1 text-[12px] text-muted">
+              <p className="mt-0.5 text-[11.5px] text-muted">
                 {asset.mode} · {formatDate(asset.createdAt)}{" "}
                 {formatTime(asset.createdAt)}
+                {asset.meta?.example === true ? " · Example" : ""}
               </p>
             </div>
             <button
@@ -267,14 +268,8 @@ export default function ResultsPage() {
             </button>
           </div>
 
-          {asset.meta?.example === true && (
-            <span className="inline-flex w-fit items-center rounded-md bg-warning/10 px-2 py-1 text-[11px] font-semibold text-warning">
-              Example render
-            </span>
-          )}
-
           {/* Prompt */}
-          <div className="rounded-[14px] border border-border bg-surface p-3">
+          <div className="rounded-[14px] border border-border bg-surface p-2.5">
             <div className="flex items-center justify-between gap-2">
               <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
                 Prompt
@@ -288,7 +283,7 @@ export default function ResultsPage() {
                 <Icon name="copy" size={14} />
               </button>
             </div>
-            <p className="mt-1.5 whitespace-pre-wrap text-[12.5px] leading-relaxed text-ink-soft">
+            <p className="mt-1 line-clamp-4 whitespace-pre-wrap text-[12.5px] leading-relaxed text-ink-soft" title={asset.prompt}>
               {asset.prompt}
             </p>
           </div>
@@ -297,7 +292,7 @@ export default function ResultsPage() {
           <div className="flex flex-col gap-2">
             <Link
               href={`/generate/${isVideo ? "video" : "image"}?prompt=${encodeURIComponent(asset.prompt)}&style=${encodeURIComponent(String(asset.settings.style))}&aspect=${asset.settings.aspect}`}
-              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-primary-strong text-sm font-semibold text-white transition-colors hover:bg-primary-dark"
+              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-[12px] bg-primary-strong text-sm font-semibold text-white transition-colors hover:bg-primary-dark"
             >
               <Icon name="refresh" size={16} />
               Regenerate
@@ -344,11 +339,14 @@ export default function ResultsPage() {
           </div>
 
           {/* Reuse configuration */}
-          <div className="rounded-[14px] border border-border bg-surface p-3">
-            <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
-              Reuse in generator
-            </span>
-            <div className="mt-2 flex flex-wrap gap-1.5">
+          <div className="rounded-[14px] border border-border bg-surface p-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
+                Reuse in generator
+              </span>
+              <span className="text-[10.5px] text-muted">with your current model</span>
+            </div>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
               {(
                 [
                   ["all", "Everything", "layers"],
@@ -360,24 +358,21 @@ export default function ResultsPage() {
                 <Link
                   key={scope}
                   href={reuseUrl(scope)}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border bg-raised px-3 text-[12px] font-semibold text-ink-soft transition-colors hover:border-primary hover:text-primary"
+                  className="inline-flex h-7 items-center gap-1.5 rounded-full border border-border bg-raised px-2.5 text-[11.5px] font-semibold text-ink-soft transition-colors hover:border-primary hover:text-primary"
                 >
                   <Icon name={icon} size={12} />
                   {label}
                 </Link>
               ))}
             </div>
-            <p className="mt-2 text-[11px] text-muted">
-              Loads into the generator with your current model.
-            </p>
           </div>
 
           {/* Render details */}
-          <div className="rounded-[14px] border border-border bg-surface p-3.5">
+          <div className="rounded-[14px] border border-border bg-surface p-3">
             <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
               Render details
             </span>
-            <dl className="mt-2.5 space-y-2 text-[12.5px]">
+            <dl className="mt-2 space-y-1.5 text-[12.5px]">
               <Row label="Style" value={String(asset.settings.style)} />
               <Row label="Aspect" value={asset.settings.aspect} />
               <Row label="Resolution" value={asset.settings.resolution} />
@@ -394,8 +389,9 @@ export default function ResultsPage() {
           {/* Danger zone */}
           <Button
             variant="ghost"
+            size="sm"
             icon="trash"
-            className="text-danger hover:bg-danger-soft hover:text-danger"
+            className="mx-auto text-danger hover:bg-danger-soft hover:text-danger"
             onClick={() => setConfirmOpen(true)}
           >
             Delete render
