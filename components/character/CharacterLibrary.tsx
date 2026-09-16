@@ -10,21 +10,19 @@ import { MenuItem } from "@/components/library/MenuItem";
 import { PromptDialog } from "@/components/library/PromptDialog";
 import { TagEditorDialog } from "@/components/library/TagEditorDialog";
 import {
-  CARD_CAPTION,
   CARD_CHECK,
   CARD_FALLBACK,
   CARD_MEDIA,
-  CARD_MEDIA_ZONE,
   CARD_MENU_BTN,
-  CARD_META,
-  CARD_META_ROW,
-  CARD_NAME,
-  CARD_SCRIM,
+  CARD_INFO,
+  CARD_INFO_META,
+  CARD_INFO_REVEAL,
   CARD_SELECTED,
   CARD_SHELL,
   CARD_STAR,
   CARD_STAR_GHOST,
   CARD_STAR_ON,
+  CARD_TITLE,
   CARD_USAGE_CHIP,
 } from "@/components/library/card-styles";
 import {
@@ -361,11 +359,12 @@ export function CharacterLibrary() {
               ? parentNames.get(character.parentId)
               : undefined;
             const metaLeft = [
-              lineage ? `↳ ${lineage}` : character.parentId ? "Variation" : "",
+              lineage ? `\u21b3 ${lineage}` : character.parentId ? "Variation" : "",
               ...tags.slice(0, 2),
             ]
               .filter(Boolean)
-              .join(" · ");
+              .join(" \u00b7 ");
+            const media = <CharacterThumb character={character} />;
             return (
               <div
                 key={character.id}
@@ -373,155 +372,31 @@ export function CharacterLibrary() {
                   manage && isSelected ? CARD_SELECTED : "border-border"
                 }`}
               >
-                {/* Media zone — scrims and overlay controls anchor here */}
-                <div className={CARD_MEDIA_ZONE}>
-                  {manage ? (
-                    <button
-                      type="button"
-                      role="checkbox"
-                      aria-checked={isSelected}
-                      aria-label={`Select ${character.name}`}
-                      onClick={() => toggleSelected(character.id)}
-                      className="block w-full"
-                    >
-                      <CharacterThumb character={character} />
-                    </button>
-                  ) : (
-                    <Link
-                      href={`/character/${character.id}`}
-                      aria-label={`Open ${character.name}`}
-                      className="block"
-                    >
-                      <CharacterThumb character={character} />
-                    </Link>
-                  )}
+                {manage ? (
+                  <button
+                    type="button"
+                    role="checkbox"
+                    aria-checked={isSelected}
+                    aria-label={`Select ${character.name}`}
+                    onClick={() => toggleSelected(character.id)}
+                    className="block w-full"
+                  >
+                    {media}
+                  </button>
+                ) : (
+                  <Link
+                    href={`/character/${character.id}`}
+                    aria-label={`Open ${character.name}`}
+                    className="block"
+                  >
+                    {media}
+                  </Link>
+                )}
 
-                  {/* Prompt scrim */}
-                  <div className={CARD_SCRIM}>
-                    <p className="line-clamp-2 text-[11.5px] leading-snug text-white/90">
-                      {character.spec.prompt}
-                    </p>
-                  </div>
-
-                  {/* Overlay controls */}
-                  {manage ? (
-                    <span
-                      role="checkbox"
-                      aria-checked={isSelected}
-                      className={CARD_CHECK}
-                    >
-                      <Icon name="check" size={13} />
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      aria-label={
-                        character.favorite ? "Remove favourite" : "Add favourite"
-                      }
-                      onClick={() => toggleCharacterFavorite(character.id)}
-                      className={`${CARD_STAR} ${
-                        character.favorite ? CARD_STAR_ON : CARD_STAR_GHOST
-                      }`}
-                    >
-                      <Icon name="star" size={14} />
-                    </button>
-                  )}
-                  {!manage && (
-                    <button
-                      type="button"
-                      aria-label={`Actions for ${character.name}`}
-                      aria-expanded={menuId === character.id}
-                      onClick={() =>
-                        setMenuId((id) => (id === character.id ? null : character.id))
-                      }
-                      className={CARD_MENU_BTN}
-                    >
-                      <Icon name="more" size={15} />
-                    </button>
-                  )}
-                  {menuId === character.id && !manage && (
-                    <>
-                      <button
-                        type="button"
-                        aria-label="Close menu"
-                        className="fixed inset-0 z-10 cursor-default"
-                        onClick={() => setMenuId(null)}
-                      />
-                      <div
-                        role="menu"
-                        className="absolute right-2.5 top-11 z-20 w-52 rounded-[14px] border border-border bg-raised p-1.5 shadow-lift"
-                      >
-                        <MenuItem icon="user" label="Open & edit" href={`/character/${character.id}`} onDone={() => setMenuId(null)} />
-                        <MenuItem
-                          icon="copy"
-                          label="Rename"
-                          onSelect={() => {
-                            setRenameTarget(character);
-                            setMenuId(null);
-                          }}
-                        />
-                        <MenuItem
-                          icon="layers"
-                          label="Duplicate"
-                          onSelect={() => {
-                            duplicate(character);
-                            setMenuId(null);
-                          }}
-                        />
-                        <MenuItem
-                          icon="sparkle"
-                          label="Create variation"
-                          onSelect={() => {
-                            router.push(`/character/new?parent=${character.id}`);
-                          }}
-                        />
-                        {!usage.solo && (
-                          <MenuItem
-                            icon="plus"
-                            label="Add to Solo cast"
-                            onSelect={() => {
-                              addToCast("solo", character);
-                              setMenuId(null);
-                            }}
-                          />
-                        )}
-                        {!usage.story && (
-                          <MenuItem
-                            icon="plus"
-                            label="Add to Story cast"
-                            onSelect={() => {
-                              addToCast("story", character);
-                              setMenuId(null);
-                            }}
-                          />
-                        )}
-                        <MenuItem
-                          icon="chip"
-                          label="Add tag"
-                          onSelect={() => {
-                            setTagTargets([character]);
-                            setMenuId(null);
-                          }}
-                        />
-                        <div className="my-1 h-px bg-border" />
-                        <MenuItem
-                          icon="trash"
-                          label="Delete"
-                          tone="danger"
-                          onSelect={() => {
-                            setDeleteTargets([character]);
-                            setMenuId(null);
-                          }}
-                        />
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {/* Caption */}
-                <div className={CARD_CAPTION}>
+                {/* Info scrim — always-on title, hover reveals the prompt */}
+                <div className={CARD_INFO}>
                   <div className="flex items-center justify-between gap-2">
-                    <span className={CARD_NAME}>{character.name}</span>
+                    <span className={CARD_TITLE}>{character.name}</span>
                     {(usage.solo || usage.story) && (
                       <span className="flex shrink-0 gap-1">
                         {usage.solo && <span className={CARD_USAGE_CHIP}>Solo</span>}
@@ -529,15 +404,130 @@ export function CharacterLibrary() {
                       </span>
                     )}
                   </div>
-                  <div className={CARD_META_ROW}>
-                    <span className={`min-w-0 truncate ${CARD_META}`}>
-                      {metaLeft || "\u00A0"}
-                    </span>
-                    <span className={`shrink-0 ${CARD_META}`}>
-                      {formatDate(character.updatedAt)}
-                    </span>
+                  <div className={CARD_INFO_META}>
+                    <span className="min-w-0 truncate">{metaLeft || "\u00a0"}</span>
+                    <span className="shrink-0">{formatDate(character.updatedAt)}</span>
+                  </div>
+                  <div className={CARD_INFO_REVEAL}>
+                    <p className="mt-1.5 line-clamp-2 text-[11.5px] leading-snug text-white/90">
+                      {character.spec.prompt}
+                    </p>
                   </div>
                 </div>
+
+                {/* Overlay controls */}
+                {manage ? (
+                  <span
+                    role="checkbox"
+                    aria-checked={isSelected}
+                    className={CARD_CHECK}
+                  >
+                    <Icon name="check" size={13} />
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    aria-label={
+                      character.favorite ? "Remove favourite" : "Add favourite"
+                    }
+                    onClick={() => toggleCharacterFavorite(character.id)}
+                    className={`${CARD_STAR} ${
+                      character.favorite ? CARD_STAR_ON : CARD_STAR_GHOST
+                    }`}
+                  >
+                    <Icon name="star" size={14} />
+                  </button>
+                )}
+                {!manage && (
+                  <button
+                    type="button"
+                    aria-label={`Actions for ${character.name}`}
+                    aria-expanded={menuId === character.id}
+                    onClick={() =>
+                      setMenuId((id) => (id === character.id ? null : character.id))
+                    }
+                    className={CARD_MENU_BTN}
+                  >
+                    <Icon name="more" size={15} />
+                  </button>
+                )}
+                {menuId === character.id && !manage && (
+                  <>
+                    <button
+                      type="button"
+                      aria-label="Close menu"
+                      className="fixed inset-0 z-10 cursor-default"
+                      onClick={() => setMenuId(null)}
+                    />
+                    <div
+                      role="menu"
+                      className="absolute right-2.5 top-11 z-20 w-52 rounded-[14px] border border-border bg-raised p-1.5 shadow-lift"
+                    >
+                      <MenuItem icon="user" label="Open & edit" href={`/character/${character.id}`} onDone={() => setMenuId(null)} />
+                      <MenuItem
+                        icon="copy"
+                        label="Rename"
+                        onSelect={() => {
+                          setRenameTarget(character);
+                          setMenuId(null);
+                        }}
+                      />
+                      <MenuItem
+                        icon="layers"
+                        label="Duplicate"
+                        onSelect={() => {
+                          duplicate(character);
+                          setMenuId(null);
+                        }}
+                      />
+                      <MenuItem
+                        icon="sparkle"
+                        label="Create variation"
+                        onSelect={() => {
+                          router.push(`/character/new?parent=${character.id}`);
+                        }}
+                      />
+                      {!usage.solo && (
+                        <MenuItem
+                          icon="plus"
+                          label="Add to Solo cast"
+                          onSelect={() => {
+                            addToCast("solo", character);
+                            setMenuId(null);
+                          }}
+                        />
+                      )}
+                      {!usage.story && (
+                        <MenuItem
+                          icon="plus"
+                          label="Add to Story cast"
+                          onSelect={() => {
+                            addToCast("story", character);
+                            setMenuId(null);
+                          }}
+                        />
+                      )}
+                      <MenuItem
+                        icon="chip"
+                        label="Add tag"
+                        onSelect={() => {
+                          setTagTargets([character]);
+                          setMenuId(null);
+                        }}
+                      />
+                      <div className="my-1 h-px bg-border" />
+                      <MenuItem
+                        icon="trash"
+                        label="Delete"
+                        tone="danger"
+                        onSelect={() => {
+                          setDeleteTargets([character]);
+                          setMenuId(null);
+                        }}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             );
           })}
@@ -588,13 +578,13 @@ function CharacterThumb({ character }: { character: SavedCharacter }) {
         src={character.thumbnail}
         alt={character.name}
         ratio="4/5"
-        rounded="rounded-t-[15px]"
+        rounded="rounded-[15px]"
         className={CARD_MEDIA}
       />
     );
   }
   return (
-    <div className={`${CARD_FALLBACK} aspect-[4/5] rounded-t-[15px]`}>
+    <div className={`${CARD_FALLBACK} aspect-[4/5] rounded-[15px]`}>
       <span className="text-[38px] font-bold text-muted/60">
         {character.name.charAt(0).toUpperCase()}
       </span>
