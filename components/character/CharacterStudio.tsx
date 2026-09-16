@@ -237,7 +237,9 @@ export function CharacterStudio({
   }
 
   function backToLibrary() {
-    router.push("/character");
+    // Edit mode returns to the character's detail page; creating returns to
+    // the library.
+    router.push(mode === "edit" && characterId ? `/character/${characterId}` : "/character");
   }
 
   function handleDetailsNext() {
@@ -402,6 +404,13 @@ export function CharacterStudio({
 
   const canRender = spec.prompt.trim().length > 0;
 
+  /** Sheet renders use the Review step's knobs plus the task model — the
+   * model is resolved here (settings pill) and handed to the panel. */
+  const sheetParams: CharacterRenderParams = useMemo(
+    () => ({ ...renderParams, modelId: characterModelId ?? undefined }),
+    [renderParams, characterModelId],
+  );
+
   return (
     <div
       ref={scrollRef}
@@ -552,8 +561,7 @@ export function CharacterStudio({
           }
         >
           {sheetOpen && (
-            <div className="mb-2 flex items-center justify-between px-1">
-              <span className="text-[13px] font-bold text-ink">Character sheet</span>
+            <div className="mb-1 flex justify-end px-1">
               <button
                 type="button"
                 aria-label="Close"
@@ -567,7 +575,7 @@ export function CharacterStudio({
           <CharacterSheetPanel
             spec={spec}
             uncensored={uncensored}
-            renderParams={renderParams}
+            renderParams={sheetParams}
             batchRequest={batchRequest}
             canRender={canRender}
             renderHint="Describe your character first — then render the sheet."

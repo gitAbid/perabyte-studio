@@ -76,7 +76,26 @@ Six fixed views in `SHEET_VIEWS` order:
 Mobile: the panel collapses to a fixed bottom bar ("Sheet 2/6") expanding into
 the existing bottom-sheet drawer pattern.
 
-### Removed
+### Character detail page (`/character/[id]`)
+
+Saved characters land on a **detail page**, not the wizard (the wizard moved to
+`/character/[id]/edit`):
+
+- **Poster** (thumbnail or front view) with download; **character sheet** grid
+  restoring the latest saved sheet (`meta.sheetOrder` + `variants`), each view
+  downloadable and promotable to poster; **renders** — every asset tagged
+  `characterIds`, newest first, each linking into the `/results?id=` viewer for
+  its full render details.
+- **Specifications** column: the whole spec (identity rows in Detailed mode,
+  "Prompt-only" badge in Simple/freeform), personality, and the raw prompt.
+- **Actions**: **Edit** (wizard, loads in the character's own mode),
+  **Copy** (instant duplicate via `cloneForDuplicate`, navigates to the copy),
+  **New generation** (`/character/new?parent=id` — seeds a re-configurable
+  copy), and Modify & re-render. Delete/rename/favourite/cast stay in the
+  library; card links open the detail page, the card menu gains an explicit
+  "Edit & re-render" entry.
+
+## Removed
 
 The full-page `generating` and `ready` phases of `CharacterStudio` are deleted —
 their jobs (progress, failure, save, download, renders strip) move into the

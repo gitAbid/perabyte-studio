@@ -59,7 +59,8 @@ import {
 /**
  * The character library: server-backed poster grid with search, tag/family
  * filters, favourites, manage mode, and one-click duplicate / vary / cast.
- * Editing opens the wizard at /character/[id]; this page owns management.
+ * Cards open the detail page at /character/[id]; the wizard lives at
+ * /character/[id]/edit. This page owns management.
  */
 export function CharacterLibrary() {
   const toast = useToast();
@@ -386,7 +387,7 @@ export function CharacterLibrary() {
                 ) : (
                   <Link
                     href={`/character/${character.id}`}
-                    aria-label={`Open ${character.name}`}
+                    aria-label={`Open ${character.name} details`}
                     className="block"
                   >
                     {media}
@@ -463,7 +464,8 @@ export function CharacterLibrary() {
                       role="menu"
                       className="absolute right-2.5 top-11 z-20 w-52 rounded-[14px] border border-border bg-raised p-1.5 shadow-lift"
                     >
-                      <MenuItem icon="user" label="Open & edit" href={`/character/${character.id}`} onDone={() => setMenuId(null)} />
+                      <MenuItem icon="user" label="Open details" href={`/character/${character.id}`} onDone={() => setMenuId(null)} />
+                      <MenuItem icon="sliders" label="Edit & re-render" href={`/character/${character.id}/edit`} onDone={() => setMenuId(null)} />
                       <MenuItem
                         icon="copy"
                         label="Rename"
