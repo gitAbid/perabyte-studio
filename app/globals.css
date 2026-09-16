@@ -112,9 +112,15 @@
   }
 }
 
-html,
-body {
+/* html keeps a fixed height, but body must GROW with the page: the sticky
+   sidebar capsule can only pin within a containing block taller than the
+   viewport, and height:100% on body would cap it (sidebar would scroll away). */
+html {
   height: 100%;
+}
+
+body {
+  min-height: 100%;
 }
 
 body {

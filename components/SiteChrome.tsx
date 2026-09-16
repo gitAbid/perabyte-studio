@@ -275,7 +275,7 @@ export function SiteSidebar() {
     <>
       {/* Desktop capsule */}
       <aside
-        className={`sticky top-3 z-40 hidden h-[calc(100dvh-1.5rem)] shrink-0 flex-col rounded-xl border border-border bg-raised shadow-card transition-[width] duration-300 ease-in-out md:ml-3 md:flex ${
+        className={`sticky top-3 z-40 hidden h-[calc(100dvh-1.5rem)] shrink-0 flex-col rounded-xl border border-border bg-raised shadow-card transition-[width] duration-300 ease-in-out md:mx-3 md:flex ${
           collapsed ? "w-[76px]" : "w-[248px]"
         }`}
       >

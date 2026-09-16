@@ -33,7 +33,9 @@ export default function RootLayout({
     // suppressHydrationWarning: the inline theme script below adds `.dark`
     // to <html> before React hydrates, which is an expected mismatch.
     <html lang="en" suppressHydrationWarning>
-      <body className="flex min-h-dvh">
+      {/* Column on mobile (top bar above content), row on md+ (sidebar
+          beside content) — the mobile top bar is a direct body child. */}
+      <body className="flex min-h-dvh flex-col md:flex-row">
         {/* Runs before first paint: applies the stored (or OS) theme and
             avoids a light→dark flash on load. */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript() }} />
