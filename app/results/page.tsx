@@ -51,13 +51,13 @@ export default function ResultsPage() {
           <EmptyState
             icon="alert"
             title="That render is no longer available"
-            body="It may have been deleted from this browser. Your remaining history is safe."
+            body="It may have been deleted from your library. Your remaining renders are safe."
             action={
               <Link
-                href="/history"
+                href="/images"
                 className="inline-flex h-11 items-center gap-2 rounded-[12px] bg-primary-strong px-4 text-sm font-semibold text-white"
               >
-                Back to History
+                Back to the library
               </Link>
             }
           />
@@ -115,7 +115,7 @@ export default function ResultsPage() {
     <div className="mx-auto w-full max-w-[1100px] px-4 pb-12 pt-8 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
-          href="/history"
+          href="/images"
           className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted transition-colors hover:text-ink"
         >
           <Icon name="arrow-left" size={15} />

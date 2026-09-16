@@ -19,7 +19,8 @@ const PRIMARY_NAV: NavItem[] = [
   { href: "/generate/image", label: "Generate", icon: "sparkle" },
   { href: "/story", label: "Story", icon: "story" },
   { href: "/character", label: "Character", icon: "character" },
-  { href: "/history", label: "History", icon: "history" },
+  { href: "/images", label: "Images", icon: "image" },
+  { href: "/stories", label: "Stories", icon: "grid" },
 ];
 
 const SECONDARY_NAV: NavItem[] = [
@@ -30,6 +31,8 @@ const SECONDARY_NAV: NavItem[] = [
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
   if (href === "/generate/image") return pathname.startsWith("/generate");
+  // /story (editor) must not light up for /stories (library) and vice versa.
+  if (href === "/story") return pathname === "/story" || pathname.startsWith("/story/");
   return pathname.startsWith(href);
 }
 
@@ -339,7 +342,7 @@ const FOOTER_LINKS = [
   { href: "/generate/image", label: "Solo Mode" },
   { href: "/story", label: "Story Mode" },
   { href: "/character", label: "Character Studio" },
-  { href: "/history", label: "History" },
+  { href: "/images", label: "Images & videos" },
   { href: "/settings", label: "Settings" },
   { href: "/styleguide", label: "Style guide" },
 ] as const;

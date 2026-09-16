@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { MediaFrame } from "@/components/Media";
 import { LibraryShell } from "@/components/library/LibraryShell";
+import { MenuItem } from "@/components/library/MenuItem";
 import { PromptDialog } from "@/components/library/PromptDialog";
 import { TagEditorDialog } from "@/components/library/TagEditorDialog";
 import {
@@ -422,7 +423,7 @@ export function CharacterLibrary() {
                           role="menu"
                           className="absolute right-0 top-9 z-20 w-52 rounded-[14px] border border-border bg-raised p-1.5 shadow-lift"
                         >
-                          <MenuLink icon="user" label="Open & edit" href={`/character/${character.id}`} onDone={() => setMenuId(null)} />
+                          <MenuItem icon="user" label="Open & edit" href={`/character/${character.id}`} onDone={() => setMenuId(null)} />
                           <MenuItem
                             icon="copy"
                             label="Rename"
@@ -584,42 +585,3 @@ function CharacterThumb({
   );
 }
 
-function MenuItem({
-  icon,
-  label,
-  href,
-  onSelect,
-  onDone,
-  tone = "default",
-}: {
-  icon: Parameters<typeof Icon>[0]["name"];
-  label: string;
-  href?: string;
-  onSelect?: () => void;
-  onDone?: () => void;
-  tone?: "default" | "danger";
-}) {
-  const className = `flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-2 text-left text-[13px] font-medium transition-colors ${
-    tone === "danger"
-      ? "text-danger hover:bg-danger-soft"
-      : "text-ink-soft hover:bg-surface-2"
-  }`;
-  if (href) {
-    return (
-      <Link href={href} role="menuitem" className={className} onClick={onDone}>
-        <Icon name={icon} size={15} />
-        {label}
-      </Link>
-    );
-  }
-  return (
-    <button type="button" role="menuitem" className={className} onClick={onSelect}>
-      <Icon name={icon} size={15} />
-      {label}
-    </button>
-  );
-}
-
-function MenuLink(props: { icon: Parameters<typeof Icon>[0]["name"]; label: string; href: string; onDone?: () => void }) {
-  return <MenuItem {...props} />;
-}
