@@ -432,12 +432,8 @@ export function SiteFooter() {
  */
 export function ConditionalFooter() {
   const pathname = usePathname();
-  if (
-    pathname?.startsWith("/generate") ||
-    pathname?.startsWith("/story") ||
-    pathname?.startsWith("/character")
-  ) {
-    return null;
-  }
+  // The footer is a marketing-sitemap element — only the landing page keeps
+  // it. Every studio surface (generator, libraries, settings) is footer-free.
+  if (pathname !== "/") return null;
   return <SiteFooter />;
 }

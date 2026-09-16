@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { MediaFrame, VideoStage } from "@/components/Media";
 import {
@@ -17,6 +17,7 @@ import { isSensitiveAsset } from "@/lib/domain/models";
 import { downloadMedia } from "@/lib/generation";
 import { isVideoSource } from "@/lib/renderer";
 import { getAsset, removeAsset, toggleFavorite, useAssets } from "@/lib/store";
+import { storyCover } from "@/lib/library-selectors";
 import type { Asset } from "@/lib/types";
 import { StoryPlayer } from "@/components/StoryPlayer";
 
@@ -46,6 +47,15 @@ export default function ResultsPage() {
   }, [assets, ready]);
 
   useEffect(() => setVariant(0), [asset?.id]);
+
+  /** Scrollable "more generations" strip: newest others, mixed kinds. */
+  const others = useMemo(() => {
+    if (!asset) return [];
+    return assets
+      .filter((a) => a.id !== asset.id)
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, 24);
+  }, [assets, asset]);
 
   if (!asset) {
     return (
@@ -118,6 +128,32 @@ export default function ResultsPage() {
       ?.writeText(asset!.prompt)
       .then(() => toast.push("Prompt copied.", "success"))
       .catch(() => toast.push("Could not copy the prompt.", "error"));
+  }
+
+  /** Swap the viewed asset in place; the URL stays deep-linkable. */
+  function selectAsset(next: Asset) {
+    window.history.replaceState(null, "", `/results?id=${next.id}`);
+    setAsset(next);
+    setVariant(0);
+  }
+
+  /** Generator deep link carrying this render's configuration. The model
+   * deliberately stays the user's current pick — reuse transfers the look
+   * (prompt/style/shape), not the engine. */
+  function reuseUrl(scope: "all" | "prompt" | "style" | "aspect"): string {
+    if (!asset) return "#";
+    const params = new URLSearchParams();
+    params.set("prompt", asset.prompt);
+    if (scope === "all" || scope === "style") {
+      params.set("style", String(asset.settings.style));
+    }
+    if (scope === "all" || scope === "aspect") {
+      params.set("aspect", asset.settings.aspect);
+    }
+    if (scope === "all") {
+      params.set("resolution", asset.settings.resolution);
+    }
+    return `/generate/${isVideo ? "video" : "image"}?${params.toString()}`;
   }
 
   return (
@@ -197,6 +233,58 @@ export default function ResultsPage() {
                 </button>
               ))}
             </div>
+          )}
+
+          {/* More from your library — click to preview in place */}
+          {others.length > 0 && (
+            <section className="mt-8">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[14px] font-bold text-ink">More from your library</h2>
+                <Link
+                  href="/images"
+                  className="text-[12px] font-semibold text-muted transition-colors hover:text-ink"
+                >
+                  View all →
+                </Link>
+              </div>
+              <div className="mt-3 flex gap-3 overflow-x-auto no-scrollbar pb-1">
+                {others.map((other) => {
+                  const cover =
+                    other.kind === "story"
+                      ? storyCover(other)
+                      : other.posterUrl ?? other.url;
+                  return (
+                    <button
+                      key={other.id}
+                      type="button"
+                      onClick={() => selectAsset(other)}
+                      aria-label={`Preview ${other.title}`}
+                      className="group relative w-[148px] shrink-0 overflow-hidden rounded-[14px] border border-border bg-surface-2 shadow-card transition-all duration-150 hover:-translate-y-0.5 hover:shadow-lift motion-reduce:hover:transform-none"
+                    >
+                      <MediaFrame
+                        src={cover ?? null}
+                        alt={other.title}
+                        ratio="1/1"
+                        rounded="rounded-[13px]"
+                        sensitive={isSensitiveAsset(other)}
+                      />
+                      <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent px-2.5 pb-2 pt-6 text-left">
+                        <span className="block truncate text-[11.5px] font-semibold text-white">
+                          {other.title}
+                        </span>
+                        <span className="mt-0.5 block text-[10px] font-medium uppercase tracking-wide text-white/60">
+                          {other.kind === "video"
+                            ? "Video"
+                            : other.kind === "story"
+                              ? "Story"
+                              : "Image"}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
           )}
         </div>
 
@@ -302,6 +390,35 @@ export default function ResultsPage() {
                 </Link>
               )}
             </div>
+          </div>
+
+          {/* Reuse configuration */}
+          <div className="rounded-[14px] border border-border bg-surface p-3">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
+              Reuse in generator
+            </span>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {(
+                [
+                  ["all", "Everything", "layers"],
+                  ["prompt", "Prompt", "copy"],
+                  ["style", "Style", "sparkle"],
+                  ["aspect", "Aspect", "grid"],
+                ] as const
+              ).map(([scope, label, icon]) => (
+                <Link
+                  key={scope}
+                  href={reuseUrl(scope)}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border bg-raised px-3 text-[12px] font-semibold text-ink-soft transition-colors hover:border-primary hover:text-primary"
+                >
+                  <Icon name={icon} size={12} />
+                  {label}
+                </Link>
+              ))}
+            </div>
+            <p className="mt-2 text-[11px] text-muted">
+              Loads into the generator with your current model.
+            </p>
           </div>
 
           {/* Render details */}

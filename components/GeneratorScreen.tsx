@@ -14,8 +14,10 @@ import {
   DEFAULT_VIDEO_SETTINGS,
   IMAGE_STYLES,
   PROMPT_MAX,
+  RESOLUTIONS,
   VIDEO_STYLES,
   type AspectKey,
+  type ResolutionKey,
 } from "@/lib/constants";
 import { isSensitiveAsset } from "@/lib/domain/models";
 import { downloadMedia, useGeneration } from "@/lib/generation";
@@ -100,6 +102,10 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
     }
     if (aspect && aspect in ASPECTS) {
       setSettings((s) => ({ ...s, aspect: aspect as AspectKey }));
+    }
+    const resolution = params.get("resolution");
+    if (resolution && resolution in RESOLUTIONS) {
+      setSettings((s) => ({ ...s, resolution: resolution as ResolutionKey }));
     }
   }, [kind]);
 
