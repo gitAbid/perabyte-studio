@@ -94,7 +94,7 @@ export function Stepper({
                 {done ? <Icon name="check" size={13} /> : step}
               </span>
               <span
-                className={`hidden truncate text-[13px] font-semibold sm:block ${
+                className={`hidden truncate text-[13px] font-semibold xl:block ${
                   active ? "text-ink" : done ? "text-ink-soft" : "text-muted"
                 }`}
               >

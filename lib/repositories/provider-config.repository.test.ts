@@ -8,6 +8,8 @@ import {
   invalidateProviderConfigCache,
   setProviderConfigPathForTests,
   getDefaultProviderConfig,
+  getConfigRevision,
+  type CustomProviderEntry,
 } from "./provider-config.repository";
 
 describe("provider-config.repository", () => {
@@ -179,6 +181,22 @@ describe("provider-config.repository", () => {
 });
 
 describe("render staleness knob", () => {
+  // Own temp-path hooks: without them the overridePath is null by the time
+  // this describe runs and writes would land on the real .studio/settings.json.
+  let tempDir: string;
+
+  beforeEach(async () => {
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "studio-staleness-test-"));
+    setProviderConfigPathForTests(path.join(tempDir, "settings.json"));
+    invalidateProviderConfigCache();
+  });
+
+  afterEach(async () => {
+    setProviderConfigPathForTests(null);
+    invalidateProviderConfigCache();
+    await fs.rm(tempDir, { recursive: true, force: true });
+  });
+
   it("applies a staleness patch and clamps out-of-band values", () => {
     updateProviderConfig({ renderTimeouts: { staleness: 120 } });
     expect(getProviderConfig().renderTimeouts.staleness).toBe(120);
@@ -186,5 +204,111 @@ describe("render staleness knob", () => {
     expect(getProviderConfig().renderTimeouts.staleness).toBe(60); // min clamp
     updateProviderConfig({ renderTimeouts: { staleness: 99_999 } });
     expect(getProviderConfig().renderTimeouts.staleness).toBe(1800); // max clamp
+  });
+});
+
+describe("customProviders config", () => {
+  let tempDir: string;
+  let configPath: string;
+
+  beforeEach(async () => {
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "studio-custom-test-"));
+    configPath = path.join(tempDir, "settings.json");
+    setProviderConfigPathForTests(configPath);
+    invalidateProviderConfigCache();
+  });
+
+  afterEach(async () => {
+    setProviderConfigPathForTests(null);
+    invalidateProviderConfigCache();
+    await fs.rm(tempDir, { recursive: true, force: true });
+  });
+
+  const entry: CustomProviderEntry = {
+    id: "my-relay",
+    label: "My Relay",
+    format: "openai",
+    baseUrl: "https://relay.example/v1",
+    apiKey: "sk-test",
+    enabled: true,
+    models: [
+      { model: "gpt-image-1", label: "GPT Image", kind: "image", enabled: true },
+      { model: "grok-4.5", kind: "text", enabled: false },
+    ],
+  };
+
+  it("defaults to an empty list", () => {
+    expect(getDefaultProviderConfig().customProviders).toEqual([]);
+  });
+
+  it("upsert appends then replaces by id", () => {
+    const first = updateProviderConfig({ customProviders: { upsert: entry } });
+    expect(first.customProviders).toHaveLength(1);
+    expect(first.customProviders[0].label).toBe("My Relay");
+
+    const replaced = updateProviderConfig({
+      customProviders: { upsert: { ...entry, label: "Renamed" } },
+    });
+    expect(replaced.customProviders).toHaveLength(1);
+    expect(replaced.customProviders[0].label).toBe("Renamed");
+    expect(replaced.customProviders[0].models.map((m) => m.model)).toEqual([
+      "gpt-image-1",
+      "grok-4.5",
+    ]);
+  });
+
+  it("setModel mutates kind and enabled on one model", () => {
+    updateProviderConfig({ customProviders: { upsert: entry } });
+    const next = updateProviderConfig({
+      customProviders: {
+        setModel: { providerId: "my-relay", model: "grok-4.5", kind: "text", enabled: true },
+      },
+    });
+    expect(next.customProviders[0].models[1]).toMatchObject({ kind: "text", enabled: true });
+    expect(next.customProviders[0].models[0]).toMatchObject({ enabled: true });
+  });
+
+  it("remove drops the entry and keeps others", () => {
+    updateProviderConfig({ customProviders: { upsert: entry } });
+    updateProviderConfig({
+      customProviders: {
+        upsert: { ...entry, id: "second", models: [] },
+      },
+    });
+    const next = updateProviderConfig({ customProviders: { remove: "my-relay" } });
+    expect(next.customProviders.map((e) => e.id)).toEqual(["second"]);
+  });
+
+  it("sanitizes invalid entries loaded from disk", async () => {
+    await fs.writeFile(
+      configPath,
+      JSON.stringify({
+        customProviders: [
+          entry,
+          { id: "BAD ID", format: "openai", baseUrl: "https://x", models: [] }, // bad slug
+          { id: "no-format", format: "soap", baseUrl: "https://x", models: [] }, // bad format
+          { id: "no-url", format: "openai", models: [] }, // missing baseUrl
+          {
+            id: "bad-models",
+            format: "openai",
+            baseUrl: "https://x",
+            models: [{ model: "", kind: "image", enabled: true }, "junk"],
+          },
+        ],
+      }),
+      "utf-8",
+    );
+    invalidateProviderConfigCache();
+    const config = getProviderConfig();
+    expect(config.customProviders.map((e) => e.id)).toEqual(["my-relay", "bad-models"]);
+    expect(config.customProviders[0].models).toHaveLength(2);
+    // entries with no usable models at all are dropped entirely
+    expect(config.customProviders[1].models).toEqual([]);
+  });
+
+  it("getConfigRevision bumps when the config is written", () => {
+    const before = getConfigRevision();
+    updateProviderConfig({ tasks: { enhance: null } });
+    expect(getConfigRevision()).toBeGreaterThan(before);
   });
 });
