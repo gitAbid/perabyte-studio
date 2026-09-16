@@ -21,6 +21,7 @@ import { isSensitiveAsset } from "@/lib/domain/models";
 import { downloadMedia, useGeneration } from "@/lib/generation";
 import { requestPromptEnhancement } from "@/lib/enhancement";
 import { useModelCatalog } from "@/lib/model-catalog";
+import { refFromMediaUrl, uploadFrameRef } from "@/lib/media/frame";
 import { snapSettingsForModel } from "@/lib/render-options";
 import { snapLorasForModel } from "@/lib/lora-options";
 import { composeSceneWithCharacters } from "@/lib/character";
@@ -33,6 +34,7 @@ import { useCharacters } from "@/lib/repositories/characters.repository";
 import { addAsset, assetFromResponse, DEMO_SPECS, toggleFavorite, useAssets } from "@/lib/store";
 import type { DemoSpec } from "@/lib/store";
 import type { GenerationSettings } from "@/lib/types";
+import type { FrameRefs } from "@/components/FrameDock";
 
 const COPY = {
   image: {
@@ -60,6 +62,9 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
   const [prompt, setPrompt] = useState("");
   const [promptError, setPromptError] = useState<string | undefined>();
   const [enhancing, setEnhancing] = useState(false);
+  // Manual frames for the next render — first/reference + optional last.
+  // They persist across renders so a frame can anchor an iteration loop.
+  const [frames, setFrames] = useState<FrameRefs>({});
   const [assetId, setAssetId] = useState<string | null>(null);
   const [favorite, setFavorite] = useState(false);
   const [activeVariant, setActiveVariant] = useState(0);
@@ -69,6 +74,9 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
   const { settings: userSettings } = useSettings();
   const { characters } = useCharacters();
   const catalog = useModelCatalog(kind);
+  // Start-capable video models (hidden i2v siblings included) — names the
+  // model a frame-carrying render really uses when the pick can't take one.
+  const startCatalog = useModelCatalog("video", "start");
 
   // Character reuse: the attached cast's identities are folded into the
   // prompt at generate time; the textarea keeps holding only the scene.
@@ -134,6 +142,24 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
     setSettings((s) => ({ ...s, ...patch }));
   }
 
+  // Smart frame hint — only when the attached frames do something the chip
+  // alone can't tell: the img2img role, or the model swap for frame control.
+  const startSwapModel =
+    kind === "video" && frames.startImageRef && activeModel && !activeModel.frameInput?.start
+      ? startCatalog.models.find((model) => model.id === activeModel.i2vModelId)
+      : undefined;
+  const frameEndSupported = activeModel?.frameInput?.end === true;
+  const frameNote =
+    kind === "image"
+      ? frames.startImageRef
+        ? "Your image guides composition and style — the render builds on it."
+        : undefined
+      : startSwapModel
+        ? `Renders on ${startSwapModel.label} — picked automatically for frame control.`
+        : frames.endImageRef
+          ? "The render ends exactly on your last frame."
+          : undefined;
+
   // Settings restored from storage may predate the active model's limits
   // (e.g. a 5s clip under MiniMax H3) — snap them once the catalog lands.
   // The effect settles after one pass: snapSettingsForModel returns an empty
@@ -158,6 +184,17 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
           }
         : {}),
     }));
+    // Frame snap: a last frame the new model can't condition on drops (same
+    // rule the server applies, made visible). A start frame always stays —
+    // the service auto-swaps to the model's i2v sibling. Nothing wipes while
+    // the catalog is still loading.
+    if (activeModel) {
+      setFrames((f) =>
+        f.endImageRef && !activeModel.frameInput?.end
+          ? { startImageRef: f.startImageRef }
+          : f,
+      );
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only on model/catalog/gate changes
   }, [catalog.models, modelId, userSettings.uncensoredEnabled]);
 
@@ -188,6 +225,10 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
         uncensored,
       ),
       uncensored,
+      // Manual frames: the render starts/ends on them when the model takes
+      // them (the server swaps models / degrades with a warning otherwise).
+      startImageRef: frames.startImageRef,
+      endImageRef: frames.endImageRef,
     });
     if (!response) return;
 
@@ -213,6 +254,32 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
     toggleFavorite(assetId);
     setFavorite((f) => !f);
     toast.push("Saved to favourites.", "success");
+  }
+
+  // Reuse the completed render as the next first/reference frame — the
+  // image→video (or iterate-on-reference) step with zero re-uploading.
+  // Cache-backed results hand over their ref directly; provider URLs are
+  // fetched and uploaded once.
+  async function handleUseAsFrame() {
+    if (!shownUrl) return;
+    const message =
+      kind === "video"
+        ? "Next render starts from this frame."
+        : "Next render builds on this reference.";
+    const cached = refFromMediaUrl(shownUrl);
+    if (cached) {
+      setFrames((f) => ({ ...f, startImageRef: cached }));
+      toast.push(message, "success");
+      return;
+    }
+    try {
+      const blob = await fetch(shownUrl).then((r) => r.blob());
+      const ref = await uploadFrameRef(blob);
+      setFrames((f) => ({ ...f, startImageRef: ref }));
+      toast.push(message, "success");
+    } catch {
+      toast.push("Could not reuse that render as a frame.", "error");
+    }
   }
 
   function handleDownload() {
@@ -390,6 +457,14 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
             characters={characters}
             characterIds={userSettings.soloCharacterIds}
             onCharactersChange={setSoloCharacters}
+            frames={frames}
+            onFramesChange={(patch) => setFrames((f) => ({ ...f, ...patch }))}
+            onFramesError={(message) => toast.push(message, "error")}
+            frameEndSupported={frameEndSupported}
+            frameNote={frameNote}
+            frameNoteIcon={
+              kind === "image" ? "image" : startSwapModel ? "chip" : "video"
+            }
             busy={busy}
             onGenerate={handleGenerate}
             onCancel={cancel}
@@ -512,6 +587,15 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
                     icon="copy"
                     label="Copy prompt"
                     onClick={handleCopyPrompt}
+                  />
+                  <OverlayButton
+                    icon={kind === "video" ? "video" : "image"}
+                    label={
+                      kind === "video"
+                        ? "Use as first frame — the next render starts here"
+                        : "Use as reference — the next render builds on this"
+                    }
+                    onClick={() => void handleUseAsFrame()}
                   />
                   {assetId ? (
                     <Link

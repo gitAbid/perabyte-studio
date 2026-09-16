@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ConvertDialog } from "@/components/story/ConvertDialog";
 import { SceneChainBadge } from "@/components/story/SceneChainBadge";
-import { SceneRefChips } from "@/components/story/SceneRefChips";
 import { Icon } from "@/components/Icon";
 import { MediaFrame, VideoStage } from "@/components/Media";
 import { PromptComposer } from "@/components/PromptComposer";
@@ -210,6 +209,20 @@ export default function StoryPage() {
   const endSupported = Boolean(selectedModel?.frameInput?.end);
   // Style presets are per-model: provider-workflow models take only the raw prompt.
   const stylesSupported = selectedModel?.stylesSupported ?? true;
+
+  // Smart frame hint: only when the draft frames do something the chip alone
+  // can't tell — overriding the chain, anchoring an image scene, or bracketing
+  // a video with a first and last frame.
+  const framesAttached = Boolean(draftRefs.startImageRef || draftRefs.endImageRef);
+  const frameNote = !framesAttached
+    ? undefined
+    : kind === "video" && draftRefs.startImageRef && continuityOn
+      ? "This scene starts from your image — the chain continues from here."
+      : kind === "image"
+        ? "Your image guides this scene's composition and style."
+        : "This scene starts on your first frame and ends on your last.";
+  const frameNoteIcon =
+    kind === "video" && draftRefs.startImageRef && continuityOn ? "link" : "image";
 
   // The kind toggle swaps the model silently (it reads the other kind's saved
   // pick without firing onModelChange), so LoRA selections need the same
@@ -877,6 +890,12 @@ export default function StoryPage() {
               characters={characters}
               characterIds={userSettings.storyCharacterIds}
               onCharactersChange={setStoryCharacters}
+              frames={draftRefs}
+              onFramesChange={(patch) => setDraftRefs((r) => ({ ...r, ...patch }))}
+              onFramesError={(message) => toast.push(message, "error")}
+              frameEndSupported={endSupported}
+              frameNote={frameNote}
+              frameNoteIcon={frameNoteIcon}
               busy={running}
               onGenerate={handleGenerateAll}
               onCancel={handleCancel}
@@ -887,25 +906,6 @@ export default function StoryPage() {
                   ?.writeText(prompt)
                   .then(() => toast.push("Prompt copied.", "success"));
               }}
-            />
-          </div>
-
-          {/* Optional start/end frames for the scene being authored. They are
-              committed with the next Generate / Add scene, not per-tile — the
-              composer is where a scene is composed. */}
-          <div className="mt-3 shrink-0">
-            <p className="mb-1.5 text-[11.5px] font-semibold text-muted">
-              Scene frames{" "}
-              <span className="font-normal">
-                — optional; a start frame overrides chaining
-              </span>
-            </p>
-            <SceneRefChips
-              startRef={draftRefs.startImageRef}
-              endRef={draftRefs.endImageRef}
-              endSupported={endSupported}
-              onChange={(patch) => setDraftRefs((r) => ({ ...r, ...patch }))}
-              onError={(message) => toast.push(message, "error")}
             />
           </div>
 
