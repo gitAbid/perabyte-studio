@@ -1,6 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { logger } from "@/lib/logging/logger";
+import { resetLoraCatalogCache } from "@/lib/providers/sogni/lora-catalog";
 import {
   GenerationServiceError,
+  resolveLoras,
   validateGenerationRequest,
 } from "@/lib/services/generation.service";
 
@@ -141,5 +144,107 @@ describe("validateGenerationRequest — loras", () => {
   it("defaults to an empty list when loras is absent or not an array", () => {
     expect(validateGenerationRequest(baseBody()).loras).toEqual([]);
     expect(validateGenerationRequest({ ...baseBody(), loras: "warm" }).loras).toEqual([]);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* resolveLoras — the pre-submit catalog gate                          */
+/* ------------------------------------------------------------------ */
+
+const GATE_FIXTURE = {
+  status: "success",
+  data: {
+    loras: [
+      {
+        loraId: "krea2-mystic-x",
+        name: "Mystic X",
+        ui: { min: 0, max: 2, default: 1, step: 0.1, nsfw: true, sexual: true },
+        modelIds: ["krea2_turbo_fp8_scaled"],
+      },
+      {
+        loraId: "krea2-realism",
+        name: "Realism",
+        ui: { min: -2, max: 2, default: 1, step: 0.1, nsfw: false, sexual: false },
+        modelIds: ["krea2_turbo_fp8_scaled"],
+      },
+      {
+        loraId: "h3-mystic-xxx-v4",
+        name: "H3 Mystic",
+        ui: { min: 0, max: 1, default: 1, step: 0.1, nsfw: true, sexual: true },
+        modelIds: ["minimax-h3-fl2va-fp8_i2v"],
+      },
+    ],
+    models: ["krea2_turbo_fp8_scaled", "minimax-h3-fl2va-fp8_i2v"],
+    constraints: { maxPerRequest: 8 },
+  },
+};
+
+function mockCatalogFetch(): void {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(GATE_FIXTURE),
+    }),
+  );
+}
+
+describe("resolveLoras", () => {
+  afterEach(() => {
+    resetLoraCatalogCache();
+    vi.unstubAllGlobals();
+  });
+
+  it("keeps nsfw adapters on an uncensored request (safe:false)", async () => {
+    mockCatalogFetch();
+    const kept = await resolveLoras(
+      [
+        { loraId: "krea2-mystic-x", strength: 0.8 },
+        { loraId: "krea2-realism", strength: 1 },
+      ],
+      "krea2_turbo_fp8_scaled",
+      false,
+      logger,
+    );
+    expect(kept.map((l) => l.loraId)).toEqual(["krea2-mystic-x", "krea2-realism"]);
+  });
+
+  it("strips nsfw adapters from a sensored request (safe:true)", async () => {
+    mockCatalogFetch();
+    const kept = await resolveLoras(
+      [
+        { loraId: "krea2-mystic-x", strength: 0.8 },
+        { loraId: "krea2-realism", strength: 1 },
+      ],
+      "krea2_turbo_fp8_scaled",
+      true,
+      logger,
+    );
+    expect(kept.map((l) => l.loraId)).toEqual(["krea2-realism"]);
+  });
+
+  it("strips adapters the model doesn't list regardless of the gate", async () => {
+    mockCatalogFetch();
+    const kept = await resolveLoras(
+      [
+        { loraId: "krea2-mystic-x", strength: 0.8 },
+        { loraId: "h3-mystic-xxx-v4", strength: 1 },
+      ],
+      "krea2_turbo_fp8_scaled",
+      false,
+      logger,
+    );
+    expect(kept.map((l) => l.loraId)).toEqual(["krea2-mystic-x"]);
+  });
+
+  it("strips everything when the catalog is unreachable", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network down")));
+    const kept = await resolveLoras(
+      [{ loraId: "krea2-realism", strength: 1 }],
+      "krea2_turbo_fp8_scaled",
+      false,
+      logger,
+    );
+    expect(kept).toEqual([]);
   });
 });
