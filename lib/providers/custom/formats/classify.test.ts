@@ -8,6 +8,7 @@ describe("classifyModelId", () => {
     ["flux-pro-1.1", "image"],
     ["grok-imagine-image", "image"],
     ["grok-imagine-image-quality", "image"],
+    ["grok-imagine-edit", "image"],
     ["stable-diffusion-3.5", "image"],
     ["black-forest-labs/flux-schnell", "image"],
     ["grok-imagine-video-1.5", "video"],

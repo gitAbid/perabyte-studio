@@ -324,16 +324,19 @@ function parseCustomUpsert(raw: unknown, config: ReturnType<typeof getProviderCo
       field: "customProviders",
     });
   }
+  const existing = config.customProviders.find((entry) => entry.id === id);
+  // Partial re-upserts (e.g. {id, models} after discovery) inherit the rest.
+  const formatRaw = typeof e.format === "string" ? e.format : existing?.format;
   if (
-    typeof e.format !== "string" ||
-    !CUSTOM_FORMATS.includes(e.format as CustomProviderFormat)
+    typeof formatRaw !== "string" ||
+    !CUSTOM_FORMATS.includes(formatRaw as CustomProviderFormat)
   ) {
     throw new ProviderSettingsError(
       `The format must be one of: ${CUSTOM_FORMATS.join(", ")}.`,
       { field: "customProviders" },
     );
   }
-  const baseUrl = typeof e.baseUrl === "string" ? e.baseUrl.trim() : "";
+  const baseUrl = typeof e.baseUrl === "string" && e.baseUrl.trim() ? e.baseUrl.trim() : existing?.baseUrl ?? "";
   try {
     const url = new URL(baseUrl);
     if (url.protocol !== "http:" && url.protocol !== "https:") throw new Error("protocol");
@@ -342,7 +345,6 @@ function parseCustomUpsert(raw: unknown, config: ReturnType<typeof getProviderCo
       field: "customProviders",
     });
   }
-  const existing = config.customProviders.find((entry) => entry.id === id);
   const models =
     e.models === undefined && existing
       ? existing.models
@@ -352,8 +354,8 @@ function parseCustomUpsert(raw: unknown, config: ReturnType<typeof getProviderCo
     label:
       typeof e.label === "string" && e.label.trim()
         ? e.label.trim().slice(0, 80)
-        : id,
-    format: e.format as CustomProviderFormat,
+        : (existing?.label ?? id),
+    format: formatRaw as CustomProviderFormat,
     baseUrl,
     apiKey:
       e.apiKey === undefined

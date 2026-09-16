@@ -9,7 +9,7 @@ import type { DiscoveredModel } from "./types";
 
 const VIDEO_PATTERN = /video|veo|sora|kling|hailuo|seedance|runway|pika/i;
 const IMAGE_PATTERN =
-  /image|imagen|flux|dall|sd3|sdxl|stable-diff|kolors|seedream|banana/i;
+  /image|imagen|flux|dall|sd3|sdxl|stable-diff|kolors|seedream|banana|imagine-edit/i;
 const TEXT_PATTERN =
   /gpt|grok|claude|gemini|qwen|llama|deepseek|mistral|sonnet|opus|haiku|embed|build/i;
 
