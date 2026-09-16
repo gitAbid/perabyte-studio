@@ -1,0 +1,56 @@
+/**
+ * Shared library-card chrome — one visual system across characters, images,
+ * and stories: flush edge-to-edge media inside an overflow-hidden shell, a
+ * hover lift, a prompt scrim, and minimal caption rows. Pages compose these;
+ * overlay controls (star / menu / checkbox) share positions and treatment.
+ */
+
+/** Card shell. NO overflow-hidden — dropdown menus must be able to escape;
+ * the media carries its own top rounding (`rounded-t-[15px]`, 1px inset for
+ * the border). Overlays anchor to the media zone, not the whole card. */
+export const CARD_SHELL =
+  "group relative rounded-[16px] border bg-surface shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-border-strong hover:shadow-lift motion-reduce:hover:transform-none";
+
+export const CARD_SELECTED = "border-primary ring-2 ring-primary/25";
+
+/** Wrapper around the media — anchors scrims and overlay controls. */
+export const CARD_MEDIA_ZONE = "relative";
+
+/** Media inside the shell is flush — top corners follow the shell. */
+export const CARD_MEDIA = "w-full rounded-t-[15px]";
+
+/** Favourite star: filled when favourited, ghost on hover otherwise. */
+export const CARD_STAR =
+  "absolute left-2.5 top-2.5 z-10 flex size-7 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm transition-all duration-150 hover:scale-110 motion-reduce:hover:transform-none";
+export const CARD_STAR_ON = "text-amber-300";
+export const CARD_STAR_GHOST = "opacity-0 group-hover:opacity-100";
+
+/** Overflow menu trigger, hover-revealed (stays visible while open). */
+export const CARD_MENU_BTN =
+  "absolute right-2.5 top-2.5 z-10 flex size-7 items-center justify-center rounded-full bg-black/45 text-white opacity-0 backdrop-blur-sm transition-all duration-150 hover:scale-110 hover:bg-black/60 motion-reduce:hover:transform-none group-hover:opacity-100 aria-expanded:opacity-100";
+
+/** Manage-mode select circle, top-left. */
+export const CARD_CHECK =
+  "absolute left-2.5 top-2.5 z-10 flex size-7 items-center justify-center rounded-full border-2 border-white/80 bg-black/35 text-transparent backdrop-blur-sm transition-colors aria-checked:border-primary aria-checked:bg-primary-strong aria-checked:text-white";
+
+/** Bottom gradient over the media that surfaces the prompt/tags on hover. */
+export const CARD_SCRIM =
+  "pointer-events-none absolute inset-x-0 bottom-0 z-[5] rounded-b-[15px] bg-gradient-to-t from-black/80 via-black/35 to-transparent p-3 pt-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100";
+
+/** Caption strip under the media. */
+export const CARD_CAPTION = "relative px-3 py-2.5";
+export const CARD_NAME = "min-w-0 truncate text-[13px] font-semibold text-ink";
+export const CARD_META = "text-[11px] text-muted";
+export const CARD_META_ROW = "mt-0.5 flex items-center justify-between gap-2";
+
+/** Chip over media (video duration, live status). */
+export const CARD_OVERLAY_CHIP =
+  "inline-flex items-center gap-1 rounded-md bg-black/55 px-1.5 py-0.5 text-[10.5px] font-semibold text-white backdrop-blur-sm";
+
+/** Tiny uppercase chip in captions (cast usage). */
+export const CARD_USAGE_CHIP =
+  "inline-flex shrink-0 items-center rounded-md bg-primary-soft px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-primary";
+
+/** Elegant fallback tile when no thumbnail exists. */
+export const CARD_FALLBACK =
+  "flex w-full items-center justify-center bg-surface-2";

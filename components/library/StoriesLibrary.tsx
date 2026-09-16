@@ -10,6 +10,24 @@ import { MenuItem } from "@/components/library/MenuItem";
 import { PromptDialog } from "@/components/library/PromptDialog";
 import { TagEditorDialog } from "@/components/library/TagEditorDialog";
 import {
+  CARD_CAPTION,
+  CARD_CHECK,
+  CARD_FALLBACK,
+  CARD_MEDIA,
+  CARD_MEDIA_ZONE,
+  CARD_MENU_BTN,
+  CARD_META,
+  CARD_META_ROW,
+  CARD_NAME,
+  CARD_OVERLAY_CHIP,
+  CARD_SCRIM,
+  CARD_SELECTED,
+  CARD_SHELL,
+  CARD_STAR,
+  CARD_STAR_GHOST,
+  CARD_STAR_ON,
+} from "@/components/library/card-styles";
+import {
   Badge,
   Button,
   ConfirmDialog,
@@ -250,153 +268,154 @@ export function StoriesLibrary() {
             const isSelected = selected.has(story.id);
             const progress = storyProgress(story);
             const tags = assetTags(story);
+            const media = <StoryCover story={story} />;
             return (
               <div
                 key={story.id}
-                className={`group relative rounded-[16px] border bg-raised p-2 shadow-card transition-shadow hover:shadow-lift ${
-                  manage && isSelected ? "border-primary" : "border-border"
+                className={`${CARD_SHELL} ${
+                  manage && isSelected ? CARD_SELECTED : "border-border"
                 }`}
               >
-                {manage ? (
-                  <button
-                    type="button"
-                    role="checkbox"
-                    aria-checked={isSelected}
-                    aria-label={`Select ${story.title}`}
-                    onClick={() => toggleSelected(story.id)}
-                    className="block w-full"
-                  >
-                    <StoryCover story={story} />
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    aria-label={`Open ${story.title} in the editor`}
-                    onClick={() => router.push(`/story?id=${story.id}`)}
-                    className="block w-full text-left"
-                  >
-                    <StoryCover story={story} />
-                  </button>
-                )}
+                {/* Media zone */}
+                <div className={CARD_MEDIA_ZONE}>
+                  {manage ? (
+                    <button
+                      type="button"
+                      role="checkbox"
+                      aria-checked={isSelected}
+                      aria-label={`Select ${story.title}`}
+                      onClick={() => toggleSelected(story.id)}
+                      className="block w-full"
+                    >
+                      {media}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      aria-label={`Open ${story.title} in the editor`}
+                      onClick={() => router.push(`/story?id=${story.id}`)}
+                      className="block w-full text-left"
+                    >
+                      {media}
+                    </button>
+                  )}
 
-                {manage ? (
-                  <span
-                    className={`absolute left-3.5 top-3.5 flex size-6 items-center justify-center rounded-full border-2 ${
-                      isSelected
-                        ? "border-primary bg-primary-strong text-white"
-                        : "border-white/70 bg-black/30 text-transparent"
-                    }`}
-                  >
-                    <Icon name="check" size={13} />
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    aria-label={story.favorite ? "Remove favourite" : "Add favourite"}
-                    onClick={() => toggleFavorite(story.id)}
-                    className={`absolute left-3.5 top-3.5 flex size-7 items-center justify-center rounded-full bg-black/35 backdrop-blur-sm transition-opacity ${
-                      story.favorite
-                        ? "text-warning opacity-100"
-                        : "text-white opacity-0 group-hover:opacity-100"
-                    }`}
-                  >
-                    <Icon name="star" size={14} />
-                  </button>
-                )}
+                  {/* Prompt + tags scrim */}
+                  <div className={CARD_SCRIM}>
+                    <p className="line-clamp-2 text-[11.5px] leading-snug text-white/90">
+                      {story.prompt}
+                    </p>
+                    {tags.length > 0 && (
+                      <p className="mt-1 truncate text-[11px] font-medium text-white/70">
+                        {tags.join(" · ")}
+                      </p>
+                    )}
+                  </div>
 
-                {!manage && (
-                  <div className="absolute right-3.5 top-3.5">
+                  {manage ? (
+                    <span role="checkbox" aria-checked={isSelected} className={CARD_CHECK}>
+                      <Icon name="check" size={13} />
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      aria-label={story.favorite ? "Remove favourite" : "Add favourite"}
+                      onClick={() => toggleFavorite(story.id)}
+                      className={`${CARD_STAR} ${story.favorite ? CARD_STAR_ON : CARD_STAR_GHOST}`}
+                    >
+                      <Icon name="star" size={14} />
+                    </button>
+                  )}
+                  {!manage && (
                     <button
                       type="button"
                       aria-label={`Actions for ${story.title}`}
                       aria-expanded={menuId === story.id}
-                      onClick={() =>
-                        setMenuId((id) => (id === story.id ? null : story.id))
-                      }
-                      className="flex size-7 items-center justify-center rounded-full bg-black/35 text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 aria-expanded:opacity-100"
+                      onClick={() => setMenuId((id) => (id === story.id ? null : story.id))}
+                      className={CARD_MENU_BTN}
                     >
                       <Icon name="more" size={15} />
                     </button>
-                    {menuId === story.id && (
-                      <>
-                        <button
-                          type="button"
-                          aria-label="Close menu"
-                          className="fixed inset-0 z-10 cursor-default"
-                          onClick={() => setMenuId(null)}
-                        />
-                        <div
-                          role="menu"
-                          className="absolute right-0 top-9 z-20 w-52 rounded-[14px] border border-border bg-raised p-1.5 shadow-lift"
-                        >
-                          <MenuItem
-                            icon="story"
-                            label="Open in editor"
-                            href={`/story?id=${story.id}`}
-                            onDone={() => setMenuId(null)}
-                          />
-                          <MenuItem
-                            icon="copy"
-                            label="Rename"
-                            onSelect={() => {
-                              setRenameTarget(story);
-                              setMenuId(null);
-                            }}
-                          />
-                          <MenuItem
-                            icon="layers"
-                            label="Duplicate"
-                            onSelect={() => {
-                              duplicate(story);
-                              setMenuId(null);
-                            }}
-                          />
-                          <MenuItem
-                            icon="chip"
-                            label="Add tag"
-                            onSelect={() => {
-                              setTagTargets([story]);
-                              setMenuId(null);
-                            }}
-                          />
-                          <div className="my-1 h-px bg-border" />
-                          <MenuItem
-                            icon="trash"
-                            label="Delete"
-                            tone="danger"
-                            onSelect={() => {
-                              setPendingDelete(story);
-                              setMenuId(null);
-                            }}
-                          />
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                <div className="px-1 pb-1 pt-2">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="min-w-0 truncate text-[13.5px] font-bold text-ink">
-                      {story.title}
-                    </span>
-                    {progress.live && (
-                      <Badge tone="warning">
-                        <span className="size-1.5 animate-pulse rounded-full bg-current" />
-                        Generating…
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="mt-0.5 text-[11.5px] text-muted">
-                    {progress.total} scene{progress.total === 1 ? "" : "s"} ·{" "}
-                    {progress.done} done · {formatDate(story.createdAt)}
-                  </p>
-                  {tags.length > 0 && (
-                    <p className="mt-0.5 truncate text-[11.5px] text-ink-soft">
-                      {tags.slice(0, 2).join(" · ")}
-                      {tags.length > 2 ? ` +${tags.length - 2}` : ""}
-                    </p>
                   )}
+                  {menuId === story.id && !manage && (
+                    <>
+                      <button
+                        type="button"
+                        aria-label="Close menu"
+                        className="fixed inset-0 z-10 cursor-default"
+                        onClick={() => setMenuId(null)}
+                      />
+                      <div
+                        role="menu"
+                        className="absolute right-2.5 top-11 z-20 w-52 rounded-[14px] border border-border bg-raised p-1.5 shadow-lift"
+                      >
+                        <MenuItem
+                          icon="story"
+                          label="Open in editor"
+                          href={`/story?id=${story.id}`}
+                          onDone={() => setMenuId(null)}
+                        />
+                        <MenuItem
+                          icon="copy"
+                          label="Rename"
+                          onSelect={() => {
+                            setRenameTarget(story);
+                            setMenuId(null);
+                          }}
+                        />
+                        <MenuItem
+                          icon="layers"
+                          label="Duplicate"
+                          onSelect={() => {
+                            duplicate(story);
+                            setMenuId(null);
+                          }}
+                        />
+                        <MenuItem
+                          icon="chip"
+                          label="Add tag"
+                          onSelect={() => {
+                            setTagTargets([story]);
+                            setMenuId(null);
+                          }}
+                        />
+                        <div className="my-1 h-px bg-border" />
+                        <MenuItem
+                          icon="trash"
+                          label="Delete"
+                          tone="danger"
+                          onSelect={() => {
+                            setPendingDelete(story);
+                            setMenuId(null);
+                          }}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Caption */}
+                <div className={CARD_CAPTION}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={CARD_NAME}>{story.title}</span>
+                    {progress.live && (
+                      <span
+                        className={`shrink-0 ${CARD_OVERLAY_CHIP} bg-warning/15 !text-warning`}
+                      >
+                        <span className="size-1.5 animate-pulse rounded-full bg-current" />
+                        Generating
+                      </span>
+                    )}
+                  </div>
+                  <div className={CARD_META_ROW}>
+                    <span className={`min-w-0 truncate ${CARD_META}`}>
+                      {progress.done}/{progress.total} scene
+                      {progress.total === 1 ? "" : "s"} rendered
+                    </span>
+                    <span className={`shrink-0 ${CARD_META}`}>
+                      {formatDate(story.createdAt)}
+                    </span>
+                  </div>
                 </div>
               </div>
             );
@@ -470,14 +489,14 @@ function StoryCover({ story }: { story: Asset }) {
         src={cover}
         alt={story.title}
         ratio="16/9"
-        rounded="rounded-[12px]"
-        className="w-full border border-border"
+        rounded="rounded-t-[15px]"
+        className={CARD_MEDIA}
         sensitive={isSensitiveAsset(story)}
       />
     );
   }
   return (
-    <div className="flex aspect-video w-full items-center justify-center rounded-[12px] border border-border bg-surface-2">
+    <div className={`${CARD_FALLBACK} aspect-video rounded-t-[15px]`}>
       <Icon name="story" size={26} />
     </div>
   );

@@ -8,7 +8,22 @@ import { LibraryShell } from "@/components/library/LibraryShell";
 import { MenuItem } from "@/components/library/MenuItem";
 import { TagEditorDialog } from "@/components/library/TagEditorDialog";
 import {
-  Badge,
+  CARD_CAPTION,
+  CARD_CHECK,
+  CARD_MEDIA,
+  CARD_MEDIA_ZONE,
+  CARD_MENU_BTN,
+  CARD_META,
+  CARD_NAME,
+  CARD_OVERLAY_CHIP,
+  CARD_SCRIM,
+  CARD_SELECTED,
+  CARD_SHELL,
+  CARD_STAR,
+  CARD_STAR_GHOST,
+  CARD_STAR_ON,
+} from "@/components/library/card-styles";
+import {
   Button,
   ConfirmDialog,
   EmptyState,
@@ -27,6 +42,7 @@ import {
   type SortMode,
 } from "@/lib/library-selectors";
 import { removeAssets, toggleFavorite, updateAsset, useAssets } from "@/lib/store";
+import { formatDate } from "@/components/ui";
 import type { Asset } from "@/lib/types";
 
 /** Generation aspect keys → CSS ratios (fallback squares the tile). */
@@ -263,180 +279,164 @@ export function ImagesLibrary() {
             const isSelected = selected.has(asset.id);
             const tags = assetTags(asset);
             const isVideo = asset.kind === "video";
+            const media = (
+              <MediaFrame
+                src={asset.posterUrl ?? asset.url}
+                alt={asset.title}
+                ratio={aspectRatio(asset.settings.aspect)}
+                rounded="rounded-t-[15px]"
+                className={CARD_MEDIA}
+                sensitive={isSensitiveAsset(asset)}
+              />
+            );
             return (
               <div
                 key={asset.id}
-                className={`group relative mb-3 break-inside-avoid rounded-[16px] border bg-raised p-2 shadow-card transition-shadow hover:shadow-lift ${
-                  manage && isSelected ? "border-primary" : "border-border"
+                className={`mb-3 break-inside-avoid ${CARD_SHELL} ${
+                  manage && isSelected ? CARD_SELECTED : "border-border"
                 }`}
               >
-                {manage ? (
-                  <button
-                    type="button"
-                    role="checkbox"
-                    aria-checked={isSelected}
-                    aria-label={`Select ${asset.title}`}
-                    onClick={() => toggleSelected(asset.id)}
-                    className="block w-full"
-                  >
-                    <MediaFrame
-                      src={asset.posterUrl ?? asset.url}
-                      alt={asset.title}
-                      ratio={aspectRatio(asset.settings.aspect)}
-                      rounded="rounded-[12px]"
-                      className="w-full border border-border"
-                      sensitive={isSensitiveAsset(asset)}
-                    />
-                  </button>
-                ) : (
-                  <Link
-                    href={`/results?id=${asset.id}`}
-                    aria-label={`Open ${asset.title}`}
-                    className="relative block"
-                  >
-                    <MediaFrame
-                      src={asset.posterUrl ?? asset.url}
-                      alt={asset.title}
-                      ratio={aspectRatio(asset.settings.aspect)}
-                      rounded="rounded-[12px]"
-                      className="w-full border border-border"
-                      sensitive={isSensitiveAsset(asset)}
-                    />
-                    {isVideo && (
-                      <span className="pointer-events-none absolute bottom-2.5 left-2.5 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-semibold text-white">
-                        <Icon name="play" size={10} />
-                        {String(asset.settings.duration ?? "")}
-                      </span>
+                {/* Media zone */}
+                <div className={CARD_MEDIA_ZONE}>
+                  {manage ? (
+                    <button
+                      type="button"
+                      role="checkbox"
+                      aria-checked={isSelected}
+                      aria-label={`Select ${asset.title}`}
+                      onClick={() => toggleSelected(asset.id)}
+                      className="block w-full"
+                    >
+                      {media}
+                    </button>
+                  ) : (
+                    <Link
+                      href={`/results?id=${asset.id}`}
+                      aria-label={`Open ${asset.title}`}
+                      className="block"
+                    >
+                      {media}
+                    </Link>
+                  )}
+
+                  {/* Prompt + tags scrim */}
+                  <div className={CARD_SCRIM}>
+                    <p className="line-clamp-2 text-[11.5px] leading-snug text-white/90">
+                      {asset.prompt}
+                    </p>
+                    {tags.length > 0 && (
+                      <p className="mt-1 truncate text-[11px] font-medium text-white/70">
+                        {tags.join(" · ")}
+                      </p>
                     )}
-                  </Link>
-                )}
+                  </div>
 
-                {manage ? (
-                  <span
-                    className={`absolute left-3.5 top-3.5 flex size-6 items-center justify-center rounded-full border-2 ${
-                      isSelected
-                        ? "border-primary bg-primary-strong text-white"
-                        : "border-white/70 bg-black/30 text-transparent"
-                    }`}
-                  >
-                    <Icon name="check" size={13} />
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    aria-label={asset.favorite ? "Remove favourite" : "Add favourite"}
-                    onClick={() => toggleFavorite(asset.id)}
-                    className={`absolute left-3.5 top-3.5 flex size-7 items-center justify-center rounded-full bg-black/35 backdrop-blur-sm transition-opacity ${
-                      asset.favorite
-                        ? "text-warning opacity-100"
-                        : "text-white opacity-0 group-hover:opacity-100"
-                    }`}
-                  >
-                    <Icon name="star" size={14} />
-                  </button>
-                )}
+                  {isVideo && (
+                    <span className={`absolute bottom-2.5 left-2.5 z-[6] ${CARD_OVERLAY_CHIP}`}>
+                      <Icon name="play" size={10} />
+                      {String(asset.settings.duration ?? "")}
+                    </span>
+                  )}
 
-                {!manage && (
-                  <div className="absolute right-3.5 top-3.5">
+                  {manage ? (
+                    <span role="checkbox" aria-checked={isSelected} className={CARD_CHECK}>
+                      <Icon name="check" size={13} />
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      aria-label={asset.favorite ? "Remove favourite" : "Add favourite"}
+                      onClick={() => toggleFavorite(asset.id)}
+                      className={`${CARD_STAR} ${asset.favorite ? CARD_STAR_ON : CARD_STAR_GHOST}`}
+                    >
+                      <Icon name="star" size={14} />
+                    </button>
+                  )}
+                  {!manage && (
                     <button
                       type="button"
                       aria-label={`Actions for ${asset.title}`}
                       aria-expanded={menuId === asset.id}
-                      onClick={() =>
-                        setMenuId((id) => (id === asset.id ? null : asset.id))
-                      }
-                      className="flex size-7 items-center justify-center rounded-full bg-black/35 text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 aria-expanded:opacity-100"
+                      onClick={() => setMenuId((id) => (id === asset.id ? null : asset.id))}
+                      className={CARD_MENU_BTN}
                     >
                       <Icon name="more" size={15} />
                     </button>
-                    {menuId === asset.id && (
-                      <>
-                        <button
-                          type="button"
-                          aria-label="Close menu"
-                          className="fixed inset-0 z-10 cursor-default"
-                          onClick={() => setMenuId(null)}
-                        />
-                        <div
-                          role="menu"
-                          className="absolute right-0 top-9 z-20 w-52 rounded-[14px] border border-border bg-raised p-1.5 shadow-lift"
-                        >
-                          <MenuItem
-                            icon="image"
-                            label="Open in Results"
-                            href={`/results?id=${asset.id}`}
-                            onDone={() => setMenuId(null)}
-                          />
-                          <MenuItem
-                            icon="download"
-                            label="Download"
-                            onSelect={() => {
-                              downloadMedia(
-                                asset.url,
-                                `perabyte-${asset.kind}-${Date.now()}`,
-                              );
-                              toast.push("Your download has started.", "success");
-                              setMenuId(null);
-                            }}
-                          />
-                          <MenuItem
-                            icon="refresh"
-                            label="Reuse prompt"
-                            href={`/generate/${asset.kind === "video" ? "video" : "image"}?prompt=${encodeURIComponent(asset.prompt)}&style=${encodeURIComponent(String(asset.settings.style))}&aspect=${asset.settings.aspect}`}
-                            onDone={() => setMenuId(null)}
-                          />
-                          <MenuItem
-                            icon="copy"
-                            label="Copy prompt"
-                            onSelect={() => {
-                              void navigator.clipboard
-                                ?.writeText(asset.prompt)
-                                .then(() => toast.push("Prompt copied.", "success"))
-                                .catch(() =>
-                                  toast.push("Could not copy the prompt.", "error"),
-                                );
-                              setMenuId(null);
-                            }}
-                          />
-                          <MenuItem
-                            icon="chip"
-                            label="Add tag"
-                            onSelect={() => {
-                              setTagTargets([asset]);
-                              setMenuId(null);
-                            }}
-                          />
-                          <div className="my-1 h-px bg-border" />
-                          <MenuItem
-                            icon="trash"
-                            label="Delete"
-                            tone="danger"
-                            onSelect={() => {
-                              setPendingDelete(asset);
-                              setMenuId(null);
-                            }}
-                          />
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                <div className="flex items-center gap-1.5 px-1 pb-1 pt-2">
-                  {isVideo && <Badge tone="primary">Video</Badge>}
-                  {asset.favorite && (
-                    <Badge tone="warning">
-                      <Icon name="star" size={11} /> Favourite
-                    </Badge>
                   )}
-                  {tags.length > 0 && (
-                    <span className="min-w-0 truncate text-[11.5px] text-ink-soft">
-                      {tags.slice(0, 2).join(" · ")}
-                      {tags.length > 2 ? ` +${tags.length - 2}` : ""}
-                    </span>
+                  {menuId === asset.id && !manage && (
+                    <>
+                      <button
+                        type="button"
+                        aria-label="Close menu"
+                        className="fixed inset-0 z-10 cursor-default"
+                        onClick={() => setMenuId(null)}
+                      />
+                      <div
+                        role="menu"
+                        className="absolute right-2.5 top-11 z-20 w-52 rounded-[14px] border border-border bg-raised p-1.5 shadow-lift"
+                      >
+                        <MenuItem
+                          icon="image"
+                          label="Open in Results"
+                          href={`/results?id=${asset.id}`}
+                          onDone={() => setMenuId(null)}
+                        />
+                        <MenuItem
+                          icon="download"
+                          label="Download"
+                          onSelect={() => {
+                            downloadMedia(asset.url, `perabyte-${asset.kind}-${Date.now()}`);
+                            toast.push("Your download has started.", "success");
+                            setMenuId(null);
+                          }}
+                        />
+                        <MenuItem
+                          icon="refresh"
+                          label="Reuse prompt"
+                          href={`/generate/${asset.kind === "video" ? "video" : "image"}?prompt=${encodeURIComponent(asset.prompt)}&style=${encodeURIComponent(String(asset.settings.style))}&aspect=${asset.settings.aspect}`}
+                          onDone={() => setMenuId(null)}
+                        />
+                        <MenuItem
+                          icon="copy"
+                          label="Copy prompt"
+                          onSelect={() => {
+                            void navigator.clipboard
+                              ?.writeText(asset.prompt)
+                              .then(() => toast.push("Prompt copied.", "success"))
+                              .catch(() => toast.push("Could not copy the prompt.", "error"));
+                            setMenuId(null);
+                          }}
+                        />
+                        <MenuItem
+                          icon="chip"
+                          label="Add tag"
+                          onSelect={() => {
+                            setTagTargets([asset]);
+                            setMenuId(null);
+                          }}
+                        />
+                        <div className="my-1 h-px bg-border" />
+                        <MenuItem
+                          icon="trash"
+                          label="Delete"
+                          tone="danger"
+                          onSelect={() => {
+                            setPendingDelete(asset);
+                            setMenuId(null);
+                          }}
+                        />
+                      </div>
+                    </>
                   )}
                 </div>
-                <p className="truncate px-1 pb-1 text-[12px] text-muted">{asset.title}</p>
+
+                {/* Caption */}
+                <div className={`${CARD_CAPTION} flex items-center justify-between gap-2`}>
+                  <span className={CARD_NAME}>{asset.title}</span>
+                  <span className={`shrink-0 ${CARD_META}`}>
+                    {formatDate(asset.createdAt)}
+                  </span>
+                </div>
               </div>
             );
           })}
