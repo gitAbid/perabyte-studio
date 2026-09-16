@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ConvertDialog } from "@/components/story/ConvertDialog";
+import { SceneChainBadge } from "@/components/story/SceneChainBadge";
 import { SceneRefChips } from "@/components/story/SceneRefChips";
 import { Icon } from "@/components/Icon";
 import { MediaFrame, VideoStage } from "@/components/Media";
@@ -37,7 +38,12 @@ import {
   useAssets,
 } from "@/lib/store";
 import { appRunner } from "@/lib/story/runner";
-import { resolveChainModelPlan } from "@/lib/story/chain";
+import {
+  chainPredecessorIndex,
+  effectiveChainRef,
+  resolveChainModelPlan,
+  type EffectiveChainRef,
+} from "@/lib/story/chain";
 import {
   buildClipScenes,
   resolveEndCapableModel,
@@ -62,6 +68,19 @@ const CONTINUATIONS = [
 /** Placeholder copy for empty scene slots (after the first). */
 const PLACEHOLDERS = ["Continue the story", "Add an end…", "Add another scene"];
 
+/** Whether a badge's reference frame comes from an 18+ render — the thumb
+ * inherits the veil the source scene's own card would show. */
+function chainBadgeSensitive(
+  resolution: EffectiveChainRef,
+  scenes: StoryScene[],
+  scene: StoryScene,
+): boolean {
+  if (resolution.state === "chained") {
+    return scenes[resolution.predecessorIndex]?.safe === false;
+  }
+  return scene.safe === false;
+}
+
 export default function StoryPage() {
   const toast = useToast();
   const router = useRouter();
@@ -78,6 +97,12 @@ export default function StoryPage() {
   // the scene when it is committed (Generate or Add scene), then reset for
   // the next draft.
   const [draftRefs, setDraftRefs] = useState<{ startImageRef?: string; endImageRef?: string }>({});
+  // Inline scene-prompt editing: one scene at a time, queued/canceled only.
+  const [editingSceneId, setEditingSceneId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
+  // Guards against Escape unmounting the textarea and its blur committing
+  // the edit anyway.
+  const editCancelingRef = useRef(false);
 
   function setStoryId(id: string | null) {
     setStoryIdState(id);
@@ -384,6 +409,52 @@ export default function StoryPage() {
     appRunner.removeScene(storyId, sceneId);
   }
 
+  /** Commit an inline prompt edit. Empty prompts can never render, so they're
+   * refused (composer parity); the runner reads prompts at run time, so edits
+   * land for any scene that hasn't started. */
+  function commitScenePromptEdit(sceneId: string) {
+    setEditingSceneId(null);
+    if (!storyId) return;
+    const next = editDraft.trim();
+    if (!next) {
+      toast.push("A scene needs a prompt before it can render.", "error");
+      return;
+    }
+    updateStoryScenes(storyId, (list) =>
+      list.map((scene) =>
+        scene.id === sceneId ? { ...scene, prompt: next.slice(0, PROMPT_MAX) } : scene,
+      ),
+    );
+    toast.push("Scene prompt updated.");
+  }
+
+  /** Re-run ONE settled scene: park it back in the queue. A run in flight
+   * picks it up after the current scene; an idle story waits for Generate
+   * (the only trigger). Later scenes keep their results — same chain
+   * semantics as cancel. */
+  function handleRerunScene(sceneId: string) {
+    if (!storyId) return;
+    appRunner.requeueScene(storyId, sceneId);
+    toast.push(
+      scenes.some((scene) => scene.status === "generating")
+        ? "Scene re-queued — it renders after the current scene."
+        : "Scene re-queued — press Generate to render it.",
+    );
+  }
+
+  /** Swap a scene with its neighbor. Purely an ordering edit — the chain
+   * follows scene order, nothing re-renders from this. */
+  function moveScene(index: number, delta: -1 | 1) {
+    if (!storyId) return;
+    const target = index + delta;
+    if (target < 0 || target >= scenes.length) return;
+    updateStoryScenes(storyId, (list) => {
+      const next = [...list];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  }
+
   function toggleContinuity() {
     const next = !continuityOn;
     setContinuityOn(next);
@@ -537,6 +608,8 @@ export default function StoryPage() {
     setPromptError(undefined);
     setDraftRefs({});
     setSceneProgress({});
+    setEditingSceneId(null);
+    setEditDraft("");
   }
 
   async function handleEnhancePrompt() {
@@ -807,21 +880,15 @@ export default function StoryPage() {
             />
           )}
           {/* Scenes flow top-left, left to right, wrapping downward. */}
-          <div className="grid flex-1 content-start gap-4 sm:grid-cols-3">
-            {Array.from({ length: Math.max(3, scenes.length) }, (_, index) => {
+          <div className="grid flex-1 content-start gap-4 sm:grid-cols-2">
+            {Array.from({ length: Math.max(2, scenes.length) }, (_, index) => {
               const typed = scenes[index] as StoryScene | undefined;
               const ratioStyle = {
                 aspectRatio: `${ASPECTS[settings.aspect].width}/${ASPECTS[settings.aspect].height}`,
               };
               // The nearest non-canceled scene before this one — canceled
               // scenes are transparent to the chain (mirrors the runner).
-              let chainPredIndex = -1;
-              for (let i = index - 1; i >= 0; i -= 1) {
-                if (scenes[i]?.status !== "canceled") {
-                  chainPredIndex = i;
-                  break;
-                }
-              }
+              const chainPredIndex = chainPredecessorIndex(scenes, index);
               // A queued chain scene whose effective predecessor hasn't finished.
               const waitingFor =
                 typed &&
@@ -831,29 +898,44 @@ export default function StoryPage() {
                 !typed.startImageRef &&
                 chainPredIndex >= 0 &&
                 scenes[chainPredIndex].status !== "completed";
+              const chainResolution: EffectiveChainRef = typed
+                ? effectiveChainRef(scenes, index, continuityOn)
+                : { state: "none" };
+              const editable = typed?.status === "queued" || typed?.status === "canceled";
               return (
                 <div key={typed?.id ?? `slot-${index}`} className="min-w-0">
                   {typed?.url ? (
-                    typed.kind === "video" ? (
-                      <VideoStage
-                        posterUrl={typed.url}
-                        videoUrl={
-                          typed.mime?.startsWith("video/") || isVideoSource(typed.url)
-                            ? typed.url
-                            : undefined
-                        }
-                        title={typed.prompt}
-                        durationSeconds={Number(String(settings.duration).replace("s", "")) || 5}
-                        sensitive={typed.safe === false}
-                      />
-                    ) : (
-                      <MediaFrame
-                        src={typed.url}
-                        alt={typed.prompt}
-                        ratio={`${ASPECTS[settings.aspect].width}/${ASPECTS[settings.aspect].height}`}
-                        sensitive={typed.safe === false}
-                      />
-                    )
+                    <div className="group relative">
+                      {typed.kind === "video" ? (
+                        <VideoStage
+                          posterUrl={typed.url}
+                          videoUrl={
+                            typed.mime?.startsWith("video/") || isVideoSource(typed.url)
+                              ? typed.url
+                              : undefined
+                          }
+                          title={typed.prompt}
+                          durationSeconds={Number(String(settings.duration).replace("s", "")) || 5}
+                          sensitive={typed.safe === false}
+                        />
+                      ) : (
+                        <MediaFrame
+                          src={typed.url}
+                          alt={typed.prompt}
+                          ratio={`${ASPECTS[settings.aspect].width}/${ASPECTS[settings.aspect].height}`}
+                          sensitive={typed.safe === false}
+                        />
+                      )}
+                      <button
+                        type="button"
+                        aria-label={`Re-render scene ${index + 1}`}
+                        title="Render this scene again (later scenes keep their current results)"
+                        onClick={() => handleRerunScene(typed.id)}
+                        className="absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-full bg-white/95 text-ink-soft opacity-0 shadow-card transition-opacity hover:text-ink focus:opacity-100 group-hover:opacity-100"
+                      >
+                        <Icon name="refresh" size={13} />
+                      </button>
+                    </div>
                   ) : typed && typed.status === "generating" ? (
                     <div className="relative">
                       <div
@@ -867,6 +949,15 @@ export default function StoryPage() {
                           />
                         </div>
                       </div>
+                      {/* A rendering scene shows only a resolvable frame —
+                          "pending" here would mean a prompt-only run. */}
+                      {chainResolution.state === "manual" ||
+                      chainResolution.state === "chained" ? (
+                        <SceneChainBadge
+                          resolution={chainResolution}
+                          sensitive={chainBadgeSensitive(chainResolution, scenes, typed)}
+                        />
+                      ) : null}
                       <button
                         type="button"
                         aria-label={`Cancel scene ${index + 1}`}
@@ -891,6 +982,10 @@ export default function StoryPage() {
                           </span>
                         )}
                       </div>
+                      <SceneChainBadge
+                        resolution={chainResolution}
+                        sensitive={chainBadgeSensitive(chainResolution, scenes, typed)}
+                      />
                       <button
                         type="button"
                         aria-label={`Remove scene ${index + 1} from the queue`}
@@ -922,6 +1017,29 @@ export default function StoryPage() {
                         className="absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-full bg-white/95 text-ink-soft shadow-card transition-colors hover:text-ink"
                       >
                         <Icon name="close" size={13} />
+                      </button>
+                    </div>
+                  ) : typed && typed.status === "failed" ? (
+                    <div className="relative">
+                      <div
+                        className="flex w-full flex-col items-center justify-center rounded-[14px] border border-dashed border-red-200 bg-white px-3 text-center"
+                        style={ratioStyle}
+                      >
+                        <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-wide text-red-600 shadow-card">
+                          <Icon name="alert" size={10} /> Failed
+                        </span>
+                        <p className="mt-2 line-clamp-2 text-[11px] text-muted">
+                          {typed.error ?? "The render didn't make it."}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        aria-label={`Re-render scene ${index + 1}`}
+                        title="Render this scene again"
+                        onClick={() => handleRerunScene(typed.id)}
+                        className="absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-full bg-white/95 text-ink-soft shadow-card transition-colors hover:text-ink"
+                      >
+                        <Icon name="refresh" size={13} />
                       </button>
                     </div>
                   ) : index === 0 && !typed ? (
@@ -957,11 +1075,6 @@ export default function StoryPage() {
                     <p className="text-[11.5px] font-semibold uppercase tracking-wide text-muted">
                       Scene {index + 1}
                     </p>
-                    {typed?.status === "failed" && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-600">
-                        <Icon name="alert" size={11} /> failed
-                      </span>
-                    )}
                     {typed?.effectiveModelId && (
                       <span
                         className="inline-flex min-w-0 items-center gap-0.5 rounded-full bg-primary-soft px-1.5 py-0.5 text-[10px] font-bold text-primary"
@@ -999,12 +1112,73 @@ export default function StoryPage() {
                       !scenes[index + 1]?.startImageRef && (
                         <Icon name="link" size={11} className="text-muted" />
                       )}
+                    {typed && (
+                      <div className="ml-auto flex shrink-0 items-center gap-0.5">
+                        <button
+                          type="button"
+                          aria-label={`Move scene ${index + 1} earlier`}
+                          title="Move earlier"
+                          disabled={running || index === 0}
+                          onClick={() => moveScene(index, -1)}
+                          className="inline-flex size-6 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-ink disabled:opacity-30 disabled:hover:bg-transparent"
+                        >
+                          <Icon name="chevron-down" size={12} className="rotate-180" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Move scene ${index + 1} later`}
+                          title="Move later"
+                          disabled={running || index === scenes.length - 1}
+                          onClick={() => moveScene(index, 1)}
+                          className="inline-flex size-6 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-ink disabled:opacity-30 disabled:hover:bg-transparent"
+                        >
+                          <Icon name="chevron-down" size={12} />
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  {typed?.prompt && (
-                    <p className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-ink-soft">
-                      {typed.prompt}
-                    </p>
-                  )}
+                  {typed?.prompt &&
+                    (editingSceneId === typed.id && editable ? (
+                      <textarea
+                        autoFocus
+                        rows={2}
+                        maxLength={PROMPT_MAX}
+                        value={editDraft}
+                        onChange={(event) => setEditDraft(event.target.value)}
+                        onBlur={() => {
+                          if (editCancelingRef.current) {
+                            editCancelingRef.current = false;
+                            return;
+                          }
+                          commitScenePromptEdit(typed.id);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "Escape") {
+                            editCancelingRef.current = true;
+                            setEditingSceneId(null);
+                          }
+                        }}
+                        className="mt-0.5 w-full resize-none rounded-[8px] border border-primary/40 bg-white px-2 py-1.5 text-[12px] leading-snug text-ink outline-none"
+                      />
+                    ) : (
+                      <p
+                        onClick={
+                          editable
+                            ? () => {
+                                editCancelingRef.current = false; // a prior Escape must not swallow this commit
+                                setEditDraft(typed.prompt);
+                                setEditingSceneId(typed.id);
+                              }
+                            : undefined
+                        }
+                        title={editable ? "Click to edit the prompt" : undefined}
+                        className={`mt-0.5 line-clamp-2 text-[12px] leading-snug text-ink-soft ${
+                          editable ? "cursor-text hover:text-ink" : ""
+                        }`}
+                      >
+                        {typed.prompt}
+                      </p>
+                    ))}
                 </div>
               );
             })}

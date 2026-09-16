@@ -734,3 +734,91 @@ describe("story queue controls", () => {
     expect(calls[0][0].clientTag).toBe("story1:s1");
   });
 });
+
+describe("requeueScene", () => {
+  it("requeues a completed scene but never renders on its own", () => {
+    const deps = makeDeps();
+    const runner = createStoryRunner(deps);
+    deps.assets.set("story1", story([
+      scene({ id: "s1", status: "completed", url: "a", endFrameRef: "f1.png" }),
+      scene({ id: "s2", status: "completed", url: "b", endFrameRef: "f2.png" }),
+    ], { continuity: true }));
+
+    runner.requeueScene("story1", "s2");
+
+    expect(deps.assets.get("story1")!.scenes![1].status).toBe("queued");
+    // Idle story: Generate stays the only trigger.
+    expect(deps.requestGeneration).not.toHaveBeenCalled();
+  });
+
+  it("requeues a failed scene and clears its error", () => {
+    const deps = makeDeps();
+    const runner = createStoryRunner(deps);
+    deps.assets.set("story1", story([
+      scene({ id: "s1", status: "failed", error: "boom" }),
+      scene({ id: "s2", status: "queued" }),
+    ]));
+
+    runner.requeueScene("story1", "s1");
+
+    const s1 = deps.assets.get("story1")!.scenes![0];
+    expect(s1.status).toBe("queued");
+    expect(s1.error).toBeUndefined();
+  });
+
+  it("never touches a generating scene or unrelated canceled/failed scenes", () => {
+    const deps = makeDeps();
+    const runner = createStoryRunner(deps);
+    deps.assets.set("story1", story([
+      scene({ id: "s1", status: "queued" }),
+      scene({ id: "s2", status: "generating" }),
+      scene({ id: "s3", status: "canceled" }),
+      scene({ id: "s4", status: "failed", error: "x" }),
+    ], { continuity: false }));
+
+    runner.requeueScene("story1", "s2"); // generating → no-op
+    runner.requeueScene("story1", "s4"); // failed → queued (only this one)
+
+    const statuses = deps.assets.get("story1")!.scenes!.map((s) => s.status);
+    expect(statuses).toEqual(["queued", "generating", "canceled", "queued"]);
+  });
+
+  it("picks the requeued scene up when a chained run is in flight", async () => {
+    const deps = makeDeps();
+    const runner = createStoryRunner(deps);
+    const gate: { release?: () => void } = {};
+    deps.requestGeneration = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          gate.release = () =>
+            resolve({
+              requestId: "r",
+              status: "completed",
+              kind: "image",
+              elapsedMs: 1,
+              media: [{ id: "m", url: "/api/media?f=new.png", width: 8, height: 8, seed: 1 }],
+            });
+        }),
+    ) as unknown as typeof deps.requestGeneration;
+    deps.assets.set("story1", story([
+      scene({ id: "s1", status: "completed", url: "a", endFrameRef: "f1.png" }),
+      scene({ id: "s2" }),
+      scene({ id: "s3" }),
+    ], { continuity: true }));
+
+    runner.start("story1"); // s2 chains off s1 immediately; s3 waits (capacity 1)
+    await vi.waitFor(() => expect(deps.requestGeneration).toHaveBeenCalledTimes(1));
+
+    // Re-run scene 1 mid-run: chain capacity keeps it waiting.
+    runner.requeueScene("story1", "s1");
+    expect(deps.requestGeneration).toHaveBeenCalledTimes(1);
+
+    gate.release?.(); // s2 settles → schedule → s1 (re-queued) renders next
+    await vi.waitFor(() => expect(deps.requestGeneration).toHaveBeenCalledTimes(2));
+    // s1 renders as scene 1 — no chained start frame.
+    const call = deps.requestGeneration.mock.calls[1] as unknown as [
+      { startImageRef?: string },
+    ];
+    expect(call[0].startImageRef).toBeUndefined();
+  });
+});
