@@ -4,6 +4,7 @@ import {
   requestGeneration,
   type GenerationProgress,
 } from "@/lib/generation";
+import { chainPredecessor } from "@/lib/story/chain";
 import { extractLastFrame, refFromMediaUrl, uploadFrameRef } from "@/lib/media/frame";
 import { getAsset, updateStoryScenes } from "@/lib/store";
 import { composeSceneWithCharacter } from "@/lib/character";
@@ -73,16 +74,6 @@ export function createStoryRunner(deps: StoryRunnerDeps) {
 
   function continuityOn(story: Asset): boolean {
     return story.meta?.continuity !== false;
-  }
-
-  /** The nearest non-canceled scene before `index` — a canceled scene is
-   * transparent to the chain, so its successor continues from the scene
-   * before it. Undefined means "run without a chain ref" (like scene 1). */
-  function chainPredecessor(scenes: StoryScene[], index: number): StoryScene | undefined {
-    for (let i = index - 1; i >= 0; i -= 1) {
-      if (scenes[i].status !== "canceled") return scenes[i];
-    }
-    return undefined;
   }
 
   /** A chain scene runs when it has an explicit ref, is first (or everything
@@ -356,6 +347,17 @@ export function createStoryRunner(deps: StoryRunnerDeps) {
       deps.updateStoryScenes(storyId, (scenes) =>
         scenes.filter((scene) => scene.id !== sceneId),
       );
+      if (hasInFlight(storyId)) schedule(storyId);
+    },
+
+    /** Requeue ONE settled scene for a re-render (per-scene re-run). Unlike
+     * start(), nothing else is reset — unrelated failed/canceled scenes stay
+     * put. Re-schedules only while a run is in progress, so this never starts
+     * generating on its own (Generate is the only trigger for an idle story). */
+    requeueScene(storyId: string, sceneId: string) {
+      const scene = deps.getStory(storyId)?.scenes?.find((s) => s.id === sceneId);
+      if (!scene || scene.status === "generating") return;
+      patch(storyId, sceneId, { status: "queued", error: undefined });
       if (hasInFlight(storyId)) schedule(storyId);
     },
 
