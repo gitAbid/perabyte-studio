@@ -18,6 +18,7 @@ import {
   putModerationRepository,
 } from "@/lib/repositories/moderation.repository";
 import { getProviderConfig } from "@/lib/repositories/provider-config.repository";
+import sharp from "sharp";
 
 /**
  * Content-aware 18+ classification (spec 2026-09-16-smart-masking): one
@@ -37,6 +38,35 @@ export interface ModerationDecision {
 const CLASSIFIABLE_REFS = /\.(png|jpe?g|webp)$/;
 const MAX_VISION_BYTES = 4 * 1024 * 1024;
 const MAX_CONCURRENCY = 2;
+/** Endpoint cap: "Inline image exceeds maximum dimensions of 1024px on its
+ * longest side" (verified live 2026-09-16). Larger renders are downscaled. */
+const VISION_MAX_SIDE = 1024;
+
+/** Fit the bytes to the endpoint's 1024px inline-image cap; undecodable
+ * payloads pass through unchanged so the endpoint's own error (→ static
+ * fallback) stays the honest verdict path. */
+async function prepareVisionImage(
+  bytes: Buffer,
+  contentType: string,
+  log: Logger,
+): Promise<{ bytes: Buffer; contentType: string }> {
+  try {
+    const meta = await sharp(bytes).metadata();
+    const longest = Math.max(meta.width ?? 0, meta.height ?? 0);
+    if (longest <= VISION_MAX_SIDE) return { bytes, contentType };
+    const resized = await sharp(bytes)
+      .resize({ width: VISION_MAX_SIDE, height: VISION_MAX_SIDE, fit: "inside", withoutEnlargement: true })
+      .png()
+      .toBuffer();
+    log.debug("vision image downscaled to the 1024px endpoint cap", {
+      from: `${meta.width}x${meta.height}`,
+      bytes: resized.length,
+    });
+    return { bytes: resized, contentType: "image/png" };
+  } catch {
+    return { bytes, contentType };
+  }
+}
 
 const pending = new Map<string, Promise<ModerationDecision>>();
 
@@ -106,9 +136,10 @@ async function runClassification(
       });
       return fallback;
     }
+    const vision = await prepareVisionImage(stored.bytes, stored.contentType, log);
     const reply = await sogniVisionComplete(
       MODERATION_USER_INSTRUCTION,
-      { bytes: stored.bytes, contentType: stored.contentType },
+      { bytes: vision.bytes, contentType: vision.contentType },
       { signal },
     );
     if (signal?.aborted) {

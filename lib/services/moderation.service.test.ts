@@ -14,6 +14,7 @@ import {
   setProviderConfigPathForTests,
   updateProviderConfig,
 } from "@/lib/repositories/provider-config.repository";
+import sharp from "sharp";
 import {
   classifyMediaRef,
   resetModerationServiceForTests,
@@ -155,6 +156,33 @@ describe("classifyMediaRef", () => {
     const decision = await classifyMediaRef(PNG_REF);
     expect(decision.verdict?.uncertain).toBe(true);
     expect(decision.source).toBe("ai"); // persisted; policy (static fallback) is the caller's job
+  });
+
+  it("downscales oversized images to the 1024px endpoint cap", async () => {
+    const big = await sharp({
+      create: { width: 2000, height: 1000, channels: 3, background: { r: 120, g: 0, b: 0 } },
+    })
+      .png()
+      .toBuffer();
+    setMediaRepositoryForTests(
+      memoryMediaRepo({ [PNG_REF]: { ref: PNG_REF, contentType: "image/png", bytes: big } }),
+    );
+    let sentUri = "";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: unknown, init?: RequestInit) => {
+        const body = JSON.parse((init as RequestInit).body as string);
+        sentUri = body.messages[1].content[1].image_url.url;
+        return okReply(SAFE_REPLY);
+      }),
+    );
+    const decision = await classifyMediaRef(PNG_REF);
+    expect(decision.source).toBe("ai");
+    const match = sentUri.match(/^data:image\/png;base64,(.+)$/);
+    expect(match).toBeTruthy();
+    const meta = await sharp(Buffer.from(match![1], "base64")).metadata();
+    expect(meta.width).toBeLessThanOrEqual(1024);
+    expect(meta.height).toBeLessThanOrEqual(1024);
   });
 });
 
