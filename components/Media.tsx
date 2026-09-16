@@ -370,6 +370,7 @@ export function VideoStage({
   className = "",
   fit,
   fitStyle,
+  ratio = "16/9",
   sensitive,
 }: {
   posterUrl: string | null;
@@ -378,11 +379,14 @@ export function VideoStage({
   title: string;
   durationSeconds?: number;
   className?: string;
-  /** Shrink to the container instead of claiming a fixed 16:9 box. */
+  /** Shrink to the container instead of claiming a fixed aspect-ratio box. */
   fit?: boolean;
   /** Exact sizing for fit mode (e.g. the render's aspect ratio), applied when
    * `fit` is set so portrait renders are not cropped into a 16:9 stage. */
   fitStyle?: CSSProperties;
+  /** The render's native aspect ratio for the stage box when it is not sized
+   * by a fit container — defaults to the legacy 16:9 stage. */
+  ratio?: string;
   /** Source is 18+/uncensored — blur while the mask setting is on. */
   sensitive?: boolean;
 }) {
@@ -420,13 +424,13 @@ export function VideoStage({
         style={
           fit
             ? (fitStyle ?? {
-                aspectRatio: "16 / 9",
+                aspectRatio: ratio,
                 height: "100%",
                 width: "auto",
                 maxWidth: "100%",
                 maxHeight: "100%",
               })
-            : { aspectRatio: "16/9" }
+            : { aspectRatio: ratio }
         }
       >
         {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
@@ -455,13 +459,13 @@ export function VideoStage({
       style={
         fit
           ? (fitStyle ?? {
-              aspectRatio: "16 / 9",
+              aspectRatio: ratio,
               height: "100%",
               width: "auto",
               maxWidth: "100%",
               maxHeight: "100%",
             })
-          : { aspectRatio: "16/9" }
+          : { aspectRatio: ratio }
       }
     >
       {posterUrl ? (
