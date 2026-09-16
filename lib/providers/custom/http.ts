@@ -155,14 +155,19 @@ export async function httpJson<T>(
 export async function httpBytes(
   target: HttpTarget,
   url: string,
-  init?: { headers?: Record<string, string>; signal?: AbortSignal; timeoutMs?: number },
+  init?: {
+    headers?: Record<string, string>;
+    signal?: AbortSignal;
+    timeoutMs?: number;
+  },
+  fetchImpl: FetchImpl = fetch,
 ): Promise<Buffer | null> {
   try {
     const headers: Record<string, string> = {
       ...(target.apiKey ? { authorization: `Bearer ${target.apiKey}` } : {}),
       ...init?.headers,
     };
-    const response = await fetch(url, {
+    const response = await fetchImpl(url, {
       headers,
       cache: "no-store",
       signal: combinedSignal(init?.timeoutMs ?? 60_000, init?.signal),
