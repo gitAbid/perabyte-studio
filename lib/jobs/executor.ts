@@ -379,7 +379,7 @@ export class JobExecutor {
       // tagged jobs, a History asset for solo renders. Idempotent with the
       // client runner's own writes (same values, same ids).
       if (!job) return;
-      const sceneTag = job.clientTag?.match(/^s_([^:]+):(.+)$/);
+      const sceneTag = job.clientTag?.match(/^(s_[^:]+):(.+)$/);
       if (sceneTag) {
         this.absorbStoryScene(jobId, sceneTag[1], sceneTag[2], media, prepared, log);
       } else {
@@ -500,32 +500,46 @@ export class JobExecutor {
   private failFromError(jobId: string, error: unknown, log: Logger): void {
     const current = getJobsRepository(jobId);
     if (!current || (current.status !== "running" && current.status !== "queued")) return;
+    let message = (error as Error)?.message ?? "The render failed unexpectedly.";
+    let retryable = true;
     if (error instanceof GenerationServiceError) {
-      patchJobRepository(jobId, {
-        status: "failed",
-        error: error.message,
-        retryable: error.retryable,
-        finishedAt: this.now(),
-      });
-      return;
-    }
-    if (error instanceof ProviderError) {
-      patchJobRepository(jobId, {
-        status: "failed",
-        error: error.message,
-        retryable: error.retryable,
-        finishedAt: this.now(),
-      });
-      log.warn("job failed by provider", { jobId, message: error.message });
-      return;
+      message = error.message;
+      retryable = error.retryable;
+    } else if (error instanceof ProviderError) {
+      message = error.message;
+      retryable = error.retryable;
+      log.warn("job failed by provider", { jobId, message });
+    } else {
+      log.error("job failed unexpectedly", { jobId, error });
     }
     patchJobRepository(jobId, {
       status: "failed",
-      error: (error as Error)?.message ?? "The render failed unexpectedly.",
-      retryable: true,
+      error: message,
+      retryable,
       finishedAt: this.now(),
     });
-    log.error("job failed unexpectedly", { jobId, error });
+    // A failed story-scene job writes the failure into its scene and halts
+    // the run — a stuck "generating" tile must never wait on a dead job.
+    const sceneTag = current.clientTag?.match(/^(s_[^:]+):(.+)$/);
+    if (sceneTag) {
+      const story = getStoriesRepository(sceneTag[1]);
+      if (story?.scenes) {
+        patchStoryRepository(sceneTag[1], {
+          scenes: story.scenes.map((sc) =>
+            sc.id === sceneTag[2] && sc.status === "generating"
+              ? { ...sc, status: "failed" as const, error: message, progress: undefined }
+              : sc,
+          ),
+          meta: { ...(story.meta ?? {}), running: false },
+        });
+        log.warn("story run halted on scene failure", {
+          jobId,
+          storyId: sceneTag[1],
+          sceneId: sceneTag[2],
+          message,
+        });
+      }
+    }
   }
 
   private recordProgress(jobId: string, progress: ProviderProgress): void {

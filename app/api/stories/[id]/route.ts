@@ -6,6 +6,7 @@ import { listActiveJobsRepository } from "@/lib/repositories/jobs.repository";
 import {
   cancelStoryRun,
   cancelStoryScene,
+  mutateStoryScenes,
   requeueStoryScene,
   startStoryRun,
   type StoryRunInput,
@@ -55,6 +56,16 @@ export async function POST(
     }
     if (action === "cancel") {
       const story = await cancelStoryRun(id);
+      if (!story) {
+        return NextResponse.json({ error: "Story not found.", retryable: false }, { status: 404 });
+      }
+      return NextResponse.json({ story }, { headers: { "cache-control": "no-store" } });
+    }
+    if (action === "mutate") {
+      // Scene-level edits (add/remove/move/edit/continuity) are applied
+      // server-side as read-modify-write — the console never patches the
+      // record from stale client state while a run may be mutating it.
+      const story = await mutateStoryScenes(id, body as unknown as Parameters<typeof mutateStoryScenes>[1]);
       if (!story) {
         return NextResponse.json({ error: "Story not found.", retryable: false }, { status: 404 });
       }

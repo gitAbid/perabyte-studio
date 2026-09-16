@@ -232,3 +232,67 @@ export async function requeueStoryScene(storyId: string, sceneId: string): Promi
   if (isStoryRunning(story)) return advanceStoryChain(storyId);
   return getStoriesRepository(storyId);
 }
+
+/* ------------------------------------------------------------------ */
+/* Console mutations (server read-modify-write)                         */
+/* ------------------------------------------------------------------ */
+
+export type SceneMutation =
+  | { op: "add"; scene: StoryScene }
+  | { op: "remove"; sceneId: string }
+  | { op: "move"; sceneId: string; delta: -1 | 1 }
+  | { op: "edit"; sceneId: string; prompt: string }
+  | { op: "continuity"; value: boolean };
+
+/** Apply one scene-level edit to the live story record. A generating scene
+ * is never removed or edited mid-flight (cancel it first), mirroring the
+ * client runner's guards. */
+export function mutateStoryScenes(
+  storyId: string,
+  mutation: SceneMutation,
+): Asset | undefined {
+  const story = getStoriesRepository(storyId);
+  if (!story || story.kind !== "story") return undefined;
+  const scenes = story.scenes ?? [];
+
+  if (mutation.op === "continuity") {
+    patchStoryRepository(storyId, {
+      meta: { ...(story.meta ?? {}), continuity: mutation.value },
+    });
+    return getStoriesRepository(storyId);
+  }
+
+  if (mutation.op === "add") {
+    if (!mutation.scene.prompt?.trim() || scenes.length >= 6) {
+      return getStoriesRepository(storyId);
+    }
+    patchStoryRepository(storyId, { scenes: [...scenes, mutation.scene] });
+    return getStoriesRepository(storyId);
+  }
+
+  const index = scenes.findIndex((s) => s.id === mutation.sceneId);
+  if (index === -1) return getStoriesRepository(storyId);
+
+  if (mutation.op === "remove") {
+    if (scenes[index].status === "generating") return getStoriesRepository(storyId);
+    patchStoryRepository(storyId, { scenes: scenes.filter((s) => s.id !== mutation.sceneId) });
+    return getStoriesRepository(storyId);
+  }
+  if (mutation.op === "edit") {
+    const next = mutation.prompt.trim();
+    if (!next || scenes[index].status === "generating") return getStoriesRepository(storyId);
+    patchStoryRepository(storyId, {
+      scenes: scenes.map((s) =>
+        s.id === mutation.sceneId ? { ...s, prompt: next.slice(0, 1000) } : s,
+      ),
+    });
+    return getStoriesRepository(storyId);
+  }
+  // move
+  const target = index + mutation.delta;
+  if (target < 0 || target >= scenes.length) return getStoriesRepository(storyId);
+  const reordered = [...scenes];
+  [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+  patchStoryRepository(storyId, { scenes: reordered });
+  return getStoriesRepository(storyId);
+}

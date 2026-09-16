@@ -33,8 +33,6 @@ import { composeSceneWithCharacters } from "@/lib/character";
 import { refFromMediaUrl, uploadFrameRef } from "@/lib/media/frame";
 import {
   addAsset,
-  updateAsset,
-  updateStoryScenes,
   useAssets,
 } from "@/lib/store";
 import {
@@ -326,17 +324,20 @@ export default function StoryPage() {
 
   async function runStoryAction(
     action: "generate" | "cancel" | "rerun",
-    sceneId?: string,
-    body?: Record<string, unknown>,
+    options?: { sceneId?: string; body?: Record<string, unknown>; idOverride?: string },
   ): Promise<boolean> {
-    if (!storyId) return false;
+    // Generate passes idOverride right after creating the story — the state
+    // variable still holds the previous render's value at that point.
+    const target = options?.idOverride ?? storyId;
+    if (!target) return false;
+    const sceneId = options?.sceneId;
     const params = new URLSearchParams({ action });
     if (sceneId) params.set("sceneId", sceneId);
     try {
-      const response = await fetch(`/api/stories/${storyId}?${params}`, {
+      const response = await fetch(`/api/stories/${target}?${params}`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(body ?? {}),
+        body: JSON.stringify(options?.body ?? {}),
       });
       if (!response.ok) {
         const payload = (await response.json().catch(() => ({}))) as { error?: string };
@@ -400,16 +401,35 @@ export default function StoryPage() {
           characterIds: attachedCharacters.map((c) => c.id),
         },
       };
+      try {
+        await fetch("/api/assets", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(asset),
+        });
+      } catch {
+        toast.push("We could not reach the studio service. Check your connection and retry.", "error");
+        return;
+      }
       addAsset(asset);
       setStoryId(id);
     }
     announceChainModel(draft);
+    // A typed draft joins the queue on the SERVER record before the run
+    // starts (awaited — the run reads the story from the server).
+    if (draftPrompt && storyId) {
+      const draftScene = draft[draft.length - 1];
+      if (draftScene) await mutateScene({ op: "add", scene: draftScene });
+    }
     // The SERVER runs the story now (Phase C): prompts are snapshotted with
     // the cast anchors, the settings snapshot follows the current pickers,
     // and the chain advances server-side — the tab can close freely.
-    const started = await runStoryAction("generate", undefined, {
-      settingsPatch: currentSettings(),
-      runPrompts: composeRunPrompts(draft),
+    const started = await runStoryAction("generate", {
+      idOverride: id,
+      body: {
+        settingsPatch: currentSettings(),
+        runPrompts: composeRunPrompts(draft),
+      },
     });
     if (started) {
       toast.push(
@@ -441,14 +461,25 @@ export default function StoryPage() {
     if (!storyId) return;
     // A generating scene's job is canceled first; then the scene leaves the
     // record. Queued scenes drop silently — the chain skips them.
-    const scene = scenes.find((s) => s.id === sceneId);
-    const stop = scene?.status === "generating"
-      ? fetch(`/api/stories/${storyId}?sceneId=${encodeURIComponent(sceneId)}`, { method: "DELETE" }).catch(() => undefined)
-      : Promise.resolve();
-    void stop.then(() => {
-      updateStoryScenes(storyId, (list) => list.filter((s) => s.id !== sceneId));
-      void runStoryRefresh();
-    });
+    void mutateScene({ op: "remove", sceneId });
+  }
+
+  /** One scene-level edit, applied server-side (read-modify-write) so the
+   * console never overwrites a run that may be mutating the same record. */
+  async function mutateScene(mutation: Record<string, unknown>) {
+    if (!storyId) return;
+    try {
+      const response = await fetch(`/api/stories/${storyId}?action=mutate`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(mutation),
+      });
+      if (!response.ok) return;
+      const data = (await response.json()) as { story?: Asset };
+      if (data.story) setLiveStory(data.story);
+    } catch {
+      /* offline — the poll loop refreshes server truth on the next tick */
+    }
   }
 
   /** Re-read the story record (server truth) into the console view. */
@@ -473,11 +504,7 @@ export default function StoryPage() {
       toast.push("A scene needs a prompt before it can render.", "error");
       return;
     }
-    updateStoryScenes(storyId, (list) =>
-      list.map((scene) =>
-        scene.id === sceneId ? { ...scene, prompt: next.slice(0, PROMPT_MAX) } : scene,
-      ),
-    );
+    void mutateScene({ op: "edit", sceneId, prompt: next.slice(0, PROMPT_MAX) });
     toast.push("Scene prompt updated.");
   }
 
@@ -487,7 +514,7 @@ export default function StoryPage() {
    * semantics as cancel. */
   function handleRerunScene(sceneId: string) {
     if (!storyId) return;
-    void runStoryAction("rerun", sceneId).then((ok) => {
+    void runStoryAction("rerun", { sceneId }).then((ok) => {
       if (!ok) return;
       toast.push(
         running
@@ -503,23 +530,15 @@ export default function StoryPage() {
     if (!storyId) return;
     const target = index + delta;
     if (target < 0 || target >= scenes.length) return;
-    updateStoryScenes(storyId, (list) => {
-      const next = [...list];
-      [next[index], next[target]] = [next[target], next[index]];
-      return next;
-    });
+    void mutateScene({ op: "move", sceneId: scenes[index].id, delta });
   }
 
   function toggleContinuity() {
     const next = !continuityOn;
     setContinuityOn(next);
     if (storyId) {
-      // Re-schedule under the new rule: ON chains the rest from the latest
-      // completed frame; OFF releases every queued scene in parallel. A
-      // paused queue keeps waiting — only a run in flight continues.
-      const meta = { ...(story?.meta ?? {}), continuity: next };
-      updateAsset(storyId, { meta });
-      void runStoryRefresh();
+      // Applied server-side: the chain reads continuity at each advance.
+      void mutateScene({ op: "continuity", value: next });
     }
   }
 
@@ -603,7 +622,7 @@ export default function StoryPage() {
 
   /* ------------------------------ helpers ------------------------------ */
 
-  function addScene() {
+  async function addScene() {
     // Validation: a scene without a prompt can never render, so it can't be
     // queued — blank prompts produce garbage like ", an establishing shot".
     if (!prompt.trim()) {
@@ -622,11 +641,12 @@ export default function StoryPage() {
     };
     setDraftRefs({});
     setPrompt("");
-    if (storyId && story) {
+    if (storyId) {
       // Queued only — nothing renders until Generate is pressed.
-      updateStoryScenes(storyId, (list) => [...list, draft]);
+      void mutateScene({ op: "add", scene: draft });
     } else {
-      // No story yet — create the queue asset with just this scene.
+      // No story yet — create the queue asset with just this scene. The
+      // server write is awaited: later scene mutations must never race it.
       const id = `s_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
       const asset: Asset = {
         id,
@@ -647,6 +667,16 @@ export default function StoryPage() {
           characterIds: attachedCharacters.map((c) => c.id),
         },
       };
+      try {
+        await fetch("/api/assets", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(asset),
+        });
+      } catch {
+        toast.push("We could not reach the studio service. Check your connection and retry.", "error");
+        return;
+      }
       addAsset(asset);
       setStoryId(id);
     }
@@ -886,7 +916,7 @@ export default function StoryPage() {
               block
               icon="plus"
               disabled={running || scenes.length >= 6}
-              onClick={addScene}
+              onClick={() => void addScene()}
             >
               Add scene
             </Button>
