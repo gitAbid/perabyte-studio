@@ -228,7 +228,8 @@ function validateLoras(value: unknown): LoraSelection[] {
  * the catalog itself is unreachable the adapters are dropped entirely: a render
  * without its LoRAs beats no render at all.
  */
-async function resolveLoras(
+/** Exported for the gating regression tests; not part of the public surface. */
+export async function resolveLoras(
   selections: LoraSelection[],
   rawModelId: string,
   safe: boolean,
@@ -238,7 +239,7 @@ async function resolveLoras(
   const known = new Set(
     (catalog?.loras ?? [])
       .filter((entry) => entry.modelIds.includes(rawModelId))
-      .filter((entry) => safe || (!entry.nsfw && !entry.sexual))
+      .filter((entry) => !safe || (!entry.nsfw && !entry.sexual))
       .map((entry) => entry.loraId),
   );
   const kept = selections.filter((s) => known.has(s.loraId));
