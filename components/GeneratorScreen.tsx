@@ -29,7 +29,7 @@ import {
   setSoloCharacters,
   useSettings,
 } from "@/lib/repositories/settings.repository";
-import { useCharacters } from "@/lib/repositories/characters.repository";
+import { useCharacters } from "@/lib/character-store";
 import { addAsset, assetFromResponse, DEMO_SPECS, toggleFavorite, useAssets } from "@/lib/store";
 import type { DemoSpec } from "@/lib/store";
 import type { GenerationSettings } from "@/lib/types";

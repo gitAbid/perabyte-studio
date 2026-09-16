@@ -25,7 +25,7 @@ describe("parseCharacterRow", () => {
     expect(row!.favorite).toBe(true);
     expect(row!.parentId).toBe("ch_0");
     expect(row!.tags).toEqual(["main cast"]);
-    expect((row as Record<string, unknown>).futureField).toBe(1);
+    expect((row as unknown as Record<string, unknown>).futureField).toBe(1);
   });
 
   it("rejects rows missing identity or spec", () => {

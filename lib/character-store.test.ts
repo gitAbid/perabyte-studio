@@ -7,7 +7,7 @@ import {
   removeCharacter,
   resetCharactersForTests,
   updateCharacter,
-} from "@/lib/repositories/characters.repository";
+} from "@/lib/character-store";
 
 class LocalStorageStub {
   private store = new Map<string, string>();

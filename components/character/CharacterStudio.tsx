@@ -39,7 +39,7 @@ import {
   getCharacter,
   removeCharacter,
   useCharacters,
-} from "@/lib/repositories/characters.repository";
+} from "@/lib/character-store";
 import { addAsset } from "@/lib/store";
 import { titleFromPrompt } from "@/lib/constants";
 import type { GenerationResponse } from "@/lib/types";

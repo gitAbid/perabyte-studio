@@ -53,7 +53,7 @@ import {
   setStoryCharacters,
   useSettings,
 } from "@/lib/repositories/settings.repository";
-import { useCharacters } from "@/lib/repositories/characters.repository";
+import { useCharacters } from "@/lib/character-store";
 import type { Asset, GenerationSettings, StoryScene } from "@/lib/types";
 
 const CONTINUATIONS = [

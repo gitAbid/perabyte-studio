@@ -3,7 +3,7 @@
 import { Icon } from "@/components/Icon";
 import { MediaFrame } from "@/components/Media";
 import { Button } from "@/components/ui";
-import type { SavedCharacter } from "@/lib/repositories/characters.repository";
+import type { SavedCharacter } from "@/lib/character-store";
 
 const HERO_MAIN = "/character/look-editorial.jpg";
 const HERO_SIDE = ["/character/look-golden.jpg", "/character/look-urban.jpg"];
