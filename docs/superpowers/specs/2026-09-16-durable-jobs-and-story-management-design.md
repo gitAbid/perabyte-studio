@@ -21,7 +21,10 @@ Renders live inside an HTTP request and stories live inside one browser.
     until 24 h pruning.
   - Absorption needs exactly the right page open (`GeneratorScreen` for solo,
     `/story` for that story); History never absorbs.
-  - `appRunner.rehydrate()` is dead code — nothing calls it.
+  - Boot-time resume exists (`StoreBootstrap` calls `appRunner.rehydrate` on
+    every load) but can only see stories still in that browser's store —
+    a story generated elsewhere, or after a storage clear, has nothing to
+    resume from.
 - **Navigation kills renders.** The story runner and in-flight generation
   requests live in page components; navigating to Settings (or anywhere) and
   back loses the run and strands scenes.
