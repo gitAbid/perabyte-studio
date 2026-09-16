@@ -1,5 +1,5 @@
-import { getStudioEnv } from "@/lib/config/env";
-import { ProviderError, type TextModelDescriptor } from "@/lib/providers/types";
+import { sogniChat } from "@/lib/providers/sogni/sogni.chat";
+import type { TextModelDescriptor } from "@/lib/providers/types";
 
 export const DEFAULT_SOGNI_TEXT_MODEL = "qwen3.5-35b-a3b-abliterated-gguf-q4km";
 
@@ -29,6 +29,9 @@ export const SOGNI_TEXT_MODELS: TextModelDescriptor[] = [
 
 const TIMEOUT_MS = 25_000;
 
+const DEFAULT_TEXT_SYSTEM =
+  "You rewrite AI-generation prompts. Follow the user's rules exactly and reply with the rewritten prompt only.";
+
 export interface TextCompletionOptions {
   signal?: AbortSignal;
   modelId?: string;
@@ -39,63 +42,14 @@ export async function sogniTextComplete(
   instruction: string,
   options: TextCompletionOptions = {},
 ): Promise<string> {
-  const env = getStudioEnv();
-  if (!env.sogniApiKey) {
-    throw new ProviderError("Sogni is not configured.", { retryable: false });
-  }
-
-  // Strip "sogni:" prefix if present
   let model = options.modelId ?? DEFAULT_SOGNI_TEXT_MODEL;
   if (model.startsWith("sogni:")) {
     model = model.slice("sogni:".length);
   }
-
-  const system =
-    options.systemPrompt ??
-    "You rewrite AI-generation prompts. Follow the user's rules exactly and reply with the rewritten prompt only.";
-
-  const timeout = AbortSignal.timeout(TIMEOUT_MS);
-  let response: Response;
-  try {
-    response = await fetch(`${env.sogniRestUrl}/v1/chat/completions`, {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${env.sogniApiKey}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: instruction },
-        ],
-        max_tokens: 700,
-        stream: false,
-      }),
-      signal: options.signal ? AbortSignal.any([options.signal, timeout]) : timeout,
-    });
-  } catch (error) {
-    if ((error as Error)?.name === "TimeoutError") {
-      throw new ProviderError("The Sogni enhancer timed out.", { retryable: true });
-    }
-    if ((error as Error)?.name === "AbortError") throw error;
-    throw new ProviderError("The Sogni enhancer is unreachable.", { retryable: true });
-  }
-
-  if (!response.ok) {
-    throw new ProviderError(`The Sogni enhancer replied ${response.status}.`, {
-      retryable: response.status >= 500 || response.status === 429,
-    });
-  }
-
-  const body = (await response.json().catch(() => null)) as {
-    choices?: { message?: { content?: string } }[];
-  } | null;
-  const content = body?.choices?.[0]?.message?.content?.trim() ?? "";
-  if (!content) {
-    throw new ProviderError("The Sogni enhancer returned an empty reply.", {
-      retryable: true,
-    });
-  }
-  return content;
+  return sogniChat(model, instruction, {
+    signal: options.signal,
+    systemPrompt: options.systemPrompt ?? DEFAULT_TEXT_SYSTEM,
+    timeoutMs: TIMEOUT_MS,
+    label: "Sogni enhancer",
+  });
 }
