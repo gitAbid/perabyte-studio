@@ -21,6 +21,13 @@ export interface CharacterSpec {
   // Step 1 — Character
   prompt: string;
   style: string;
+  /**
+   * Simple-mode identity: the prompt IS the character. Renders use the raw
+   * prompt and reuse composes the prompt itself (not the defaulted anchor
+   * fields) into Solo/Story scenes. Set by Simple mode, cleared when the
+   * user switches to Detailed and starts tuning real fields.
+   */
+  freeform?: boolean;
 
   // Step 2 — Appearance
   gender: string;
@@ -57,6 +64,7 @@ export interface CharacterSpec {
 export const DEFAULT_CHARACTER_SPEC: CharacterSpec = {
   prompt: "",
   style: "Realistic",
+  freeform: false,
 
   gender: "Female",
   age: 25,
@@ -765,14 +773,18 @@ const NUDE_OUTFITS = new Set([
  * The character-identity text: who this person is, what they look like and
  * wear. Composed from the spec alone — no scene, pose or render settings —
  * so the same anchor keeps the character consistent wherever it is reused.
+ * Freeform characters (Simple mode) use their prompt verbatim.
  */
 export function composeCharacterAnchor(spec: CharacterSpec): string {
+  if (spec.freeform) return spec.prompt.trim();
   return `portrait of ${composeAnchorBody(spec)}`;
 }
 
 /** The anchor without its "portrait of" lead — the reusable half that
  * multi-character scenes label per person ("First: …; Second: …"). */
 function composeAnchorBody(spec: CharacterSpec): string {
+  if (spec.freeform) return spec.prompt.trim();
+
   const parts: string[] = [];
 
   const noun = GENDER_NOUN[spec.gender] ?? "person";
@@ -835,12 +847,133 @@ function composeAnchorBody(spec: CharacterSpec): string {
 
 /**
  * Fold the wizard choices into one descriptive prompt for the character
- * render: the user's own prompt leads, the identity anchor follows.
+ * render: the user's own prompt leads, the identity anchor follows. Freeform
+ * (Simple mode) characters render their prompt alone — the anchor would
+ * duplicate it.
  */
 export function composeCharacterPrompt(spec: CharacterSpec): string {
   const base = spec.prompt.trim();
+  if (spec.freeform) return base;
   const anchor = composeCharacterAnchor(spec);
   return base ? `${base}, ${anchor}` : anchor;
+}
+
+/* ------------------------------------------------------------------ */
+/* Character sheet — multi-view design renders                         */
+/* ------------------------------------------------------------------ */
+
+export type SheetViewId = "front" | "back" | "face" | "chest" | "hip" | "butt";
+
+export interface SheetView {
+  id: SheetViewId;
+  label: string;
+  /** Framing clause appended after the character identity. */
+  framing: string;
+  /** Close-ups always render square; full views use the render aspect. */
+  kind: "full" | "closeup";
+}
+
+/**
+ * The six design-sheet views the panel renders, like a character reference
+ * sheet. Order matters twice over: Full Front is rendered first as the
+ * identity base every other view chains its reference image to, and saved
+ * sheets keep this order when restoring views into the panel.
+ */
+export const SHEET_VIEWS: SheetView[] = [
+  {
+    id: "front",
+    label: "Full Front",
+    framing:
+      "full body character design sheet, standing front view, head to toe in frame, arms relaxed, plain neutral studio background",
+    kind: "full",
+  },
+  {
+    id: "back",
+    label: "Full Back",
+    framing:
+      "full body character design sheet, standing back view, seen from behind, head to toe in frame, plain neutral studio background",
+    kind: "full",
+  },
+  {
+    id: "face",
+    label: "Face",
+    framing:
+      "close-up portrait of the face, front view, detailed facial features, plain neutral studio background",
+    kind: "closeup",
+  },
+  {
+    id: "chest",
+    label: "Chest",
+    framing:
+      "close-up of the chest and torso, front view, plain neutral studio background",
+    kind: "closeup",
+  },
+  {
+    id: "hip",
+    label: "Hip",
+    framing:
+      "close-up of the hips and waist, front view, plain neutral studio background",
+    kind: "closeup",
+  },
+  {
+    id: "butt",
+    label: "Butt",
+    framing:
+      "close-up of the hips and butt, rear view, plain neutral studio background",
+    kind: "closeup",
+  },
+];
+
+export function sheetViewById(id: string): SheetView | undefined {
+  return SHEET_VIEWS.find((view) => view.id === id);
+}
+
+/** Leads every chained view so img2img keeps the same person across views. */
+export const SHEET_CHAIN_LEAD = "same character as the reference image";
+
+/**
+ * The render prompt for one sheet view: the character identity (prompt +
+ * anchor, or the raw prompt for freeform characters), the view framing, and
+ * — when chaining off the front view — the reference instruction up front.
+ */
+export function composeSheetPrompt(
+  spec: CharacterSpec,
+  view: SheetView,
+  chained: boolean,
+): string {
+  return [
+    ...(chained ? [SHEET_CHAIN_LEAD] : []),
+    composeCharacterPrompt(spec),
+    view.framing,
+  ]
+    .filter(Boolean)
+    .join(", ");
+}
+
+/**
+ * Sheet renders are one image per view; close-ups are always square, full
+ * views take the render aspect. Safety, style, model and LoRA semantics are
+ * the render settings' — the same gate Solo and Story follow.
+ */
+export function characterSheetSettings(
+  spec: CharacterSpec,
+  view: SheetView,
+  params: CharacterRenderParams,
+  uncensored: boolean,
+) {
+  return {
+    ...characterGenerationSettings(
+      spec,
+      {
+        ...params,
+        ...(view.kind === "closeup"
+          ? { aspect: "1:1" as CharacterRenderParams["aspect"] }
+          : {}),
+      },
+      uncensored,
+    ),
+    count: 1,
+  };
 }
 
 /**
