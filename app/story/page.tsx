@@ -47,6 +47,10 @@ import {
   resolveEndCapableModel,
   type ConvertSource,
 } from "@/lib/story/convert";
+import {
+  putStoryAsset,
+  storyExistsOnServer,
+} from "@/lib/story/records";
 import { isVideoSource } from "@/lib/renderer";
 import {
   setSelectedModel,
@@ -150,6 +154,17 @@ export default function StoryPage() {
     async function tick() {
       try {
         const response = await fetch(`/api/stories/${storyId}`, { cache: "no-store" });
+        if (response.status === 404) {
+          // The active story is gone server-side (deleted in another tab,
+          // record store reset): drop the stale id instead of letting every
+          // action dead-end on "That story does not exist."
+          if (!stop) {
+            setStoryId(null);
+            setLiveStory(undefined);
+            toast.push("That story no longer exists — starting a fresh one.");
+          }
+          return;
+        }
         if (!response.ok) return;
         const data = (await response.json()) as {
           story?: Asset;
@@ -381,8 +396,12 @@ export default function StoryPage() {
     setDraftRefs({});
     const id =
       storyId ?? `s_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
-    if (!storyId) {
-      const asset: Asset = {
+    const runBody = {
+      settingsPatch: currentSettings(),
+      runPrompts: composeRunPrompts(draft),
+    };
+    function buildStoryAsset(): Asset {
+      return {
         id,
         kind: "story",
         title: draftPrompt.slice(0, 40) || "Untitled story",
@@ -401,13 +420,11 @@ export default function StoryPage() {
           characterIds: attachedCharacters.map((c) => c.id),
         },
       };
-      try {
-        await fetch("/api/assets", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify(asset),
-        });
-      } catch {
+    }
+    if (!storyId) {
+      const asset = buildStoryAsset();
+      const created = await putStoryAsset(asset);
+      if (!created) {
         toast.push("We could not reach the studio service. Check your connection and retry.", "error");
         return;
       }
@@ -424,13 +441,17 @@ export default function StoryPage() {
     // The SERVER runs the story now (Phase C): prompts are snapshotted with
     // the cast anchors, the settings snapshot follows the current pickers,
     // and the chain advances server-side — the tab can close freely.
-    const started = await runStoryAction("generate", {
-      idOverride: id,
-      body: {
-        settingsPatch: currentSettings(),
-        runPrompts: composeRunPrompts(draft),
-      },
-    });
+    let started = await runStoryAction("generate", { idOverride: id, body: runBody });
+    if (!started && storyId && !(await storyExistsOnServer(id))) {
+      // A restored id the server no longer has (deleted in another tab,
+      // store reset): recreate the record from what the console shows and
+      // start over instead of dead-ending on "That story does not exist."
+      const asset = buildStoryAsset();
+      if (await putStoryAsset(asset)) {
+        addAsset(asset);
+        started = await runStoryAction("generate", { idOverride: id, body: runBody });
+      }
+    }
     if (started) {
       toast.push(
         `Rendering ${draft.length} scene${draft.length === 1 ? "" : "s"} — one after another, on the server.`,
