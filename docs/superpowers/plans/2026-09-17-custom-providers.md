@@ -21,7 +21,7 @@
 - Modify: `lib/repositories/provider-config.repository.ts`
 - Test: `lib/repositories/provider-config.repository.test.ts`
 
-- [ ] **Step 1: Failing tests** — add to the existing test file:
+- [x] **Step 1: Failing tests** — add to the existing test file:
 
 ```ts
 import {
@@ -89,8 +89,8 @@ describe("customProviders config", () => {
 // test helpers in this file already do temp-path seeding — reuse them).
 ```
 
-- [ ] **Step 2: Run** `npx vitest run lib/repositories/provider-config.repository.test.ts` → new tests FAIL (`getConfigRevision` not exported, merge ignores `customProviders`).
-- [ ] **Step 3: Implement** in the repository:
+- [x] **Step 2: Run** `npx vitest run lib/repositories/provider-config.repository.test.ts` → new tests FAIL (`getConfigRevision` not exported, merge ignores `customProviders`).
+- [x] **Step 3: Implement** in the repository:
 
 ```ts
 export const CUSTOM_FORMATS = ["openai", "google", "anthropic"] as const;
@@ -136,8 +136,8 @@ then applies ops in order: `upsert` (replace by id or append), `remove` (filter)
 string; coerce `models` to valid entries (`model` non-empty string, `kind` valid, `enabled`
 boolean default false); unknown fields dropped.
 
-- [ ] **Step 4: Run** again → PASS (whole file).
-- [ ] **Step 5: Commit** `feat(config): customProviders[] schema with op-based patches and revision counter`.
+- [x] **Step 4: Run** again → PASS (whole file).
+- [x] **Step 5: Commit** `feat(config): customProviders[] schema with op-based patches and revision counter`.
 
 ### Task 2: Format contract, classifier, hardened HTTP helper
 
@@ -145,7 +145,7 @@ boolean default false); unknown fields dropped.
 - Create: `lib/providers/custom/formats/types.ts`, `lib/providers/custom/formats/classify.ts`, `lib/providers/custom/http.ts`
 - Test: `lib/providers/custom/formats/classify.test.ts`, `lib/providers/custom/http.test.ts`
 
-- [ ] **Step 1: `types.ts`** (pure types, no test needed):
+- [x] **Step 1: `types.ts`** (pure types, no test needed):
 
 ```ts
 import type { GeneratedArtifact, ProviderContext, TextGenerationRequest, TextGenerationResult } from "@/lib/providers/types";
@@ -176,7 +176,7 @@ Note: `CustomProviderFormat` lives in the repository (Task 1) — if the import 
 feels inverted (providers importing from repositories), re-export the type from here and
 import elsewhere from `formats/types`. Keep one definition site.
 
-- [ ] **Step 2: `classify.test.ts`** then **`classify.ts`**:
+- [x] **Step 2: `classify.test.ts`** then **`classify.ts`**:
 
 ```ts
 // classify.test.ts
@@ -216,7 +216,7 @@ returns `"off"` when no pattern matched AND no text pattern matched; keep table 
 (`my-weird-model → off`). `guessEntry(list: {model, label?}[]): CustomModelEntry[]` maps
 kind via classifyModelId, `enabled: kind === "image" || kind === "video"`, keeps label.
 
-- [ ] **Step 3: `http.test.ts`** then **`http.ts`** — mirror `lib/providers/apikey-fan/client.ts`
+- [x] **Step 3: `http.test.ts`** then **`http.ts`** — mirror `lib/providers/apikey-fan/client.ts`
   semantics (Bearer auth, JSON, 429/408 retry on POST, 5xx retry on GET only, timeout via
   `AbortSignal.timeout` combined with caller signal, `ProviderError` mapping) but with
   neutral error copy that names the provider label. Injectable fetch for tests:
@@ -242,8 +242,8 @@ export function httpJson<T>(target: HttpTarget, call: HttpCall, fetchImpl: Fetch
 Tests: fake `fetchImpl` returns scripted Responses; assert auth header, body JSON,
 retry-on-429 (2 calls), no-retry-on-400, 401 message, timeout path via aborted signal.
 
-- [ ] **Step 4: Run** `npx vitest run lib/providers/custom/` → PASS.
-- [ ] **Step 5: Commit** `feat(custom): format contract, model-kind classifier, hardened HTTP helper`.
+- [x] **Step 4: Run** `npx vitest run lib/providers/custom/` → PASS.
+- [x] **Step 5: Commit** `feat(custom): format contract, model-kind classifier, hardened HTTP helper`.
 
 ### Task 3: `openai` format adapter
 
@@ -251,7 +251,7 @@ retry-on-429 (2 calls), no-retry-on-400, 401 message, timeout path via aborted s
 - Create: `lib/providers/custom/formats/openai.ts`
 - Test: `lib/providers/custom/formats/openai.test.ts`
 
-- [ ] **Step 1: Failing tests** — fake fetch, one test per behavior:
+- [x] **Step 1: Failing tests** — fake fetch, one test per behavior:
 
 ```ts
 import { createOpenAiFormat } from "./openai";
@@ -281,7 +281,7 @@ const fetchJson = (routes: Record<string, unknown>) => async (url: string) =>
    → `choices[0].message.content`; strips `relay:` prefix from modelId if present (no —
    model ids here are raw; the factory passes raw model).
 
-- [ ] **Step 2: Run** → FAIL. **Step 3: Implement** — constants:
+- [x] **Step 2: Run** → FAIL. **Step 3: Implement** — constants:
 
 ```ts
 const ASPECT_SIZE: Record<AspectKey, string> = {
@@ -306,7 +306,7 @@ const rawUrl = body.video?.url; // relay; Sora omits → use `/videos/${id}/cont
 Download with Bearer key + mp4 plausibility re-fetch (port `isPlausibleMp4` retry once from
 apikey-fan, 5s wait). `capabilities {image:true, video:true, text:true}`.
 
-- [ ] **Step 4: Run** → PASS. **Step 5: Commit** `feat(custom): OpenAI-compatible format adapter`.
+- [x] **Step 4: Run** → PASS. **Step 5: Commit** `feat(custom): OpenAI-compatible format adapter`.
 
 ### Task 4: `google` format adapter (Gemini)
 
@@ -314,15 +314,15 @@ apikey-fan, 5s wait). `capabilities {image:true, video:true, text:true}`.
 - Create: `lib/providers/custom/formats/google.ts`
 - Test: `lib/providers/custom/formats/google.test.ts`
 
-- [ ] **Step 1: Failing tests** (same fake-fetch pattern; auth header `x-goog-api-key`):
+- [x] **Step 1: Failing tests** (same fake-fetch pattern; auth header `x-goog-api-key`):
 1. `listModels` GET `{base}/v1beta/models` → items `{name:"models/gemini-2.5-flash", displayName, supportedGenerationMethods:["generateContent"]}` → keep only methods containing `generateContent` or `predictLongRunning`; kind: `predictLongRunning`→video; `/imagen|image|banana/` in name→image; else text. `model` field strips `models/` prefix.
 2. `generateText` POST `/v1beta/models/{m}:generateContent` `{contents:[{parts:[{text}]}], systemInstruction?{parts:[{text}]}, generationConfig:{temperature, maxOutputTokens}}` → joins `candidates[0].content.parts[].text`.
 3. `generateImage` POST `:generateContent` with `generationConfig.responseModalities:["TEXT","IMAGE"]`; start frame → input `parts` gain `{inlineData:{mimeType, data}}` (base64 of FrameImage bytes); response parts `inlineData` → artifacts (`bytes` from base64, `ext` from mimeType `image/png`→png).
 4. `videoJobs.submit` POST `/v1beta/models/{m}:predictLongRunning` `{instances:[{prompt, image?{bytesBase64Encoded, mimeType}}], parameters:{aspectRatio? only for 16:9/9:16}}` → `{name}` → ref.
 5. `videoJobs.poll` GET `/v1beta/{ref}` → `!done` → running; `done` + `response.generateVideoResponse.generatedSamples[0].video.uri` OR `response.videos[0].{uri|bytesBase64Encoded}` → download uri with `x-goog-api-key` header (or decode base64) → completed; `done` + `error` → failed.
 
-- [ ] **Step 2–4:** implement, run to green. Base rule: format calls use the stored base URL as-is + `/v1beta/...` paths (Google base is the API root).
-- [ ] **Step 5: Commit** `feat(custom): Google Gemini format adapter (text, image, Veo video)`.
+- [x] **Step 2–4:** implement, run to green. Base rule: format calls use the stored base URL as-is + `/v1beta/...` paths (Google base is the API root).
+- [x] **Step 5: Commit** `feat(custom): Google Gemini format adapter (text, image, Veo video)`.
 
 ### Task 5: `anthropic` format adapter (text-only)
 
@@ -330,8 +330,8 @@ apikey-fan, 5s wait). `capabilities {image:true, video:true, text:true}`.
 - Create: `lib/providers/custom/formats/anthropic.ts`
 - Test: `lib/providers/custom/formats/anthropic.test.ts`
 
-- [ ] **Step 1–4:** tests first: `listModels` GET `/v1/models` (headers `x-api-key`, `anthropic-version: 2023-06-01`) → `data[].id`, kind always `text`; `generateText` POST `/v1/messages` `{model, max_tokens: maxTokens ?? 1024, system?, messages:[{role:"user", content: userPrompt}]}` → join `content[].text` blocks. No image/video (capabilities false, methods absent).
-- [ ] **Step 5: Commit** `feat(custom): Anthropic format adapter (text)`.
+- [x] **Step 1–4:** tests first: `listModels` GET `/v1/models` (headers `x-api-key`, `anthropic-version: 2023-06-01`) → `data[].id`, kind always `text`; `generateText` POST `/v1/messages` `{model, max_tokens: maxTokens ?? 1024, system?, messages:[{role:"user", content: userPrompt}]}` → join `content[].text` blocks. No image/video (capabilities false, methods absent).
+- [x] **Step 5: Commit** `feat(custom): Anthropic format adapter (text)`.
 
 ### Task 6: Format registry + custom provider factory
 
@@ -339,7 +339,7 @@ apikey-fan, 5s wait). `capabilities {image:true, video:true, text:true}`.
 - Create: `lib/providers/custom/formats/index.ts`, `lib/providers/custom/parked-images.ts`, `lib/providers/custom/custom-provider.factory.ts`
 - Test: `lib/providers/custom/custom-provider.factory.test.ts`
 
-- [ ] **Step 1: `formats/index.ts`**:
+- [x] **Step 1: `formats/index.ts`**:
 
 ```ts
 import type { CustomProviderFormat } from "@/lib/repositories/provider-config.repository";
@@ -352,10 +352,10 @@ export const FORMATS: Record<CustomProviderFormat, ProviderFormat> = {
 export function formatFor(id: CustomProviderFormat): ProviderFormat { return FORMATS[id]; }
 ```
 
-- [ ] **Step 2: `parked-images.ts`** — module-level `Map<string, GeneratedArtifact[]>` +
+- [x] **Step 2: `parked-images.ts`** — module-level `Map<string, GeneratedArtifact[]>` +
   `parkImage(ref, artifacts)`, `takeParkedImage(ref)`; survives adapter-instance rebuilds
   (settings saves mid-render). Ref prefix `cimg_`.
-- [ ] **Step 3: Failing factory tests**, then **`custom-provider.factory.ts`**:
+- [x] **Step 3: Failing factory tests**, then **`custom-provider.factory.ts`**:
 
 ```ts
 export function createCustomProvider(entry: CustomProviderEntry): ImageProvider & VideoProvider & JobProvider
@@ -387,8 +387,8 @@ injected via a `createCustomProvider(entry, format?)` second arg defaulting to `
 - Modify: `lib/providers/registry.ts`
 - Test: `lib/providers/registry.wiring.test.ts` (extend)
 
-- [ ] **Step 1: Failing tests**: with `setProviderConfigPathForTests(tmp)` + a config file containing one custom entry (openai, one image + one video + one text model): `getGenerationRegistry().listModels("image")` contains `my-relay:my-image` AFTER the built-ins; `resolve("my-relay:my-image")` returns the custom provider; disabling the entry (rewrite config + revision bump) removes it without process restart; customs come before pollinations in order. Also `provider-settings.service.getProviderSettings()` (Task 8 asserts too — keep registry tests focused on registry).
-- [ ] **Step 2: Implement**: in `registry.ts`
+- [x] **Step 1: Failing tests**: with `setProviderConfigPathForTests(tmp)` + a config file containing one custom entry (openai, one image + one video + one text model): `getGenerationRegistry().listModels("image")` contains `my-relay:my-image` AFTER the built-ins; `resolve("my-relay:my-image")` returns the custom provider; disabling the entry (rewrite config + revision bump) removes it without process restart; customs come before pollinations in order. Also `provider-settings.service.getProviderSettings()` (Task 8 asserts too — keep registry tests focused on registry).
+- [x] **Step 2: Implement**: in `registry.ts`
 
 ```ts
 function buildCustomProviders(): AnyProvider[] {
@@ -418,7 +418,7 @@ handled by the factory's list filtering).
 - Modify: `lib/services/provider-settings.service.ts`
 - Test: `lib/services/provider-settings.service.test.ts` (extend)
 
-- [ ] **Step 1: Failing tests** (seed config via existing temp-path helper):
+- [x] **Step 1: Failing tests** (seed config via existing temp-path helper):
 1. `getProviderSettings()` with one custom entry → payload.providers includes
    `{id:"my-relay", label, enabled, keySupported:true, keyOptional:false, keySource:"settings", keyMasked:"••••key", models:[image/video views with id `my-relay:x`], textModels:[…], format:"openai"}`.
 2. `applyProviderSettingsUpdate({customProviders:{upsert: valid}})` persists; invalid slug /
@@ -430,7 +430,7 @@ handled by the factory's list filtering).
 6. "at least one provider enabled" check counts enabled customs.
 7. api keys never echoed: `keyMasked` only.
 
-- [ ] **Step 2: Implement**:
+- [x] **Step 2: Implement**:
 - `ProviderView` gains `format?: CustomProviderFormat; keyOptional?: boolean;` and `id: string` (widen from `ProviderId` — internal lookups that index `config.providers[id]` must branch on built-in vs custom; keep a `BUILTIN_IDS` guard).
 - After the built-in loop, append views built from `config.customProviders` (models from the entry itself — no registry lookup needed; this keeps views stable even when the key is missing).
 - `keyView` gains a custom branch (settings-only source).
@@ -445,7 +445,7 @@ handled by the factory's list filtering).
 - Create: `lib/providers/custom/discovery.service.ts`, `app/api/providers/discover/route.ts`
 - Test: `lib/providers/custom/discovery.service.test.ts`
 
-- [ ] **Step 1: Failing tests** (inject a fake formats map):
+- [x] **Step 1: Failing tests** (inject a fake formats map):
 1. `{format:"openai", baseUrl:"https://x/v1", apiKey:"k"}` → format.listModels called with an
    equivalent entry → returns guessed `CustomModelEntry[]` via `guessEntry`, `lastDiscoveredAt` set.
 2. `{id:"my-relay"}` → uses stored entry + key; merge: existing model keeps `{kind, enabled, label}`,
@@ -456,7 +456,7 @@ handled by the factory's list filtering).
 5. Route test (optional, follow `app/api/settings` route test pattern if one exists — otherwise
    cover via service tests only): POST body passthrough + error mapping.
 
-- [ ] **Step 2: Implement**:
+- [x] **Step 2: Implement**:
 
 ```ts
 export interface DiscoveredProviderPayload { models: CustomModelEntry[]; lastDiscoveredAt: string; }
@@ -478,7 +478,7 @@ unexpected → 500. No key ever included in the response.
 - Modify: `lib/services/enhancement.service.ts`
 - Test: `lib/services/enhancement.service.test.ts` (extend)
 
-- [ ] **Step 1: Failing tests** (config seeded with a custom provider holding `grok-4.5`
+- [x] **Step 1: Failing tests** (config seeded with a custom provider holding `grok-4.5`
   as an enabled text model):
 1. `tasks.enhance = "my-relay:grok-4.5"` → `resolveEnhanceEngines()` first entry is the
    custom engine (providerId `"my-relay"`); running `runPromptEnhancement` hits the fake
@@ -488,7 +488,7 @@ unexpected → 500. No key ever included in the response.
    one entry per enabled custom text provider, first enabled text model).
 3. Custom provider disabled or model disabled → excluded.
 
-- [ ] **Step 2: Implement** `custom.text.ts`:
+- [x] **Step 2: Implement** `custom.text.ts`:
 
 ```ts
 export async function customTextComplete(providerId: string, instruction: string,
@@ -510,9 +510,9 @@ fallback chain appends customs. `log` lines keep `engine` field working (string 
 - Modify: `app/settings/page.tsx`, `components/settings/ProvidersSection.tsx` (statusOf `keyOptional`), possibly `components/settings/GeneralSection.tsx` (group label for custom entries in enhance picker — verify options rendering tolerates non-builtin provider ids; expected yes)
 - Test: GUI verification only (Task 12)
 
-- [ ] **Step 1: Read** `app/settings/page.tsx` and `GeneralSection.tsx` first; mirror the existing
+- [x] **Step 1: Read** `app/settings/page.tsx` and `GeneralSection.tsx` first; mirror the existing
   section composition, `SectionShell`, Toggle/Badge/Button imports, and the PATCH helper.
-- [ ] **Step 2: Implement**:
+- [x] **Step 2: Implement**:
 
 - `ProvidersSection`: `statusOf` gains keyless-active case: `provider.keySource || !provider.keySupported || provider.keyOptional → Active`.
 - `CustomProvidersSection({providers, onUpdate, onDiscover})`: 
@@ -540,8 +540,8 @@ fallback chain appends customs. `log` lines keep `engine` field working (string 
 - Create: `scripts/verify-custom-providers.mjs`
 - Modify: `.env.local` (main tree + worktree copy): strip the `ss//` artifact from `APIKEY_FAN_API_KEY`
 
-- [ ] **Step 1:** `sed -i '' 's|APIKEY_FAN_API_KEY=ss//|APIKEY_FAN_API_KEY=|' .env.local` (both trees); verify with a dry `/v1/models` curl (never print the key).
-- [ ] **Step 2: Live smoke script** (model on `scripts/verify-character-sheet.mjs` — read it first for server boot/port conventions; dev port 3100):
+- [x] **Step 1:** `sed -i '' 's|APIKEY_FAN_API_KEY=ss//|APIKEY_FAN_API_KEY=|' .env.local` (both trees); verify with a dry `/v1/models` curl (never print the key).
+- [x] **Step 2: Live smoke script** (model on `scripts/verify-character-sheet.mjs` — read it first for server boot/port conventions; dev port 3100):
   1. PUT `/api/settings` `customProviders.upsert {id:"verify-relay", label:"Verify Relay", format:"openai", baseUrl:"https://apikey.fan/v1", apiKey:$APIKEY_FAN_API_KEY, enabled:true, models:[]}`
   2. POST `/api/providers/discover {id:"verify-relay"}` → assert `grok-imagine-image` kind image,
      `grok-imagine-video-1.5` kind video, `grok-4.5` kind text; assert ≥10 models.
@@ -552,15 +552,15 @@ fallback chain appends customs. `log` lines keep `engine` field working (string 
   5. PUT `/api/settings` `tasks.enhance = "verify-relay:grok-4.5"` → POST `/api/enhance {prompt:"a red apple"}` → `source:"ai"`.
   6. Cleanup: PUT `/api/settings` `customProviders.remove:"verify-relay"`, `tasks.enhance:null`.
      Print PASS/FAIL summary; exit code accordingly.
-- [ ] **Step 3:** full `npx vitest run` (all suites green, count reported), `npx tsc --noEmit`, `npm run lint` if configured.
-- [ ] **Step 4:** browser GUI check: add a fake-key provider → discover fails with field error toast; kind select round-trip persists. (Playwright script or manual via dev server; capture what was verified.)
-- [ ] **Step 5: Commit** `test(verify): custom providers live smoke + env key artifact fix`.
+- [x] **Step 3:** full `npx vitest run` (all suites green, count reported), `npx tsc --noEmit`, `npm run lint` if configured.
+- [x] **Step 4:** browser GUI check: add a fake-key provider → discover fails with field error toast; kind select round-trip persists. (Playwright script or manual via dev server; capture what was verified.)
+- [x] **Step 5: Commit** `test(verify): custom providers live smoke + env key artifact fix`.
 
 ### Task 13: Merge + wrap-up
 
-- [ ] **Step 1:** re-run full suite in worktree; `git add -A && git commit` any stragglers.
-- [ ] **Step 2:** merge to master (`git checkout master && git merge --no-ff feat/custom-providers`), run suite once on master, remove worktree (`git worktree remove .worktrees/custom-providers`), delete branch.
-- [ ] **Step 3:** update memory (`custom-providers-spec.md` → implemented/merged state + gotchas), close out todos.
+- [x] **Step 1:** re-run full suite in worktree; `git add -A && git commit` any stragglers.
+- [x] **Step 2:** merge to master (`git checkout master && git merge --no-ff feat/custom-providers`), run suite once on master, remove worktree (`git worktree remove .worktrees/custom-providers`), delete branch.
+- [x] **Step 3:** update memory (`custom-providers-spec.md` → implemented/merged state + gotchas), close out todos.
 
 ## Self-review notes
 
