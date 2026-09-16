@@ -427,6 +427,20 @@ export default function StoryPage() {
     toast.push("Scene prompt updated.");
   }
 
+  /** Re-run ONE settled scene: park it back in the queue. A run in flight
+   * picks it up after the current scene; an idle story waits for Generate
+   * (the only trigger). Later scenes keep their results — same chain
+   * semantics as cancel. */
+  function handleRerunScene(sceneId: string) {
+    if (!storyId) return;
+    appRunner.requeueScene(storyId, sceneId);
+    toast.push(
+      scenes.some((scene) => scene.status === "generating")
+        ? "Scene re-queued — it renders after the current scene."
+        : "Scene re-queued — press Generate to render it.",
+    );
+  }
+
   function toggleContinuity() {
     const next = !continuityOn;
     setContinuityOn(next);
@@ -877,26 +891,37 @@ export default function StoryPage() {
               return (
                 <div key={typed?.id ?? `slot-${index}`} className="min-w-0">
                   {typed?.url ? (
-                    typed.kind === "video" ? (
-                      <VideoStage
-                        posterUrl={typed.url}
-                        videoUrl={
-                          typed.mime?.startsWith("video/") || isVideoSource(typed.url)
-                            ? typed.url
-                            : undefined
-                        }
-                        title={typed.prompt}
-                        durationSeconds={Number(String(settings.duration).replace("s", "")) || 5}
-                        sensitive={typed.safe === false}
-                      />
-                    ) : (
-                      <MediaFrame
-                        src={typed.url}
-                        alt={typed.prompt}
-                        ratio={`${ASPECTS[settings.aspect].width}/${ASPECTS[settings.aspect].height}`}
-                        sensitive={typed.safe === false}
-                      />
-                    )
+                    <div className="group relative">
+                      {typed.kind === "video" ? (
+                        <VideoStage
+                          posterUrl={typed.url}
+                          videoUrl={
+                            typed.mime?.startsWith("video/") || isVideoSource(typed.url)
+                              ? typed.url
+                              : undefined
+                          }
+                          title={typed.prompt}
+                          durationSeconds={Number(String(settings.duration).replace("s", "")) || 5}
+                          sensitive={typed.safe === false}
+                        />
+                      ) : (
+                        <MediaFrame
+                          src={typed.url}
+                          alt={typed.prompt}
+                          ratio={`${ASPECTS[settings.aspect].width}/${ASPECTS[settings.aspect].height}`}
+                          sensitive={typed.safe === false}
+                        />
+                      )}
+                      <button
+                        type="button"
+                        aria-label={`Re-render scene ${index + 1}`}
+                        title="Render this scene again (later scenes keep their current results)"
+                        onClick={() => handleRerunScene(typed.id)}
+                        className="absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-full bg-white/95 text-ink-soft opacity-0 shadow-card transition-opacity hover:text-ink focus:opacity-100 group-hover:opacity-100"
+                      >
+                        <Icon name="refresh" size={13} />
+                      </button>
+                    </div>
                   ) : typed && typed.status === "generating" ? (
                     <div className="relative">
                       <div
@@ -980,6 +1005,29 @@ export default function StoryPage() {
                         <Icon name="close" size={13} />
                       </button>
                     </div>
+                  ) : typed && typed.status === "failed" ? (
+                    <div className="relative">
+                      <div
+                        className="flex w-full flex-col items-center justify-center rounded-[14px] border border-dashed border-red-200 bg-white px-3 text-center"
+                        style={ratioStyle}
+                      >
+                        <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-wide text-red-600 shadow-card">
+                          <Icon name="alert" size={10} /> Failed
+                        </span>
+                        <p className="mt-2 line-clamp-2 text-[11px] text-muted">
+                          {typed.error ?? "The render didn't make it."}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        aria-label={`Re-render scene ${index + 1}`}
+                        title="Render this scene again"
+                        onClick={() => handleRerunScene(typed.id)}
+                        className="absolute right-2 top-2 inline-flex size-7 items-center justify-center rounded-full bg-white/95 text-ink-soft shadow-card transition-colors hover:text-ink"
+                      >
+                        <Icon name="refresh" size={13} />
+                      </button>
+                    </div>
                   ) : index === 0 && !typed ? (
                     // Scene 1: an active starting point, not a dashed slot.
                     <div
@@ -1013,11 +1061,6 @@ export default function StoryPage() {
                     <p className="text-[11.5px] font-semibold uppercase tracking-wide text-muted">
                       Scene {index + 1}
                     </p>
-                    {typed?.status === "failed" && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-red-600">
-                        <Icon name="alert" size={11} /> failed
-                      </span>
-                    )}
                     {typed?.effectiveModelId && (
                       <span
                         className="inline-flex min-w-0 items-center gap-0.5 rounded-full bg-primary-soft px-1.5 py-0.5 text-[10px] font-bold text-primary"
