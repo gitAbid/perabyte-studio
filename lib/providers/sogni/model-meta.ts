@@ -22,6 +22,10 @@ interface CuratedModel {
   stylesSupported?: boolean;
   /** Family base id — live variants starting with it inherit this entry. */
   familyBase?: string;
+  /** Cold-start chain pairing: the t2v entry's registered i2v sibling (must
+   * exist in COLD_START_HIDDEN) so frame chaining works before the live
+   * catalog warms. */
+  i2vModel?: string;
 }
 
 const CURATED: CuratedModel[] = [
@@ -74,6 +78,7 @@ const CURATED: CuratedModel[] = [
     useCase: "Quick budget clips, 1–10s",
     costTier: "credits",
     familyBase: "wan_v2.2-14b-fp8_t2v",
+    i2vModel: "wan_v2.2-14b-fp8_i2v_lightx2v",
   },
   {
     kind: "video",
@@ -84,6 +89,7 @@ const CURATED: CuratedModel[] = [
     useCase: "Flagship motion quality, 2–20s",
     costTier: "credits",
     familyBase: "ltx25-22b-int8_t2v",
+    i2vModel: "ltx25-22b-int8_i2v_distilled",
   },
   {
     kind: "video",
@@ -120,6 +126,7 @@ function toDescriptor(entry: CuratedModel): ModelDescriptor {
     ...(entry.useCase ? { useCase: entry.useCase } : {}),
     ...(entry.costTier ? { costTier: entry.costTier } : {}),
     ...(entry.stylesSupported === false ? { stylesSupported: false } : {}),
+    ...(entry.i2vModel ? { i2vModelId: buildModelId(PROVIDER_ID, entry.i2vModel) } : {}),
   };
 }
 

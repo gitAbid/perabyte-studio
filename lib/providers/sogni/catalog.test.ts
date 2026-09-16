@@ -191,6 +191,10 @@ describe("frame capability rules", () => {
     expect(i2vSiblingId("ltx25-22b-int8_t2v_distilled")).toBe("ltx25-22b-int8_i2v_distilled");
   });
 
+  it("rewrites dashed vendor t2v ids to their i2v sibling too", () => {
+    expect(i2vSiblingId("happyhorse-1.1-t2v")).toBe("happyhorse-1.1-i2v");
+  });
+
   it("returns null for models without a t2v workflow suffix", () => {
     expect(i2vSiblingId("seedance-2-0-mini")).toBeNull();
     expect(i2vSiblingId("ltx23-22b-fp8_i2v_dev")).toBeNull();

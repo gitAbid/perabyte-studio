@@ -216,6 +216,96 @@ describe("story runner scheduling", () => {
       "Couldn't read the last frame — continuing without it.",
     );
   });
+
+  it("persists the effective model id + label when the service swaps for frames", async () => {
+    const deps = makeDeps();
+    deps.requestGeneration = vi.fn(async () => ({
+      requestId: "r",
+      status: "completed",
+      kind: "video",
+      elapsedMs: 1,
+      effectiveModelId: "sogni:fake_i2v",
+      effectiveModelLabel: "Fake 2.3 i2v",
+      media: [{ id: "m", url: "/api/media?f=clip.mp4", width: 8, height: 8, seed: 1 }],
+    })) as never;
+    const runner = createStoryRunner(deps);
+    deps.assets.set("story1", story([scene({ id: "s1", kind: "video" })], { continuity: true }));
+
+    runner.start("story1");
+
+    await vi.waitFor(() =>
+      expect(deps.assets.get("story1")!.scenes![0].status).toBe("completed"),
+    );
+    const settled = deps.assets.get("story1")!.scenes![0];
+    expect(settled.effectiveModelId).toBe("sogni:fake_i2v");
+    expect(settled.effectiveModelLabel).toBe("Fake 2.3 i2v");
+  });
+
+  it("renders frame-carrying scenes with the chain model and scene 1 with the pick", async () => {
+    const deps = makeDeps();
+    const runner = createStoryRunner(deps);
+    const asset = story(
+      [scene({ id: "s1", kind: "video" }), scene({ id: "s2", kind: "video" })],
+      { continuity: true },
+    );
+    asset.settings = {
+      ...asset.settings,
+      modelId: "p:minimax_t2v",
+      chainModelId: "p:minimax_i2v",
+    };
+    deps.assets.set("story1", asset);
+
+    runner.start("story1");
+
+    await vi.waitFor(() => expect(deps.requestGeneration).toHaveBeenCalledTimes(2));
+    const calls = deps.requestGeneration.mock.calls as unknown as [
+      { settings: { modelId?: string } },
+    ][];
+    expect(calls[0][0].settings.modelId).toBe("p:minimax_t2v");
+    expect(calls[1][0].settings.modelId).toBe("p:minimax_i2v");
+    // The chain-model scene records it so the tile chip stays truthful.
+    expect(deps.assets.get("story1")!.scenes![1].effectiveModelId).toBe("p:minimax_i2v");
+  });
+
+  it("uses the chain model for manual start-frame scenes too", async () => {
+    const deps = makeDeps();
+    const runner = createStoryRunner(deps);
+    const asset = story(
+      [scene({ id: "s1", kind: "video", startImageRef: "manual.png" })],
+      { continuity: false },
+    );
+    asset.settings = { ...asset.settings, modelId: "p:t2v", chainModelId: "p:i2v" };
+    deps.assets.set("story1", asset);
+
+    runner.start("story1");
+
+    await vi.waitFor(() => expect(deps.requestGeneration).toHaveBeenCalledTimes(1));
+    const calls = deps.requestGeneration.mock.calls as unknown as [
+      { settings: { modelId?: string } },
+    ][];
+    expect(calls[0][0].settings.modelId).toBe("p:i2v");
+  });
+
+  it("keeps the picked model on chained scenes when no chain override is set", async () => {
+    const deps = makeDeps();
+    const runner = createStoryRunner(deps);
+    const asset = story(
+      [scene({ id: "s1", kind: "video" }), scene({ id: "s2", kind: "video" })],
+      { continuity: true },
+    );
+    asset.settings = { ...asset.settings, modelId: "p:t2v" };
+    deps.assets.set("story1", asset);
+
+    runner.start("story1");
+
+    await vi.waitFor(() => expect(deps.requestGeneration).toHaveBeenCalledTimes(2));
+    const calls = deps.requestGeneration.mock.calls as unknown as [
+      { settings: { modelId?: string; chainModelId?: string } },
+    ][];
+    // No override ⇒ the server-side capability swap stays the Auto path.
+    expect(calls[1][0].settings.modelId).toBe("p:t2v");
+    expect(calls[1][0].settings.chainModelId).toBeUndefined();
+  });
 });
 
 describe("story runner character reuse", () => {
