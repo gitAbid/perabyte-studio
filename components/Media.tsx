@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent } from "react";
 import { Icon } from "./Icon";
+import { useSmartMask } from "@/lib/moderation-client";
 import { displaySrc, isVideoSource } from "@/lib/renderer";
-import { useSettings } from "@/lib/repositories/settings.repository";
 
 /* ------------------------------------------------------------------ */
 /* Image frame with skeleton + recoverable error state                 */
@@ -17,22 +17,11 @@ const AUTO_RETRIES = 3;
 /* ------------------------------------------------------------------ */
 
 /**
- * Mask state for one media frame: the blur engages when the caller flags the
- * source as sensitive (rendered with the safety checker off) and the
- * "Mask 18+ content" setting is on. Revealing is per frame instance and
- * resets whenever the source or sensitivity changes.
+ * Mask decisions come from `useSmartMask` (lib/moderation-client.ts): the
+ * caller's static flag (rendered with the safety checker off) rules until
+ * a confident vision verdict for this exact media arrives, then the
+ * verdict wins in both directions. Revealing is per frame instance.
  */
-function useMediaMask(sensitive: boolean | undefined, src: string | null) {
-  const { settings } = useSettings();
-  const [revealed, setRevealed] = useState(false);
-
-  useEffect(() => setRevealed(false), [src, sensitive]);
-
-  return {
-    masked: Boolean(sensitive) && settings.maskUncensored && !revealed,
-    reveal: useCallback(() => setRevealed(true), []),
-  };
-}
 
 /** Classes that blur a media element past recognition (scale hides the blur's soft edges). */
 const BLUR_CLASSES = "scale-105 blur-2xl";
@@ -175,7 +164,7 @@ function VideoFrame({
   detailed?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
-  const { masked, reveal } = useMediaMask(sensitive, src);
+  const { masked, reveal } = useSmartMask(sensitive, src);
 
   useEffect(() => setFailed(false), [src]);
 
@@ -230,7 +219,7 @@ function ImageFrame({
   const [autoTries, setAutoTries] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
-  const { masked, reveal } = useMediaMask(sensitive, src);
+  const { masked, reveal } = useSmartMask(sensitive, src);
 
   useEffect(() => {
     setLoaded(false);
@@ -395,7 +384,7 @@ export function VideoStage({
   const [muted, setMuted] = useState(true);
   const [videoFailed, setVideoFailed] = useState(false);
   const shellRef = useRef<HTMLDivElement>(null);
-  const { masked, reveal } = useMediaMask(sensitive, videoUrl ?? posterUrl ?? null);
+  const { masked, reveal } = useSmartMask(sensitive, videoUrl ?? posterUrl ?? null);
 
   const duration = Math.max(1, Math.round(durationSeconds * 15)) / 10;
 

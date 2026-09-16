@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/Icon";
-import { useSettings } from "@/lib/repositories/settings.repository";
+import { useSmartMask } from "@/lib/moderation-client";
 import type { EffectiveChainRef } from "@/lib/story/chain";
 
 /**
@@ -11,7 +11,7 @@ import type { EffectiveChainRef } from "@/lib/story/chain";
  * scene's own manual start frame — overlaid bottom-left on the card. Pending
  * chains (frame not derived yet) show a pulsing link instead of a thumb.
  * Click a thumb to enlarge; an 18+ veiled thumb stays blurred and doesn't
- * enlarge (same mask policy as MediaFrame).
+ * enlarge (same smart-mask policy as MediaFrame).
  */
 export function SceneChainBadge({
   resolution,
@@ -21,9 +21,15 @@ export function SceneChainBadge({
   /** The frame's source scene rendered with the safety checker off. */
   sensitive?: boolean;
 }) {
-  const { settings } = useSettings();
   const [zoomed, setZoomed] = useState(false);
-  const masked = Boolean(sensitive) && settings.maskUncensored;
+  // The hook must run before the early return below, so resolve the frame
+  // ref first — the badge masks by the same content-aware verdict as the
+  // scene card itself.
+  const chainRef =
+    resolution.state === "manual" || resolution.state === "chained"
+      ? resolution.ref
+      : undefined;
+  const { masked } = useSmartMask(sensitive, chainRef ? `/api/media?f=${chainRef}` : null);
 
   useEffect(() => {
     if (!zoomed) return;
@@ -35,10 +41,7 @@ export function SceneChainBadge({
   }, [zoomed]);
 
   if (resolution.state === "none") return null;
-  const ref =
-    resolution.state === "manual" || resolution.state === "chained"
-      ? resolution.ref
-      : undefined;
+  const ref = chainRef;
   const label =
     resolution.state === "manual"
       ? "Your start frame"
