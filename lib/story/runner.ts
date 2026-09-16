@@ -217,6 +217,7 @@ export function createStoryRunner(deps: StoryRunnerDeps) {
         safe: story.settings.safe,
         status: "completed",
         effectiveModelId: response.effectiveModelId,
+        effectiveModelLabel: response.effectiveModelLabel,
         frameUsed: response.frameUsed,
         ...(endFrameRef ? { endFrameRef } : {}),
       });

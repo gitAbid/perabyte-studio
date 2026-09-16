@@ -96,6 +96,9 @@ export interface StoryScene {
   endFrameRef?: string;
   /** Model actually used when the service swapped for frame capability. */
   effectiveModelId?: string;
+  /** Display label for `effectiveModelId` — the hidden i2v sibling isn't in
+   * the picker catalog, so the tile needs the label the server resolved. */
+  effectiveModelLabel?: string;
   frameUsed?: boolean;
   /** Provider safety-checker state used for this scene's render — drives 18+ masking. */
   safe?: boolean;

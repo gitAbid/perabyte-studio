@@ -216,6 +216,30 @@ describe("story runner scheduling", () => {
       "Couldn't read the last frame — continuing without it.",
     );
   });
+
+  it("persists the effective model id + label when the service swaps for frames", async () => {
+    const deps = makeDeps();
+    deps.requestGeneration = vi.fn(async () => ({
+      requestId: "r",
+      status: "completed",
+      kind: "video",
+      elapsedMs: 1,
+      effectiveModelId: "sogni:fake_i2v",
+      effectiveModelLabel: "Fake 2.3 i2v",
+      media: [{ id: "m", url: "/api/media?f=clip.mp4", width: 8, height: 8, seed: 1 }],
+    })) as never;
+    const runner = createStoryRunner(deps);
+    deps.assets.set("story1", story([scene({ id: "s1", kind: "video" })], { continuity: true }));
+
+    runner.start("story1");
+
+    await vi.waitFor(() =>
+      expect(deps.assets.get("story1")!.scenes![0].status).toBe("completed"),
+    );
+    const settled = deps.assets.get("story1")!.scenes![0];
+    expect(settled.effectiveModelId).toBe("sogni:fake_i2v");
+    expect(settled.effectiveModelLabel).toBe("Fake 2.3 i2v");
+  });
 });
 
 describe("story runner character reuse", () => {

@@ -74,7 +74,11 @@ export function PillSelect({
     };
   }, [open]);
 
-  const current = options.find((o) => o.value === value);
+  // A selected tail option isn't in `options` — without this lookup the pill
+  // shows the raw value (e.g. "sogni:ltx23-…") instead of the model's label.
+  const current =
+    options.find((o) => o.value === value) ??
+    tail?.options.find((o) => o.value === value);
 
   const renderOption = (option: PillOption) => {
     const active = option.value === value;

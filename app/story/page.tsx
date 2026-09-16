@@ -36,6 +36,7 @@ import {
   useAssets,
 } from "@/lib/store";
 import { appRunner } from "@/lib/story/runner";
+import { resolveChainModelPlan } from "@/lib/story/chain";
 import {
   buildClipScenes,
   resolveEndCapableModel,
@@ -213,6 +214,9 @@ export default function StoryPage() {
 
   // End-capable catalog for the conversion dialog (image stories only).
   const endCatalog = useModelCatalog("video", "end");
+  // Start-capable catalog (hidden i2v siblings included) — names the model
+  // chained scenes actually render with when the pick can't take a frame.
+  const startCatalog = useModelCatalog("video", "start");
 
   const selectedModel = catalog.models.find((m) => m.id === modelId);
   const endSupported = Boolean(selectedModel?.frameInput?.end);
@@ -229,6 +233,37 @@ export default function StoryPage() {
   }
 
   /* ------------------------- queue integration ------------------------- */
+
+  /**
+   * Say up front which model chained scenes will really render with. A t2v
+   * pick can't take the chain's start frame, so the service swaps every
+   * chained scene to the family's hidden i2v sibling (i2v requires a
+   * reference image, so scene 1 stays on the pick). Skipped while the
+   * start-capable catalog is still loading — a wrong "frames dropped" claim
+   * is worse than no notice.
+   */
+  function announceChainModel(draft: StoryScene[]) {
+    if (kind !== "video" || !selectedModel || startCatalog.loading) return;
+    const framesFlow =
+      (continuityOn && draft.length >= 2) ||
+      Boolean(draftRefs.startImageRef) ||
+      draft.some((scene) => scene.startImageRef);
+    if (!framesFlow) return;
+    const plan = resolveChainModelPlan({
+      picked: selectedModel,
+      startCapable: startCatalog.models,
+    });
+    if (!plan) return;
+    if (plan.action === "swap") {
+      toast.push(
+        `Chained scenes render with ${plan.label} — ${selectedModel.label} can't take a start frame.`,
+      );
+    } else {
+      toast.push(
+        `${selectedModel.label} can't chain start frames — later scenes continue prompt-only.`,
+      );
+    }
+  }
 
   async function handleGenerateAll() {
     // A blank composer is fine when scenes are already queued — but a typed
@@ -279,6 +314,7 @@ export default function StoryPage() {
     };
     addAsset(asset);
     setStoryId(id);
+    announceChainModel(draft);
     appRunner.start(id);
     toast.push(
       `Rendering ${draft.length} scene${draft.length === 1 ? "" : "s"} — one after another.`,
@@ -874,10 +910,17 @@ export default function StoryPage() {
                     )}
                     {typed?.effectiveModelId && (
                       <span
-                        className="inline-flex items-center gap-0.5 rounded-full bg-primary-soft px-1.5 py-0.5 text-[10px] font-bold text-primary"
-                        title={`Rendered with ${typed.effectiveModelId}`}
+                        className="inline-flex min-w-0 items-center gap-0.5 rounded-full bg-primary-soft px-1.5 py-0.5 text-[10px] font-bold text-primary"
+                        title={`Rendered with ${typed.effectiveModelLabel ?? typed.effectiveModelId}`}
                       >
-                        <Icon name="link" size={9} /> i2v
+                        <Icon name="link" size={9} />
+                        <span className="max-w-[110px] truncate">
+                          {typed.effectiveModelLabel ??
+                            startCatalog.models.find(
+                              (model) => model.id === typed.effectiveModelId,
+                            )?.label ??
+                            "i2v"}
+                        </span>
                       </span>
                     )}
                     {typed?.startImageRef && (
