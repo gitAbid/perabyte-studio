@@ -139,7 +139,9 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
   // The effect settles after one pass: snapSettingsForModel returns an empty
   // patch once the settings already fit. LoRA selections snap too: entries
   // the new model doesn't accept drop, and an unavailable catalog (no loras
-  // served) leaves selections untouched rather than wiping them.
+  // served) leaves selections untouched rather than wiping them. The
+  // Uncensored gate re-snaps as well so a Mature pick can't stay visible
+  // after the toggle turns it off — the server would strip it silently.
   useEffect(() => {
     setSettings((s) => ({
       ...s,
@@ -151,12 +153,13 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
               catalog.loras,
               activeModel.model,
               catalog.loraMaxPerRequest,
+              userSettings.uncensoredEnabled,
             ),
           }
         : {}),
     }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only when the active model's identity changes
-  }, [catalog.models, modelId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only on model/catalog/gate changes
+  }, [catalog.models, modelId, userSettings.uncensoredEnabled]);
 
   // Detached-render recovery: a solo render that outlived its timeout keeps
   // going on the provider; when the pending-renders registry reports it

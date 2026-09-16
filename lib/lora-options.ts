@@ -76,6 +76,7 @@ export function snapLorasForModel(
   catalog: readonly LoraOption[],
   model: string,
   maxPerRequest = 8,
+  allowNsfw = true,
 ): LoraSelection[] {
   const byId = new Map(catalog.map((entry) => [entry.loraId, entry]));
   const snapped: LoraSelection[] = [];
@@ -83,6 +84,9 @@ export function snapLorasForModel(
     if (snapped.length >= maxPerRequest) break;
     const entry = byId.get(item.loraId);
     if (!entry || !entry.modelIds.includes(model)) continue;
+    // Same gate the picker applies to the visible list — a selection must
+    // never outlive the toggle that made it choosable.
+    if (!allowNsfw && (entry.nsfw || entry.sexual)) continue;
     snapped.push({ loraId: item.loraId, strength: clampStrength(entry, item.strength) });
   }
   return snapped;

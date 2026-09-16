@@ -17,7 +17,6 @@ import {
   ASPECTS,
   DEFAULT_IMAGE_SETTINGS,
   PROMPT_MAX,
-  VIDEO_STYLES,
 } from "@/lib/constants";
 import {
   downloadMedia,
@@ -46,6 +45,7 @@ import {
 } from "@/lib/story/chain";
 import {
   buildClipScenes,
+  buildConvertSettings,
   resolveEndCapableModel,
   type ConvertSource,
 } from "@/lib/story/convert";
@@ -249,6 +249,27 @@ export default function StoryPage() {
   const endSupported = Boolean(selectedModel?.frameInput?.end);
   // Style presets are per-model: provider-workflow models take only the raw prompt.
   const stylesSupported = selectedModel?.stylesSupported ?? true;
+
+  // The kind toggle swaps the model silently (it reads the other kind's saved
+  // pick without firing onModelChange), so LoRA selections need the same
+  // reactive snap the solo screen applies: adapters the active model doesn't
+  // accept — or the Uncensored gate no longer allows — would otherwise ride
+  // into every scene request and get dropped server-side. An unavailable
+  // catalog leaves selections untouched rather than wiping them.
+  useEffect(() => {
+    if (!catalog.loras.length || !selectedModel) return;
+    setSettings((s) => ({
+      ...s,
+      loras: snapLorasForModel(
+        s.loras ?? [],
+        catalog.loras,
+        selectedModel.model,
+        catalog.loraMaxPerRequest,
+        userSettings.uncensoredEnabled,
+      ),
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only on model/catalog/gate changes
+  }, [modelId, catalog.loras, userSettings.uncensoredEnabled]);
 
   // Chain preset: which model frame-carrying scenes (chained or manual start)
   // render with. Only a decision when the picked model can't chain itself —
@@ -519,12 +540,7 @@ export default function StoryPage() {
         prompt: story?.prompt ?? prompt,
         url: clips[0].startImageRef ? `/api/media?f=${clips[0].startImageRef}` : "",
         variants: [],
-        settings: {
-          ...currentSettings(),
-          kind: "video",
-          style: Object.keys(VIDEO_STYLES)[0],
-          modelId: chosenModelId,
-        },
+        settings: buildConvertSettings(currentSettings(), chosenModelId, endCatalog),
         createdAt: Date.now(),
         favorite: false,
         mode: "Story Mode",
