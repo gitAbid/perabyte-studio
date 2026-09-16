@@ -42,7 +42,8 @@ export type IconName =
   | "sun"
   | "moon"
   | "chevrons-left"
-  | "link";
+  | "link"
+  | "pen";
 
 const PATHS: Record<IconName, string> = {
   logo: "M4 15.5V8.5l6-4.2 6 4.2v7l-6 4.2-6-4.2Z M16 6.5l4 2.8v6.4l-4 2.8",
@@ -92,6 +93,7 @@ const PATHS: Record<IconName, string> = {
   sun: "M12 16.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9ZM12 3v1.8M12 19.2V21M3 12h1.8M19.2 12H21M5.6 5.6l1.3 1.3M17.1 17.1l1.3 1.3M18.4 5.6l-1.3 1.3M6.9 17.1l-1.3 1.3",
   moon: "M20.2 14.2A8.2 8.2 0 0 1 9.8 3.8a8.2 8.2 0 1 0 10.4 10.4Z",
   "chevrons-left": "M11.5 7l-5 5 5 5M17.5 7l-5 5 5 5",
+  pen: "M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5Z",
 };
 
 interface IconProps extends Omit<SVGProps<SVGSVGElement>, "name"> {
