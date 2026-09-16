@@ -1164,6 +1164,7 @@ export default function StoryPage() {
                         onClick={
                           editable
                             ? () => {
+                                editCancelingRef.current = false; // a prior Escape must not swallow this commit
                                 setEditDraft(typed.prompt);
                                 setEditingSceneId(typed.id);
                               }
