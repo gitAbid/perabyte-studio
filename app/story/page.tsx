@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ConvertDialog } from "@/components/story/ConvertDialog";
+import { SceneChainBadge } from "@/components/story/SceneChainBadge";
 import { SceneRefChips } from "@/components/story/SceneRefChips";
 import { Icon } from "@/components/Icon";
 import { MediaFrame, VideoStage } from "@/components/Media";
@@ -37,7 +38,12 @@ import {
   useAssets,
 } from "@/lib/store";
 import { appRunner } from "@/lib/story/runner";
-import { resolveChainModelPlan } from "@/lib/story/chain";
+import {
+  chainPredecessorIndex,
+  effectiveChainRef,
+  resolveChainModelPlan,
+  type EffectiveChainRef,
+} from "@/lib/story/chain";
 import {
   buildClipScenes,
   resolveEndCapableModel,
@@ -61,6 +67,19 @@ const CONTINUATIONS = [
 
 /** Placeholder copy for empty scene slots (after the first). */
 const PLACEHOLDERS = ["Continue the story", "Add an end…", "Add another scene"];
+
+/** Whether a badge's reference frame comes from an 18+ render — the thumb
+ * inherits the veil the source scene's own card would show. */
+function chainBadgeSensitive(
+  resolution: EffectiveChainRef,
+  scenes: StoryScene[],
+  scene: StoryScene,
+): boolean {
+  if (resolution.state === "chained") {
+    return scenes[resolution.predecessorIndex]?.safe === false;
+  }
+  return scene.safe === false;
+}
 
 export default function StoryPage() {
   const toast = useToast();
@@ -806,21 +825,15 @@ export default function StoryPage() {
             />
           )}
           {/* Scenes flow top-left, left to right, wrapping downward. */}
-          <div className="grid flex-1 content-start gap-4 sm:grid-cols-3">
-            {Array.from({ length: Math.max(3, scenes.length) }, (_, index) => {
+          <div className="grid flex-1 content-start gap-4 sm:grid-cols-2">
+            {Array.from({ length: Math.max(2, scenes.length) }, (_, index) => {
               const typed = scenes[index] as StoryScene | undefined;
               const ratioStyle = {
                 aspectRatio: `${ASPECTS[settings.aspect].width}/${ASPECTS[settings.aspect].height}`,
               };
               // The nearest non-canceled scene before this one — canceled
               // scenes are transparent to the chain (mirrors the runner).
-              let chainPredIndex = -1;
-              for (let i = index - 1; i >= 0; i -= 1) {
-                if (scenes[i]?.status !== "canceled") {
-                  chainPredIndex = i;
-                  break;
-                }
-              }
+              const chainPredIndex = chainPredecessorIndex(scenes, index);
               // A queued chain scene whose effective predecessor hasn't finished.
               const waitingFor =
                 typed &&
@@ -830,6 +843,9 @@ export default function StoryPage() {
                 !typed.startImageRef &&
                 chainPredIndex >= 0 &&
                 scenes[chainPredIndex].status !== "completed";
+              const chainResolution: EffectiveChainRef = typed
+                ? effectiveChainRef(scenes, index, continuityOn)
+                : { state: "none" };
               return (
                 <div key={typed?.id ?? `slot-${index}`} className="min-w-0">
                   {typed?.url ? (
@@ -866,6 +882,15 @@ export default function StoryPage() {
                           />
                         </div>
                       </div>
+                      {/* A rendering scene shows only a resolvable frame —
+                          "pending" here would mean a prompt-only run. */}
+                      {chainResolution.state === "manual" ||
+                      chainResolution.state === "chained" ? (
+                        <SceneChainBadge
+                          resolution={chainResolution}
+                          sensitive={chainBadgeSensitive(chainResolution, scenes, typed)}
+                        />
+                      ) : null}
                       <button
                         type="button"
                         aria-label={`Cancel scene ${index + 1}`}
@@ -890,6 +915,10 @@ export default function StoryPage() {
                           </span>
                         )}
                       </div>
+                      <SceneChainBadge
+                        resolution={chainResolution}
+                        sensitive={chainBadgeSensitive(chainResolution, scenes, typed)}
+                      />
                       <button
                         type="button"
                         aria-label={`Remove scene ${index + 1} from the queue`}
