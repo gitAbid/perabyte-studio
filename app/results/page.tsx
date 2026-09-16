@@ -229,6 +229,15 @@ export default function ResultsPage() {
               Play story
             </Button>
           )}
+          {isStory && (
+            <Link
+              href={`/story?id=${asset.id}`}
+              className="inline-flex h-11 items-center gap-2 rounded-[12px] border border-border-strong bg-raised px-4 text-sm font-semibold text-ink transition-colors hover:border-primary hover:text-primary"
+            >
+              <Icon name="video" size={16} />
+              Continue in editor
+            </Link>
+          )}
           <Button variant="secondary" icon="heart" onClick={handleFavorite}>
             {asset.favorite ? "Unsave" : "Save"}
           </Button>

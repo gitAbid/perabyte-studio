@@ -116,15 +116,18 @@ export default function StoryPage() {
   }
 
   // Restore the active story on mount or reload (spec §5 — the queue survives
-  // reloads; ?id= wins over the last active story).
+  // reloads; ?id= wins over the last active story). Opening via ?id= adopts
+  // the story as active so refreshes keep it — addressable stories,
+  // durable-jobs spec Phase A.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const fromUrl = new URLSearchParams(window.location.search).get("id");
     const fromStorage = sessionStorage.getItem("perabyte.active_story");
     const targetId = fromUrl ?? fromStorage;
     if (targetId) {
-      setStoryIdState(targetId);
+      setStoryId(targetId);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [continuityOn, setContinuityOn] = useState(true);

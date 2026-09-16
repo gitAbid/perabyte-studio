@@ -41,6 +41,9 @@ const mediaFake: MediaRepository = {
     bytes,
   }),
   get: async () => null,
+  stat: async () => null,
+  list: async () => [],
+  delete: async () => undefined,
 };
 
 const imageModel = SOGNI_IMAGE_MODELS[0];

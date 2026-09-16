@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { getStudioEnv } from "@/lib/config/env";
 import { logger } from "@/lib/logging/logger";
@@ -11,7 +11,9 @@ import { logger } from "@/lib/logging/logger";
  * provider URLs.
  *
  * The `MediaRepository` interface exists so a durable backend (Vercel Blob,
- * S3) can replace the disk implementation later without touching callers.
+ * S3) can replace the disk implementation later without touching callers —
+ * it doubles as the disk-backed `StorageBucket` implementation
+ * (see lib/storage/bucket.ts).
  */
 export interface StoredMedia {
   /** File name inside the cache: `<sha256>.<ext>`. */
@@ -20,9 +22,22 @@ export interface StoredMedia {
   bytes: Buffer;
 }
 
+/** Metadata-only view of a stored ref (list/stat). */
+export interface StoredMediaInfo {
+  ref: string;
+  contentType: string;
+  size: number;
+}
+
 export interface MediaRepository {
   put(bytes: Buffer, ext?: string): Promise<StoredMedia>;
   get(ref: string): Promise<StoredMedia | null>;
+  /** Metadata for one ref, or null when it is not stored. */
+  stat(ref: string): Promise<StoredMediaInfo | null>;
+  /** Every stored ref's metadata (the cache dir may legitimately be empty). */
+  list(): Promise<StoredMediaInfo[]>;
+  /** Removes one ref; a missing ref is a no-op. */
+  delete(ref: string): Promise<void>;
 }
 
 const log = logger.child({ module: "media-repository" });
@@ -106,10 +121,41 @@ class DiskMediaRepository implements MediaRepository {
   async get(ref: string): Promise<StoredMedia | null> {
     if (!isValidMediaRef(ref)) return null;
     try {
-      const bytes = await readFile(path.join(cacheDir(), ref));
+      const bytes = await readFile(path.join(/*turbopackIgnore: true*/ cacheDir(), ref));
       return { ref, contentType: contentTypeForRef(ref), bytes };
     } catch {
       return null;
+    }
+  }
+
+  async stat(ref: string): Promise<StoredMediaInfo | null> {
+    if (!isValidMediaRef(ref)) return null;
+    try {
+      const info = await stat(path.join(/*turbopackIgnore: true*/ cacheDir(), ref));
+      if (!info.isFile()) return null;
+      return { ref, contentType: contentTypeForRef(ref), size: info.size };
+    } catch {
+      return null;
+    }
+  }
+
+  async list(): Promise<StoredMediaInfo[]> {
+    let names: string[];
+    try {
+      names = await readdir(/*turbopackIgnore: true*/ cacheDir());
+    } catch {
+      return []; // cache dir not created yet
+    }
+    const infos = await Promise.all(names.filter(isValidMediaRef).map((ref) => this.stat(ref)));
+    return infos.filter((info): info is StoredMediaInfo => info !== null);
+  }
+
+  async delete(ref: string): Promise<void> {
+    if (!isValidMediaRef(ref)) return;
+    try {
+      await unlink(path.join(/*turbopackIgnore: true*/ cacheDir(), ref));
+    } catch {
+      // Missing ref — deletion is idempotent.
     }
   }
 }

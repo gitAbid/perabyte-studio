@@ -1,44 +1,114 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
-import {
-  DEFAULT_IMAGE_SETTINGS,
-  DEFAULT_VIDEO_SETTINGS,
-  titleFromPrompt,
-} from "./constants";
+import { titleFromPrompt } from "./constants";
 import type { Asset, GenerationResponse, GenerationSettings, StoryScene } from "./types";
+import { parseAssetRows } from "./repositories/asset-row";
+import { storeTransport } from "./store-transport";
 
-const STORAGE_KEY = "perabyte.assets.v2";
-const SEED_KEY = "perabyte.seeded.v2";
+/**
+ * The client asset store (History + story projects). The public API is the
+ * same external-store contract the app has always used; the backing moved
+ * server-side (durable-jobs spec Phase A): every mutation applies
+ * optimistically to the in-memory cache and mirrors to /api/assets, so a
+ * browser loses nothing by clearing storage and any browser sees the same
+ * library. Legacy localStorage rows are imported once, then retired to a
+ * read-only fallback.
+ */
+
+const LEGACY_STORAGE_KEY = "perabyte.assets.v2";
+const MIGRATED_KEY = "perabyte.assets.migrated.v3";
+
+/* Demo content lives in ./demo-content so the server repository can seed
+ * the example strip; only the export is re-exposed here for the generator's
+ * example strip. */
+export { DEMO_SPECS } from "./demo-content";
+export type { DemoSpec } from "./demo-content";
+
+/**
+ * Legacy hook: demo rows are now seeded server-side on first `/api/assets`
+ * read. Kept as a no-op so existing imports keep working.
+ */
+export function seedDemoContent() {}
 
 const EMPTY: Asset[] = [];
 let cache: Asset[] | null = null;
+let hydration: Promise<Asset[]> | null = null;
 const listeners = new Set<() => void>();
 
 function emit() {
   listeners.forEach((l) => l());
 }
 
-function persist(assets: Asset[]) {
-  cache = assets;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(assets));
-  } catch {
-    /* storage full or blocked — the session still works in memory */
+/** Optimistic local write + fire-and-forget server mirror. A server
+ * failure never breaks the session — memory stays authoritative for the
+ * tab and the next successful write re-syncs that row. */
+function persist(next: Asset[], sync?: (t: NonNullable<ReturnType<typeof storeTransport>>) => Promise<void>) {
+  cache = next;
+  const transport = storeTransport();
+  if (transport && sync) {
+    void sync(transport).catch(() => {
+      /* server unreachable — the session still works in memory */
+    });
   }
   emit();
 }
 
 function read(): Asset[] {
-  if (cache) return cache;
-  if (typeof window === "undefined") return EMPTY;
+  return cache ?? EMPTY;
+}
+
+/** Rows this browser generated before the server-store upgrade. Demo rows
+ * are skipped — the server seeds those itself. */
+function readLegacyRows(): Asset[] {
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    cache = raw ? (JSON.parse(raw) as Asset[]) : [];
+    if (window.localStorage.getItem(MIGRATED_KEY)) return [];
+    const raw = window.localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (!raw) return [];
+    return parseAssetRows(JSON.parse(raw)).filter((a) => a.meta?.example !== true);
   } catch {
-    cache = [];
+    return [];
   }
-  return cache;
+}
+
+/**
+ * One-time boot hydration: import legacy localStorage rows into the server
+ * store, then adopt the server list as the cache. Resolves with the adopted
+ * list (callers rehydrate story queues from it). Idempotent per page load;
+ * a failure resolves with whatever the tab already has.
+ */
+export function ensureStoreHydrated(): Promise<Asset[]> {
+  if (hydration) return hydration;
+  const transport = storeTransport();
+  if (!transport) {
+    hydration = Promise.resolve(read());
+    return hydration;
+  }
+  hydration = (async () => {
+    const legacy = readLegacyRows();
+    if (legacy.length) {
+      try {
+        await transport.importLegacy(legacy);
+        try {
+          window.localStorage.setItem(MIGRATED_KEY, "1");
+        } catch {
+          /* storage blocked — the import skip-list on the server still makes
+             a re-run a no-op */
+        }
+      } catch {
+        /* server unreachable — retry next boot; the import is idempotent */
+      }
+    }
+    try {
+      cache = await transport.list();
+      emit();
+    } catch {
+      cache = cache ?? []; // offline: memory (or an empty library) still works
+      emit();
+    }
+    return cache;
+  })();
+  return hydration;
 }
 
 export function subscribe(listener: () => void) {
@@ -55,139 +125,6 @@ export function getServerSnapshot(): Asset[] {
 }
 
 /* ------------------------------------------------------------------ */
-/* Seed content so a fresh browser shows a populated History, matching  */
-/* the mockup. Real renders from the provider, flagged as examples.     */
-/* ------------------------------------------------------------------ */
-
-const HOUR = 3_600_000;
-
-export interface DemoSpec {
-  title: string;
-  prompt: string;
-  kind: "image" | "video";
-  aspect: "16:9" | "9:16" | "4:5" | "1:1" | "3:2";
-  style: string;
-  ageHours: number;
-  seed: number;
-  /** Pre-rendered example stored in /public/demo (see scripts/prerender_examples.py). */
-  file: string;
-}
-
-/** Pre-rendered examples (see scripts/prerender_examples.py), also used by the
- * generator's "try an example" strip. */
-export const DEMO_SPECS: DemoSpec[] = [
-  {
-    title: "Mountain Lake",
-    prompt: "A serene mountain landscape with a lake, sunrise, and pine trees",
-    kind: "image",
-    aspect: "16:9",
-    style: "Realistic",
-    ageHours: 12,
-    seed: 4821,
-    file: "/demo/mountain-lake.jpg",
-  },
-  {
-    title: "City at Night",
-    prompt: "A neon city street at night in the rain, reflections on the road",
-    kind: "video",
-    aspect: "9:16",
-    style: "Cinematic",
-    ageHours: 30,
-    seed: 7712,
-    file: "/demo/city-night.jpg",
-  },
-  {
-    title: "Fantasy Forest",
-    prompt: "A glowing fantasy forest with floating lights and ancient mossy trees",
-    kind: "image",
-    aspect: "16:9",
-    style: "Digital Art",
-    ageHours: 52,
-    seed: 3390,
-    file: "/demo/fantasy-forest.jpg",
-  },
-  {
-    title: "Ocean Sunset",
-    prompt: "A calm ocean sunset with soft clouds and a distant sailboat",
-    kind: "image",
-    aspect: "4:5",
-    style: "Realistic",
-    ageHours: 78,
-    seed: 9014,
-    file: "/demo/ocean-sunset.jpg",
-  },
-  {
-    title: "Robot in City",
-    prompt: "A friendly robot walking through a futuristic city plaza at dusk",
-    kind: "video",
-    aspect: "9:16",
-    style: "Animated",
-    ageHours: 120,
-    seed: 2265,
-    file: "/demo/robot-city.jpg",
-  },
-  {
-    title: "Winter Village",
-    prompt: "A cosy winter village covered in snow beneath a purple evening sky",
-    kind: "image",
-    aspect: "16:9",
-    style: "Watercolor",
-    ageHours: 160,
-    seed: 6120,
-    file: "/demo/winter-village.jpg",
-  },
-];
-
-function demoAsset(spec: DemoSpec): Asset {
-  const base =
-    spec.kind === "video" ? DEFAULT_VIDEO_SETTINGS : DEFAULT_IMAGE_SETTINGS;
-  const settings: GenerationSettings = {
-    ...base,
-    kind: spec.kind,
-    aspect: spec.aspect,
-    style: spec.style,
-  };
-  return {
-    id: `demo_${spec.seed}`,
-    kind: spec.kind,
-    title: spec.title,
-    prompt: spec.prompt,
-    url: spec.file,
-    variants: [spec.file],
-    posterUrl: spec.file,
-    settings,
-    createdAt: Date.now() - spec.ageHours * HOUR,
-    favorite: false,
-    mode: spec.kind === "video" ? "Solo Mode (Video)" : "Solo Mode (Image)",
-    meta: { example: true, seed: spec.seed },
-  };
-}
-
-/**
- * Ensure the fixed example assets exist. Safe to call from anywhere: it only
- * runs once per browser and **merges** instead of replacing, so a render
- * generated before the first History visit is never clobbered.
- */
-export function seedDemoContent() {
-  if (typeof window === "undefined") return;
-  try {
-    if (window.localStorage.getItem(SEED_KEY)) return;
-    window.localStorage.setItem(SEED_KEY, "1");
-
-    const existing = read();
-    const known = new Set(existing.map((a) => a.id));
-    const additions = DEMO_SPECS.map(demoAsset).filter((a) => !known.has(a.id));
-    if (!additions.length) return;
-
-    persist(
-      [...existing, ...additions].sort((a, b) => b.createdAt - a.createdAt),
-    );
-  } catch {
-    /* ignore blocked storage */
-  }
-}
-
-/* ------------------------------------------------------------------ */
 /* Reads and writes                                                    */
 /* ------------------------------------------------------------------ */
 
@@ -196,12 +133,12 @@ export function getAsset(id: string): Asset | undefined {
 }
 
 export function addAsset(asset: Asset): Asset {
-  persist([asset, ...read().filter((a) => a.id !== asset.id)]);
+  persist([asset, ...read().filter((a) => a.id !== asset.id)], (t) => t.create(asset));
   return asset;
 }
 
 export function updateAsset(id: string, patch: Partial<Asset>): void {
-  persist(read().map((a) => (a.id === id ? { ...a, ...patch } : a)));
+  persist(read().map((a) => (a.id === id ? { ...a, ...patch } : a)), (t) => t.patch(id, patch));
 }
 
 /** Functional scene update for a story asset (the queue's write path). */
@@ -209,17 +146,23 @@ export function updateStoryScenes(
   storyId: string,
   updater: (scenes: StoryScene[]) => StoryScene[],
 ): void {
-  persist(
-    read().map((asset) =>
-      asset.id === storyId && asset.scenes
-        ? { ...asset, scenes: updater(asset.scenes) }
-        : asset,
-    ),
+  const next = read().map((asset) =>
+    asset.id === storyId && asset.scenes
+      ? { ...asset, scenes: updater(asset.scenes) }
+      : asset,
+  );
+  const story = next.find((a) => a.id === storyId);
+  persist(next, (t) =>
+    story ? t.patch(storyId, { scenes: story.scenes }) : Promise.resolve(),
   );
 }
 
 export function toggleFavorite(id: string): void {
-  persist(read().map((a) => (a.id === id ? { ...a, favorite: !a.favorite } : a)));
+  const target = read().find((a) => a.id === id);
+  persist(
+    read().map((a) => (a.id === id ? { ...a, favorite: !a.favorite } : a)),
+    (t) => t.patch(id, { favorite: !target?.favorite }),
+  );
 }
 
 export function removeAsset(id: string): void {
@@ -229,11 +172,13 @@ export function removeAsset(id: string): void {
 /** Delete several assets in one persist/notify pass (bulk manage actions). */
 export function removeAssets(ids: string[]): void {
   const doomed = new Set(ids);
-  persist(read().filter((a) => !doomed.has(a.id)));
+  persist(read().filter((a) => !doomed.has(a.id)), (t) => t.remove(ids));
 }
 
+/** "Clean library": clears History assets on the server; story projects are
+ * kept (they are work, not history). */
 export function clearAssets(): void {
-  persist([]);
+  persist([], (t) => t.clear());
 }
 
 /** Build a storable asset from a completed API response. */
@@ -270,6 +215,9 @@ export function assetFromResponse(
 export function useAssets(): { assets: Asset[]; ready: boolean } {
   const assets = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const ready = useHydrated();
+  useEffect(() => {
+    void ensureStoreHydrated();
+  }, []);
   return { assets, ready };
 }
 
@@ -278,4 +226,10 @@ export function useHydrated(): boolean {
   const [ready, setReady] = useState(false);
   useEffect(() => setReady(true), []);
   return ready;
+}
+
+/** Test hook: drop the cache and hydration state (node tests only). */
+export function resetStoreForTests(): void {
+  cache = null;
+  hydration = null;
 }
