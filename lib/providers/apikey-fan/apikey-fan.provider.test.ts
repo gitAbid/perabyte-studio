@@ -33,6 +33,9 @@ const mediaFake: MediaRepository = {
     bytes,
   }),
   get: async () => null,
+  stat: async () => null,
+  list: async () => [],
+  delete: async () => undefined,
 };
 
 const PNG_BYTES = Buffer.from([
