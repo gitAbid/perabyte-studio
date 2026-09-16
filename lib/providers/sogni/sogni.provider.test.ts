@@ -262,6 +262,10 @@ describe("sogni provider", () => {
     (fake.client.projects as { get?: unknown }).get = async () => ({
       status: "processing",
     });
+    (fake.client.projects as { downloadUrl?: unknown }).downloadUrl = async () =>
+      "https://cdn.sogni.ai/x.png";
+    (fake.client.projects as { mediaDownloadUrl?: unknown }).mediaDownloadUrl = async () =>
+      "https://cdn.sogni.ai/x.mp4";
     setSogniClientForTests(fake.client);
 
     const { ref } = await sogniProvider.submitJob(imageRequest({ count: 2 }), imageModel, {
@@ -293,17 +297,26 @@ describe("sogni provider", () => {
     expect(again.status).toBe("running");
   });
 
-  it("re-attaches a project after a restart via the server-side lookup", async () => {
+  it("re-attaches a project after a restart: mints urls from the raw record", async () => {
     setSogniClientForTests({
       projects: {
         create: async () => {
           throw new Error("should not create for a re-attach");
         },
         getAvailableModels: async () => [],
-        get: async (id: string) => ({
+        get: async (_id: string) => ({
           status: "completed",
-          workerJobs: [{ resultUrl: "https://cdn.sogni.ai/late.png" }],
+          workerJobs: [],
+          completedWorkerJobs: [
+            { id: "proj_lost-0", imgID: "img_1", triggeredNSFWFilter: false },
+            { id: "proj_lost-1", imgID: "img_2", triggeredNSFWFilter: true }, // filtered — skipped
+          ],
         }),
+        downloadUrl: async ({ imageId }: { imageId: string }) =>
+          `https://cdn.sogni.ai/${imageId}.png`,
+        mediaDownloadUrl: async () => {
+          throw new Error("image kind should not use the media endpoint");
+        },
       },
     });
 
@@ -312,8 +325,9 @@ describe("sogni provider", () => {
     });
     expect(done.status).toBe("completed");
     if (done.status === "completed") {
+      expect(done.artifacts).toHaveLength(1); // NSFW-filtered job skipped
       expect(done.artifacts[0]).toMatchObject({
-        url: "https://cdn.sogni.ai/late.png",
+        url: "https://cdn.sogni.ai/img_1.png",
         ext: "png",
         seed: 42,
       });

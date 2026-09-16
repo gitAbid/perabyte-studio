@@ -55,9 +55,26 @@ export interface SogniClient {
      */
     get?(projectId: string): Promise<{
       status?: string;
-      workerJobs?: { resultUrl?: string | null }[];
+      workerJobs?: RawJobRecord[];
+      completedWorkerJobs?: RawJobRecord[];
     }>;
+    /**
+     * Mints a signed download URL for a finished job's media (the same call
+     * the SDK's own job sync makes from the raw record's imgID). Optional —
+     * feature-detected like `get`.
+     */
+    downloadUrl?(params: { jobId: string; imageId: string; type: "complete" }): Promise<string>;
+    mediaDownloadUrl?(params: { jobId: string; id: string; type: "complete" }): Promise<string>;
   };
+}
+
+/** One job of a raw server-side project record. */
+export interface RawJobRecord {
+  id?: string;
+  imgID?: string;
+  status?: string;
+  resultUrl?: string | null;
+  triggeredNSFWFilter?: boolean;
 }
 
 const APP_ID_FILE = "sogni-app-id.txt";

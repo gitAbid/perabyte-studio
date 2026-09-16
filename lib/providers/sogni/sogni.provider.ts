@@ -246,7 +246,9 @@ async function pollProjectRemote(
 ): Promise<JobPollResult> {
   const client = await getSogniClient();
   const get = client.projects.get;
-  if (!get) {
+  const downloadUrl = client.projects.downloadUrl;
+  const mediaDownloadUrl = client.projects.mediaDownloadUrl;
+  if (!get || !downloadUrl || !mediaDownloadUrl) {
     return {
       status: "failed",
       retryable: true,
@@ -254,9 +256,9 @@ async function pollProjectRemote(
         "The server restarted while this render was in flight and Sogni's state could not be re-read. Please re-run it.",
     };
   }
-  let raw: { status?: string; workerJobs?: { resultUrl?: string | null }[] };
+  let raw: Awaited<NonNullable<ReturnType<NonNullable<typeof get>>>>;
   try {
-    raw = (await get.call(client.projects, ref)) as typeof raw;
+    raw = await get.call(client.projects, ref);
   } catch (error) {
     return {
       status: "failed",
@@ -266,15 +268,34 @@ async function pollProjectRemote(
   }
   const status = raw.status;
   if (status === "completed") {
-    const urls = (raw.workerJobs ?? [])
-      .map((job) => job.resultUrl)
-      .filter((url): url is string => Boolean(url));
+    // Finished projects move their jobs into completedWorkerJobs; scan both.
+    const jobs = [...(raw.completedWorkerJobs ?? []), ...(raw.workerJobs ?? [])];
+    const urls: string[] = [];
+    for (const job of jobs) {
+      // A filtered job has no media to chase — the SDK withholds likewise.
+      if (job.triggeredNSFWFilter === true) continue;
+      const imgId = job.imgID ?? job.id;
+      if (!imgId) continue;
+      try {
+        const url =
+          request.kind === "video"
+            ? await mediaDownloadUrl.call(client.projects, { jobId: ref, id: imgId, type: "complete" })
+            : await downloadUrl.call(client.projects, { jobId: ref, imageId: imgId, type: "complete" });
+        if (url) urls.push(url);
+      } catch (error) {
+        ctx.logger.warn("media url mint failed for a recovered job", {
+          ref,
+          imgId,
+          error: describe(error),
+        });
+      }
+    }
     if (!urls.length) {
       return {
         status: "failed",
         retryable: true,
         message:
-          "The render finished on Sogni AI while the server was down, but its media links have expired. Please re-run it.",
+          "The render finished on Sogni AI while the server was down, but its media could not be retrieved. Please re-run it.",
       };
     }
     ctx.logger.info("sogni project re-attached after restart", { ref, urls: urls.length });
