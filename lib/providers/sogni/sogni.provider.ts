@@ -25,6 +25,7 @@ import {
   toImageParams,
   toVideoParams,
 } from "@/lib/providers/sogni/request-maps";
+import { driveJobToDeadline } from "@/lib/providers/job-drive";
 
 /**
  * Sogni AI adapter. Image, Video, and Text capabilities.
@@ -79,7 +80,10 @@ export const sogniProvider: ImageProvider &
     model: ModelDescriptor,
     ctx: ProviderContext,
   ): Promise<GeneratedArtifact[]> {
-    return driveToDeadline(request, model, ctx, "image", imageDeadlineMs());
+    return driveJobToDeadline({
+      provider: sogniProvider, providerLabel: sogniProvider.label, request, model, ctx,
+      kind: "image", deadlineMs: imageDeadlineMs(),
+    });
   },
 
   async generateVideo(
@@ -87,7 +91,10 @@ export const sogniProvider: ImageProvider &
     model: ModelDescriptor,
     ctx: ProviderContext,
   ): Promise<GeneratedArtifact[]> {
-    return driveToDeadline(request, model, ctx, "video", videoDeadlineMs());
+    return driveJobToDeadline({
+      provider: sogniProvider, providerLabel: sogniProvider.label, request, model, ctx,
+      kind: "video", deadlineMs: videoDeadlineMs(),
+    });
   },
 
   async submitJob(request, model, ctx) {
@@ -298,75 +305,6 @@ async function pollProjectRemote(
 /* ------------------------------------------------------------------ */
 /* Legacy request-scoped drive (generateImage/generateVideo)           */
 /* ------------------------------------------------------------------ */
-
-const LEGACY_POLL_INTERVAL_MS = 2_000;
-
-/**
- * Drives submit/poll to the given deadline for the legacy request-scoped
- * path. On deadline the Sogni project keeps running server-side — the
- * caller gets a retryable timeout, not a detached promise (the durable job
- * engine superseded the detached registry; there is nothing to attach the
- * late result back with on this path).
- */
-async function driveToDeadline(
-  request: NormalizedGenerationRequest,
-  model: ModelDescriptor,
-  ctx: ProviderContext,
-  kind: "image" | "video",
-  deadlineMs: number,
-): Promise<GeneratedArtifact[]> {
-  const started = Date.now();
-  const { ref } = await sogniProvider.submitJob(request, model, ctx);
-  let lastMessage = "";
-  let lastPercent: number | undefined;
-  try {
-    while (Date.now() - started < deadlineMs) {
-      if (ctx.signal?.aborted) {
-        throw Object.assign(new Error("aborted"), { name: "AbortError" });
-      }
-      const result = await sogniProvider.pollJob(ref, request, model, ctx);
-      if (result.status === "completed") return result.artifacts;
-      if (result.status === "failed") {
-        throw new ProviderError(result.message, {
-          retryable: result.retryable,
-          status: 502,
-        });
-      }
-      // Unchanged state is suppressed — no tick spam while nothing moves.
-      const progress = result.progress;
-      if (progress && (progress.message !== lastMessage || progress.percent !== lastPercent)) {
-        lastMessage = progress.message;
-        lastPercent = progress.percent;
-        ctx.onProgress?.(progress);
-      }
-      await sleep(Math.min(LEGACY_POLL_INTERVAL_MS, deadlineMs), ctx.signal);
-    }
-    const minutes = Math.round(deadlineMs / 60_000);
-    throw new ProviderError(
-      `Your ${kind} render hit the ${minutes}-minute time limit and is still running on Sogni AI. You can retry, or raise the limit in Settings → Render timeouts.`,
-      { retryable: true, status: 504 },
-    );
-  } catch (error) {
-    if (ctx.signal?.aborted || (error as Error)?.name === "AbortError") {
-      await sogniProvider.cancelJob?.(ref);
-    }
-    throw error;
-  }
-}
-
-function sleep(ms: number, signal?: AbortSignal): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(resolve, ms);
-    signal?.addEventListener(
-      "abort",
-      () => {
-        clearTimeout(timer);
-        reject(signal.reason ?? new Error("aborted"));
-      },
-      { once: true },
-    );
-  });
-}
 
 /* ------------------------------------------------------------------ */
 /* Progress readout (pure — one project state → one tick)              */

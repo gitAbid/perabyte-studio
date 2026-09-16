@@ -1,6 +1,8 @@
 import type {
   ImageProvider,
   GeneratedArtifact,
+  JobPollResult,
+  JobProvider,
   ProviderContext,
   VideoProvider,
 } from "@/lib/providers/types";
@@ -11,12 +13,8 @@ import { getStudioEnv } from "@/lib/config/env";
 import { randomSeed } from "@/lib/renderer";
 import { isPlausibleMp4 } from "@/lib/media/mp4";
 import { getMediaRepository } from "@/lib/repositories/media.repository";
-import {
-  markRenderFailed,
-  markRenderRecovered,
-  recordDetachedRender,
-} from "@/lib/providers/detached-renders";
 import { createApiKeyFanClient } from "@/lib/providers/apikey-fan/client";
+import { driveJobToDeadline } from "@/lib/providers/job-drive";
 import {
   APIKEY_FAN_IMAGE_MODELS,
   APIKEY_FAN_VIDEO_MODELS,
@@ -36,7 +34,7 @@ import {
  * both under a single credential; the registry still treats them as two
  * independent capabilities.
  */
-export const apiKeyFanProvider: ImageProvider & VideoProvider = {
+export const apiKeyFanProvider: ImageProvider & VideoProvider & JobProvider = {
   id: PROVIDER_ID,
   label: "apikey.fan",
 
@@ -158,6 +156,18 @@ export const apiKeyFanProvider: ImageProvider & VideoProvider = {
     model: ModelDescriptor,
     ctx: ProviderContext,
   ): Promise<GeneratedArtifact[]> {
+    return driveJobToDeadline({
+      provider: apiKeyFanProvider,
+      providerLabel: apiKeyFanProvider.label,
+      request,
+      model,
+      ctx,
+      kind: "video",
+      deadlineMs: getStudioEnv().videoRenderDeadlineMs,
+    });
+  },
+
+  async submitJob(request, model, ctx) {
     const env = getStudioEnv();
     const apiKey = env.apiKeyFanApiKey;
     if (!apiKey) {
@@ -166,71 +176,166 @@ export const apiKeyFanProvider: ImageProvider & VideoProvider = {
         { retryable: false, field: "model" },
       );
     }
-    const client = createApiKeyFanClient({ baseUrl: env.apiKeyFanBaseUrl, apiKey });
-    const log = ctx.logger.child({ provider: PROVIDER_ID, model: model.model });
+    if (request.kind === "video") {
+      // One relay job per requested variation, created sequentially (parallel
+      // creates would double-bill on retry). The ref carries all of them plus
+      // a per-job `~f` suffix when the relay made us drop the start frame —
+      // stateless, so the flag survives restarts.
+      const parts: string[] = [];
+      for (let index = 0; index < request.count; index += 1) {
+        const job = await createVideoJob(request, model, ctx, apiKey);
+        parts.push(job.frameDropped ? `${job.requestId}~f` : job.requestId);
+      }
+      const ref = parts.join(",");
+      ctx.logger.debug("relay video jobs submitted", { ref, count: request.count });
+      return { ref };
+    }
+    // Images are one synchronous b64 call — they complete "at submit". The
+    // artifacts park in memory for the executor's first poll; a restart
+    // loses the parking spot, which the recover pass reports as retryable.
+    const artifacts = await this.generateImage(request, model, ctx);
+    const ref = `grokimg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    parkedImages.set(ref, artifacts);
+    return { ref };
+  },
 
-    // One job per requested variation, run sequentially: parallel creates
-    // would double-bill on retry and the relay serialises media anyway.
-    const artifacts: GeneratedArtifact[] = [];
-    const prompt = foldNegativePrompt(request.prompt, request.negativePrompt);
-    for (let index = 0; index < request.count; index += 1) {
-      let frameDropped = false;
-      const buildPayload = (withImage: boolean) =>
-        toVideoPayload(model.model, {
-          prompt,
-          durationSeconds: request.durationSeconds,
-          ...(withImage && request.startImage ? { image: request.startImage } : {}),
-        });
-      let created: VideoCreateResponse;
+  async pollJob(ref, request, _model, ctx): Promise<JobPollResult> {
+    if (ref.startsWith(IMAGE_REF_PREFIX)) {
+      const parked = parkedImages.get(ref);
+      if (!parked) {
+        return {
+          status: "failed",
+          retryable: true,
+          message:
+            "The server restarted while this render was in flight and the relay result could not be retrieved. Please re-run it.",
+        };
+      }
+      parkedImages.delete(ref);
+      return { status: "completed", artifacts: parked };
+    }
+
+    const env = getStudioEnv();
+    const apiKey = env.apiKeyFanApiKey;
+    if (!apiKey) {
+      return {
+        status: "failed",
+        retryable: false,
+        message: "The apikey.fan provider lost its API key while this render was in flight.",
+      };
+    }
+    const client = createApiKeyFanClient({ baseUrl: env.apiKeyFanBaseUrl, apiKey });
+    const parts = ref.split(",").filter(Boolean).map((part) => ({
+      id: part.replace(/~f$/, ""),
+      frameDropped: part.endsWith("~f"),
+    }));
+
+    const urls: (string | null)[] = [];
+    for (const { id } of parts) {
+      let status: VideoStatusResponse;
       try {
-        created = await client.postJson<VideoCreateResponse>(
-          "/videos/generations",
-          buildPayload(true),
-          { logger: log, signal: ctx.signal, timeoutMs: 90_000, retries: 1 },
+        status = await client.getJson<VideoStatusResponse>(
+          `/videos/${encodeURIComponent(id)}`,
+          { logger: ctx.logger, signal: ctx.signal, timeoutMs: 20_000 },
         );
       } catch (error) {
-        if (request.startImage && error instanceof ProviderError && error.status === 400) {
-          // The relay may not forward Grok's image field (unverified) —
-          // degrade to a prompt-only clip instead of failing the scene.
-          log.warn("video create rejected the image field — retrying prompt-only");
-          frameDropped = true;
-          created = await client.postJson<VideoCreateResponse>(
-            "/videos/generations",
-            buildPayload(false),
-            { logger: log, signal: ctx.signal, timeoutMs: 90_000, retries: 1 },
-          );
-        } else {
-          throw error;
-        }
+        // Transient relay hiccup — keep polling rather than failing the job.
+        ctx.logger.debug("relay poll hiccup", { id, error: describeError(error) });
+        return {
+          status: "running",
+          progress: { stage: "rendering", message: "The relay is rendering your video…" },
+        };
       }
-
-      const requestId = created.request_id;
-      if (!requestId) {
-        throw new ProviderError("The provider did not return a video job id.", {
-          retryable: true,
-        });
+      if (status.status === "failed" || status.status === "expired") {
+        return {
+          status: "failed",
+          retryable: status.status === "expired",
+          message:
+            status.status === "expired"
+              ? "The video job expired before completing. Try again."
+              : "The provider could not generate this video. Try rephrasing the prompt.",
+        };
       }
-
-      const done = await pollVideo(client, requestId, log, ctx.signal, ctx.onProgress, {
-        request,
-        model,
-        ctx,
-      });
-      log.info("video job completed", { requestId, index, total: request.count });
-
-      ctx.onProgress?.({
-        stage: "downloading",
-        message: index === 0 ? "Downloading your video…" : `Downloading video ${index + 1} of ${request.count}…`,
-      });
-      // Download the mp4 immediately: relay URLs are short-lived.
-      const artifact = await downloadVideo(
-        done.video.url, env.apiKeyFanBaseUrl, request, index, apiKey, log, ctx.signal,
-      );
-      artifacts.push(frameDropped ? { ...artifact, frameDropped: true } : artifact);
+      if (status.status !== "done" || !status.video?.url) {
+        return {
+          status: "running",
+          progress: { stage: "rendering", message: "The relay is rendering your video…" },
+        };
+      }
+      urls.push(new URL(status.video.url, env.apiKeyFanBaseUrl).toString());
     }
-    return artifacts;
+
+    // Only download once EVERY variation has finished — relay content urls
+    // stay valid, so re-polling a finished job never re-downloads early.
+    ctx.onProgress?.({
+      stage: "downloading",
+      message: parts.length === 1 ? "Downloading your video…" : "Downloading your videos…",
+    });
+    const artifacts: GeneratedArtifact[] = [];
+    for (let index = 0; index < urls.length; index += 1) {
+      const artifact = await downloadVideo(
+        urls[index] as string, env.apiKeyFanBaseUrl, request, index, apiKey, ctx.logger, ctx.signal,
+      );
+      artifacts.push(parts[index]?.frameDropped ? { ...artifact, frameDropped: true } : artifact);
+    }
+    ctx.logger.info("relay video jobs completed", { ref, count: artifacts.length });
+    return { status: "completed", artifacts };
   },
 };
+
+/** Parked completed image jobs, keyed by synthetic `grokimg_` refs. */
+const IMAGE_REF_PREFIX = "grokimg_";
+const parkedImages = new Map<string, GeneratedArtifact[]>();
+
+/** Creates one relay video job; the id plus whether the frame was dropped. */
+async function createVideoJob(
+  request: NormalizedGenerationRequest,
+  model: ModelDescriptor,
+  ctx: ProviderContext,
+  apiKey: string,
+): Promise<{ requestId: string; frameDropped: boolean }> {
+  const env = getStudioEnv();
+  const client = createApiKeyFanClient({ baseUrl: env.apiKeyFanBaseUrl, apiKey });
+  const log = ctx.logger.child({ provider: PROVIDER_ID, model: model.model });
+  const prompt = foldNegativePrompt(request.prompt, request.negativePrompt);
+  const buildPayload = (withImage: boolean) =>
+    toVideoPayload(model.model, {
+      prompt,
+      durationSeconds: request.durationSeconds,
+      ...(withImage && request.startImage ? { image: request.startImage } : {}),
+    });
+  try {
+    const created = await client.postJson<VideoCreateResponse>("/videos/generations", buildPayload(true), {
+      logger: log,
+      signal: ctx.signal,
+      timeoutMs: 90_000,
+      retries: 1,
+    });
+    if (!created.request_id) {
+      throw new ProviderError("The provider did not return a video job id.", { retryable: true });
+    }
+    return { requestId: created.request_id, frameDropped: false };
+  } catch (error) {
+    if (request.startImage && error instanceof ProviderError && error.status === 400) {
+      // The relay may not forward Grok's image field (unverified) —
+      // degrade to a prompt-only clip instead of failing the scene.
+      log.warn("video create rejected the image field — retrying prompt-only");
+      const created = await client.postJson<VideoCreateResponse>(
+        "/videos/generations",
+        buildPayload(false),
+        { logger: log, signal: ctx.signal, timeoutMs: 90_000, retries: 1 },
+      );
+      if (!created.request_id) {
+        throw new ProviderError("The provider did not return a video job id.", { retryable: true });
+      }
+      return { requestId: created.request_id, frameDropped: true };
+    }
+    throw error;
+  }
+}
+
+function describeError(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
 
 /* ------------------------------------------------------------------ */
 /* Response shapes (subset of the fields we consume)                    */
@@ -249,19 +354,17 @@ interface VideoStatusResponse {
   video?: { url?: string };
 }
 
-/* ------------------------------------------------------------------ */
-/* Job polling                                                         */
-/* ------------------------------------------------------------------ */
-
-const POLL_INTERVAL_MS = 3_000;
 /**
- * Per-job poll budget: the configurable video render deadline (Settings →
- * Render timeouts, default 10 min) minus the download headroom, both computed
- * in the env layer. Video jobs normally finish far sooner.
+ * Content endpoint quirks (both verified against the live relay):
+ * - `video.url` can be a path relative to the relay base (`/v1/videos/<id>/content`),
+ *   so it must be resolved before fetching — a relative path handed to the
+ *   browser would resolve against our own origin and 404.
+ * - The endpoint requires the Bearer key; an unauthenticated fetch 401s, and a
+ *   raw URL is therefore useless to the client — download here or not at all.
+ * - A job can report "done" while object storage still serves a placeholder,
+ *   so bytes are validated and re-fetched once before failing loudly.
  */
-export function pollDeadlineMs(): number {
-  return getStudioEnv().videoRenderDeadlineMs;
-}
+const PROPAGATION_RETRY_MS = 5_000;
 
 function sleep(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -276,138 +379,6 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
     );
   });
 }
-
-async function pollVideo(
-  client: ReturnType<typeof createApiKeyFanClient>,
-  requestId: string,
-  log: Logger,
-  signal: AbortSignal | undefined,
-  onProgress: ((progress: { stage: "rendering"; message: string }) => void) | undefined,
-  meta: { request: NormalizedGenerationRequest; model: ModelDescriptor; ctx: ProviderContext },
-): Promise<{ video: { url: string } }> {
-  const deadline = Date.now() + pollDeadlineMs();
-  const startedAt = Date.now();
-  let ticks = 0;
-
-  while (Date.now() < deadline) {
-    await sleep(POLL_INTERVAL_MS, signal);
-    const status = await client.getJson<VideoStatusResponse>(
-      `/videos/${encodeURIComponent(requestId)}`,
-      { logger: log, signal, timeoutMs: 20_000 },
-    );
-
-    ticks += 1;
-    if (ticks % 2 === 0) {
-      const seconds = Math.round((Date.now() - startedAt) / 1000);
-      onProgress?.({
-        stage: "rendering",
-        message: `The relay is rendering your video — ${seconds}s`,
-      });
-    }
-    if (ticks % 5 === 0) {
-      log.debug("video job still running", { requestId, status: status.status, ticks });
-    }
-
-    if (status.status === "done" && status.video?.url) {
-      return status as { video: { url: string } };
-    }
-    if (status.status === "failed" || status.status === "expired") {
-      throw new ProviderError(
-        status.status === "expired"
-          ? "The video job expired before completing. Try again."
-          : "The provider could not generate this video. Try rephrasing the prompt.",
-        { retryable: status.status === "expired", status: 502 },
-      );
-    }
-  }
-  detachApiKeyFanVideo({ client, requestId, log, meta });
-  throw new ProviderError(
-    "The relay is still rendering this video — we detached it, and it will be attached automatically when it finishes. You can also raise the limit in Settings → Render timeouts.",
-    { retryable: true },
-  );
-}
-
-const DETACHED_POLL_INTERVAL_MS = 15_000;
-/** Salvage window — matches the relay's ~24 h result retention. */
-const DETACHED_MAX_AGE_MS = 24 * 60 * 60 * 1000;
-
-/**
- * Keeps polling a relay job that outlived its request: when it finishes, the
- * mp4 is downloaded into the media cache and the pending-renders record is
- * marked recovered so the studio UI can attach it (story scene or History).
- */
-function detachApiKeyFanVideo(input: {
-  client: ReturnType<typeof createApiKeyFanClient>;
-  requestId: string;
-  log: Logger;
-  meta: { request: NormalizedGenerationRequest; model: ModelDescriptor; ctx: ProviderContext };
-}): void {
-  const { client, requestId, log, meta } = input;
-  const record = recordDetachedRender({
-    provider: PROVIDER_ID,
-    kind: "video",
-    modelId: meta.model.id,
-    prompt: meta.request.prompt,
-    clientTag: meta.ctx.clientTag,
-  });
-  const apiKey = getStudioEnv().apiKeyFanApiKey ?? "";
-  const seed = meta.request.seed ?? randomSeed();
-  log.warn("poll deadline hit — detaching the still-running relay job", {
-    requestId,
-    pendingId: record.id,
-  });
-
-  void (async () => {
-    const salvageDeadline = Date.now() + DETACHED_MAX_AGE_MS;
-    while (Date.now() < salvageDeadline) {
-      await sleep(DETACHED_POLL_INTERVAL_MS);
-      let status: VideoStatusResponse;
-      try {
-        status = await client.getJson<VideoStatusResponse>(
-          `/videos/${encodeURIComponent(requestId)}`,
-          { logger: log, timeoutMs: 20_000 },
-        );
-      } catch {
-        continue; // transient relay hiccup — keep polling
-      }
-
-      if (status.status === "done" && status.video?.url) {
-        const url = new URL(status.video.url, getStudioEnv().apiKeyFanBaseUrl).toString();
-        const bytes = await fetchVideoBytes(url, apiKey, undefined);
-        if (bytes && isPlausibleMp4(bytes)) {
-          const stored = await getMediaRepository().put(bytes, "mp4");
-          markRenderRecovered(record.id, {
-            url: `/api/media?f=${stored.ref}`,
-            mime: stored.contentType,
-          });
-          log.info("detached relay render recovered", { pendingId: record.id, requestId });
-        } else {
-          markRenderFailed(record.id, "finished video could not be retrieved");
-        }
-        return;
-      }
-      if (status.status === "failed" || status.status === "expired") {
-        markRenderFailed(record.id, `relay job ${status.status}`);
-        return;
-      }
-    }
-    markRenderFailed(record.id, "salvage window expired");
-  })().catch((error) => {
-    markRenderFailed(record.id, (error as Error)?.message ?? "salvage failed");
-  });
-}
-
-/**
- * Content endpoint quirks (both verified against the live relay):
- * - `video.url` can be a path relative to the relay base (`/v1/videos/<id>/content`),
- *   so it must be resolved before fetching — a relative path handed to the
- *   browser would resolve against our own origin and 404.
- * - The endpoint requires the Bearer key; an unauthenticated fetch 401s, and a
- *   raw URL is therefore useless to the client — download here or not at all.
- * - A job can report "done" while object storage still serves a placeholder,
- *   so bytes are validated and re-fetched once before failing loudly.
- */
-const PROPAGATION_RETRY_MS = 5_000;
 
 async function downloadVideo(
   rawUrl: string,
