@@ -16,6 +16,8 @@ import {
   setProviderConfigPathForTests,
   updateProviderConfig,
 } from "@/lib/repositories/provider-config.repository";
+import { setAssetsPathForTests } from "@/lib/repositories/assets.repository";
+import { setStoriesPathForTests } from "@/lib/repositories/stories.repository";
 import {
   getJobsRepository,
   putJobRepository,
@@ -163,6 +165,8 @@ beforeEach(() => {
 
 afterEach(() => {
   setJobsPathForTests(null);
+  setAssetsPathForTests(null);
+  setStoriesPathForTests(null);
   setProviderConfigPathForTests(null);
   resetProviderConfigForTests();
 });
