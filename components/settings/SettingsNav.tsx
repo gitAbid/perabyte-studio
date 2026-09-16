@@ -30,7 +30,7 @@ export function SettingsNav({
   return (
     <nav
       aria-label="Settings sections"
-      className="shrink-0 self-start md:sticky md:top-8 md:w-[188px]"
+      className="w-full min-w-0 self-start md:sticky md:shrink-0 md:top-8 md:w-[188px]"
     >
       <div className="flex gap-1.5 overflow-x-auto pb-1 md:flex-col md:gap-0.5 md:overflow-visible md:pb-0">
         {SECTIONS.map((s) => {

@@ -3,6 +3,7 @@
 import { Button, SelectField, TextAreaField } from "@/components/ui";
 import { CHARACTER_STYLES, type CharacterSpec } from "@/lib/character";
 import { PROMPT_EXAMPLES } from "@/components/character/CharacterSteps";
+import type { ModelOption } from "@/components/character/CharacterStudio";
 
 const EXAMPLE_LABELS = ["Artist", "Warrior", "Barista"];
 
@@ -17,11 +18,18 @@ export function StepSimple({
   patch,
   promptError,
   onSwitchToDetailed,
+  models,
+  modelId,
+  onModelChange,
 }: {
   spec: CharacterSpec;
   patch: (patch: Partial<CharacterSpec>) => void;
   promptError?: string;
   onSwitchToDetailed: () => void;
+  /** Image model catalog for the picker; the row hides while empty. */
+  models?: ModelOption[];
+  modelId?: string | null;
+  onModelChange?: (modelId: string) => void;
 }) {
   return (
     <div className="space-y-5">
@@ -80,6 +88,17 @@ export function StepSimple({
           </option>
         ))}
       </SelectField>
+
+      {models && models.length > 0 && onModelChange && (
+        <SelectField label="Model" value={modelId ?? models[0].id} onChange={(e) => onModelChange(e.target.value)}>
+          {models.map((model) => (
+            <option key={model.id} value={model.id}>
+              {model.label}
+              {model.hint ? ` — ${model.hint}` : ""} · {model.providerLabel}
+            </option>
+          ))}
+        </SelectField>
+      )}
 
       <div className="flex items-center justify-between gap-3 rounded-[14px] border border-border bg-surface p-3.5">
         <p className="text-[12px] leading-snug text-muted">
