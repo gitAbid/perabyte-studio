@@ -210,13 +210,13 @@ describe("provider settings service", () => {
   it("exposes render timeouts and persists updates in seconds", () => {
     wireRegistry();
     // Defaults: 5 minutes images, 10 minutes videos.
-    expect(getProviderSettings().renderTimeouts).toEqual({ image: 300, video: 600 });
+    expect(getProviderSettings().renderTimeouts).toEqual({ image: 300, video: 600, staleness: 300 });
 
     const payload = applyProviderSettingsUpdate({
-      renderTimeouts: { image: 480, video: 900 },
+      renderTimeouts: { image: 480, video: 900, staleness: 300 },
     });
-    expect(payload.renderTimeouts).toEqual({ image: 480, video: 900 });
-    expect(getProviderSettings().renderTimeouts).toEqual({ image: 480, video: 900 });
+    expect(payload.renderTimeouts).toEqual({ image: 480, video: 900, staleness: 300 });
+    expect(getProviderSettings().renderTimeouts).toEqual({ image: 480, video: 900, staleness: 300 });
   });
 
   it("clamps render timeouts into the safe range", () => {
@@ -239,6 +239,6 @@ describe("provider settings service", () => {
     wireRegistry();
     applyProviderSettingsUpdate({ renderTimeouts: { video: 900 } });
     applyProviderSettingsUpdate({ tasks: { enhance: "sogni:qwen-b" } });
-    expect(getProviderSettings().renderTimeouts).toEqual({ image: 300, video: 900 });
+    expect(getProviderSettings().renderTimeouts).toEqual({ image: 300, video: 900, staleness: 300 });
   });
 });

@@ -10,7 +10,7 @@ import {
   type GenerationKind,
   type ResolutionKey,
 } from "@/lib/constants";
-import { durationToSeconds, type FrameImage, type NormalizedGenerationRequest } from "@/lib/domain/models";
+import { durationToSeconds, type FrameImage, type ModelDescriptor, type NormalizedGenerationRequest } from "@/lib/domain/models";
 import { getStudioEnv } from "@/lib/config/env";
 import type { Logger } from "@/lib/logging/logger";
 import { logger as rootLogger } from "@/lib/logging/logger";
@@ -351,7 +351,7 @@ async function materializeCompanionFrame(
 }
 
 /** Persist artifacts and convert them to the client-facing media contract. */
-async function persistArtifacts(
+export async function persistArtifacts(
   artifacts: GeneratedArtifact[],
   aspect: AspectKey,
   resolution: ResolutionKey,
@@ -391,14 +391,27 @@ async function persistArtifacts(
   );
 }
 
-export async function runGeneration(
-  body: Record<string, unknown>,
-  options: RunGenerationOptions = {},
-): Promise<GenerationResponse> {
-  const started = Date.now();
-  const request = validateGenerationRequest(body);
+export interface PreparedGeneration {
+  normalized: NormalizedGenerationRequest;
+  /** The provider + (possibly frame-swapped) model the render will use. */
+  provider: ImageProvider & Partial<VideoProvider> | VideoProvider;
+  model: ModelDescriptor;
+  swapped: boolean;
+  framesActive: boolean;
+  hadStartImage: boolean;
+  log: Logger;
+}
+
+/**
+ * Shared pre-flight for both render paths (request-scoped and durable jobs):
+ * resolve the model, load continuity-frame bytes from their refs, swap to a
+ * frame-capable model when needed, and normalize under the safety gate.
+ */
+export async function prepareGeneration(
+  request: ValidatedRequest,
+  baseLog: Logger,
+): Promise<PreparedGeneration> {
   const registry = getGenerationRegistry();
-  const requestId = `req_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 
   // Model resolution: explicit pick → default for the kind.
   let modelId = request.modelId;
@@ -425,8 +438,7 @@ export async function runGeneration(
     });
   }
 
-  const log = (options.logger ?? rootLogger).child({
-    requestId,
+  const log = baseLog.child({
     kind: request.kind,
     provider: resolved.provider.id,
     model: resolved.model.model,
@@ -495,6 +507,28 @@ export async function runGeneration(
     endImage,
   };
 
+  return {
+    normalized,
+    provider: effective.provider,
+    model: effective.model,
+    swapped,
+    framesActive,
+    hadStartImage: Boolean(startImage),
+    log,
+  };
+}
+
+export async function runGeneration(
+  body: Record<string, unknown>,
+  options: RunGenerationOptions = {},
+): Promise<GenerationResponse> {
+  const started = Date.now();
+  const request = validateGenerationRequest(body);
+  const requestId = `req_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+
+  const prepared = await prepareGeneration(request, (options.logger ?? rootLogger).child({ requestId }));
+  const { normalized, provider: effectiveProvider, model: effectiveModel, swapped, framesActive, hadStartImage, log } = prepared;
+
   // Overall render budget (Settings → Render timeouts): a safety net around
   // every provider. A video budget applies per clip so multi-clip requests
   // keep their per-job allowance; client cancellation still propagates.
@@ -513,14 +547,14 @@ export async function runGeneration(
   try {
     const artifacts =
       request.kind === "video"
-        ? await (effective.provider as VideoProvider).generateVideo(
+        ? await (effectiveProvider as VideoProvider).generateVideo(
             normalized,
-            effective.model,
+            effectiveModel,
             { logger: log, signal: renderSignal, onProgress: options.onProgress, clientTag },
           )
-        : await (effective.provider as ImageProvider).generateImage(
+        : await (effectiveProvider as ImageProvider).generateImage(
             normalized,
-            effective.model,
+            effectiveModel,
             { logger: log, signal: renderSignal, onProgress: options.onProgress, clientTag },
           );
 
@@ -544,11 +578,11 @@ export async function runGeneration(
       ...(artifacts[0]?.prewarmed === undefined ? {} : { prewarmed: artifacts[0].prewarmed }),
       ...(swapped
         ? {
-            effectiveModelId: effective.model.id,
-            effectiveModelLabel: effective.model.label,
+            effectiveModelId: effectiveModel.id,
+            effectiveModelLabel: effectiveModel.label,
           }
         : {}),
-      ...(startImage ? { frameUsed: framesActive && artifacts[0]?.frameDropped !== true } : {}),
+      ...(hadStartImage ? { frameUsed: framesActive && artifacts[0]?.frameDropped !== true } : {}),
       media,
     };
   } catch (error) {
@@ -556,7 +590,7 @@ export async function runGeneration(
       const minutes = Math.round(budgetMs / 60_000);
       log.warn("generation hit the render timeout", { budgetMs });
       throw new GenerationServiceError(
-        `Your ${request.kind} render hit the ${minutes}-minute time limit. It is still rendering on ${resolved.provider.label} — we detached it, and it will be attached automatically when it finishes. You can also raise the limit in Settings → Render timeouts.`,
+        `Your ${request.kind} render hit the ${minutes}-minute time limit. It may still be running on the provider — the durable job queue handles long renders better than this legacy path. You can retry, or raise the limit in Settings → Render timeouts.`,
         { retryable: true, status: 504, pending: true },
       );
     }

@@ -2,20 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { NormalizedGenerationRequest } from "@/lib/domain/models";
 import { resetStudioEnvForTests } from "@/lib/config/env";
 import { logger } from "@/lib/logging/logger";
-import {
-  apiKeyFanProvider,
-  pollDeadlineMs,
-} from "@/lib/providers/apikey-fan/apikey-fan.provider";
+import { apiKeyFanProvider } from "@/lib/providers/apikey-fan/apikey-fan.provider";
 import {
   resetProviderConfigForTests,
   setProviderConfigPathForTests,
   updateProviderConfig,
 } from "@/lib/repositories/provider-config.repository";
-import {
-  listPendingRenders,
-  resetPendingRendersForTests,
-  setPendingRendersPathForTests,
-} from "@/lib/repositories/pending-renders.repository";
 import {
   setMediaRepositoryForTests,
   type MediaRepository,
@@ -92,8 +84,6 @@ beforeEach(() => {
   configDir = mkdtempSync(join(tmpdir(), "apikey-fan-provider-test-"));
   setProviderConfigPathForTests(join(configDir, "settings.json"));
   resetProviderConfigForTests();
-  setPendingRendersPathForTests(join(configDir, "pending.json"));
-  resetPendingRendersForTests();
   setMediaRepositoryForTests(mediaFake);
   process.env.APIKEY_FAN_API_KEY = "sk-test-key";
   resetStudioEnvForTests();
@@ -103,8 +93,6 @@ afterEach(() => {
   delete process.env.APIKEY_FAN_API_KEY;
   setProviderConfigPathForTests(null);
   resetProviderConfigForTests();
-  setPendingRendersPathForTests(null);
-  resetPendingRendersForTests();
   setMediaRepositoryForTests(null);
   resetStudioEnvForTests();
   if (configDir) {
@@ -117,24 +105,11 @@ afterEach(() => {
 });
 
 describe("apikey-fan provider", () => {
-  it("derives the poll deadline from the configured video timeout", () => {
-    // Default: 10 min video budget − 1 min download headroom.
-    expect(pollDeadlineMs()).toBe(540_000);
-  });
-
-  it("applies a custom video timeout from settings", () => {
-    updateProviderConfig({ renderTimeouts: { video: 120 } });
-    resetStudioEnvForTests();
-    expect(pollDeadlineMs()).toBe(60_000);
-  });
-
-  it("detaches a deadline-hit relay job and recovers the finished video", async () => {
+  it("times out retryably at the deadline without detaching", async () => {
     vi.useFakeTimers();
-    // 30 s video timeout → 30 s floored poll deadline; 3 s poll interval.
     updateProviderConfig({ renderTimeouts: { video: 30 } });
     resetStudioEnvForTests();
 
-    let jobState = "processing";
     vi.stubGlobal(
       "fetch",
       vi.fn(async (input: string | URL | Request) => {
@@ -142,18 +117,8 @@ describe("apikey-fan provider", () => {
         if (url.endsWith("/videos/generations")) {
           return new Response(JSON.stringify({ request_id: "job_late" }), { status: 200 });
         }
-        if (url.includes("/videos/job_late/content")) {
-          return new Response(MP4_BYTES, { status: 200 });
-        }
         if (url.endsWith("/videos/job_late")) {
-          return new Response(
-            JSON.stringify(
-              jobState === "done"
-                ? { status: "done", video: { url: "/v1/videos/job_late/content" } }
-                : { status: jobState },
-            ),
-            { status: 200 },
-          );
+          return new Response(JSON.stringify({ status: "processing" }), { status: 200 });
         }
         return new Response("not found", { status: 404 });
       }),
@@ -162,22 +127,91 @@ describe("apikey-fan provider", () => {
     const pending = apiKeyFanProvider.generateVideo(videoRequest(1), videoModel, { logger });
     const assertion = expect(pending).rejects.toMatchObject({
       retryable: true,
-      message: expect.stringContaining("detached"),
+      status: 504,
+      message: expect.stringContaining("time limit"),
     });
-    await vi.advanceTimersByTimeAsync(31_000);
+    await vi.runAllTimersAsync();
     await assertion;
+  });
 
-    // The abandoned job is registered as detached.
-    expect(listPendingRenders()).toHaveLength(1);
-    expect(listPendingRenders()[0].status).toBe("detached");
+  it("exposes submit/poll: relay request ids become refs", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request) => {
+        const url = String(input);
+        if (url.endsWith("/videos/generations")) {
+          return new Response(JSON.stringify({ request_id: "job_durable" }), { status: 200 });
+        }
+        if (url.includes("/videos/job_durable")) {
+          return new Response(JSON.stringify({ status: "processing" }), { status: 200 });
+        }
+        return new Response("not found", { status: 404 });
+      }),
+    );
 
-    // The relay finishes later; the detached salvage pump caches the mp4.
-    jobState = "done";
-    await vi.advanceTimersByTimeAsync(15_000);
-    const recovered = listPendingRenders()[0];
-    expect(recovered.status).toBe("recovered");
-    expect(recovered.media?.mime).toBe("video/mp4");
-    expect(recovered.media?.url).toBe("/api/media?f=fake.mp4");
+    const { ref } = await apiKeyFanProvider.submitJob(videoRequest(1), videoModel, { logger });
+    expect(ref).toBe("job_durable");
+
+    const running = await apiKeyFanProvider.pollJob(ref, videoRequest(1), videoModel, { logger });
+    expect(running.status).toBe("running");
+  });
+
+  it("pollJob downloads once every variation is done and seeds per index", async () => {
+    let creates = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request) => {
+        const url = String(input);
+        if (url.endsWith("/videos/generations")) {
+          creates += 1;
+          return new Response(JSON.stringify({ request_id: `job_${creates}` }), { status: 200 });
+        }
+        if (url.includes("/videos/job_1") || url.includes("/videos/job_2")) {
+          return new Response(
+            JSON.stringify({ status: "done", video: { url: "https://cdn.example/v.mp4" } }),
+            { status: 200 },
+          );
+        }
+        if (url === "https://cdn.example/v.mp4") {
+          return new Response(new Uint8Array(MP4_BYTES), { status: 200 });
+        }
+        return new Response("not found", { status: 404 });
+      }),
+    );
+
+    const { ref } = await apiKeyFanProvider.submitJob(videoRequest(2), videoModel, { logger });
+    expect(ref).toBe("job_1,job_2");
+
+    const done = await apiKeyFanProvider.pollJob(ref, videoRequest(2), videoModel, { logger });
+    expect(done.status).toBe("completed");
+    if (done.status === "completed") {
+      expect(done.artifacts).toHaveLength(2);
+      expect(done.artifacts.map((a) => a.seed)).toEqual([42, 43]);
+    }
+  });
+
+  it("parked image jobs complete on first poll; lost parks fail retryably", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      return new Response(JSON.stringify({ data: [{ b64_json: Buffer.from(PNG_BYTES).toString("base64") }] }), { status: 200 });
+    }));
+    const imageModel = {
+      id: "apikey-fan:grok-imagine-image-2.0",
+      providerId: "apikey-fan",
+      kind: "image" as const,
+      model: "grok-imagine-image-2.0",
+      label: "Grok Imagine 2.0",
+    };
+    const request = {
+      kind: "image" as const, prompt: "a fox", negativePrompt: "", aspect: "16:9" as const,
+      resolution: "1080p" as const, durationSeconds: 0, count: 1, seed: 42, safe: true, enhance: false,
+    };
+    const { ref } = await apiKeyFanProvider.submitJob(request, imageModel, { logger });
+    expect(ref.startsWith("grokimg_")).toBe(true);
+    const done = await apiKeyFanProvider.pollJob(ref, request, imageModel, { logger });
+    expect(done.status).toBe("completed");
+
+    const lost = await apiKeyFanProvider.pollJob("grokimg_lost", request, imageModel, { logger });
+    expect(lost).toMatchObject({ status: "failed", retryable: true });
   });
 
   it("generates one video per requested variation (count honoured)", async () => {    const createCalls: string[] = [];

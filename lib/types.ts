@@ -65,6 +65,9 @@ export interface GenerationResponse {
   status: "completed";
   kind: GenerationKind;
   elapsedMs: number;
+  /** Server-created History asset id (durable jobs) — clients reuse it so
+   * the optimistic row and the server row are the same record. */
+  assetId?: string;
   /** True when the primary render was already produced before we answered. */
   prewarmed?: boolean;
   media: GeneratedMedia[];
