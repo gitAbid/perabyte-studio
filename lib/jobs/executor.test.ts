@@ -18,6 +18,7 @@ import {
 } from "@/lib/repositories/provider-config.repository";
 import { setAssetsPathForTests } from "@/lib/repositories/assets.repository";
 import { setStoriesPathForTests } from "@/lib/repositories/stories.repository";
+import { setModerationPathForTests } from "@/lib/repositories/moderation.repository";
 import {
   getJobsRepository,
   putJobRepository,
@@ -160,6 +161,11 @@ beforeEach(() => {
   dir = fs.mkdtempSync(path.join(os.tmpdir(), "executor-"));
   setJobsPathForTests(path.join(dir, "jobs.json"));
   setProviderConfigPathForTests(path.join(dir, "settings.json"));
+  // Absorption writes assets/stories/moderation during these tests — point
+  // them at the temp dir too, or fake rows leak into the live .studio.
+  setAssetsPathForTests(path.join(dir, "assets.json"));
+  setStoriesPathForTests(path.join(dir, "stories.json"));
+  setModerationPathForTests(path.join(dir, "moderation.json"));
   resetProviderConfigForTests();
 });
 
@@ -167,6 +173,7 @@ afterEach(() => {
   setJobsPathForTests(null);
   setAssetsPathForTests(null);
   setStoriesPathForTests(null);
+  setModerationPathForTests(null);
   setProviderConfigPathForTests(null);
   resetProviderConfigForTests();
 });
