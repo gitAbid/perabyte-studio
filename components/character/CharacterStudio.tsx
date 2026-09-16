@@ -30,9 +30,9 @@ import { snapLorasForModel } from "@/lib/lora-options";
 import { setSelectedModel, useSettings } from "@/lib/repositories/settings.repository";
 import {
   addCharacter,
+  ensureCharactersHydrated,
   getCharacter,
   updateCharacter,
-  useCharacters,
 } from "@/lib/character-store";
 import { addAsset, updateAsset, useAssets } from "@/lib/store";
 import { titleFromPrompt } from "@/lib/constants";
@@ -95,7 +95,6 @@ export function CharacterStudio({
 
   const { job, run, cancel, reset } = useGeneration();
   const { settings: userSettings, ready: settingsReady } = useSettings();
-  const { ready: charactersReady } = useCharacters();
   const { assets } = useAssets();
   const catalog = useModelCatalog("image");
   const characterModelId = userSettings.imageModel ?? catalog.defaultModelId;
@@ -115,32 +114,43 @@ export function CharacterStudio({
   useEffect(() => {
     if (initialized) return;
     if (!settingsReady) return;
-    if (mode === "edit" && !charactersReady) return;
-    if (mode === "edit") {
-      const character = characterId ? getCharacter(characterId) : undefined;
-      if (!character) {
-        setMissing(true);
+    let cancelled = false;
+    // Hydration is async (server store) — resolve it before the one-shot
+    // lookup, otherwise a not-yet-loaded cache reads as "character missing".
+    void ensureCharactersHydrated().then((rows) => {
+      if (cancelled) return;
+      if (mode === "edit") {
+        const character = characterId
+          ? rows.find((r) => r.id === characterId) ?? getCharacter(characterId)
+          : undefined;
+        if (!character) {
+          setMissing(true);
+          setInitialized(true);
+          return;
+        }
+        setSpec(sanitizeSpec({ ...DEFAULT_CHARACTER_SPEC, ...character.spec }, uncensored));
+        setSaveName(character.name);
         setInitialized(true);
         return;
       }
-      setSpec(sanitizeSpec({ ...DEFAULT_CHARACTER_SPEC, ...character.spec }, uncensored));
-      setSaveName(character.name);
-      setInitialized(true);
-      return;
-    }
-    if (parentId && charactersReady) {
-      const parent = getCharacter(parentId);
-      if (parent) {
-        setSpec(sanitizeSpec({ ...DEFAULT_CHARACTER_SPEC, ...parent.spec }, uncensored));
-        setSaveName("");
-        setParentName(parent.name);
-      } else {
-        toast.push("Parent character not found — starting fresh.");
+      if (parentId) {
+        const parent =
+          rows.find((r) => r.id === parentId) ?? getCharacter(parentId);
+        if (parent) {
+          setSpec(sanitizeSpec({ ...DEFAULT_CHARACTER_SPEC, ...parent.spec }, uncensored));
+          setSaveName("");
+          setParentName(parent.name);
+        } else {
+          toast.push("Parent character not found — starting fresh.");
+        }
       }
-    }
-    setInitialized(true);
+      setInitialized(true);
+    });
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time library-mode init
-  }, [initialized, mode, characterId, parentId, charactersReady, settingsReady]);
+  }, [initialized, mode, characterId, parentId, settingsReady]);
 
   // LoRA selections snap to the render model: entries it doesn't accept drop
   // (same policy as Solo/Story), so the Review step never shows a count the
