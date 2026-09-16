@@ -153,4 +153,25 @@ describe("writer service", () => {
     expect(result.model).toBe("default");
     expect(String(fetchMock.mock.calls[0]?.[0])).toContain("pollinations");
   });
+
+  it("the session model pill overrides the tasks.writer pick", async () => {
+    updateProviderConfig({ tasks: { writer: "pollinations:default" } });
+    stubReplies(["override story"]);
+    const result = await runWriterAction({
+      action: "write",
+      brief: { idea: "x" },
+      modelId: "sogni:qwen3.6-35b-a3b-gguf-iq4xs",
+    });
+    expect(result.provider).toBe("sogni");
+  });
+
+  it("an unknown session model id degrades to the chain instead of failing", async () => {
+    stubReplies(["fallback story"]);
+    const result = await runWriterAction({
+      action: "write",
+      brief: { idea: "x" },
+      modelId: "sogni:not-a-real-model",
+    });
+    expect(result.provider).toBe("sogni");
+  });
 });

@@ -68,12 +68,22 @@ function engineLabel(entry: {
  * reply needs far more, and truncation is unrepairable. */
 const SPLIT_MAX_TOKENS = 2048;
 
+/** Session override from the /writer pill; falls back to the Settings pick. */
+function sessionModelId(body: Record<string, unknown>): string | undefined {
+  const value = body.modelId;
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
 async function completeViaChain(
   instruction: string,
-  options: { signal?: AbortSignal; maxTokens?: number; logger: Logger },
+  options: {
+    signal?: AbortSignal;
+    maxTokens?: number;
+    modelId?: string;
+    logger: Logger;
+  },
 ): Promise<{ text: string; engine: { providerId: string; modelId?: string } }> {
-  const taskModel = getProviderConfig().tasks.writer;
-  const engines = resolveTextEngines(taskModel);
+  const engines = resolveTextEngines(options.modelId ?? getProviderConfig().tasks.writer);
   if (!engines.length) {
     throw new WriterServiceError(
       "No text model is available. Enable a provider in Settings and retry.",
@@ -116,12 +126,14 @@ export async function runWriterAction(
 ): Promise<WriterTextResult | WriterSplitResult> {
   const log = (options.logger ?? rootLogger).child({ surface: "writer" });
   const action = body.action;
+  const modelId = sessionModelId(body);
 
   if (action === "write") {
     const brief = parseWriteBody(body);
     const started = Date.now();
     const { text, engine } = await completeViaChain(writeStoryInstruction(brief), {
       signal: options.signal,
+      modelId,
       logger: log,
     });
     log.info("story written", { ...engineLabel(engine), elapsedMs: Date.now() - started });
@@ -133,7 +145,7 @@ export async function runWriterAction(
     const started = Date.now();
     const { text, engine } = await completeViaChain(
       enhanceDraftInstruction(request.draft, request.instruction),
-      { signal: options.signal, logger: log },
+      { signal: options.signal, modelId, logger: log },
     );
     log.info("story enhanced", { ...engineLabel(engine), elapsedMs: Date.now() - started });
     return { text, ...engineLabel(engine) };
@@ -154,6 +166,7 @@ export async function runWriterAction(
       const { text, engine } = await completeViaChain(instruction, {
         signal: options.signal,
         maxTokens: SPLIT_MAX_TOKENS,
+        modelId,
         logger: log,
       });
       const parsed = extractStoryScenes(text, request.sceneCount);
