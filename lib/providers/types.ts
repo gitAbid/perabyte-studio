@@ -140,6 +140,8 @@ export interface TextModelDescriptor {
   readonly description?: string;
   readonly contextTokens?: number;
   readonly reasoning?: boolean;
+  /** True when the model will keep adult/explicit text instead of refusing it. */
+  readonly uncensored?: boolean;
 }
 
 export interface TextGenerationRequest {

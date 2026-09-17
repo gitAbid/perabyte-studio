@@ -80,12 +80,45 @@ describe("instruction builders", () => {
     expect(text).toContain("5");
     expect(text).toContain("dark");
     expect(text).toContain("Ada");
+    expect(text).toContain("Do not sanitize or moralize");
   });
 
-  it("enhance instruction carries draft and instruction", () => {
-    const text = enhanceDraftInstruction("old draft", "make it darker");
+  it("omits the uncensored clause when the flag is off", () => {
+    const text = writeStoryInstruction({
+      idea: "a neon chase",
+      sceneCount: 5,
+      tone: null,
+      characterNames: [],
+      uncensored: false,
+    });
+    expect(text).not.toContain("Do not sanitize or moralize");
+  });
+
+  it("enhance instruction carries draft, instruction, and the uncensored clause", () => {
+    const text = enhanceDraftInstruction("old draft", "make it darker", true);
     expect(text).toContain("old draft");
     expect(text).toContain("make it darker");
+    expect(text).toContain("Do not sanitize or moralize");
+    expect(enhanceDraftInstruction("old draft", "make it darker", false)).not.toContain(
+      "Do not sanitize or moralize",
+    );
+  });
+
+  it("parses uncensored on enhance and split bodies", () => {
+    expect(
+      parseEnhanceBody({
+        action: "enhance",
+        draft: "adult scene",
+        instruction: "more explicit",
+        uncensored: true,
+      }),
+    ).toMatchObject({ uncensored: true });
+    expect(
+      parseEnhanceBody({ action: "enhance", draft: "adult scene", instruction: "more explicit" }),
+    ).toMatchObject({ uncensored: false });
+    expect(parseSplitBody({ action: "split", draft: "prose", uncensored: true })).toMatchObject({
+      uncensored: true,
+    });
   });
 
   it("split instruction demands JSON output with the requested count", () => {
@@ -104,6 +137,14 @@ describe("instruction builders", () => {
     const explicitImage = splitScenesInstruction("prose", 4, [], "image");
     expect(explicitImage).toBe(image);
     expect(image).not.toContain("motion");
+  });
+
+  it("split instruction keeps adult visual detail when uncensored", () => {
+    const text = splitScenesInstruction("adult prose", 3, [], "image", true);
+    expect(text).toContain("Do not sanitize or moralize");
+    expect(splitScenesInstruction("adult prose", 3, [], "image", false)).not.toContain(
+      "Do not sanitize or moralize",
+    );
   });
 });
 

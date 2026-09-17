@@ -23,6 +23,8 @@ export interface EnhancementRequest {
   sceneIndex?: number | null;
   sceneCount?: number | null;
   negativePrompt?: string | null;
+  /** Uncensored Mode — keep adult/explicit intent in the rewrite. */
+  uncensored?: boolean;
 }
 
 export interface EnhancementResult {
@@ -56,6 +58,7 @@ export async function requestPromptEnhancement(
     sceneCount: request.sceneCount ?? null,
     timeOfDay: timeOfDayFromDate(new Date()),
     negativePrompt: request.negativePrompt ?? null,
+    uncensored: request.uncensored === true,
   };
 
   let response: Response;

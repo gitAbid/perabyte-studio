@@ -169,6 +169,60 @@ describe("runPromptEnhancement", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it("asks the engine to keep adult content when uncensored is on", async () => {
+    enableSogni();
+    const fetchMock = vi.fn(async () => {
+      return new Response(
+        JSON.stringify({
+          choices: [{ message: { content: "A nude woman, explicit pose, cinematic lighting." } }],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await runPromptEnhancement({
+      prompt: "a nude woman in lingerie",
+      kind: "image",
+      uncensored: true,
+    });
+    expect(result.source).toBe("ai");
+    const body = JSON.parse(String((fetchMock.mock.calls[0] as unknown as [string, RequestInit])[1].body));
+    const user = (body.messages as Array<{ role: string; content: string }>).find(
+      (m) => m.role === "user",
+    )?.content;
+    expect(user).toContain("Do not sanitize or moralize");
+    expect(user).toContain("a nude woman in lingerie");
+  });
+
+  it("does not fall through to aligned engines after an uncensored refusal", async () => {
+    enableSogni();
+    const fetchMock = vi.fn(async (url: string | URL | Request) => {
+      if (String(url).includes("/v1/chat/completions")) {
+        return new Response(
+          JSON.stringify({
+            choices: [{ message: { content: "I'm sorry, I cannot help with that." } }],
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }
+      return new Response("A fully clothed woman in a modest dress, family-friendly.", {
+        status: 200,
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const result = await runPromptEnhancement({
+      prompt: "a nude woman in lingerie",
+      kind: "image",
+      uncensored: true,
+    });
+    expect(result.source).toBe("fallback");
+    expect(result.enhanced.toLowerCase()).toContain("nude");
+    expect(result.enhanced).not.toContain("family-friendly");
+    expect(fetchMock.mock.calls.every((call) => String(call[0]).includes("/v1/chat/completions"))).toBe(
+      true,
+    );
+  });
+
   it("honors configured task model over default priority order", async () => {
     enableSogni();
     updateProviderConfig({

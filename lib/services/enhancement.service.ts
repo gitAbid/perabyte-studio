@@ -102,6 +102,7 @@ export function validateEnhancementRequest(
     sceneCount,
     timeOfDay,
     negativePrompt,
+    uncensored: body.uncensored === true,
   };
 }
 
@@ -145,7 +146,9 @@ export async function runPromptEnhancement(
   try {
     const instruction = enhancementInstruction(request.prompt, request);
     let lastError: unknown;
-    const engines = resolveTextEngines(config.tasks.enhance);
+    const engines = resolveTextEngines(config.tasks.enhance, {
+      preferUncensored: request.uncensored,
+    });
     for (const engine of engines) {
       try {
         const reply = await engine.complete(instruction, {

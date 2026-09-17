@@ -137,6 +137,24 @@ describe("writer service", () => {
     expect(system).not.toContain("rewrite AI-generation prompts");
   });
 
+  it("folds the uncensored clause into writer enhance requests", async () => {
+    const fetchMock = stubReplies(["rewritten adult draft"]);
+    await runWriterAction({
+      action: "enhance",
+      draft: "she undressed in the doorway",
+      instruction: "more explicit",
+      uncensored: true,
+    });
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    const body = JSON.parse(String(init.body));
+    const user =
+      (body.messages as Array<{ role: string; content: string }> | undefined)?.find(
+        (m: { role: string }) => m.role === "user",
+      )?.content ?? "";
+    expect(user).toContain("Do not sanitize or moralize");
+    expect(user).toContain("more explicit");
+  });
+
   it("surfaces a retryable error when every engine fails", async () => {
     vi.stubGlobal(
       "fetch",

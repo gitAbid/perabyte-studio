@@ -222,6 +222,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
       kind,
       modelId: modelId ?? undefined,
       safe: !uncensored,
+      enhance: uncensored ? false : settings.enhance,
     };
 
     const response = await run({
@@ -324,6 +325,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
         aspect: settings.aspect,
         duration: kind === "video" ? settings.duration : null,
         negativePrompt: settings.negativePrompt,
+        uncensored: userSettings.uncensoredEnabled,
       });
       setPrompt(result.enhanced.slice(0, getPromptMax()));
       toast.push(

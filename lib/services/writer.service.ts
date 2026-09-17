@@ -88,10 +88,13 @@ async function completeViaChain(
     maxTokens?: number;
     modelId?: string;
     systemPrompt?: string;
+    preferUncensored?: boolean;
     logger: Logger;
   },
 ): Promise<{ text: string; engine: { providerId: string; modelId?: string } }> {
-  const engines = resolveTextEngines(options.modelId ?? getProviderConfig().tasks.writer);
+  const engines = resolveTextEngines(options.modelId ?? getProviderConfig().tasks.writer, {
+    preferUncensored: options.preferUncensored,
+  });
   if (!engines.length) {
     throw new WriterServiceError(
       "No text model is available. Enable a provider in Settings and retry.",
@@ -144,6 +147,7 @@ export async function runWriterAction(
       signal: options.signal,
       modelId,
       systemPrompt: WRITER_SYSTEM_PROMPT,
+      preferUncensored: brief.uncensored,
       logger: log,
     });
     log.info("story written", { ...engineLabel(engine), elapsedMs: Date.now() - started });
@@ -154,8 +158,14 @@ export async function runWriterAction(
     const request = parseEnhanceBody(body);
     const started = Date.now();
     const { text, engine } = await completeViaChain(
-      enhanceDraftInstruction(request.draft, request.instruction),
-      { signal: options.signal, modelId, systemPrompt: WRITER_SYSTEM_PROMPT, logger: log },
+      enhanceDraftInstruction(request.draft, request.instruction, request.uncensored),
+      {
+        signal: options.signal,
+        modelId,
+        systemPrompt: WRITER_SYSTEM_PROMPT,
+        preferUncensored: request.uncensored,
+        logger: log,
+      },
     );
     log.info("story enhanced", { ...engineLabel(engine), elapsedMs: Date.now() - started });
     return { text, ...engineLabel(engine) };
@@ -169,6 +179,7 @@ export async function runWriterAction(
       request.sceneCount,
       request.characterNames,
       request.kind,
+      request.uncensored,
     );
     // One stricter retry when the reply isn't parseable (spec: parse failure).
     for (let attempt = 0; attempt < 2; attempt += 1) {
@@ -179,6 +190,7 @@ export async function runWriterAction(
         maxTokens: OUTPUT_MAX_TOKENS,
         modelId,
         systemPrompt: WRITER_SYSTEM_PROMPT,
+        preferUncensored: request.uncensored,
         logger: log,
       });
       const parsed = extractStoryScenes(text, getProviderConfig().promptMaxChars);
