@@ -20,8 +20,6 @@ const OVERRIDE_KEYS = [
   "loras",
 ] as const satisfies readonly (keyof GenerationSettings)[];
 
-export type SceneSettingsOverride = Pick<GenerationSettings, (typeof OVERRIDE_KEYS)[number]>;
-
 /** The settings a scene renders with: story settings, then its overrides. */
 export function mergedSceneSettings(
   story: GenerationSettings,
@@ -36,12 +34,14 @@ export function mergedSceneSettings(
 export function diffSettingsBaseline(
   baseline: GenerationSettings,
   buffer: GenerationSettings,
-): SceneSettingsOverride {
-  const patch: Record<string, unknown> = {};
+): Partial<GenerationSettings> {
+  const patch: Partial<GenerationSettings> = {};
   for (const key of OVERRIDE_KEYS) {
-    if (!settingsEqual(baseline[key], buffer[key])) patch[key] = buffer[key];
+    if (!settingsEqual(baseline[key], buffer[key])) {
+      (patch as Record<string, unknown>)[key] = buffer[key];
+    }
   }
-  return patch as SceneSettingsOverride;
+  return patch;
 }
 
 function settingsEqual(a: unknown, b: unknown): boolean {
@@ -55,7 +55,7 @@ function settingsEqual(a: unknown, b: unknown): boolean {
  * to) whatever the scene already overrode. */
 export function applySceneOverrides(
   existing: Partial<GenerationSettings> | undefined,
-  patch: SceneSettingsOverride,
-): SceneSettingsOverride {
+  patch: Partial<GenerationSettings>,
+): Partial<GenerationSettings> {
   return { ...(existing ?? {}), ...patch };
 }

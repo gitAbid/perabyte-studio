@@ -10,7 +10,8 @@ import { getProviderConfig } from "@/lib/repositories/provider-config.repository
 import { createJob } from "@/lib/jobs/jobs.service";
 import { GenerationServiceError } from "@/lib/services/generation.service";
 import { logger as rootLogger, type Logger } from "@/lib/logging/logger";
-import type { Asset, GenerationKind, GenerationSettings, StoryScene } from "@/lib/types";
+import type { GenerationKind } from "@/lib/constants";
+import type { Asset, GenerationSettings, StoryScene } from "@/lib/types";
 
 /**
  * The server-side story runner (Phase C). The story record IS the run: the
@@ -245,7 +246,21 @@ export type SceneMutation =
   | { op: "remove"; sceneId: string }
   | { op: "move"; sceneId: string; delta: -1 | 1 }
   | { op: "edit"; sceneId: string; prompt: string }
-  | { op: "continuity"; value: boolean };
+  | { op: "continuity"; value: boolean }
+  | { op: "update"; sceneId: string; patch: SceneUpdatePatch };
+
+/** Per-scene update from the composer's scene edit mode. Ref values of null
+ * clear the ref; `runPrompt` arrives recomposed so a mid-run chain never
+ * renders a stale anchor snapshot. An explicit empty `settings` object clears
+ * the scene's overrides; an absent key preserves them. */
+export interface SceneUpdatePatch {
+  prompt?: string;
+  kind?: GenerationKind;
+  settings?: Partial<GenerationSettings>;
+  startImageRef?: string | null;
+  endImageRef?: string | null;
+  runPrompt?: string;
+}
 
 /** Apply one scene-level edit to the live story record. A generating scene
  * is never removed or edited mid-flight (cancel it first), mirroring the
@@ -290,6 +305,51 @@ export function mutateStoryScenes(
       scenes: scenes.map((s) =>
         s.id === mutation.sceneId ? { ...s, prompt: next.slice(0, promptMax) } : s,
       ),
+    });
+    return getStoriesRepository(storyId);
+  }
+  if (mutation.op === "update") {
+    const scene = scenes[index];
+    // A rendering scene owns its request; a completed scene owns its media.
+    // Everything else (queued/canceled/failed) is fair game — the runner
+    // reads these fields when the chain reaches the scene.
+    if (!scene || scene.status === "generating" || scene.status === "completed") {
+      return getStoriesRepository(storyId);
+    }
+    const patch = mutation.patch;
+    const promptMax = getProviderConfig().promptMaxChars;
+    const prompt =
+      typeof patch.prompt === "string" && patch.prompt.trim()
+        ? patch.prompt.trim().slice(0, promptMax)
+        : undefined;
+    const kind =
+      patch.kind === "image" || patch.kind === "video" ? patch.kind : undefined;
+    const clearSettings =
+      "settings" in patch && !(patch.settings && Object.keys(patch.settings).length);
+    const nextSettings = clearSettings
+      ? undefined
+      : (patch.settings as Partial<GenerationSettings> | undefined);
+    patchStoryRepository(storyId, {
+      scenes: scenes.map((s) => {
+        if (s.id !== mutation.sceneId) return s;
+        const next: StoryScene = {
+          ...s,
+          ...(prompt ? { prompt } : {}),
+          ...(kind ? { kind } : {}),
+          ...(nextSettings ? { settings: nextSettings } : {}),
+          ...(patch.startImageRef !== undefined
+            ? { startImageRef: patch.startImageRef ?? undefined }
+            : {}),
+          ...(patch.endImageRef !== undefined
+            ? { endImageRef: patch.endImageRef ?? undefined }
+            : {}),
+          ...(typeof patch.runPrompt === "string" && patch.runPrompt.trim()
+            ? { runPrompt: patch.runPrompt }
+            : {}),
+        };
+        if (clearSettings) delete next.settings;
+        return next;
+      }),
     });
     return getStoriesRepository(storyId);
   }

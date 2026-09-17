@@ -387,13 +387,13 @@ describe("mutateStoryScenes update", () => {
 
   it("clamps the prompt to the configured budget", () => {
     putQueued("u7");
-    updateProviderConfig({ promptMaxChars: 10 });
+    updateProviderConfig({ promptMaxChars: 100 }); // min clamp floor
     const updated = mutateStoryScenes(storyId, {
       op: "update",
       sceneId: "sc1",
-      patch: { prompt: "0123456789ABCDEF" },
+      patch: { prompt: "x".repeat(150) },
     });
-    expect(updated?.scenes?.[0]?.prompt).toBe("0123456789");
+    expect(updated?.scenes?.[0]?.prompt).toBe("x".repeat(100));
     updateProviderConfig({ promptMaxChars: 5000 });
   });
 });
