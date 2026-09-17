@@ -37,6 +37,9 @@ export interface ModerationVerdict {
 /** Where a mask decision came from. */
 export type ModerationSource = "cache" | "ai" | "static";
 
+/** Only stills can ride the vision endpoint; mp4/webm refs keep the flag. */
+export const CLASSIFIABLE_REF_RE = /\.(png|jpe?g|webp)$/;
+
 /**
  * The classifier rubric. The gate is the "uncensored 18+" preview mask:
  * nudity and explicit sexual content blur; clothed (incl. swimwear /
