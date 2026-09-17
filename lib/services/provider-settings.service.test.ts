@@ -3,6 +3,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { resetStudioEnvForTests } from "@/lib/config/env";
+import { PROMPT_MAX } from "@/lib/constants";
 import { buildModelId, type ModelDescriptor } from "@/lib/domain/models";
 import { setProvidersForTests } from "@/lib/providers/registry";
 import type { ImageProvider, VideoProvider } from "@/lib/providers/types";
@@ -249,6 +250,29 @@ describe("provider settings service", () => {
     const payload = applyProviderSettingsUpdate({ renderTimeouts: { image: 1, video: 100000 } });
     expect(payload.renderTimeouts.image).toBe(30); // 30 s floor
     expect(payload.renderTimeouts.video).toBe(3600); // 1 h ceiling
+  });
+
+  it("exposes the prompt budget and persists updates", () => {
+    wireRegistry();
+    expect(getProviderSettings().promptMaxChars).toBe(PROMPT_MAX);
+
+    const payload = applyProviderSettingsUpdate({ promptMaxChars: 8000 });
+    expect(payload.promptMaxChars).toBe(8000);
+    expect(getProviderSettings().promptMaxChars).toBe(8000);
+
+    // null is not a number — the save is rejected and the value stays.
+    expect(() => applyProviderSettingsUpdate({ promptMaxChars: null })).toThrow();
+    expect(getProviderSettings().promptMaxChars).toBe(8000);
+  });
+
+  it("clamps the prompt budget into the safe range and rejects non-numbers", () => {
+    wireRegistry();
+    const payload = applyProviderSettingsUpdate({ promptMaxChars: 1 });
+    expect(payload.promptMaxChars).toBe(100); // floor
+    expect(applyProviderSettingsUpdate({ promptMaxChars: 999_999 }).promptMaxChars).toBe(20000);
+    expect(() =>
+      applyProviderSettingsUpdate({ promptMaxChars: "long" as unknown as number }),
+    ).toThrow(/prompt limit/i);
   });
 
   it("rejects non-numeric render timeouts", () => {

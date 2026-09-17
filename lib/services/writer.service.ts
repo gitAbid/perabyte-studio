@@ -181,7 +181,7 @@ export async function runWriterAction(
         systemPrompt: WRITER_SYSTEM_PROMPT,
         logger: log,
       });
-      const parsed = extractStoryScenes(text);
+      const parsed = extractStoryScenes(text, getProviderConfig().promptMaxChars);
       if (parsed) {
         log.info("story split", {
           ...engineLabel(engine),

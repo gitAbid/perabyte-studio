@@ -12,11 +12,8 @@ import { PillSelect } from "@/components/PillSelect";
 import { RenderProgress } from "@/components/RenderProgress";
 import { StoryPlayer } from "@/components/StoryPlayer";
 import { Badge, Button, Segmented, useToast } from "@/components/ui";
-import {
-  ASPECTS,
-  DEFAULT_IMAGE_SETTINGS,
-  PROMPT_MAX,
-} from "@/lib/constants";
+import { ASPECTS, DEFAULT_IMAGE_SETTINGS } from "@/lib/constants";
+import { usePromptMax } from "@/lib/prompt-limit";
 import {
   downloadMedia,
   storyProgressPercent,
@@ -85,6 +82,9 @@ function chainBadgeSensitive(
 export default function StoryPage() {
   const toast = useToast();
   const router = useRouter();
+  // Live generation-prompt budget (Settings → General) for the composer,
+  // inline scene edits and enhancement results.
+  const promptMax = usePromptMax();
   const [kind, setKind] = useState<"image" | "video">("image");
   const [prompt, setPrompt] = useState("");
   const [promptError, setPromptError] = useState<string | undefined>();
@@ -559,7 +559,7 @@ export default function StoryPage() {
       toast.push("A scene needs a prompt before it can render.", "error");
       return;
     }
-    void mutateScene({ op: "edit", sceneId, prompt: next.slice(0, PROMPT_MAX) });
+    void mutateScene({ op: "edit", sceneId, prompt: next.slice(0, promptMax) });
     toast.push("Scene prompt updated.");
   }
 
@@ -766,7 +766,7 @@ export default function StoryPage() {
         sceneCount: Math.max(1, scenes.length),
         negativePrompt: settings.negativePrompt || null,
       });
-      setPrompt(result.enhanced.slice(0, PROMPT_MAX));
+      setPrompt(result.enhanced.slice(0, promptMax));
       toast.push(
         result.source === "ai"
           ? "Prompt enhanced with AI — review it and press Generate."
@@ -1276,7 +1276,7 @@ export default function StoryPage() {
                       <textarea
                         autoFocus
                         rows={2}
-                        maxLength={PROMPT_MAX}
+                        maxLength={promptMax}
                         value={editDraft}
                         onChange={(event) => setEditDraft(event.target.value)}
                         onBlur={() => {

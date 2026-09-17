@@ -51,6 +51,8 @@ export interface EnhancementContext {
   /** Client-local bucket; the server never assumes its own timezone. */
   timeOfDay?: TimeOfDay | null;
   negativePrompt?: string | null;
+  /** Character budget the rewrite must fit (Settings → General). */
+  maxChars?: number;
 }
 
 /** Lighting mood per time-of-day bucket, for the offline fallback. */
@@ -103,13 +105,14 @@ export function enhancementInstruction(
   prompt: string,
   ctx: EnhancementContext,
 ): string {
+  const maxChars = ctx.maxChars ?? PROMPT_MAX;
   const lines: string[] = [
     `You are a prompt engineer for AI ${ctx.kind} generation.`,
     "Rewrite the user's prompt into one vivid, generation-ready prompt.",
     "Rules:",
     "- Keep the original subject and intent; enrich with concrete visual detail (composition, lighting, materials, mood).",
     "- Reply with the rewritten prompt text only: no quotes, no labels, no explanations.",
-    `- Keep it under ${PROMPT_MAX} characters.`,
+    `- Keep it under ${maxChars} characters.`,
   ];
 
   const descriptor = ctx.stylesSupported === false ? null : styleDescriptor(ctx.kind, ctx.style);
@@ -171,6 +174,7 @@ function orientationOf(aspect: string | null | undefined): string | null {
 export function sanitizeEnhancedText(
   raw: string,
   original: string,
+  maxChars: number = PROMPT_MAX,
 ): string | null {
   let text = raw.trim();
   // Code fences and wrapping quotes are decoration the model adds.
@@ -185,7 +189,7 @@ export function sanitizeEnhancedText(
   if (/^(sorry|i'm sorry|i am sorry|i cannot|i can't|as an ai)\b/i.test(text)) {
     return null;
   }
-  if (text.length > PROMPT_MAX) text = `${text.slice(0, PROMPT_MAX - 1)}…`;
+  if (text.length > maxChars) text = `${text.slice(0, maxChars - 1)}…`;
   if (text.toLowerCase() === original.trim().toLowerCase()) return null;
   return text;
 }

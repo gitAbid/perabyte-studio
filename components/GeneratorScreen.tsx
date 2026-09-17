@@ -13,12 +13,12 @@ import {
   DEFAULT_IMAGE_SETTINGS,
   DEFAULT_VIDEO_SETTINGS,
   IMAGE_STYLES,
-  PROMPT_MAX,
   RESOLUTIONS,
   VIDEO_STYLES,
   type AspectKey,
   type ResolutionKey,
 } from "@/lib/constants";
+import { getPromptMax } from "@/lib/prompt-limit";
 import { isSensitiveAsset } from "@/lib/domain/models";
 import { downloadMedia, useGeneration } from "@/lib/generation";
 import { requestPromptEnhancement } from "@/lib/enhancement";
@@ -101,7 +101,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
     const params = new URLSearchParams(window.location.search);
     const incoming = params.get("prompt");
     if (!incoming) return;
-    setPrompt(incoming.slice(0, PROMPT_MAX));
+    setPrompt(incoming.slice(0, getPromptMax()));
     const style = params.get("style");
     const aspect = params.get("aspect");
     if (style) {
@@ -302,7 +302,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
   }
 
   function handleExamplePick(demo: DemoSpec) {
-    setPrompt(demo.prompt.slice(0, PROMPT_MAX));
+    setPrompt(demo.prompt.slice(0, getPromptMax()));
     if (promptError) setPromptError(undefined);
     toast.push(`“${demo.title}” example loaded — tweak it and press Generate.`);
   }
@@ -323,7 +323,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
         duration: kind === "video" ? settings.duration : null,
         negativePrompt: settings.negativePrompt,
       });
-      setPrompt(result.enhanced.slice(0, PROMPT_MAX));
+      setPrompt(result.enhanced.slice(0, getPromptMax()));
       toast.push(
         result.source === "ai"
           ? "Prompt enhanced with AI — review it and press Generate."

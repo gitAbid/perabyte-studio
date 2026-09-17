@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
+import { PROMPT_MAX } from "@/lib/constants";
 import {
   getProviderConfig,
   updateProviderConfig,
@@ -177,6 +178,36 @@ describe("provider-config.repository", () => {
     updateProviderConfig({ renderTimeouts: { image: 420 } });
     config = getProviderConfig();
     expect(config.tasks.writer).toBe("sogni:qwen3.6-35b-a3b-gguf-iq4xs");
+  });
+
+  it("defaults the prompt budget to the studio prompt limit", () => {
+    expect(getProviderConfig().promptMaxChars).toBe(PROMPT_MAX);
+  });
+
+  it("persists a prompt-budget patch alongside existing settings", () => {
+    updateProviderConfig({ tasks: { writer: "sogni:qwen3.6-35b-a3b-gguf-iq4xs" } });
+
+    updateProviderConfig({ promptMaxChars: 8000 });
+
+    const read = getProviderConfig();
+    expect(read.promptMaxChars).toBe(8000);
+    expect(read.tasks.writer).toBe("sogni:qwen3.6-35b-a3b-gguf-iq4xs");
+  });
+
+  it("clamps out-of-band prompt budgets and ignores non-numeric ones", async () => {
+    updateProviderConfig({ promptMaxChars: 5 });
+    expect(getProviderConfig().promptMaxChars).toBe(100); // min clamp
+    updateProviderConfig({ promptMaxChars: 500_000 });
+    expect(getProviderConfig().promptMaxChars).toBe(20000); // max clamp
+
+    await fs.writeFile(
+      configPath,
+      JSON.stringify({ promptMaxChars: "very long", extra: true }),
+      "utf-8",
+    );
+    invalidateProviderConfigCache();
+    // A non-number loaded from disk keeps the compiled default.
+    expect(getProviderConfig().promptMaxChars).toBe(PROMPT_MAX);
   });
 });
 

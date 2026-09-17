@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { PROMPT_MAX } from "@/lib/constants";
 import {
   WRITER_DRAFT_MAX,
   WRITER_IDEA_MAX,
@@ -130,9 +131,9 @@ describe("extractStoryScenes", () => {
     expect(extractStoryScenes('{"title":"T","scenes":[]}')).toBeNull();
   });
 
-  it("subdivides over-length scenes into ≤1000-char prompts without losing content", () => {
+  it("subdivides over-length scenes into ≤budget prompts without losing content", () => {
     const long = `${"A".repeat(900)}. ${"B".repeat(900)}.`;
-    const parsed = extractStoryScenes(JSON.stringify({ scenes: [long] }));
+    const parsed = extractStoryScenes(JSON.stringify({ scenes: [long] }), 1000);
     expect(parsed!.scenes.length).toBe(2);
     expect(parsed!.scenes.every((s) => s.length <= 1000)).toBe(true);
     expect(parsed!.scenes[0].endsWith(".")).toBe(true);
@@ -147,7 +148,10 @@ describe("clampScenePrompt", () => {
     expect(clampScenePrompt("short")).toBe("short");
   });
   it("falls back to a hard cut without sentence punctuation", () => {
-    expect(clampScenePrompt("x".repeat(1400)).length).toBe(1000);
+    expect(clampScenePrompt("x".repeat(1400), 1000).length).toBe(1000);
+  });
+  it("defaults to the studio prompt budget", () => {
+    expect(clampScenePrompt("x".repeat(PROMPT_MAX + 1)).length).toBe(PROMPT_MAX);
   });
 });
 
@@ -156,18 +160,24 @@ describe("breakIntoScenePromptChunks", () => {
     expect(breakIntoScenePromptChunks("short")).toEqual(["short"]);
   });
 
-  it("packs sentences into chunks of at most 1000 characters", () => {
+  it("packs sentences into chunks of at most the given budget", () => {
     const text = Array.from({ length: 30 }, (_, i) => `${"word".repeat(8)} number ${i}.`).join(" ");
-    const chunks = breakIntoScenePromptChunks(text);
+    const chunks = breakIntoScenePromptChunks(text, 1000);
     expect(chunks.length).toBeGreaterThan(1);
     expect(chunks.every((c) => c.length <= 1000)).toBe(true);
     expect(chunks.join(" ")).toBe(text);
   });
 
   it("hard-cuts a single sentence longer than the limit instead of dropping it", () => {
-    const chunks = breakIntoScenePromptChunks("y".repeat(2500));
+    const chunks = breakIntoScenePromptChunks("y".repeat(2500), 1000);
     expect(chunks.length).toBe(3);
     expect(chunks.join("").length).toBe(2500);
+  });
+
+  it("defaults the budget to the studio prompt limit", () => {
+    const chunks = breakIntoScenePromptChunks(". ".repeat(PROMPT_MAX));
+    expect(chunks.length).toBe(2);
+    expect(chunks.every((c) => c.length <= PROMPT_MAX)).toBe(true);
   });
 });
 
@@ -186,10 +196,10 @@ describe("segmentDraftIntoScenes", () => {
     expect(segmentDraftIntoScenes(draft)).toEqual(["Only one real scene.", "Another real one."]);
   });
 
-  it("still subdivides an over-length section per 1000 chars", () => {
+  it("still subdivides an over-length section per budget chars", () => {
     const section = `${"A".repeat(900)}. ${"B".repeat(900)}.`;
     const draft = `Intro beat.\n---\n${section}`;
-    const scenes = segmentDraftIntoScenes(draft);
+    const scenes = segmentDraftIntoScenes(draft, 1000);
     expect(scenes.length).toBe(3);
     expect(scenes.every((s) => s.length <= 1000)).toBe(true);
   });
@@ -211,16 +221,21 @@ describe("segmentDraftIntoScenes", () => {
 });
 
 describe("suggestSceneCount", () => {
-  it("suggests one scene per 1000 characters when the count is too low", () => {
-    expect(suggestSceneCount("x".repeat(4800), 3)).toBe(5);
+  it("suggests one scene per budget characters when the count is too low", () => {
+    expect(suggestSceneCount("x".repeat(4800), 3, 1000)).toBe(5);
   });
 
   it("returns null when the chosen count already covers the draft", () => {
-    expect(suggestSceneCount("x".repeat(2500), 5)).toBeNull();
+    expect(suggestSceneCount("x".repeat(2500), 5, 1000)).toBeNull();
     expect(suggestSceneCount("", 5)).toBeNull();
   });
 
   it("never suggests more than the picker maximum", () => {
-    expect(suggestSceneCount("x".repeat(20000), 5)).toBe(12);
+    expect(suggestSceneCount("x".repeat(20000), 5, 1000)).toBe(12);
+  });
+
+  it("defaults the per-scene budget to the studio prompt limit", () => {
+    expect(suggestSceneCount("x".repeat(PROMPT_MAX * 6), 5)).toBe(6);
+    expect(suggestSceneCount("x".repeat(PROMPT_MAX * 3), 5)).toBeNull();
   });
 });

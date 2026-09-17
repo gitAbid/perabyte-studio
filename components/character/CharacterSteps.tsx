@@ -8,7 +8,8 @@ import { Button, SelectField, Segmented, TextAreaField, Toggle } from "@/compone
 import { lorasForModel, visibleLoras } from "@/lib/lora-options";
 import type { LoraOption } from "@/lib/providers/sogni/lora-catalog";
 import type { LoraSelection } from "@/lib/types";
-import { ASPECTS, PROMPT_MAX, RESOLUTIONS } from "@/lib/constants";
+import { ASPECTS, RESOLUTIONS } from "@/lib/constants";
+import { usePromptMax } from "@/lib/prompt-limit";
 import {
   AGE_MAX,
   AGE_MIN,
@@ -348,6 +349,8 @@ export function StepDetails({
   onBack: () => void;
   onNext: () => void;
 }) {
+  // Character prompts share the studio-wide generation-prompt budget.
+  const promptMax = usePromptMax();
   return (
     <div className="space-y-5">
       <StepHeading
@@ -358,7 +361,7 @@ export function StepDetails({
       <TextAreaField
         label="Character Prompt"
         value={spec.prompt}
-        maxLength={PROMPT_MAX}
+        maxLength={promptMax}
         rows={5}
         error={promptError}
         placeholder="e.g. A young artist with ink-stained fingers and a paint-splattered apron, warm smile."

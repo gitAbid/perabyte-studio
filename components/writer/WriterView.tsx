@@ -22,6 +22,7 @@ import {
   suggestSceneCount,
 } from "@/lib/domain/writer";
 import { requestWriterAction, WriterError } from "@/lib/writer";
+import { usePromptMax } from "@/lib/prompt-limit";
 import { putStoryAsset } from "@/lib/story/records";
 import { useSettings } from "@/lib/repositories/settings.repository";
 import { addAsset } from "@/lib/store";
@@ -60,6 +61,9 @@ export function WriterView() {
   const [modelId, setModelId] = useState("");
   const [modelOptions, setModelOptions] = useState<{ value: string; label: string }[]>([]);
   const [tasksWriterId, setTasksWriterId] = useState<string | null>(null);
+  // Live scene-prompt budget (Settings → General): guides the scene-count
+  // suggestion and the split preview's per-scene packing.
+  const promptMax = usePromptMax();
 
   /* Restore the autosaved draft once on mount. */
   useEffect(() => {
@@ -138,15 +142,18 @@ export function WriterView() {
     };
   }, []);
 
-  // ~1 scene per 1000 draft characters keeps every scene prompt inside the
-  // render-side budget; the split itself also subdivides losslessly, so this
-  // is guidance, never a blocker.
-  const sceneSuggestion = suggestSceneCount(draft, sceneCount);
+  // ~1 scene per prompt-budget of draft characters keeps every scene prompt
+  // inside the render-side budget; the split itself also subdivides
+  // losslessly, so this is guidance, never a blocker.
+  const sceneSuggestion = suggestSceneCount(draft, sceneCount, promptMax);
 
   // The live split preview: the exact scenes Split will commit, derived from
   // the draft alone. A `---` line is an explicit divider; without one the
-  // draft packs at ~1,000 characters per scene. Updates as you type.
-  const previewScenes = useMemo(() => segmentDraftIntoScenes(draft), [draft]);
+  // draft packs at ~one budget per scene. Updates as you type.
+  const previewScenes = useMemo(
+    () => segmentDraftIntoScenes(draft, promptMax),
+    [draft, promptMax],
+  );
 
   const characterNames = useCallback(
     () =>
@@ -363,7 +370,7 @@ export function WriterView() {
             {sceneSuggestion !== null && (
               <p className="flex flex-wrap items-center justify-center gap-2 text-[12px] text-muted">
                 <span>
-                  Long draft — about {sceneSuggestion} scenes keeps each prompt under 1,000 characters.
+                  Long draft — about {sceneSuggestion} scenes keeps each prompt under {promptMax.toLocaleString()} characters.
                 </span>
                 <button
                   type="button"
@@ -428,7 +435,7 @@ export function WriterView() {
               <p className="mt-3 text-[12.5px] leading-relaxed text-muted">
                 Your draft appears here as scene cards as you write. Separate scenes with a
                 line containing <code className="font-mono">---</code> to place the cuts
-                yourself; otherwise scenes break at ~1,000 characters. Split commits exactly
+                yourself; otherwise scenes break at ~{promptMax.toLocaleString()} characters. Split commits exactly
                 these cards.
               </p>
             ) : (

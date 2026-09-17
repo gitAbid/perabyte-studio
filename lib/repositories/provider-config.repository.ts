@@ -1,6 +1,8 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 
+import { PROMPT_MAX, PROMPT_MAX_RANGE } from "@/lib/constants";
+
 export type KnownProviderId = "apikey-fan" | "sogni" | "pollinations";
 
 /** Alias used by consumers that validate user-supplied provider ids. */
@@ -146,6 +148,8 @@ export interface ProviderConfig {
   providers: Record<KnownProviderId, ProviderEntryConfig>;
   tasks: TaskModelConfig;
   renderTimeouts: RenderTimeoutsConfig;
+  /** Generation-prompt budget in characters (Settings → General). */
+  promptMaxChars: number;
   customProviders: CustomProviderEntry[];
 }
 
@@ -160,6 +164,7 @@ export interface ProviderConfigPatch {
   >;
   tasks?: Partial<TaskModelConfig>;
   renderTimeouts?: Partial<RenderTimeoutsConfig>;
+  promptMaxChars?: number;
   customProviders?: CustomProvidersPatch;
 }
 
@@ -217,6 +222,7 @@ export function getDefaultProviderConfig(): ProviderConfig {
       writer: null,
     },
     renderTimeouts: { ...RENDER_TIMEOUT_DEFAULTS },
+    promptMaxChars: PROMPT_MAX,
     customProviders: [],
   };
 }
@@ -240,6 +246,15 @@ function clampStaleness(value: unknown, fallback: number): number {
   return Math.min(
     RENDER_STALENESS_RANGE.max,
     Math.max(RENDER_STALENESS_RANGE.min, Math.round(value)),
+  );
+}
+
+/** Prompt budget clamps to its sane band; missing value keeps the fallback. */
+function clampPromptMaxChars(value: unknown, fallback: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return fallback;
+  return Math.min(
+    PROMPT_MAX_RANGE.max,
+    Math.max(PROMPT_MAX_RANGE.min, Math.round(value)),
   );
 }
 
@@ -306,6 +321,10 @@ function sanitizeLoadedConfig(raw: unknown): ProviderConfig {
     timeoutsObj.staleness,
     defaults.renderTimeouts.staleness,
   );
+  defaults.promptMaxChars = clampPromptMaxChars(
+    obj.promptMaxChars,
+    defaults.promptMaxChars,
+  );
   defaults.customProviders = sanitizeCustomProviders(obj.customProviders);
 
   return defaults;
@@ -343,6 +362,7 @@ export function mergeProviderConfigPatch(patch: ProviderConfigPatch): ProviderCo
     },
     tasks: { ...current.tasks },
     renderTimeouts: { ...current.renderTimeouts },
+    promptMaxChars: current.promptMaxChars,
     customProviders: cloneCustomProviders(current.customProviders),
   };
 
@@ -382,6 +402,13 @@ export function mergeProviderConfigPatch(patch: ProviderConfigPatch): ProviderCo
           ? patch.tasks.writer.trim()
           : null;
     }
+  }
+
+  if (patch.promptMaxChars !== undefined) {
+    next.promptMaxChars = clampPromptMaxChars(
+      patch.promptMaxChars,
+      next.promptMaxChars,
+    );
   }
 
   if (patch.customProviders) {

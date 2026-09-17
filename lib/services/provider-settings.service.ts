@@ -76,6 +76,8 @@ export interface ProviderSettingsPayload {
   tasks: { enhance: string | null; writer: string | null };
   /** Overall render deadlines in seconds (Settings → Render timeouts). */
   renderTimeouts: { image: number; video: number; staleness: number };
+  /** Generation-prompt budget in characters (Settings → General). */
+  promptMaxChars: number;
 }
 
 export interface ProviderSettingsUpdate {
@@ -86,6 +88,8 @@ export interface ProviderSettingsUpdate {
   customProviders?: CustomProvidersPatch;
   tasks?: { enhance?: string | null; writer?: string | null };
   renderTimeouts?: { image?: number; video?: number; staleness?: number };
+  /** Generation-prompt budget in characters; clamped server-side. */
+  promptMaxChars?: number;
 }
 
 export class ProviderSettingsError extends Error {
@@ -227,6 +231,7 @@ export function getProviderSettings(): ProviderSettingsPayload {
       video: config.renderTimeouts.video,
       staleness: config.renderTimeouts.staleness,
     },
+    promptMaxChars: config.promptMaxChars,
   };
 }
 
@@ -538,6 +543,17 @@ export function applyProviderSettingsUpdate(body: unknown): ProviderSettingsPayl
       timeoutPatch[kind] = Math.round(value);
     }
     patch.renderTimeouts = timeoutPatch;
+  }
+
+  if (raw.promptMaxChars !== undefined) {
+    if (typeof raw.promptMaxChars !== "number" || !Number.isFinite(raw.promptMaxChars)) {
+      throw new ProviderSettingsError("The prompt limit must be a number of characters.", {
+        field: "promptMaxChars",
+      });
+    }
+    // Out-of-range values clamp to the sane band in the repository merge,
+    // mirroring renderTimeouts — an odd value never fails the save.
+    patch.promptMaxChars = Math.round(raw.promptMaxChars);
   }
 
   if (raw.customProviders !== undefined) {

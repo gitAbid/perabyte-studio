@@ -1,6 +1,14 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { logger } from "@/lib/logging/logger";
 import { resetLoraCatalogCache } from "@/lib/providers/sogni/lora-catalog";
+import {
+  invalidateProviderConfigCache,
+  setProviderConfigPathForTests,
+  updateProviderConfig,
+} from "@/lib/repositories/provider-config.repository";
 import {
   GenerationServiceError,
   resolveLoras,
@@ -20,6 +28,22 @@ function baseBody(): Record<string, unknown> {
 }
 
 describe("validateGenerationRequest", () => {
+  // Validation reads the configured prompt budget, so point the config at a
+  // temp file — never the developer's real .studio/settings.json.
+  let tempDir: string;
+
+  beforeEach(() => {
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "studio-genreq-test-"));
+    setProviderConfigPathForTests(path.join(tempDir, "settings.json"));
+    invalidateProviderConfigCache();
+  });
+
+  afterEach(() => {
+    setProviderConfigPathForTests(null);
+    invalidateProviderConfigCache();
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+
   it("accepts a well-formed request and applies defaults", () => {
     const request = validateGenerationRequest(baseBody());
     expect(request.kind).toBe("image");
@@ -27,6 +51,38 @@ describe("validateGenerationRequest", () => {
     expect(request.enhance).toBe(true);
     expect(request.modelId).toBeNull();
     expect(request.seed).toBeNull();
+  });
+
+  it("accepts a prompt at exactly the configured budget", () => {
+    expect(() =>
+      validateGenerationRequest({ ...baseBody(), prompt: "x".repeat(5000) }),
+    ).not.toThrow();
+  });
+
+  it("rejects a prompt over the configured budget and names the limit", () => {
+    try {
+      validateGenerationRequest({ ...baseBody(), prompt: "x".repeat(5001) });
+      expect.unreachable();
+    } catch (error) {
+      expect(error).toBeInstanceOf(GenerationServiceError);
+      expect((error as GenerationServiceError).field).toBe("prompt");
+      expect((error as GenerationServiceError).message).toContain("5000");
+    }
+  });
+
+  it("follows a raised or lowered prompt-budget setting", () => {
+    updateProviderConfig({ promptMaxChars: 200 });
+    expect(() =>
+      validateGenerationRequest({ ...baseBody(), prompt: "x".repeat(201) }),
+    ).toThrow(/200 characters/);
+    expect(() =>
+      validateGenerationRequest({ ...baseBody(), prompt: "x".repeat(200) }),
+    ).not.toThrow();
+
+    updateProviderConfig({ promptMaxChars: 8000 });
+    expect(() =>
+      validateGenerationRequest({ ...baseBody(), prompt: "x".repeat(6000) }),
+    ).not.toThrow();
   });
 
   it("rejects an empty prompt with a field marker", () => {

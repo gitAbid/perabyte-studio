@@ -1,4 +1,12 @@
-export const PROMPT_MAX = 1000;
+/** Default generation-prompt budget (characters). The live value is
+ * configurable in Settings → General (`promptMaxChars` in the provider
+ * config); every surface — Solo, Story, Character, Writer scenes — derives
+ * from this default when nothing is configured. */
+export const PROMPT_MAX = 5000;
+
+/** Sane clamp band for the configurable prompt budget, in characters —
+ * lives here so client UIs can pre-clamp without importing server modules. */
+export const PROMPT_MAX_RANGE = { min: 100, max: 20000 } as const;
 
 export type GenerationKind = "image" | "video";
 

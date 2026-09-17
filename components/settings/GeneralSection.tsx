@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { ConfirmDialog, SelectField, Toggle, useToast } from "@/components/ui";
 import { useModelCatalog } from "@/lib/model-catalog";
+import { PROMPT_MAX, PROMPT_MAX_RANGE } from "@/lib/constants";
 import {
   setMaskUncensored,
   setSelectedModel,
@@ -23,11 +24,13 @@ export function GeneralSection({
   providers,
   enhanceModel,
   writerModel,
+  promptMaxChars,
   onUpdate,
 }: {
   providers: ProviderView[];
   enhanceModel: string | null;
   writerModel: string | null;
+  promptMaxChars: number;
   onUpdate: OnUpdate;
 }) {
   return (
@@ -43,6 +46,7 @@ export function GeneralSection({
         writerModel={writerModel}
         onUpdate={onUpdate}
       />
+      <PromptLimitCard promptMaxChars={promptMaxChars} onUpdate={onUpdate} />
     </SectionShell>
   );
 }
@@ -235,6 +239,88 @@ function TaskModelsCard({
       ) : (
         <p className="mt-3 text-[12.5px] text-muted">Loading models…</p>
       )}
+    </div>
+  );
+}
+
+function PromptLimitCard({
+  promptMaxChars,
+  onUpdate,
+}: {
+  promptMaxChars: number;
+  onUpdate: OnUpdate;
+}) {
+  // Draft-commits-on-blur like the render-timeout fields: local state holds
+  // the draft, server truth resyncs only when the draft isn't mid-edit.
+  const [draft, setDraft] = useState(String(promptMaxChars));
+  const [committed, setCommitted] = useState(promptMaxChars);
+
+  useEffect(() => {
+    if (promptMaxChars !== committed) {
+      setCommitted(promptMaxChars);
+      setDraft(String(promptMaxChars));
+    }
+  }, [promptMaxChars, committed]);
+
+  function commit() {
+    const parsed = Number.parseInt(draft.replace(/[^\d]/g, ""), 10);
+    if (!Number.isFinite(parsed)) {
+      setDraft(String(committed));
+      return;
+    }
+    const clamped = Math.min(
+      PROMPT_MAX_RANGE.max,
+      Math.max(PROMPT_MAX_RANGE.min, parsed),
+    );
+    if (clamped === committed) {
+      setDraft(String(committed));
+      return;
+    }
+    setCommitted(clamped);
+    setDraft(String(clamped));
+    onUpdate({ promptMaxChars: clamped }).catch(() => undefined);
+  }
+
+  return (
+    <div className="rounded-[14px] border border-border bg-surface p-4">
+      <p className="text-[12px] font-bold uppercase tracking-wide text-muted">
+        Prompting
+      </p>
+      <label className="mt-3 flex items-center justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block text-[12px] font-semibold text-ink-soft">
+            Prompt character limit
+          </span>
+          <span className="block text-[11px] leading-snug text-muted">
+            Applies to Solo, Story, Character prompts and Writer scene
+            splitting. Enhancement rewrites stay inside it too. Providers may
+            still cap long prompts on their side.
+          </span>
+        </span>
+        <span className="flex shrink-0 items-center gap-1.5">
+          <input
+            type="text"
+            inputMode="numeric"
+            value={draft}
+            aria-label="Prompt character limit"
+            onChange={(event) => setDraft(event.target.value)}
+            onBlur={commit}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                commit();
+              }
+            }}
+            className="h-8 w-20 rounded-[9px] border border-border-strong bg-raised px-2.5 text-right text-[12.5px] tabular-nums text-ink focus:border-primary focus:outline-none"
+          />
+          <span className="text-[11.5px] text-muted">chars</span>
+        </span>
+      </label>
+      <p className="mt-3 border-t border-border pt-3 text-[11.5px] leading-snug text-muted">
+        Default: {PROMPT_MAX.toLocaleString()} characters (allowed{" "}
+        {PROMPT_MAX_RANGE.min.toLocaleString()}–
+        {PROMPT_MAX_RANGE.max.toLocaleString()}).
+      </p>
     </div>
   );
 }

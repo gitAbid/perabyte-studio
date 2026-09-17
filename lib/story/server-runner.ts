@@ -5,6 +5,7 @@ import {
   patchStoryRepository,
 } from "@/lib/repositories/stories.repository";
 import { listActiveJobsRepository } from "@/lib/repositories/jobs.repository";
+import { getProviderConfig } from "@/lib/repositories/provider-config.repository";
 import { createJob } from "@/lib/jobs/jobs.service";
 import { GenerationServiceError } from "@/lib/services/generation.service";
 import { logger as rootLogger, type Logger } from "@/lib/logging/logger";
@@ -281,9 +282,11 @@ export function mutateStoryScenes(
   if (mutation.op === "edit") {
     const next = mutation.prompt.trim();
     if (!next || scenes[index].status === "generating") return getStoriesRepository(storyId);
+    // Same budget the composer enforced client-side (Settings → General).
+    const promptMax = getProviderConfig().promptMaxChars;
     patchStoryRepository(storyId, {
       scenes: scenes.map((s) =>
-        s.id === mutation.sceneId ? { ...s, prompt: next.slice(0, 1000) } : s,
+        s.id === mutation.sceneId ? { ...s, prompt: next.slice(0, promptMax) } : s,
       ),
     });
     return getStoriesRepository(storyId);

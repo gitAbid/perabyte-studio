@@ -7,7 +7,6 @@ import { PillSelect } from "./PillSelect";
 import {
   ASPECTS,
   IMAGE_STYLES,
-  PROMPT_MAX,
   RESOLUTIONS,
   VIDEO_STYLES,
   VARIANT_COUNTS,
@@ -15,6 +14,7 @@ import {
   type DurationKey,
   type ResolutionKey,
 } from "@/lib/constants";
+import { usePromptMax } from "@/lib/prompt-limit";
 import type { ModelOption } from "@/lib/model-catalog";
 import { modelPickerSections } from "@/lib/model-picker-options";
 import { allowedOptions } from "@/lib/render-options";
@@ -254,6 +254,9 @@ export function PromptComposer({
   frameNote?: string;
   frameNoteIcon?: IconName;
 }) {
+  // Live generation-prompt budget (Settings → General); falls back to the
+  // compiled default until the settings fetch lands.
+  const promptMax = usePromptMax();
   const styles = kind === "video" ? VIDEO_STYLES : IMAGE_STYLES;
   // Presets the active model can render (unknown limits = show everything);
   // an empty list means the model takes no such input, so the pill hides.
@@ -342,7 +345,7 @@ export function PromptComposer({
           id="prompt-input"
           rows={3}
           value={prompt}
-          maxLength={PROMPT_MAX}
+          maxLength={promptMax}
           aria-invalid={promptError ? true : undefined}
           placeholder={
             attachedCharacters.length === 1
@@ -536,10 +539,10 @@ export function PromptComposer({
       <div className="mt-2.5 flex shrink-0 items-center gap-2">
         <span
           className={`text-[11.5px] tabular-nums text-muted ${
-            prompt.length > PROMPT_MAX - 60 ? "text-warning" : ""
+            prompt.length > promptMax - 60 ? "text-warning" : ""
           }`}
         >
-          {prompt.length}/{PROMPT_MAX}
+          {prompt.length}/{promptMax}
         </span>
         <span className="hidden text-[11.5px] text-muted lg:block">
           · ⌘ + Enter to generate

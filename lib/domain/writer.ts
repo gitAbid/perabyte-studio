@@ -192,37 +192,37 @@ export const STRICT_SPLIT_SUFFIX =
 /* ---------------------------- scene extraction ---------------------------- */
 
 /** Cut an over-length scene prompt at the last sentence end that fits. */
-export function clampScenePrompt(text: string): string {
+export function clampScenePrompt(text: string, max = PROMPT_MAX): string {
   const trimmed = text.trim();
-  if (trimmed.length <= PROMPT_MAX) return trimmed;
-  const slice = trimmed.slice(0, PROMPT_MAX);
+  if (trimmed.length <= max) return trimmed;
+  const slice = trimmed.slice(0, max);
   const lastStop = Math.max(slice.lastIndexOf(". "), slice.lastIndexOf("…"));
-  if (lastStop > PROMPT_MAX * 0.5) return slice.slice(0, lastStop + 1);
+  if (lastStop > max * 0.5) return slice.slice(0, lastStop + 1);
   return slice;
 }
 
 /**
  * Segment a draft into scene prompts. A line containing only `---` is an
  * explicit divider the author placed: each section becomes a scene verbatim
- * (an over-length section still subdivides per PROMPT_MAX). With no dividers
- * the draft packs character-wise into ≤PROMPT_MAX scenes.
+ * (an over-length section still subdivides per `max`). With no dividers the
+ * draft packs character-wise into ≤`max` scenes.
  */
-export function segmentDraftIntoScenes(draft: string): string[] {
+export function segmentDraftIntoScenes(draft: string, max = PROMPT_MAX): string[] {
   const trimmed = draft.trim();
   if (!trimmed) return [];
-  if (!/^\s*---\s*$/m.test(trimmed)) return breakIntoScenePromptChunks(trimmed);
+  if (!/^\s*---\s*$/m.test(trimmed)) return breakIntoScenePromptChunks(trimmed, max);
   return trimmed
     .split(/^\s*---\s*$/m)
     .map((section) => section.trim())
     .filter(Boolean)
-    .flatMap((section) => breakIntoScenePromptChunks(section));
+    .flatMap((section) => breakIntoScenePromptChunks(section, max));
 }
 
 /**
  * Losslessly pack a scene description into ≤max-character prompt chunks at
  * sentence boundaries; a single sentence longer than max is hard-cut rather
  * than dropped. This — not truncation — is how an over-length scene stays
- * inside the render-side PROMPT_MAX budget.
+ * inside the render-side prompt budget (the configured `promptMaxChars`).
  */
 export function breakIntoScenePromptChunks(text: string, max = PROMPT_MAX): string[] {
   const trimmed = text.trim();
@@ -260,7 +260,7 @@ export function breakIntoScenePromptChunks(text: string, max = PROMPT_MAX): stri
 export function suggestSceneCount(
   draft: string,
   sceneCount: number,
-  charsPerScene = 1000,
+  charsPerScene = PROMPT_MAX,
 ): number | null {
   const length = draft.trim().length;
   if (!length) return null;
@@ -272,11 +272,14 @@ export function suggestSceneCount(
 /**
  * Extract `{title, scenes}` from a model reply. Tolerates code fences,
  * surrounding chatter and empty scene strings; over-length scenes are
- * subdivided into ≤PROMPT_MAX chunks and over-count replies are kept —
+ * subdivided into ≤`max` chunks and over-count replies are kept —
  * scene count is a guide, never a content cap. Returns null when nothing
  * usable survives.
  */
-export function extractStoryScenes(raw: string): {
+export function extractStoryScenes(
+  raw: string,
+  max = PROMPT_MAX,
+): {
   title: string;
   scenes: string[];
 } | null {
@@ -301,7 +304,7 @@ export function extractStoryScenes(raw: string): {
 
   const scenes = record.scenes
     .filter((s): s is string => typeof s === "string")
-    .flatMap((s) => breakIntoScenePromptChunks(s))
+    .flatMap((s) => breakIntoScenePromptChunks(s, max))
     .filter(Boolean);
   if (!scenes.length) return null;
 

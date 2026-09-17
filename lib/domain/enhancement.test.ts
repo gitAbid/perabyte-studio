@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { PROMPT_MAX } from "@/lib/constants";
 import {
   deterministicEnhancement,
   enhancementInstruction,
@@ -135,9 +136,21 @@ describe("sanitizeEnhancedText", () => {
 
   it("caps runaway replies at the prompt limit", () => {
     const huge = "x".repeat(3000);
-    const result = sanitizeEnhancedText(huge, "a mountain");
+    const result = sanitizeEnhancedText(huge, "a mountain", 1000);
     expect(result).not.toBeNull();
     expect((result as string).length).toBeLessThanOrEqual(1000);
+  });
+
+  it("defaults the cap to the studio prompt budget and lets the context override it", () => {
+    const instruction = enhancementInstruction("a mountain", {
+      kind: "image",
+      maxChars: 2400,
+    });
+    expect(instruction).toContain("under 2400 characters");
+    const huge = "x".repeat(3000);
+    const result = sanitizeEnhancedText(huge, "a mountain");
+    expect(result).not.toBeNull();
+    expect((result as string).length).toBeLessThanOrEqual(PROMPT_MAX);
   });
 });
 

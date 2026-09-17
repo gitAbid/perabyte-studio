@@ -2,7 +2,6 @@ import {
   ASPECTS,
   DURATIONS,
   IMAGE_STYLES,
-  PROMPT_MAX,
   RESOLUTIONS,
   VIDEO_STYLES,
   type AspectKey,
@@ -24,6 +23,7 @@ import {
   type VideoProvider,
 } from "@/lib/providers/types";
 import { getMediaRepository, isValidMediaRef } from "@/lib/repositories/media.repository";
+import { getProviderConfig } from "@/lib/repositories/provider-config.repository";
 import { isPlausibleMp4 } from "@/lib/media/mp4";
 import {
   isAllowedMediaUrl,
@@ -110,9 +110,12 @@ export function validateGenerationRequest(body: Record<string, unknown>): Valida
       { field: "prompt" },
     );
   }
-  if (prompt.length > PROMPT_MAX) {
+  // Prompt budget is user-configurable (Settings → General); the live value,
+  // not the compiled default, is what every surface is validated against.
+  const promptMax = getProviderConfig().promptMaxChars;
+  if (prompt.length > promptMax) {
     throw new GenerationServiceError(
-      `Prompts are limited to ${PROMPT_MAX} characters. Shorten yours and try again.`,
+      `Prompts are limited to ${promptMax} characters. Shorten yours and try again.`,
       { field: "prompt" },
     );
   }

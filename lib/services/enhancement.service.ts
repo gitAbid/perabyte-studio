@@ -3,7 +3,6 @@ import {
   ASPECTS,
   DURATIONS,
   IMAGE_STYLES,
-  PROMPT_MAX,
   VIDEO_STYLES,
   type GenerationKind,
 } from "@/lib/constants";
@@ -49,9 +48,12 @@ export function validateEnhancementRequest(
       { field: "prompt" },
     );
   }
-  if (prompt.length > PROMPT_MAX) {
+  // Prompt budget is user-configurable (Settings → General); the engines and
+  // the sanitizer must fit the same live value validation enforces.
+  const promptMax = getProviderConfig().promptMaxChars;
+  if (prompt.length > promptMax) {
     throw new EnhancementServiceError(
-      `Prompts are limited to ${PROMPT_MAX} characters.`,
+      `Prompts are limited to ${promptMax} characters.`,
       { field: "prompt" },
     );
   }
@@ -90,6 +92,7 @@ export function validateEnhancementRequest(
 
   return {
     prompt,
+    maxChars: promptMax,
     kind,
     style,
     stylesSupported,
@@ -153,7 +156,7 @@ export async function runPromptEnhancement(
           // The user navigated away or re-clicked; don't spend or cache the reply.
           throw new DOMException("Aborted", "AbortError");
         }
-        const enhanced = sanitizeEnhancedText(reply, request.prompt);
+        const enhanced = sanitizeEnhancedText(reply, request.prompt, request.maxChars);
         if (!enhanced) throw new ProviderError("The enhancer reply was unusable.");
 
         cache.set(key, enhanced);

@@ -17,7 +17,9 @@ import {
 } from "@/components/settings/SettingsNav";
 import { Icon } from "@/components/Icon";
 import { useToast } from "@/components/ui";
+import { PROMPT_MAX } from "@/lib/constants";
 import { invalidateModelCatalog } from "@/lib/model-catalog";
+import { syncPromptLimit } from "@/lib/prompt-limit";
 import { bumpCatalogVersion } from "@/lib/repositories/settings.repository";
 import type {
   ProviderSettingsPayload,
@@ -79,6 +81,8 @@ export default function SettingsPage() {
         };
         if (!response.ok) throw new Error(payload.error ?? "Could not save settings.");
         setData(payload);
+        // A fresh budget reaches open studio pages without waiting for focus.
+        syncPromptLimit(payload.promptMaxChars);
         invalidateModelCatalog();
         bumpCatalogVersion();
       } catch (cause) {
@@ -129,6 +133,7 @@ export default function SettingsPage() {
               providers={data?.providers ?? []}
               enhanceModel={data?.tasks.enhance ?? null}
               writerModel={data?.tasks.writer ?? null}
+              promptMaxChars={data?.promptMaxChars ?? PROMPT_MAX}
               onUpdate={onUpdate}
             />
           ) : null}
@@ -221,5 +226,9 @@ function optimisticMerge(
     renderTimeouts: patch.renderTimeouts
       ? { ...current.renderTimeouts, ...patch.renderTimeouts }
       : current.renderTimeouts,
+    promptMaxChars:
+      patch.promptMaxChars !== undefined
+        ? patch.promptMaxChars
+        : current.promptMaxChars,
   };
 }
