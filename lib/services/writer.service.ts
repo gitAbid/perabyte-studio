@@ -158,6 +158,7 @@ export async function runWriterAction(
       request.draft,
       request.sceneCount,
       request.characterNames,
+      request.kind,
     );
     // One stricter retry when the reply isn't parseable (spec: parse failure).
     for (let attempt = 0; attempt < 2; attempt += 1) {

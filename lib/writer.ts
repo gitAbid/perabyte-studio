@@ -31,6 +31,8 @@ export type WriterPayload =
       draft: string;
       sceneCount: number;
       characterNames?: string[];
+      /** What the split scenes will render as; omitted = image. */
+      kind?: "image" | "video";
       modelId?: string;
     };
 
