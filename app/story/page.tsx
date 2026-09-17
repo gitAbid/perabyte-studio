@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { ConvertDialog } from "@/components/story/ConvertDialog";
 import { SceneChainBadge } from "@/components/story/SceneChainBadge";
 import { Icon } from "@/components/Icon";
@@ -1250,8 +1250,12 @@ export default function StoryPage() {
           <div className="thin-scrollbar grid flex-1 content-start gap-4 sm:grid-cols-2 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
             {Array.from({ length: Math.max(2, scenes.length) }, (_, index) => {
               const typed = scenes[index] as StoryScene | undefined;
+              // Per-scene overrides are visible in the grid: tiles show the
+              // scene's effective aspect (and video duration).
+              const effectiveAspect = typed?.settings?.aspect ?? settings.aspect;
+              const effectiveDuration = typed?.settings?.duration ?? settings.duration;
               const ratioStyle = {
-                aspectRatio: `${ASPECTS[settings.aspect].width}/${ASPECTS[settings.aspect].height}`,
+                aspectRatio: `${ASPECTS[effectiveAspect].width}/${ASPECTS[effectiveAspect].height}`,
               };
               // The nearest non-canceled scene before this one — canceled
               // scenes are transparent to the chain (mirrors the runner).
@@ -1269,6 +1273,33 @@ export default function StoryPage() {
                 ? effectiveChainRef(scenes, index, continuityOn)
                 : { state: "none" };
               const editable = typed?.status === "queued" || typed?.status === "canceled";
+              const selectable =
+                typed?.status === "queued" ||
+                typed?.status === "canceled" ||
+                typed?.status === "failed";
+              const selected = editing && typed?.id === selectedSceneId;
+              /** Clickable wrapper for the tiles that open in the composer. */
+              const selectableTileProps = {
+                role: "button" as const,
+                tabIndex: 0,
+                "aria-label": `Edit scene ${index + 1} in the composer`,
+                title: selected
+                  ? "Editing in the composer — click to exit"
+                  : "Edit this scene in the composer",
+                onClick: () => (selected ? exitSceneEdit() : enterSceneEdit(typed as StoryScene)),
+                onKeyDown: (event: ReactKeyboardEvent) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    if (selected) exitSceneEdit();
+                    else enterSceneEdit(typed as StoryScene);
+                  }
+                },
+                className: `relative cursor-pointer rounded-[14px] transition-shadow ${
+                  selected
+                    ? "ring-2 ring-primary"
+                    : "hover:ring-1 hover:ring-border-strong"
+                }`,
+              };
               return (
                 <div key={typed?.id ?? `slot-${index}`} className="min-w-0">
                   {typed?.url ? (
@@ -1282,15 +1313,15 @@ export default function StoryPage() {
                               : undefined
                           }
                           title={typed.prompt}
-                          durationSeconds={Number(String(settings.duration).replace("s", "")) || 5}
-                          ratio={`${ASPECTS[settings.aspect].width}/${ASPECTS[settings.aspect].height}`}
+                          durationSeconds={Number(String(effectiveDuration).replace("s", "")) || 5}
+                          ratio={`${ASPECTS[effectiveAspect].width}/${ASPECTS[effectiveAspect].height}`}
                           sensitive={typed.safe === false}
                         />
                       ) : (
                         <MediaFrame
                           src={typed.url}
                           alt={typed.prompt}
-                          ratio={`${ASPECTS[settings.aspect].width}/${ASPECTS[settings.aspect].height}`}
+                          ratio={`${ASPECTS[effectiveAspect].width}/${ASPECTS[effectiveAspect].height}`}
                           sensitive={typed.safe === false}
                         />
                       )}
@@ -1337,7 +1368,7 @@ export default function StoryPage() {
                       </button>
                     </div>
                   ) : typed && typed.status === "queued" ? (
-                    <div className="relative">
+                    <div {...selectableTileProps}>
                       <div className="skeleton w-full rounded-[14px]" style={ratioStyle} />
                       <div className="absolute inset-0 flex items-center justify-center">
                         {waitingFor ? (
@@ -1365,7 +1396,7 @@ export default function StoryPage() {
                       </button>
                     </div>
                   ) : typed && typed.status === "canceled" ? (
-                    <div className="relative">
+                    <div {...selectableTileProps}>
                       <div
                         className="flex w-full flex-col items-center justify-center rounded-[14px] border border-dashed border-border-strong bg-surface px-3 text-center"
                         style={ratioStyle}
@@ -1388,7 +1419,7 @@ export default function StoryPage() {
                       </button>
                     </div>
                   ) : typed && typed.status === "failed" ? (
-                    <div className="relative">
+                    <div {...selectableTileProps}>
                       <div
                         className="flex w-full flex-col items-center justify-center rounded-[14px] border border-dashed border-danger/40 bg-danger-soft px-3 text-center"
                         style={ratioStyle}
@@ -1531,7 +1562,9 @@ export default function StoryPage() {
                     ) : (
                       <p
                         onClick={
-                          editable
+                          // The composer owns the prompt while the scene is
+                          // open there — one editor per scene.
+                          editable && !selected
                             ? () => {
                                 editCancelingRef.current = false; // a prior Escape must not swallow this commit
                                 setEditDraft(typed.prompt);
@@ -1539,9 +1572,9 @@ export default function StoryPage() {
                               }
                             : undefined
                         }
-                        title={editable ? "Click to edit the prompt" : undefined}
+                        title={editable && !selected ? "Click to edit the prompt" : undefined}
                         className={`mt-0.5 line-clamp-2 text-[12px] leading-snug text-ink-soft ${
-                          editable ? "cursor-text hover:text-ink" : ""
+                          editable && !selected ? "cursor-text hover:text-ink" : ""
                         }`}
                       >
                         {typed.prompt}
