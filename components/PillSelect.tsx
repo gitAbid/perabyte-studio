@@ -33,6 +33,7 @@ export function PillSelect({
   options,
   onChange,
   align = "left",
+  placement = "up",
   disabled = false,
   disabledHint,
   tail,
@@ -43,6 +44,9 @@ export function PillSelect({
   options: PillOption[];
   onChange: (value: string) => void;
   align?: "left" | "right";
+  /** Panel opens up (default — composer pills live near the viewport bottom)
+   * or down (pills in page headers near the top would clip above the window). */
+  placement?: "up" | "down";
   /** Non-interactive pill for options the active model can't honour. */
   disabled?: boolean;
   disabledHint?: string;
@@ -186,9 +190,9 @@ export function PillSelect({
         <div
           role="listbox"
           aria-label={label}
-          className={`thin-scrollbar absolute bottom-[calc(100%+8px)] z-30 max-h-80 w-72 overflow-y-auto rounded-[14px] border border-border bg-raised p-1.5 shadow-lift ${
-            align === "right" ? "right-0" : "left-0"
-          }`}
+          className={`thin-scrollbar absolute z-30 max-h-80 w-72 overflow-y-auto rounded-[14px] border border-border bg-raised p-1.5 shadow-lift ${
+            placement === "down" ? "top-[calc(100%+8px)]" : "bottom-[calc(100%+8px)]"
+          } ${align === "right" ? "right-0" : "left-0"}`}
         >
           <p className="px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wide text-muted">
             {label}
