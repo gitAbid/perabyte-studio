@@ -14,11 +14,15 @@ import {
   setStoriesPathForTests,
 } from "@/lib/repositories/stories.repository";
 import { setJobsPathForTests, type JobRecord } from "@/lib/repositories/jobs.repository";
-import { setProviderConfigPathForTests } from "@/lib/repositories/provider-config.repository";
+import {
+  setProviderConfigPathForTests,
+  updateProviderConfig,
+} from "@/lib/repositories/provider-config.repository";
 import {
   advanceStoryChain,
   cancelStoryRun,
   cancelStoryScene,
+  mutateStoryScenes,
   requeueStoryScene,
   startStoryRun,
   sceneRequestBody,
@@ -251,5 +255,145 @@ describe("server story runner", () => {
     expect(body.startImageRef).toBe("manual.png");
     expect(body.modelId).toBe("sogni:krea2_turbo_i2v");
     expect(body.clientTag).toBe("s8:sc2");
+  });
+
+  it("scene request bodies honor a scene's settings overrides", () => {
+    const s = story("s9", [
+      scene("sc1", {
+        settings: { aspect: "9:16", modelId: "prov:model-b", style: "Anime" },
+      }),
+    ]);
+    putStory(s);
+    const body = sceneRequestBody(current(), current().scenes![0]);
+    expect(body.aspect).toBe("9:16");
+    expect(body.modelId).toBe("prov:model-b");
+    expect(body.style).toBe("Anime");
+    // Untouched fields still come from the story settings.
+    expect(body.duration).toBe(s.settings.duration);
+  });
+
+  it("scenes without overrides render exactly from story settings", () => {
+    const s = story("s10", [scene("sc1")]);
+    putStory(s);
+    const body = sceneRequestBody(current(), current().scenes![0]);
+    expect(body.aspect).toBe(s.settings.aspect);
+    expect(body.modelId).toBe(s.settings.modelId ?? null);
+  });
+
+  it("story chainModelId wins over a scene model when a start ref exists", () => {
+    const s = story("s11", [
+      scene("sc1", { status: "completed", endFrameRef: "f.jpg" }),
+      scene("sc2", { startImageRef: "manual.png", settings: { modelId: "prov:t2v" } }),
+    ]);
+    s.settings = {
+      ...s.settings,
+      chainModelId: "prov:i2v",
+      modelId: "prov:t2v",
+    };
+    putStory(s);
+    const body = sceneRequestBody(current(), current().scenes![1]);
+    expect(body.modelId).toBe("prov:i2v");
+  });
+
+  it("a scene model override applies under Auto chain (no chainModelId)", () => {
+    const s = story("s12", [
+      scene("sc1", { status: "completed", endFrameRef: "f.jpg" }),
+      scene("sc2", { startImageRef: "manual.png", settings: { modelId: "prov:i2v-custom" } }),
+    ]);
+    putStory(s);
+    const body = sceneRequestBody(current(), current().scenes![1]);
+    expect(body.modelId).toBe("prov:i2v-custom");
+  });
+});
+
+describe("mutateStoryScenes update", () => {
+  function putQueued(id: string, over: Partial<StoryScene> = {}) {
+    putStory(story(id, [scene("sc1", over)]));
+    return id;
+  }
+
+  it("updates prompt, kind, settings and refs on a queued scene", () => {
+    putQueued("u1");
+    const updated = mutateStoryScenes(storyId, {
+      op: "update",
+      sceneId: "sc1",
+      patch: {
+        prompt: "new prompt",
+        kind: "video",
+        settings: { aspect: "9:16" },
+        startImageRef: "ref-start",
+        endImageRef: null,
+        runPrompt: "composed prompt",
+      },
+    });
+    const sc1 = updated?.scenes?.[0];
+    expect(sc1?.prompt).toBe("new prompt");
+    expect(sc1?.kind).toBe("video");
+    expect(sc1?.settings).toEqual({ aspect: "9:16" });
+    expect(sc1?.startImageRef).toBe("ref-start");
+    expect(sc1?.endImageRef).toBeUndefined();
+    expect(sc1?.runPrompt).toBe("composed prompt");
+  });
+
+  it("refuses a generating scene", () => {
+    putQueued("u2", { status: "generating" });
+    const updated = mutateStoryScenes(storyId, {
+      op: "update",
+      sceneId: "sc1",
+      patch: { prompt: "nope" },
+    });
+    expect(updated?.scenes?.[0]?.prompt).not.toBe("nope");
+  });
+
+  it("refuses a completed scene", () => {
+    putQueued("u3", { status: "completed", url: "/api/media?f=x" });
+    const updated = mutateStoryScenes(storyId, {
+      op: "update",
+      sceneId: "sc1",
+      patch: { prompt: "nope" },
+    });
+    expect(updated?.scenes?.[0]?.prompt).not.toBe("nope");
+  });
+
+  it("accepts canceled and failed scenes", () => {
+    for (const status of ["canceled", "failed"] as const) {
+      putQueued(`u4-${status}`, { status });
+      const updated = mutateStoryScenes(storyId, {
+        op: "update",
+        sceneId: "sc1",
+        patch: { prompt: "retry prompt" },
+      });
+      expect(updated?.scenes?.[0]?.prompt).toBe("retry prompt");
+    }
+  });
+
+  it("an explicit empty settings object clears overrides; an absent key preserves them", () => {
+    putQueued("u5", { settings: { aspect: "9:16" } });
+    let updated = mutateStoryScenes(storyId, {
+      op: "update",
+      sceneId: "sc1",
+      patch: { settings: {} },
+    });
+    expect(updated?.scenes?.[0]?.settings).toBeUndefined();
+
+    putQueued("u6", { settings: { aspect: "9:16" } });
+    updated = mutateStoryScenes(storyId, {
+      op: "update",
+      sceneId: "sc1",
+      patch: { prompt: "same overrides" },
+    });
+    expect(updated?.scenes?.[0]?.settings).toEqual({ aspect: "9:16" });
+  });
+
+  it("clamps the prompt to the configured budget", () => {
+    putQueued("u7");
+    updateProviderConfig({ promptMaxChars: 10 });
+    const updated = mutateStoryScenes(storyId, {
+      op: "update",
+      sceneId: "sc1",
+      patch: { prompt: "0123456789ABCDEF" },
+    });
+    expect(updated?.scenes?.[0]?.prompt).toBe("0123456789");
+    updateProviderConfig({ promptMaxChars: 5000 });
   });
 });

@@ -1,4 +1,5 @@
 import { chainPredecessor } from "@/lib/story/chain";
+import { mergedSceneSettings } from "@/lib/story/scene-settings";
 import { getJobExecutor } from "@/lib/jobs/executor";
 import {
   getStoriesRepository,
@@ -9,7 +10,7 @@ import { getProviderConfig } from "@/lib/repositories/provider-config.repository
 import { createJob } from "@/lib/jobs/jobs.service";
 import { GenerationServiceError } from "@/lib/services/generation.service";
 import { logger as rootLogger, type Logger } from "@/lib/logging/logger";
-import type { Asset, GenerationSettings, StoryScene } from "@/lib/types";
+import type { Asset, GenerationKind, GenerationSettings, StoryScene } from "@/lib/types";
 
 /**
  * The server-side story runner (Phase C). The story record IS the run: the
@@ -36,9 +37,10 @@ export function isStoryRunning(story: Asset): boolean {
   return story.meta?.running === true;
 }
 
-/** Compose one scene's render request from the story snapshot. */
+/** Compose one scene's render request. The scene's settings overrides ride
+ * on top of the story snapshot (lib/story/scene-settings.ts). */
 export function sceneRequestBody(story: Asset, scene: StoryScene): Record<string, unknown> {
-  const settings = story.settings;
+  const settings = mergedSceneSettings(story.settings as GenerationSettings, scene);
   const continuity = story.meta?.continuity !== false;
   const index = story.scenes?.findIndex((s) => s.id === scene.id) ?? -1;
   const predecessor =
