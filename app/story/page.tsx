@@ -38,6 +38,11 @@ import {
   type EffectiveChainRef,
 } from "@/lib/story/chain";
 import {
+  applySceneOverrides,
+  diffSettingsBaseline,
+  mergedSceneSettings,
+} from "@/lib/story/scene-settings";
+import {
   buildClipScenes,
   buildConvertSettings,
   resolveEndCapableModel,
@@ -105,6 +110,28 @@ export default function StoryPage() {
   // the edit anyway.
   const editCancelingRef = useRef(false);
 
+  // Scene edit mode: the composer shows ONE queued/canceled/failed scene's
+  // prompt, kind, frames and settings. The live draft is stashed on entry and
+  // restored on exit — editing a scene never destroys an unsaved draft.
+  const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
+  const [scenePrompt, setScenePrompt] = useState("");
+  const [sceneKind, setSceneKind] = useState<"image" | "video">("image");
+  const [sceneSettings, setSceneSettings] = useState<GenerationSettings>({
+    ...DEFAULT_IMAGE_SETTINGS,
+    kind: "image",
+    count: 1,
+  });
+  const [sceneRefs, setSceneRefs] = useState<{ startImageRef?: string; endImageRef?: string }>({});
+  // The merged settings view at entry — the diff baseline for Update.
+  const [sceneBaseline, setSceneBaseline] = useState<GenerationSettings | null>(null);
+  const stashRef = useRef<{
+    prompt: string;
+    settings: GenerationSettings;
+    kind: "image" | "video";
+    refs: { startImageRef?: string; endImageRef?: string };
+    promptError?: string;
+  } | null>(null);
+
   function setStoryId(id: string | null) {
     setStoryIdState(id);
     if (typeof window !== "undefined") {
@@ -147,6 +174,15 @@ export default function StoryPage() {
   const story = (storyId ? liveStory ?? assets.find((a) => a.id === storyId) : undefined) as Asset | undefined;
   const scenes: StoryScene[] = useMemo(() => story?.scenes ?? [], [story]);
   const running = scenes.some((s) => s.status === "generating");
+  // Scene edit mode derivations: the composer faces the scene buffer while
+  // editing, the story draft otherwise.
+  const editing = selectedSceneId !== null;
+  const selectedScene = editing ? scenes.find((s) => s.id === selectedSceneId) : undefined;
+  const editingIndex = selectedScene ? scenes.indexOf(selectedScene) : -1;
+  const activeKind = editing ? sceneKind : kind;
+  const activePrompt = editing ? scenePrompt : prompt;
+  const activeRefs = editing ? sceneRefs : draftRefs;
+  const activeSettings = editing ? sceneSettings : settings;
   // Adopt the story's recorded kind the first time it loads: a story the
   // Writer split as a video story (or a convert) must open with the composer
   // already in that mode, not the image default. The kind-defining settings
@@ -231,6 +267,8 @@ export default function StoryPage() {
     userSettings.storyCharacterIds.includes(character.id),
   );
   const catalog = useModelCatalog(kind);
+  // Catalog for the scene being edited — may differ from the story kind.
+  const editCatalog = useModelCatalog(activeKind);
   const modelId =
     (kind === "video" ? userSettings.videoModel : userSettings.imageModel) ??
     catalog.defaultModelId;
@@ -242,23 +280,16 @@ export default function StoryPage() {
   const startCatalog = useModelCatalog("video", "start");
 
   const selectedModel = catalog.models.find((m) => m.id === modelId);
-  const endSupported = Boolean(selectedModel?.frameInput?.end);
+  // Composer-facing model resolution: the scene buffer's pick while editing
+  // (falls back to the scene kind's default), the story pick otherwise.
+  const composerCatalog = editing ? editCatalog : catalog;
+  const composerModelId = editing
+    ? (sceneSettings.modelId ?? editCatalog.defaultModelId)
+    : modelId;
+  const composerSelectedModel = composerCatalog.models.find((m) => m.id === composerModelId);
+  const endSupported = Boolean(composerSelectedModel?.frameInput?.end);
   // Style presets are per-model: provider-workflow models take only the raw prompt.
-  const stylesSupported = selectedModel?.stylesSupported ?? true;
-
-  // Smart frame hint: only when the draft frames do something the chip alone
-  // can't tell — overriding the chain, anchoring an image scene, or bracketing
-  // a video with a first and last frame.
-  const framesAttached = Boolean(draftRefs.startImageRef || draftRefs.endImageRef);
-  const frameNote = !framesAttached
-    ? undefined
-    : kind === "video" && draftRefs.startImageRef && continuityOn
-      ? "This scene starts from your image — the chain continues from here."
-      : kind === "image"
-        ? "Your image guides this scene's composition and style."
-        : "This scene starts on your first frame and ends on your last.";
-  const frameNoteIcon =
-    kind === "video" && draftRefs.startImageRef && continuityOn ? "link" : "image";
+  const stylesSupported = composerSelectedModel?.stylesSupported ?? true;
 
   // The kind toggle swaps the model silently (it reads the other kind's saved
   // pick without firing onModelChange), so LoRA selections need the same
@@ -564,6 +595,127 @@ export default function StoryPage() {
     toast.push("Scene prompt updated.");
   }
 
+  /* --------------------------- scene edit mode --------------------------- */
+
+  function enterSceneEdit(scene: StoryScene) {
+    stashRef.current = { prompt, settings, kind, refs: draftRefs, promptError };
+    const baseline = mergedSceneSettings(currentSettings(), scene);
+    setSelectedSceneId(scene.id);
+    setScenePrompt(scene.prompt);
+    setSceneKind(scene.kind);
+    setSceneSettings(baseline);
+    setSceneBaseline(baseline);
+    setSceneRefs({
+      ...(scene.startImageRef ? { startImageRef: scene.startImageRef } : {}),
+      ...(scene.endImageRef ? { endImageRef: scene.endImageRef } : {}),
+    });
+    setPromptError(undefined);
+    setEditingSceneId(null); // one editor per scene — the composer wins
+  }
+
+  function exitSceneEdit() {
+    setSelectedSceneId(null);
+    setSceneBaseline(null);
+    const stash = stashRef.current;
+    if (stash) {
+      setPrompt(stash.prompt);
+      setSettings(stash.settings);
+      setKind(stash.kind);
+      setDraftRefs(stash.refs);
+      if (stash.promptError) setPromptError(stash.promptError);
+      stashRef.current = null;
+    }
+  }
+
+  /** Model change inside scene edit mode writes the SCENE buffer — never the
+   * global saved pick — with the same LoRA snap the composer path applies. */
+  function updateSceneModel(nextModel: string) {
+    setSceneSettings((s) => ({
+      ...s,
+      modelId: nextModel,
+      ...(editCatalog.loras.length
+        ? {
+            loras: snapLorasForModel(
+              s.loras ?? [],
+              editCatalog.loras,
+              editCatalog.models.find((m) => m.id === nextModel)?.model ?? "",
+              editCatalog.loraMaxPerRequest,
+              userSettings.uncensoredEnabled,
+            ),
+          }
+        : {}),
+    }));
+  }
+
+  async function handleUpdateScene() {
+    const scene = selectedScene;
+    if (!scene || !storyId) return;
+    if (scene.status === "generating" || scene.status === "completed") {
+      toast.push("That scene is rendering — cancel it before updating.", "error");
+      return;
+    }
+    const nextPrompt = scenePrompt.trim();
+    if (!nextPrompt) {
+      toast.push("A scene needs a prompt before it can render.", "error");
+      return;
+    }
+    const overrides = applySceneOverrides(
+      scene.settings,
+      diffSettingsBaseline(sceneBaseline ?? currentSettings(), sceneSettings),
+    );
+    // Anchor-composed prompt recomposed NOW so a mid-run chain never renders
+    // a stale snapshot (Generate recomposes again for the whole story).
+    const runPrompt = composeSceneWithCharacters(
+      nextPrompt,
+      attachedCharacters.map((c) => c.spec),
+      userSettings.uncensoredEnabled,
+    );
+    await mutateScene({
+      op: "update",
+      sceneId: scene.id,
+      patch: {
+        prompt: nextPrompt.slice(0, promptMax),
+        kind: sceneKind,
+        settings: Object.keys(overrides).length ? overrides : {},
+        startImageRef: sceneRefs.startImageRef ?? null,
+        endImageRef: sceneRefs.endImageRef ?? null,
+        runPrompt,
+      },
+    });
+    const wasFailed = scene.status === "failed";
+    const label = editingIndex + 1;
+    exitSceneEdit();
+    toast.push(`Scene ${label} updated.`, "success");
+    if (wasFailed) {
+      // Save + retry in one step — the same requeue the tile button fires.
+      void runStoryAction("rerun", { sceneId: scene.id });
+    }
+  }
+
+  // The selected scene vanished (removed here or in another tab) — leave edit
+  // mode and hand the draft back.
+  useEffect(() => {
+    if (selectedSceneId && scenes.length && !scenes.some((s) => s.id === selectedSceneId)) {
+      exitSceneEdit();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- exit reads latest state via stashRef
+  }, [scenes, selectedSceneId]);
+
+  // Escape leaves edit mode (not while typing in a form field — the Exit
+  // button and clicking the tile again are the other doors).
+  useEffect(() => {
+    if (!editing) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("input, textarea, select, [role='dialog']")) return;
+      exitSceneEdit();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- exit is stable over the session
+  }, [editing]);
+
   /** Re-run ONE settled scene: park it back in the queue. A run in flight
    * picks it up after the current scene; an idle story waits for Generate
    * (the only trigger). Later scenes keep their results — same chain
@@ -750,25 +902,30 @@ export default function StoryPage() {
     setSceneProgress({});
     setEditingSceneId(null);
     setEditDraft("");
+    setSelectedSceneId(null);
+    setSceneBaseline(null);
+    stashRef.current = null;
   }
 
   async function handleEnhancePrompt() {
-    if (!prompt.trim() || running || enhancing) return;
+    if (!activePrompt.trim() || enhancing || (!editing && running)) return;
     setEnhancing(true);
     try {
       const result = await requestPromptEnhancement({
-        prompt,
-        kind,
-        style: stylesSupported ? settings.style : null,
+        prompt: activePrompt,
+        kind: activeKind,
+        style: stylesSupported ? activeSettings.style : null,
         stylesSupported,
-        aspect: settings.aspect,
-        duration: kind === "video" ? settings.duration : null,
-        sceneIndex: scenes.length ? scenes.length : 1,
+        aspect: activeSettings.aspect,
+        duration: activeKind === "video" ? activeSettings.duration : null,
+        sceneIndex: editing ? editingIndex + 1 : Math.max(1, scenes.length),
         sceneCount: Math.max(1, scenes.length),
-        negativePrompt: settings.negativePrompt || null,
+        negativePrompt: activeSettings.negativePrompt || null,
         uncensored: userSettings.uncensoredEnabled,
       });
-      setPrompt(result.enhanced.slice(0, promptMax));
+      const enhanced = result.enhanced.slice(0, promptMax);
+      if (editing) setScenePrompt(enhanced);
+      else setPrompt(enhanced);
       toast.push(
         result.source === "ai"
           ? "Prompt enhanced with AI — review it and press Generate."
@@ -838,27 +995,58 @@ export default function StoryPage() {
 
           {/* New story clears the queue from the UI (and stops any run);
               hidden while the workspace is empty. */}
-          <div className="flex items-center gap-2">
-            {(storyId || scenes.length > 0) && (
-              <Button variant="ghost" size="sm" icon="refresh" onClick={reset}>
-                New story
+          {editing ? (
+            <div className="flex items-center gap-2">
+              <Badge tone="primary">
+                <Icon name="pen" size={12} /> Editing scene {editingIndex + 1}
+              </Badge>
+              <Segmented
+                ariaLabel="Scene media type"
+                size="sm"
+                collapseOnMobile
+                value={sceneKind}
+                onChange={(next) => {
+                  setSceneKind(next);
+                  // Mirror the story toggle: the other kind's saved pick.
+                  setSceneSettings((s) => ({
+                    ...s,
+                    modelId:
+                      (next === "video" ? userSettings.videoModel : userSettings.imageModel) ??
+                      undefined,
+                  }));
+                }}
+                options={[
+                  { value: "image", label: "Image", icon: "image" },
+                  { value: "video", label: "Video", icon: "video" },
+                ]}
+              />
+              <Button variant="ghost" size="sm" icon="close" onClick={exitSceneEdit}>
+                Exit
               </Button>
-            )}
-            <Segmented
-              ariaLabel="Story media type"
-              size="sm"
-              collapseOnMobile
-              value={kind}
-              onChange={(next) => {
-                setKind(next);
-                setSettings((s) => ({ ...s, kind: next }));
-              }}
-              options={[
-                { value: "image", label: "Image", icon: "image" },
-                { value: "video", label: "Video", icon: "video" },
-              ]}
-            />
-          </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              {(storyId || scenes.length > 0) && (
+                <Button variant="ghost" size="sm" icon="refresh" onClick={reset}>
+                  New story
+                </Button>
+              )}
+              <Segmented
+                ariaLabel="Story media type"
+                size="sm"
+                collapseOnMobile
+                value={kind}
+                onChange={(next) => {
+                  setKind(next);
+                  setSettings((s) => ({ ...s, kind: next }));
+                }}
+                options={[
+                  { value: "image", label: "Image", icon: "image" },
+                  { value: "video", label: "Video", icon: "video" },
+                ]}
+              />
+            </div>
+          )}
         </div>
 
         {/* Centered Solo ⇄ Story mode switch */}
@@ -885,30 +1073,50 @@ export default function StoryPage() {
         <div className="order-1 flex min-h-0 min-w-0 flex-col thin-scrollbar lg:overflow-y-auto">
           <div className="flex min-h-0 flex-1 flex-col">
             <PromptComposer
-              kind={kind}
+              kind={activeKind}
               title="Story composer"
               headerBadge={
-                <Badge tone="primary">
-                  <Icon name="story" size={12} /> {scenes.length || 1} scene
-                  {(scenes.length || 1) === 1 ? "" : "s"}
-                </Badge>
+                editing ? (
+                  <Badge tone="primary">
+                    <Icon name="pen" size={12} /> Scene {editingIndex + 1}
+                  </Badge>
+                ) : (
+                  <Badge tone="primary">
+                    <Icon name="story" size={12} /> {scenes.length || 1} scene
+                    {(scenes.length || 1) === 1 ? "" : "s"}
+                  </Badge>
+                )
               }
-              prompt={prompt}
+              prompt={activePrompt}
               onPromptChange={(value) => {
-                setPrompt(value);
-                if (promptError) setPromptError(undefined);
+                if (editing) {
+                  setScenePrompt(value);
+                } else {
+                  setPrompt(value);
+                  if (promptError) setPromptError(undefined);
+                }
               }}
-              promptError={promptError}
-              settings={currentSettings()}
-              onSettingsChange={(patch) => setSettings((s) => ({ ...s, ...patch }))}
-              models={catalog.models}
-              modelId={modelId}
-              loraCatalog={catalog.loras}
-              loraMaxPerRequest={catalog.loraMaxPerRequest}
-              loraCapable={selectedModel?.loraCapable === true}
-              loraModel={selectedModel?.model}
+              promptError={editing ? undefined : promptError}
+              settings={activeSettings}
+              onSettingsChange={(patch) =>
+                editing
+                  ? setSceneSettings((s) => ({ ...s, ...patch }))
+                  : setSettings((s) => ({ ...s, ...patch }))
+              }
+              models={composerCatalog.models}
+              modelId={composerModelId}
+              loraCatalog={composerCatalog.loras}
+              loraMaxPerRequest={composerCatalog.loraMaxPerRequest}
+              loraCapable={composerSelectedModel?.loraCapable === true}
+              loraModel={composerSelectedModel?.model}
               allowNsfwLoras={userSettings.uncensoredEnabled}
               onModelChange={(nextModel) => {
+                // Scene edit mode retunes THIS scene — the global saved pick
+                // (and the story-level catalog) stays untouched.
+                if (editing) {
+                  updateSceneModel(nextModel);
+                  return;
+                }
                 setSelectedModel(kind, nextModel);
                 const nextPicked = catalog.models.find((m) => m.id === nextModel);
                 setSettings((s) => ({
@@ -931,39 +1139,63 @@ export default function StoryPage() {
                     : {}),
                 }));
               }}
-              characters={characters}
-              characterIds={userSettings.storyCharacterIds}
-              onCharactersChange={setStoryCharacters}
-              frames={draftRefs}
-              onFramesChange={(patch) => setDraftRefs((r) => ({ ...r, ...patch }))}
+              characters={editing ? [] : characters}
+              characterIds={editing ? [] : userSettings.storyCharacterIds}
+              onCharactersChange={editing ? undefined : setStoryCharacters}
+              frames={activeRefs}
+              onFramesChange={(patch) =>
+                editing
+                  ? setSceneRefs((r) => ({ ...r, ...patch }))
+                  : setDraftRefs((r) => ({ ...r, ...patch }))
+              }
               onFramesError={(message) => toast.push(message, "error")}
               frameEndSupported={endSupported}
-              frameNote={frameNote}
-              frameNoteIcon={frameNoteIcon}
-              busy={running}
-              onGenerate={handleGenerateAll}
+              frameNote={
+                // Smart frame hint: only when the attached frames do something
+                // the chip alone can't tell — overriding the chain, anchoring
+                // an image scene, or bracketing a video with first/last.
+                !Object.keys(activeRefs).length
+                  ? undefined
+                  : activeKind === "video" && activeRefs.startImageRef && continuityOn
+                    ? "This scene starts from your image — the chain continues from here."
+                    : activeKind === "image"
+                      ? "Your image guides this scene's composition and style."
+                      : "This scene starts on your first frame and ends on your last."
+              }
+              frameNoteIcon={
+                activeKind === "video" && activeRefs.startImageRef && continuityOn
+                  ? "link"
+                  : "image"
+              }
+              busy={editing ? false : running}
+              actionLabel={editing ? "Update scene" : undefined}
+              actionDisabled={editing && selectedScene?.status === "generating"}
+              hideRenderCount={editing}
+              onGenerate={editing ? () => void handleUpdateScene() : handleGenerateAll}
               onCancel={handleCancel}
               onEnhancePrompt={() => void handleEnhancePrompt()}
               enhancing={enhancing}
               onCopyPrompt={() => {
                 void navigator.clipboard
-                  ?.writeText(prompt)
+                  ?.writeText(activePrompt)
                   .then(() => toast.push("Prompt copied.", "success"));
               }}
             />
           </div>
 
           <div className="mt-3 flex shrink-0 flex-wrap items-center gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              block
-              icon="plus"
-              disabled={running || scenes.length >= 6}
-              onClick={() => void addScene()}
-            >
-              Add scene
-            </Button>
+            {!editing && (
+              <Button
+                variant="secondary"
+                size="sm"
+                block
+                icon="plus"
+                disabled={running || scenes.length >= 6}
+                onClick={() => void addScene()}
+              >
+                Add scene
+              </Button>
+            )}
             <button
               type="button"
               aria-pressed={continuityOn}
