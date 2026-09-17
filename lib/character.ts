@@ -769,6 +769,8 @@ const NUDE_OUTFITS = new Set([
   "Nude with jewelry only",
 ]);
 
+const ADULT_OUTFIT_SET = new Set<string>([...ADULT_OUTFITS, ...SUBCONTINENT_ADULT_OUTFITS]);
+
 /**
  * The character-identity text: who this person is, what they look like and
  * wear. Composed from the spec alone — no scene, pose or render settings —
@@ -823,7 +825,11 @@ function composeAnchorBody(spec: CharacterSpec): string {
     parts.push("nude");
     if (spec.outfit === "Nude with jewelry only") parts.push("wearing jewelry only");
   } else if (spec.outfit) {
-    parts.push(`wearing ${spec.outfit.toLowerCase()}${spec.nsfwLevel === 0 ? ", fully clothed" : ""}`);
+    parts.push(
+      `wearing ${spec.outfit.toLowerCase()}${
+        spec.nsfwLevel === 0 && !ADULT_OUTFIT_SET.has(spec.outfit) ? ", fully clothed" : ""
+      }`,
+    );
   }
 
   if (spec.accessories && spec.accessories !== "None")

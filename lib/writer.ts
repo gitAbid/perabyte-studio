@@ -25,7 +25,7 @@ export type WriterResponse = WriterTextResponse | WriterSplitResponse;
 
 export type WriterPayload =
   | { action: "write"; brief: WriterBrief; modelId?: string }
-  | { action: "enhance"; draft: string; instruction: string; modelId?: string }
+  | { action: "enhance"; draft: string; instruction: string; uncensored?: boolean; modelId?: string }
   | {
       action: "split";
       draft: string;
@@ -33,6 +33,7 @@ export type WriterPayload =
       characterNames?: string[];
       /** What the split scenes will render as; omitted = image. */
       kind?: "image" | "video";
+      uncensored?: boolean;
       modelId?: string;
     };
 

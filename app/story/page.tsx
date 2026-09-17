@@ -313,6 +313,7 @@ export default function StoryPage() {
       modelId: modelId ?? undefined,
       chainModelId: resolvedChainModelId(),
       safe: !userSettings.uncensoredEnabled,
+      enhance: userSettings.uncensoredEnabled ? false : settings.enhance,
     };
   }
 
@@ -765,6 +766,7 @@ export default function StoryPage() {
         sceneIndex: scenes.length ? scenes.length : 1,
         sceneCount: Math.max(1, scenes.length),
         negativePrompt: settings.negativePrompt || null,
+        uncensored: userSettings.uncensoredEnabled,
       });
       setPrompt(result.enhanced.slice(0, promptMax));
       toast.push(

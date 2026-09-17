@@ -234,6 +234,7 @@ export function WriterView() {
           action: "enhance",
           draft,
           instruction: instruction.trim(),
+          uncensored: userSettings.uncensoredEnabled,
           modelId: modelId || undefined,
         });
         setUndoDraft(draft);

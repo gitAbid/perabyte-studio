@@ -10,6 +10,7 @@ export const SOGNI_TEXT_MODELS: TextModelDescriptor[] = [
     provider: "sogni",
     description: "Uncensored instruction model with reasoning. Fast and expressive.",
     reasoning: true,
+    uncensored: true,
   },
   {
     id: "sogni:qwen3.6-35b-a3b-gguf-iq4xs",

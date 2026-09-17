@@ -53,6 +53,8 @@ export interface EnhancementContext {
   negativePrompt?: string | null;
   /** Character budget the rewrite must fit (Settings → General). */
   maxChars?: number;
+  /** Uncensored Mode — keep adult/explicit intent instead of rewriting toward SFW. */
+  uncensored?: boolean;
 }
 
 /** Lighting mood per time-of-day bucket, for the offline fallback. */
@@ -115,6 +117,12 @@ export function enhancementInstruction(
     `- Keep it under ${maxChars} characters.`,
   ];
 
+  if (ctx.uncensored) {
+    lines.push(
+      "- Do not sanitize or moralize; keep adult and explicit content as imagined. Do not rewrite toward SFW.",
+    );
+  }
+
   const descriptor = ctx.stylesSupported === false ? null : styleDescriptor(ctx.kind, ctx.style);
   if (descriptor && ctx.style) {
     lines.push(`- Match the "${ctx.style}" look: ${descriptor}.`);
@@ -149,13 +157,31 @@ export function enhancementInstruction(
     );
   }
 
-  const negative = ctx.negativePrompt?.trim();
+  const negative = exclusionTerms(ctx.negativePrompt, Boolean(ctx.uncensored));
   if (negative) {
     lines.push(`- Avoid anything related to: ${negative}.`);
   }
 
   lines.push("Prompt to rewrite:", prompt.trim());
   return lines.join("\n");
+}
+
+/** NSFW-avoidance terms that fight an uncensored rewrite. Quality terms stay. */
+const NSFW_NEGATIVE_TERM =
+  /^(nsfw|nude|nudity|topless|bottomless|sexual|explicit|erotic|lingerie|fetish|suggestive|underwear)$/i;
+
+function exclusionTerms(
+  negative: string | null | undefined,
+  uncensored: boolean,
+): string | null {
+  const parts = (negative ?? "")
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const kept = uncensored
+    ? parts.filter((part) => !NSFW_NEGATIVE_TERM.test(part))
+    : parts;
+  return kept.length ? kept.join(", ") : null;
 }
 
 function orientationOf(aspect: string | null | undefined): string | null {

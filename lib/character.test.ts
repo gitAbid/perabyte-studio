@@ -143,6 +143,23 @@ describe("composeCharacterAnchor", () => {
     expect(safe).toContain("fully clothed");
   });
 
+  it("does not tag adult outfits as fully clothed at nsfw level 0", () => {
+    const lingerie = composeCharacterAnchor({
+      ...DEFAULT_CHARACTER_SPEC,
+      outfit: "Lingerie",
+      nsfwLevel: 0,
+    });
+    expect(lingerie).toContain("wearing lingerie");
+    expect(lingerie).not.toContain("fully clothed");
+
+    const casual = composeCharacterAnchor({
+      ...DEFAULT_CHARACTER_SPEC,
+      outfit: "Casual",
+      nsfwLevel: 0,
+    });
+    expect(casual).toContain("wearing casual, fully clothed");
+  });
+
   it("is stable and does not mention scene or render settings", () => {
     const anchor = composeCharacterAnchor(uncensoredSpec);
     expect(anchor).not.toMatch(/1080|720|aspect|pose|scene|violence/i);

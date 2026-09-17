@@ -1,5 +1,9 @@
 import { getProviderConfig } from "@/lib/repositories/provider-config.repository";
-import { sogniTextComplete, SOGNI_TEXT_MODELS } from "@/lib/providers/sogni/sogni.text";
+import {
+  sogniTextComplete,
+  SOGNI_TEXT_MODELS,
+  DEFAULT_SOGNI_TEXT_MODEL,
+} from "@/lib/providers/sogni/sogni.text";
 import {
   pollinationsTextComplete,
   POLLINATIONS_TEXT_MODELS,
@@ -80,9 +84,19 @@ function customFallbackEngines(
   return engines;
 }
 
-export function resolveTextEngines(taskModel: string | null): TextEngineEntry[] {
+function sogniUncensoredModelId(modelId: string): string {
+  const meta = SOGNI_TEXT_MODELS.find((model) => model.id === modelId);
+  if (meta?.uncensored) return modelId;
+  return `sogni:${DEFAULT_SOGNI_TEXT_MODEL}`;
+}
+
+export function resolveTextEngines(
+  taskModel: string | null,
+  options: { preferUncensored?: boolean } = {},
+): TextEngineEntry[] {
   const config = getProviderConfig();
   const selectedModel = taskModel;
+  const preferUncensored = options.preferUncensored === true;
 
   const sogniEnabled =
     config.providers.sogni?.enabled !== false &&
@@ -97,16 +111,20 @@ export function resolveTextEngines(taskModel: string | null): TextEngineEntry[] 
   const engines: TextEngineEntry[] = [];
 
   if (selectedModel) {
-    const customSelected = customEngineFor(config, selectedModel);
+    const customSelected = preferUncensored ? null : customEngineFor(config, selectedModel);
     if (customSelected) {
       engines.push(customSelected);
     } else if (sogniModels.includes(selectedModel) && sogniEnabled) {
       engines.push({
         providerId: "sogni",
-        modelId: selectedModel,
+        modelId: preferUncensored ? sogniUncensoredModelId(selectedModel) : selectedModel,
         complete: sogniTextComplete,
       });
-    } else if (pollinationsModels.includes(selectedModel) && pollinationsEnabled) {
+    } else if (
+      !preferUncensored &&
+      pollinationsModels.includes(selectedModel) &&
+      pollinationsEnabled
+    ) {
       engines.push({
         providerId: "pollinations",
         modelId: selectedModel,
@@ -117,6 +135,8 @@ export function resolveTextEngines(taskModel: string | null): TextEngineEntry[] 
 
   // Fallback chain in priority order (excluding the already-selected engine):
   // the free built-ins first, then the user's keyed custom providers.
+  // Uncensored Mode stays on Sogni's abliterated default — aligned engines
+  // (Pollinations, custom Grok) rewrite adult prompts toward SFW.
   if (config.providers.sogni?.enabled !== false && !engines.some((e) => e.providerId === "sogni")) {
     engines.push({
       providerId: "sogni",
@@ -124,6 +144,7 @@ export function resolveTextEngines(taskModel: string | null): TextEngineEntry[] 
     });
   }
   if (
+    !preferUncensored &&
     config.providers.pollinations?.enabled !== false &&
     !engines.some((e) => e.providerId === "pollinations")
   ) {
@@ -132,9 +153,11 @@ export function resolveTextEngines(taskModel: string | null): TextEngineEntry[] 
       complete: pollinationsTextComplete,
     });
   }
-  for (const engine of customFallbackEngines(config)) {
-    if (!engines.some((e) => e.providerId === engine.providerId)) {
-      engines.push(engine);
+  if (!preferUncensored) {
+    for (const engine of customFallbackEngines(config)) {
+      if (!engines.some((e) => e.providerId === engine.providerId)) {
+        engines.push(engine);
+      }
     }
   }
 

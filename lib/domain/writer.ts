@@ -82,6 +82,7 @@ export function parseWriteBody(body: Record<string, unknown>): WriterBrief {
 export interface EnhanceRequest {
   draft: string;
   instruction: string;
+  uncensored: boolean;
 }
 
 export function parseEnhanceBody(body: Record<string, unknown>): EnhanceRequest {
@@ -99,7 +100,7 @@ export function parseEnhanceBody(body: Record<string, unknown>): EnhanceRequest 
     "Tell the writer what to change.",
     "Your instruction is too long — keep it short.",
   );
-  return { draft, instruction };
+  return { draft, instruction, uncensored: body.uncensored === true };
 }
 
 export interface SplitRequest {
@@ -108,6 +109,7 @@ export interface SplitRequest {
   characterNames: string[];
   /** What the scenes will render as. Anything but "video" parses as "image". */
   kind: GenerationKind;
+  uncensored: boolean;
 }
 
 export function parseSplitBody(body: Record<string, unknown>): SplitRequest {
@@ -128,6 +130,7 @@ export function parseSplitBody(body: Record<string, unknown>): SplitRequest {
     ),
     characterNames: cleanNames(body.characterNames),
     kind: body.kind === "video" ? "video" : "image",
+    uncensored: body.uncensored === true,
   };
 }
 
@@ -149,10 +152,17 @@ export function writeStoryInstruction(brief: WriterBrief): string {
   return parts.join(" ");
 }
 
-export function enhanceDraftInstruction(draft: string, instruction: string): string {
+export function enhanceDraftInstruction(
+  draft: string,
+  instruction: string,
+  uncensored = false,
+): string {
   return [
     `Rewrite the story below following this instruction: ${instruction}`,
     "Keep the same voice and characters unless told otherwise. Reply with the rewritten story only.",
+    ...(uncensored
+      ? ["Do not sanitize or moralize; write the scene as imagined."]
+      : []),
     "---",
     draft,
   ].join("\n");
@@ -172,6 +182,7 @@ export function splitScenesInstruction(
   sceneCount: number,
   characterNames: string[],
   kind: GenerationKind = "image",
+  uncensored = false,
 ): string {
   const cast = characterNames.length
     ? ` Recurring characters: ${characterNames.join(", ")}.`
@@ -180,6 +191,9 @@ export function splitScenesInstruction(
     `Split the story below into exactly ${sceneCount} scenes.`,
     ...SCENE_PROMPT_RULES,
     ...(kind === "video" ? [VIDEO_SCENE_RULE] : []),
+    ...(uncensored
+      ? ["Do not sanitize or moralize; keep adult visual detail as imagined."]
+      : []),
     `Reply ONLY with JSON: {"title": "short story title", "scenes": ["scene 1 prompt", …]} with ${sceneCount} scene strings.${cast}`,
     "---",
     draft,

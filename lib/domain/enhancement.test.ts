@@ -104,6 +104,29 @@ describe("enhancementInstruction", () => {
     });
     expect(instruction).toContain("Avoid anything related to: blurry, watermark");
   });
+
+  it("keeps adult intent when uncensored and skips NSFW negatives", () => {
+    const instruction = enhancementInstruction(
+      "a nude woman in lingerie, explicit sexual pose",
+      {
+        kind: "image",
+        uncensored: true,
+        negativePrompt: "nsfw, nude, blurry, watermark",
+      },
+    );
+    expect(instruction).toContain("Do not sanitize or moralize");
+    expect(instruction).toContain("keep adult and explicit content");
+    expect(instruction).not.toContain("Avoid anything related to: nsfw");
+    expect(instruction).toContain("Avoid anything related to: blurry, watermark");
+  });
+
+  it("does not add the uncensored clause in regular mode", () => {
+    const instruction = enhancementInstruction("a nude woman", {
+      kind: "image",
+      uncensored: false,
+    });
+    expect(instruction).not.toContain("Do not sanitize or moralize");
+  });
 });
 
 describe("sanitizeEnhancedText", () => {
