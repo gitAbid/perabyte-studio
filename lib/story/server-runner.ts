@@ -1,4 +1,5 @@
 import { chainPredecessor } from "@/lib/story/chain";
+import { PROMPT_HARD_MAX } from "@/lib/constants";
 import { getJobExecutor } from "@/lib/jobs/executor";
 import {
   getStoriesRepository,
@@ -283,7 +284,7 @@ export function mutateStoryScenes(
     if (!next || scenes[index].status === "generating") return getStoriesRepository(storyId);
     patchStoryRepository(storyId, {
       scenes: scenes.map((s) =>
-        s.id === mutation.sceneId ? { ...s, prompt: next.slice(0, 1000) } : s,
+        s.id === mutation.sceneId ? { ...s, prompt: next.slice(0, PROMPT_HARD_MAX) } : s,
       ),
     });
     return getStoriesRepository(storyId);

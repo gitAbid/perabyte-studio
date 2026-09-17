@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { PROMPT_HARD_MAX } from "@/lib/constants";
 import { logger } from "@/lib/logging/logger";
 import { resetLoraCatalogCache } from "@/lib/providers/sogni/lora-catalog";
 import {
@@ -38,6 +39,24 @@ describe("validateGenerationRequest", () => {
     } catch (error) {
       expect((error as GenerationServiceError).field).toBe("prompt");
     }
+  });
+
+  it("accepts an authored scene prompt past the 1000-char budget, up to the hard ceiling", () => {
+    // Divider-authored story scenes are kept verbatim and may run past the
+    // old PROMPT_MAX budget; the server only rejects truly oversized prompts.
+    const overBudget = "x".repeat(1047);
+    expect(() => validateGenerationRequest({ ...baseBody(), prompt: overBudget })).not.toThrow();
+    const atCeiling = validateGenerationRequest({
+      ...baseBody(),
+      prompt: "x".repeat(PROMPT_HARD_MAX),
+    });
+    expect(atCeiling.rawPrompt.length).toBe(PROMPT_HARD_MAX);
+  });
+
+  it("rejects a prompt beyond the hard ceiling", () => {
+    expect(() =>
+      validateGenerationRequest({ ...baseBody(), prompt: "x".repeat(PROMPT_HARD_MAX + 1) }),
+    ).toThrowError(/limited to/);
   });
 
   it("rejects unknown aspect ratios, resolutions and durations", () => {

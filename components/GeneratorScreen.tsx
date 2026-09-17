@@ -13,6 +13,7 @@ import {
   DEFAULT_IMAGE_SETTINGS,
   DEFAULT_VIDEO_SETTINGS,
   IMAGE_STYLES,
+  PROMPT_HARD_MAX,
   PROMPT_MAX,
   RESOLUTIONS,
   VIDEO_STYLES,
@@ -101,7 +102,9 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
     const params = new URLSearchParams(window.location.search);
     const incoming = params.get("prompt");
     if (!incoming) return;
-    setPrompt(incoming.slice(0, PROMPT_MAX));
+    // ?prompt= handoff (e.g. the writer's Solo button) carries a whole
+    // divider-authored scene — don't truncate it back at the advisory budget.
+    setPrompt(incoming.slice(0, PROMPT_HARD_MAX));
     const style = params.get("style");
     const aspect = params.get("aspect");
     if (style) {

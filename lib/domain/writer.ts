@@ -203,8 +203,9 @@ export function clampScenePrompt(text: string): string {
 
 /**
  * Segment a draft into scene prompts. A line containing only `---` is an
- * explicit divider the author placed: each section becomes a scene verbatim
- * (an over-length section still subdivides per PROMPT_MAX). With no dividers
+ * explicit divider the author placed: each section becomes one scene
+ * verbatim, whatever its length — re-splitting an authored scene is never
+ * our call, the renderer's hard ceiling is the only limit. With no dividers
  * the draft packs character-wise into ≤PROMPT_MAX scenes.
  */
 export function segmentDraftIntoScenes(draft: string): string[] {
@@ -214,8 +215,7 @@ export function segmentDraftIntoScenes(draft: string): string[] {
   return trimmed
     .split(/^\s*---\s*$/m)
     .map((section) => section.trim())
-    .filter(Boolean)
-    .flatMap((section) => breakIntoScenePromptChunks(section));
+    .filter(Boolean);
 }
 
 /**

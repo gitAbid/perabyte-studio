@@ -15,7 +15,7 @@ import { Badge, Button, Segmented, useToast } from "@/components/ui";
 import {
   ASPECTS,
   DEFAULT_IMAGE_SETTINGS,
-  PROMPT_MAX,
+  PROMPT_HARD_MAX,
 } from "@/lib/constants";
 import {
   downloadMedia,
@@ -559,7 +559,7 @@ export default function StoryPage() {
       toast.push("A scene needs a prompt before it can render.", "error");
       return;
     }
-    void mutateScene({ op: "edit", sceneId, prompt: next.slice(0, PROMPT_MAX) });
+    void mutateScene({ op: "edit", sceneId, prompt: next.slice(0, PROMPT_HARD_MAX) });
     toast.push("Scene prompt updated.");
   }
 
@@ -766,7 +766,7 @@ export default function StoryPage() {
         sceneCount: Math.max(1, scenes.length),
         negativePrompt: settings.negativePrompt || null,
       });
-      setPrompt(result.enhanced.slice(0, PROMPT_MAX));
+      setPrompt(result.enhanced.slice(0, PROMPT_HARD_MAX));
       toast.push(
         result.source === "ai"
           ? "Prompt enhanced with AI — review it and press Generate."
@@ -1276,7 +1276,7 @@ export default function StoryPage() {
                       <textarea
                         autoFocus
                         rows={2}
-                        maxLength={PROMPT_MAX}
+                        maxLength={PROMPT_HARD_MAX}
                         value={editDraft}
                         onChange={(event) => setEditDraft(event.target.value)}
                         onBlur={() => {
