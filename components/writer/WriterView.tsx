@@ -92,6 +92,8 @@ export function WriterView() {
           tasks?: { writer?: string | null };
         } | null) => {
           if (!alive || !data) return;
+          // Registered providers already include enabled custom gateways and
+          // their text models — this list needs no separate custom mapping.
           const options = (data.providers ?? [])
             .filter((provider) => provider.enabled)
             .flatMap((provider) =>
@@ -226,6 +228,7 @@ export function WriterView() {
         <PillSelect
           icon="chip"
           label="Writer model"
+          placement="down"
           value={modelId}
           options={modelChoices}
           onChange={(next) => setModelId(next)}
