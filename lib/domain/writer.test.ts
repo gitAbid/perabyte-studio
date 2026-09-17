@@ -196,12 +196,14 @@ describe("segmentDraftIntoScenes", () => {
     expect(segmentDraftIntoScenes(draft)).toEqual(["Only one real scene.", "Another real one."]);
   });
 
-  it("still subdivides an over-length section per budget chars", () => {
+  it("keeps an over-length divider section whole — dividers are authoritative", () => {
+    // Real-world shape: an authored ~1050-char scene slightly over the
+    // 1000-char prompt budget must not be silently re-split into two scenes.
     const section = `${"A".repeat(900)}. ${"B".repeat(900)}.`;
     const draft = `Intro beat.\n---\n${section}`;
-    const scenes = segmentDraftIntoScenes(draft, 1000);
-    expect(scenes.length).toBe(3);
-    expect(scenes.every((s) => s.length <= 1000)).toBe(true);
+    const scenes = segmentDraftIntoScenes(draft);
+    expect(scenes).toEqual(["Intro beat.", section]);
+    expect(scenes[1].length).toBeGreaterThan(1000);
   });
 
   it("ignores --- that is not a standalone divider line", () => {

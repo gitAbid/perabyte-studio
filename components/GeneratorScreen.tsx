@@ -101,6 +101,8 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
     const params = new URLSearchParams(window.location.search);
     const incoming = params.get("prompt");
     if (!incoming) return;
+    // ?prompt= handoff (e.g. the writer's Solo button) carries a whole
+    // divider-authored scene — don't truncate it back at a stale budget.
     setPrompt(incoming.slice(0, getPromptMax()));
     const style = params.get("style");
     const aspect = params.get("aspect");

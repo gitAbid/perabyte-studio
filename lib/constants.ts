@@ -1,7 +1,8 @@
-/** Default generation-prompt budget (characters). The live value is
- * configurable in Settings → General (`promptMaxChars` in the provider
- * config); every surface — Solo, Story, Character, Writer scenes — derives
- * from this default when nothing is configured. */
+/** Default generation-prompt budget (characters) — the acceptance ceiling
+ * for every prompt surface. The live value is configurable in Settings →
+ * General (`promptMaxChars` in the provider config); Solo, Story, Character
+ * and Writer scenes all derive from it, and it supersedes the former
+ * PROMPT_HARD_MAX ceiling. */
 export const PROMPT_MAX = 5000;
 
 /** Sane clamp band for the configurable prompt budget, in characters —

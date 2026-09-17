@@ -2,6 +2,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { PROMPT_MAX } from "@/lib/constants";
 import { logger } from "@/lib/logging/logger";
 import { resetLoraCatalogCache } from "@/lib/providers/sogni/lora-catalog";
 import {
@@ -94,6 +95,24 @@ describe("validateGenerationRequest", () => {
     } catch (error) {
       expect((error as GenerationServiceError).field).toBe("prompt");
     }
+  });
+
+  it("accepts an authored scene prompt past the old 1000-char advisory budget", () => {
+    // Divider-authored story scenes are kept verbatim and may run past the
+    // old advisory budget; the configured ceiling is the only rejection point.
+    const overBudget = "x".repeat(1047);
+    expect(() => validateGenerationRequest({ ...baseBody(), prompt: overBudget })).not.toThrow();
+    const atCeiling = validateGenerationRequest({
+      ...baseBody(),
+      prompt: "x".repeat(PROMPT_MAX),
+    });
+    expect(atCeiling.rawPrompt.length).toBe(PROMPT_MAX);
+  });
+
+  it("rejects a prompt beyond the configured ceiling", () => {
+    expect(() =>
+      validateGenerationRequest({ ...baseBody(), prompt: "x".repeat(PROMPT_MAX + 1) }),
+    ).toThrowError(/limited to/);
   });
 
   it("rejects unknown aspect ratios, resolutions and durations", () => {

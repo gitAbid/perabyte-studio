@@ -537,6 +537,7 @@ export function PromptComposer({
       </div>
 
       <div className="mt-2.5 flex shrink-0 items-center gap-2">
+        {/* Amber as the prompt approaches the configured ceiling. */}
         <span
           className={`text-[11.5px] tabular-nums text-muted ${
             prompt.length > promptMax - 60 ? "text-warning" : ""
