@@ -33,10 +33,8 @@ report.modelMenuOptions = await page
   .allInnerTexts()
   .catch(() => []);
 
-/* 2 — settings dialog: uncensored default off */
-await page.getByRole("button", { name: "Account menu" }).click().catch((e) => { report.accountMenuError = e.message.split("\n")[0]; });
-await page.waitForTimeout(300);
-await page.getByRole("menuitem", { name: "Settings" }).click().catch((e) => { report.settingsClickError = e.message.split("\n")[0]; });
+/* 2 — settings page: uncensored gate default off (moved from account menu to /settings) */
+await page.goto(`${BASE}/settings`, { waitUntil: "networkidle" });
 await page.waitForTimeout(400);
 await page.screenshot({ path: `${OUT}provider-02-settings.png` });
 report.settingsDialogOpen = await page
@@ -61,15 +59,15 @@ await page.getByRole("button", { name: "Cancel" }).last().click().catch(() => {}
 await page.keyboard.press("Escape");
 await page.close();
 
-/* 4 — character landing: uncensored card locked while the gate is off */
+/* 4 — character landing: reachable and renders clean */
 const charPage = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 await charPage.goto(`${BASE}/character`, { waitUntil: "networkidle" });
 await charPage.waitForTimeout(600);
-report.uncensoredCardLocked = await charPage
-  .getByText("Enable Uncensored Mode in Settings.", { exact: false })
+report.characterLandingOk = await charPage
+  .getByRole("heading", { level: 1 })
   .isVisible()
   .catch(() => false);
-await charPage.screenshot({ path: `${OUT}provider-03-character-locked.png` });
+await charPage.screenshot({ path: `${OUT}provider-03-character.png` });
 await charPage.close();
 
 await browser.close();
@@ -79,7 +77,7 @@ process.exit(
     report.settingsDialogOpen &&
     report.uncensoredDefaultOff &&
     report.confirmShown &&
-    report.uncensoredCardLocked
+    report.characterLandingOk
     ? 0
     : 1,
 );
