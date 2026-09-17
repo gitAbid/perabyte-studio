@@ -202,14 +202,67 @@ export function clampScenePrompt(text: string): string {
 }
 
 /**
- * Extract `{title, scenes}` from a model reply. Tolerates code fences,
- * surrounding chatter, empty scene strings and over-count replies; each scene
- * is clamped to PROMPT_MAX. Returns null when nothing usable survives.
+ * Losslessly pack a scene description into ≤max-character prompt chunks at
+ * sentence boundaries; a single sentence longer than max is hard-cut rather
+ * than dropped. This — not truncation — is how an over-length scene stays
+ * inside the render-side PROMPT_MAX budget.
  */
-export function extractStoryScenes(
-  raw: string,
-  expectedCount?: number,
-): { title: string; scenes: string[] } | null {
+export function breakIntoScenePromptChunks(text: string, max = PROMPT_MAX): string[] {
+  const trimmed = text.trim();
+  if (trimmed.length <= max) return [trimmed];
+  const sentences = trimmed.match(/[^.!?…\n]+[.!?…]*\s*/g) ?? [trimmed];
+  const chunks: string[] = [];
+  let current = "";
+  for (const sentence of sentences) {
+    let piece = sentence;
+    while (piece.length > max) {
+      if (current) {
+        chunks.push(current);
+        current = "";
+      }
+      chunks.push(piece.slice(0, max));
+      piece = piece.slice(max);
+    }
+    if (!piece) continue;
+    if (current.length + piece.length > max) {
+      chunks.push(current);
+      current = piece;
+    } else {
+      current += piece;
+    }
+  }
+  if (current.trim()) chunks.push(current);
+  return chunks.map((c) => c.trim()).filter(Boolean);
+}
+
+/**
+ * Recommended scene count for a draft: roughly one scene per
+ * `charsPerScene` characters of prose (the render-side prompt budget).
+ * Returns null when the chosen count already covers the draft.
+ */
+export function suggestSceneCount(
+  draft: string,
+  sceneCount: number,
+  charsPerScene = 1000,
+): number | null {
+  const length = draft.trim().length;
+  if (!length) return null;
+  const needed = Math.ceil(length / charsPerScene);
+  if (needed <= sceneCount) return null;
+  return Math.min(needed, WRITER_MAX_SCENES);
+}
+
+/**
+ * Extract `{title, scenes}` from a model reply. Tolerates code fences,
+ * surrounding chatter and empty scene strings; over-length scenes are
+ * subdivided into ≤PROMPT_MAX chunks and over-count replies are kept —
+ * scene count is a guide, never a content cap. Returns null when nothing
+ * usable survives.
+ */
+export function extractStoryScenes(raw: string): {
+  title: string;
+  scenes: string[];
+} | null {
   if (!raw) return null;
   let candidate = raw.trim();
   const fenced = candidate.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -231,15 +284,13 @@ export function extractStoryScenes(
 
   const scenes = record.scenes
     .filter((s): s is string => typeof s === "string")
-    .map((s) => clampScenePrompt(s))
+    .flatMap((s) => breakIntoScenePromptChunks(s))
     .filter(Boolean);
   if (!scenes.length) return null;
 
-  const limited =
-    expectedCount && expectedCount > 0 ? scenes.slice(0, expectedCount) : scenes;
   const title =
     typeof record.title === "string" && record.title.trim()
       ? record.title.trim().slice(0, 80)
       : "Untitled story";
-  return { title, scenes: limited };
+  return { title, scenes };
 }

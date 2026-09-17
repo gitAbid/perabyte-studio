@@ -13,6 +13,7 @@ import {
   WRITER_DRAFT_MAX,
   WRITER_IDEA_MAX,
   WRITER_INSTRUCTION_MAX,
+  suggestSceneCount,
 } from "@/lib/domain/writer";
 import { requestWriterAction, WriterError } from "@/lib/writer";
 import { putStoryAsset } from "@/lib/story/records";
@@ -125,6 +126,11 @@ export function WriterView() {
       alive = false;
     };
   }, []);
+
+  // ~1 scene per 1000 draft characters keeps every scene prompt inside the
+  // render-side budget; the split itself also subdivides losslessly, so this
+  // is guidance, never a blocker.
+  const sceneSuggestion = suggestSceneCount(draft, sceneCount);
 
   const characterNames = useCallback(
     () =>
@@ -271,6 +277,7 @@ export function WriterView() {
           <PillSelect
             icon="layers"
             label="Scene count"
+            placement="down"
             value={String(sceneCount)}
             options={SCENE_CHOICES.map((n) => ({
               value: String(n),
@@ -281,6 +288,7 @@ export function WriterView() {
           <PillSelect
             icon="sliders"
             label="Tone"
+            placement="down"
             value={tone}
             options={Object.entries(WRITER_TONES).map(([value, label]) => ({ value, label }))}
             onChange={(next) => setTone(next as WriterToneKey)}
@@ -334,7 +342,22 @@ export function WriterView() {
       </section>
 
       {/* HAND-OFF */}
-      <section className="flex flex-wrap items-center justify-center gap-3">
+      <section className="flex flex-col items-center gap-2">
+        {sceneSuggestion !== null && (
+          <p className="flex flex-wrap items-center justify-center gap-2 text-[12px] text-muted">
+            <span>
+              Long draft — about {sceneSuggestion} scenes keeps each prompt under 1,000 characters.
+            </span>
+            <button
+              type="button"
+              onClick={() => setSceneCount(sceneSuggestion)}
+              className="font-semibold text-primary hover:underline"
+            >
+              Use {sceneSuggestion} scenes
+            </button>
+          </p>
+        )}
+        <div className="flex flex-wrap items-center justify-center gap-3">
         <Button variant="secondary" onClick={() => runAction("solo")} disabled={busy !== null || !draft.trim()}>
           {busy === "solo" ? "Preparing…" : "Use in Solo"}
         </Button>
@@ -348,9 +371,10 @@ export function WriterView() {
             { value: "video", label: "Video story", icon: "video" },
           ]}
         />
-        <Button variant="primary" onClick={() => runAction("split")} disabled={busy !== null || !draft.trim()}>
-          {busy === "split" ? "Splitting…" : `Split into ${sceneCount} scene${sceneCount === 1 ? "" : "s"}`}
-        </Button>
+          <Button variant="primary" onClick={() => runAction("split")} disabled={busy !== null || !draft.trim()}>
+            {busy === "split" ? "Splitting…" : `Split into ${sceneCount} scene${sceneCount === 1 ? "" : "s"}`}
+          </Button>
+        </div>
       </section>
 
       {error && (
