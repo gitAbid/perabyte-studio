@@ -7,6 +7,7 @@ import { PillSelect } from "./PillSelect";
 import {
   ASPECTS,
   IMAGE_STYLES,
+  PROMPT_HARD_MAX,
   PROMPT_MAX,
   RESOLUTIONS,
   VIDEO_STYLES,
@@ -342,7 +343,7 @@ export function PromptComposer({
           id="prompt-input"
           rows={3}
           value={prompt}
-          maxLength={PROMPT_MAX}
+          maxLength={PROMPT_HARD_MAX}
           aria-invalid={promptError ? true : undefined}
           placeholder={
             attachedCharacters.length === 1
@@ -534,12 +535,13 @@ export function PromptComposer({
       </div>
 
       <div className="mt-2.5 flex shrink-0 items-center gap-2">
+        {/* Amber past ~1000 chars (one scene's worth), hard cap PROMPT_HARD_MAX. */}
         <span
           className={`text-[11.5px] tabular-nums text-muted ${
             prompt.length > PROMPT_MAX - 60 ? "text-warning" : ""
           }`}
         >
-          {prompt.length}/{PROMPT_MAX}
+          {prompt.length}/{PROMPT_HARD_MAX}
         </span>
         <span className="hidden text-[11.5px] text-muted lg:block">
           · ⌘ + Enter to generate

@@ -1,4 +1,10 @@
+/** Advisory prompt budget — one typical scene; the split suggestion and the
+ * composer's amber counter are keyed to it, but nothing hard-rejects at 1000. */
 export const PROMPT_MAX = 1000;
+/** Server-side acceptance ceiling. Divider-authored story scenes are kept
+ * verbatim and may legitimately run past the advisory budget; only prompts
+ * beyond this are rejected as oversized. */
+export const PROMPT_HARD_MAX = 4_000;
 
 export type GenerationKind = "image" | "video";
 

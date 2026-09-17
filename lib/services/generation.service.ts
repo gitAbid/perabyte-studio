@@ -2,7 +2,7 @@ import {
   ASPECTS,
   DURATIONS,
   IMAGE_STYLES,
-  PROMPT_MAX,
+  PROMPT_HARD_MAX,
   RESOLUTIONS,
   VIDEO_STYLES,
   type AspectKey,
@@ -110,9 +110,9 @@ export function validateGenerationRequest(body: Record<string, unknown>): Valida
       { field: "prompt" },
     );
   }
-  if (prompt.length > PROMPT_MAX) {
+  if (prompt.length > PROMPT_HARD_MAX) {
     throw new GenerationServiceError(
-      `Prompts are limited to ${PROMPT_MAX} characters. Shorten yours and try again.`,
+      `Prompts are limited to ${PROMPT_HARD_MAX} characters. Shorten yours and try again.`,
       { field: "prompt" },
     );
   }
