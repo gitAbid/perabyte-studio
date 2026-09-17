@@ -102,6 +102,10 @@ export interface StoryScene {
    * actually renders (the tile keeps the clean prompt). */
   runPrompt?: string;
   endImageRef?: string;
+  /** Sparse per-scene settings overrides, merged over the story's settings at
+   * render time (lib/story/scene-settings.ts). Absent = the scene follows
+   * story settings exactly. */
+  settings?: Partial<GenerationSettings>;
   /** Derived final frame of this scene, chaining to the next scene. */
   endFrameRef?: string;
   /** Model actually used when the service swapped for frame capability. */
