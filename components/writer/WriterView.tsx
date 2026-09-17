@@ -18,7 +18,7 @@ import {
   WRITER_DRAFT_MAX,
   WRITER_IDEA_MAX,
   WRITER_INSTRUCTION_MAX,
-  breakIntoScenePromptChunks,
+  segmentDraftIntoScenes,
   suggestSceneCount,
 } from "@/lib/domain/writer";
 import { requestWriterAction, WriterError } from "@/lib/writer";
@@ -144,8 +144,9 @@ export function WriterView() {
   const sceneSuggestion = suggestSceneCount(draft, sceneCount);
 
   // The live split preview: the exact scenes Split will commit, derived from
-  // the draft alone — one card per ~1,000 characters, updating as you type.
-  const previewScenes = useMemo(() => breakIntoScenePromptChunks(draft), [draft]);
+  // the draft alone. A `---` line is an explicit divider; without one the
+  // draft packs at ~1,000 characters per scene. Updates as you type.
+  const previewScenes = useMemo(() => segmentDraftIntoScenes(draft), [draft]);
 
   const characterNames = useCallback(
     () =>
@@ -425,8 +426,10 @@ export function WriterView() {
             </div>
             {previewScenes.length === 0 ? (
               <p className="mt-3 text-[12.5px] leading-relaxed text-muted">
-                Your draft appears here as scene cards as you write — one card per ~1,000
-                characters. Split commits exactly these cards.
+                Your draft appears here as scene cards as you write. Separate scenes with a
+                line containing <code className="font-mono">---</code> to place the cuts
+                yourself; otherwise scenes break at ~1,000 characters. Split commits exactly
+                these cards.
               </p>
             ) : (
               <div className="thin-scrollbar mt-3 max-h-[60vh] space-y-2 overflow-y-auto pr-1">

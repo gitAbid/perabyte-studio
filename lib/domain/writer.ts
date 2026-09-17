@@ -202,6 +202,23 @@ export function clampScenePrompt(text: string): string {
 }
 
 /**
+ * Segment a draft into scene prompts. A line containing only `---` is an
+ * explicit divider the author placed: each section becomes a scene verbatim
+ * (an over-length section still subdivides per PROMPT_MAX). With no dividers
+ * the draft packs character-wise into ≤PROMPT_MAX scenes.
+ */
+export function segmentDraftIntoScenes(draft: string): string[] {
+  const trimmed = draft.trim();
+  if (!trimmed) return [];
+  if (!/^\s*---\s*$/m.test(trimmed)) return breakIntoScenePromptChunks(trimmed);
+  return trimmed
+    .split(/^\s*---\s*$/m)
+    .map((section) => section.trim())
+    .filter(Boolean)
+    .flatMap((section) => breakIntoScenePromptChunks(section));
+}
+
+/**
  * Losslessly pack a scene description into ≤max-character prompt chunks at
  * sentence boundaries; a single sentence longer than max is hard-cut rather
  * than dropped. This — not truncation — is how an over-length scene stays
