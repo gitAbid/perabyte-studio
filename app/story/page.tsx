@@ -147,6 +147,19 @@ export default function StoryPage() {
   const story = (storyId ? liveStory ?? assets.find((a) => a.id === storyId) : undefined) as Asset | undefined;
   const scenes: StoryScene[] = useMemo(() => story?.scenes ?? [], [story]);
   const running = scenes.some((s) => s.status === "generating");
+  // Adopt the story's recorded kind the first time it loads: a story the
+  // Writer split as a video story (or a convert) must open with the composer
+  // already in that mode, not the image default. Once per story id — later
+  // toggles stay user-owned because the record only catches up when a run
+  // patches its settings.
+  const adoptedKindStoryRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!story || adoptedKindStoryRef.current === story.id) return;
+    adoptedKindStoryRef.current = story.id;
+    const recorded: "image" | "video" = story.settings?.kind === "video" ? "video" : "image";
+    setKind(recorded);
+    setSettings((s) => (s.kind === recorded ? s : { ...s, kind: recorded }));
+  }, [story]);
   useEffect(() => {
     if (!storyId) return;
     let stop = false;
