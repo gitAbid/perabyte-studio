@@ -149,16 +149,24 @@ export default function StoryPage() {
   const running = scenes.some((s) => s.status === "generating");
   // Adopt the story's recorded kind the first time it loads: a story the
   // Writer split as a video story (or a convert) must open with the composer
-  // already in that mode, not the image default. Once per story id — later
-  // toggles stay user-owned because the record only catches up when a run
-  // patches its settings.
-  const adoptedKindStoryRef = useRef<string | null>(null);
+  // already in that mode, not the image default. The kind-defining settings
+  // (aspect, style, duration) ride along so the pills match what the record
+  // will render. Once per story id — later edits stay user-owned because the
+  // record only catches up when a run patches its settings.
+  const adoptedStoryRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!story || adoptedKindStoryRef.current === story.id) return;
-    adoptedKindStoryRef.current = story.id;
-    const recorded: "image" | "video" = story.settings?.kind === "video" ? "video" : "image";
-    setKind(recorded);
-    setSettings((s) => (s.kind === recorded ? s : { ...s, kind: recorded }));
+    if (!story || adoptedStoryRef.current === story.id) return;
+    adoptedStoryRef.current = story.id;
+    const recorded = story.settings ?? ({} as Partial<GenerationSettings>);
+    const kind: "image" | "video" = recorded.kind === "video" ? "video" : "image";
+    setKind(kind);
+    setSettings((s) => ({
+      ...s,
+      kind,
+      aspect: recorded.aspect ?? s.aspect,
+      style: recorded.style ?? s.style,
+      duration: recorded.duration ?? s.duration,
+    }));
   }, [story]);
   useEffect(() => {
     if (!storyId) return;
