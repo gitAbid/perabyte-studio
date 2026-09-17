@@ -14,7 +14,7 @@ const CUSTOM_TEXT_SYSTEM =
 export async function customTextComplete(
   providerId: string,
   instruction: string,
-  options?: { signal?: AbortSignal; modelId?: string },
+  options?: { signal?: AbortSignal; modelId?: string; systemPrompt?: string },
 ): Promise<string> {
   const entry = getProviderConfig().customProviders.find((e) => e.id === providerId);
   if (!entry) {
@@ -29,7 +29,7 @@ export async function customTextComplete(
     });
   }
   const result = await format.generateText(entry, {
-    systemPrompt: CUSTOM_TEXT_SYSTEM,
+    systemPrompt: options?.systemPrompt ?? CUSTOM_TEXT_SYSTEM,
     userPrompt: instruction,
     modelId: options?.modelId,
     signal: options?.signal,

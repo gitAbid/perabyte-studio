@@ -124,6 +124,19 @@ describe("writer service", () => {
     expect(body.max_tokens).toBeGreaterThanOrEqual(2048);
   });
 
+  it("sends the writer system prompt, not the enhancer's", async () => {
+    const fetchMock = stubReplies(["story"]);
+    await runWriterAction({ action: "write", brief: { idea: "x" } });
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    const body = JSON.parse(String(init.body));
+    const system =
+      (body.messages as Array<{ role: string; content: string }> | undefined)?.find(
+        (m: { role: string }) => m.role === "system",
+      )?.content ?? "";
+    expect(system).toContain("fiction writer");
+    expect(system).not.toContain("rewrite AI-generation prompts");
+  });
+
   it("surfaces a retryable error when every engine fails", async () => {
     vi.stubGlobal(
       "fetch",

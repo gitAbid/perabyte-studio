@@ -68,6 +68,12 @@ function engineLabel(entry: {
  * reply needs far more, and truncation is unrepairable. */
 const SPLIT_MAX_TOKENS = 2048;
 
+/** The writer is a fiction author, NOT a prompt rewriter — the enhancer's
+ * default system prompt poisons story tasks (it says "reply with the
+ * rewritten prompt only"). */
+const WRITER_SYSTEM_PROMPT =
+  "You are a fiction writer. Follow the user's instructions exactly and reply with only the requested text — no preamble, no commentary.";
+
 /** Session override from the /writer pill; falls back to the Settings pick. */
 function sessionModelId(body: Record<string, unknown>): string | undefined {
   const value = body.modelId;
@@ -80,6 +86,7 @@ async function completeViaChain(
     signal?: AbortSignal;
     maxTokens?: number;
     modelId?: string;
+    systemPrompt?: string;
     logger: Logger;
   },
 ): Promise<{ text: string; engine: { providerId: string; modelId?: string } }> {
@@ -97,6 +104,7 @@ async function completeViaChain(
         signal: options.signal,
         modelId: engine.modelId,
         ...(options.maxTokens ? { maxTokens: options.maxTokens } : {}),
+        ...(options.systemPrompt ? { systemPrompt: options.systemPrompt } : {}),
       });
       if (!reply.trim()) throw new Error("Empty reply");
       return { text: reply, engine };
@@ -134,6 +142,7 @@ export async function runWriterAction(
     const { text, engine } = await completeViaChain(writeStoryInstruction(brief), {
       signal: options.signal,
       modelId,
+      systemPrompt: WRITER_SYSTEM_PROMPT,
       logger: log,
     });
     log.info("story written", { ...engineLabel(engine), elapsedMs: Date.now() - started });
@@ -145,7 +154,7 @@ export async function runWriterAction(
     const started = Date.now();
     const { text, engine } = await completeViaChain(
       enhanceDraftInstruction(request.draft, request.instruction),
-      { signal: options.signal, modelId, logger: log },
+      { signal: options.signal, modelId, systemPrompt: WRITER_SYSTEM_PROMPT, logger: log },
     );
     log.info("story enhanced", { ...engineLabel(engine), elapsedMs: Date.now() - started });
     return { text, ...engineLabel(engine) };
@@ -167,6 +176,7 @@ export async function runWriterAction(
         signal: options.signal,
         maxTokens: SPLIT_MAX_TOKENS,
         modelId,
+        systemPrompt: WRITER_SYSTEM_PROMPT,
         logger: log,
       });
       const parsed = extractStoryScenes(text, request.sceneCount);
