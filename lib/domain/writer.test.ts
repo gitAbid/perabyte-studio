@@ -53,6 +53,14 @@ describe("writer request validation", () => {
     });
     expect(parseSplitBody({ action: "split", draft: "prose" }).sceneCount).toBe(5);
   });
+
+  it("defaults the split kind to image and clamps unknown values", () => {
+    expect(parseSplitBody({ action: "split", draft: "prose" }).kind).toBe("image");
+    expect(parseSplitBody({ action: "split", draft: "prose", kind: "video" }).kind).toBe("video");
+    expect(parseSplitBody({ action: "split", draft: "prose", kind: "image" }).kind).toBe("image");
+    expect(parseSplitBody({ action: "split", draft: "prose", kind: "film" }).kind).toBe("image");
+    expect(parseSplitBody({ action: "split", draft: "prose", kind: 7 }).kind).toBe("image");
+  });
 });
 
 describe("instruction builders", () => {
@@ -81,6 +89,17 @@ describe("instruction builders", () => {
     expect(text).toContain("4");
     expect(text).toContain('"scenes"');
     expect(text).toContain("JSON");
+  });
+
+  it("split instruction adds a video-clip rule only for video kind", () => {
+    const video = splitScenesInstruction("prose", 4, [], "video");
+    expect(video).toContain("motion");
+    expect(video).toContain("camera movement");
+    expect(video).toContain("5-second");
+    const image = splitScenesInstruction("prose", 4, []);
+    const explicitImage = splitScenesInstruction("prose", 4, [], "image");
+    expect(explicitImage).toBe(image);
+    expect(image).not.toContain("motion");
   });
 });
 

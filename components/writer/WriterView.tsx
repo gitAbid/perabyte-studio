@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { CastPicker } from "@/components/CastPicker";
 import { Icon } from "@/components/Icon";
 import { PillSelect } from "@/components/PillSelect";
-import { Button, useToast } from "@/components/ui";
+import { Button, Segmented, useToast } from "@/components/ui";
 import { useCharacters } from "@/lib/character-store";
-import { WRITER_TONES, type WriterToneKey } from "@/lib/constants";
+import { WRITER_TONES, type GenerationKind, type WriterToneKey } from "@/lib/constants";
 import {
   WRITER_DEFAULT_SCENES,
   WRITER_DRAFT_MAX,
@@ -27,6 +27,7 @@ interface SavedWriterDraft {
   idea: string;
   sceneCount: number;
   tone: WriterToneKey;
+  kind: GenerationKind;
   draft: string;
   updatedAt: number;
 }
@@ -40,6 +41,7 @@ export function WriterView() {
   const [idea, setIdea] = useState("");
   const [sceneCount, setSceneCount] = useState(WRITER_DEFAULT_SCENES);
   const [tone, setTone] = useState<WriterToneKey>("none");
+  const [kind, setKind] = useState<GenerationKind>("image");
   const [castIds, setCastIds] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
   const [instruction, setInstruction] = useState("");
@@ -59,6 +61,7 @@ export function WriterView() {
       if (typeof saved.draft === "string") setDraft(saved.draft);
       if (typeof saved.sceneCount === "number") setSceneCount(saved.sceneCount);
       if (saved.tone && saved.tone in WRITER_TONES) setTone(saved.tone);
+      if (saved.kind === "image" || saved.kind === "video") setKind(saved.kind);
     } catch {
       /* corrupted draft — start clean */
     }
@@ -68,14 +71,21 @@ export function WriterView() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       try {
-        const payload: SavedWriterDraft = { idea, sceneCount, tone, draft, updatedAt: Date.now() };
+        const payload: SavedWriterDraft = {
+          idea,
+          sceneCount,
+          tone,
+          kind,
+          draft,
+          updatedAt: Date.now(),
+        };
         window.localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
       } catch {
         /* storage full/blocked — non-fatal */
       }
     }, 400);
     return () => window.clearTimeout(timer);
-  }, [idea, sceneCount, tone, draft]);
+  }, [idea, sceneCount, tone, kind, draft]);
 
   /* Writer model options from the provider settings payload. */
   useEffect(() => {
@@ -173,6 +183,7 @@ export function WriterView() {
           draft,
           sceneCount,
           characterNames: characterNames(),
+          kind,
           modelId: modelId || undefined,
         });
         if (!("scenes" in result)) return;
@@ -181,6 +192,7 @@ export function WriterView() {
           prose: draft,
           scenes: result.scenes,
           characterIds: castIds,
+          kind,
         });
         const created = await putStoryAsset(asset);
         if (!created) {
@@ -326,6 +338,16 @@ export function WriterView() {
         <Button variant="secondary" onClick={() => runAction("solo")} disabled={busy !== null || !draft.trim()}>
           {busy === "solo" ? "Preparing…" : "Use in Solo"}
         </Button>
+        <Segmented
+          ariaLabel="Story media type"
+          size="sm"
+          value={kind}
+          onChange={(next) => setKind(next)}
+          options={[
+            { value: "image", label: "Image story", icon: "image" },
+            { value: "video", label: "Video story", icon: "video" },
+          ]}
+        />
         <Button variant="primary" onClick={() => runAction("split")} disabled={busy !== null || !draft.trim()}>
           {busy === "split" ? "Splitting…" : `Split into ${sceneCount} scene${sceneCount === 1 ? "" : "s"}`}
         </Button>

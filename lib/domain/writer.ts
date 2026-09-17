@@ -1,4 +1,9 @@
-import { PROMPT_MAX, WRITER_TONES, type WriterToneKey } from "@/lib/constants";
+import {
+  PROMPT_MAX,
+  WRITER_TONES,
+  type GenerationKind,
+  type WriterToneKey,
+} from "@/lib/constants";
 
 /**
  * Story Writer domain (pure): request validation, instruction builders and the
@@ -101,6 +106,8 @@ export interface SplitRequest {
   draft: string;
   sceneCount: number;
   characterNames: string[];
+  /** What the scenes will render as. Anything but "video" parses as "image". */
+  kind: GenerationKind;
 }
 
 export function parseSplitBody(body: Record<string, unknown>): SplitRequest {
@@ -120,6 +127,7 @@ export function parseSplitBody(body: Record<string, unknown>): SplitRequest {
       WRITER_DEFAULT_SCENES,
     ),
     characterNames: cleanNames(body.characterNames),
+    kind: body.kind === "video" ? "video" : "image",
   };
 }
 
@@ -155,10 +163,15 @@ const SCENE_PROMPT_RULES = [
   "No scene references earlier scenes ('as before', 'the same room') — each must stand alone.",
 ];
 
+/** One extra rule so video scenes prompt like short clips, not stills. */
+const VIDEO_SCENE_RULE =
+  "Each scene is a short video clip: describe motion, camera movement and continuous action within a single ~5-second beat.";
+
 export function splitScenesInstruction(
   draft: string,
   sceneCount: number,
   characterNames: string[],
+  kind: GenerationKind = "image",
 ): string {
   const cast = characterNames.length
     ? ` Recurring characters: ${characterNames.join(", ")}.`
@@ -166,6 +179,7 @@ export function splitScenesInstruction(
   return [
     `Split the story below into exactly ${sceneCount} scenes.`,
     ...SCENE_PROMPT_RULES,
+    ...(kind === "video" ? [VIDEO_SCENE_RULE] : []),
     `Reply ONLY with JSON: {"title": "short story title", "scenes": ["scene 1 prompt", …]} with ${sceneCount} scene strings.${cast}`,
     "---",
     draft,

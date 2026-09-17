@@ -1,4 +1,9 @@
-import { DEFAULT_IMAGE_SETTINGS, titleFromPrompt } from "@/lib/constants";
+import {
+  DEFAULT_IMAGE_SETTINGS,
+  DEFAULT_VIDEO_SETTINGS,
+  type GenerationKind,
+  titleFromPrompt,
+} from "@/lib/constants";
 import type { Asset, StoryScene } from "@/lib/types";
 
 /**
@@ -12,8 +17,11 @@ export function createWriterStoryAsset(input: {
   prose: string;
   scenes: string[];
   characterIds: string[];
+  kind: GenerationKind;
 }): Asset {
   const id = `s_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+  const settings =
+    input.kind === "video" ? { ...DEFAULT_VIDEO_SETTINGS } : { ...DEFAULT_IMAGE_SETTINGS };
   const scenes: StoryScene[] = input.scenes.map((prompt, index) => ({
     // The story page numbers scenes by position (`sc_<n>_<rand>`); match it
     // so a later "Add scene" on the story page never collides with these.
@@ -21,7 +29,7 @@ export function createWriterStoryAsset(input: {
     prompt,
     url: null,
     status: "queued",
-    kind: "image",
+    kind: input.kind,
   }));
   return {
     id,
@@ -30,7 +38,7 @@ export function createWriterStoryAsset(input: {
     prompt: input.prose,
     url: "",
     variants: [],
-    settings: { ...DEFAULT_IMAGE_SETTINGS },
+    settings,
     createdAt: Date.now(),
     favorite: false,
     mode: "Story Mode",
@@ -38,7 +46,7 @@ export function createWriterStoryAsset(input: {
     meta: {
       continuity: true,
       running: false,
-      style: DEFAULT_IMAGE_SETTINGS.style,
+      style: settings.style,
       characterIds: input.characterIds,
     },
   };
