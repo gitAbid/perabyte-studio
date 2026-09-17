@@ -42,10 +42,12 @@ function AdvancedPanel({
   settings,
   onChange,
   onCopyPrompt,
+  hideRenderCount = false,
 }: {
   settings: GenerationSettings;
   onChange: (patch: Partial<GenerationSettings>) => void;
   onCopyPrompt: () => void;
+  hideRenderCount?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const shellRef = useRef<HTMLDivElement>(null);
@@ -93,43 +95,47 @@ function AdvancedPanel({
           </p>
 
           <div className="mt-3 space-y-3.5">
-            <div>
-              <p className="text-[12px] font-semibold text-ink-soft">Variations</p>
-              <div className="mt-1.5 flex gap-1.5">
-                {VARIANT_COUNTS.map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    aria-pressed={settings.count === n}
-                    onClick={() => onChange({ count: n })}
-                    className={`h-7 flex-1 rounded-[9px] border text-[12px] font-semibold transition-colors ${
-                      settings.count === n
-                        ? "border-primary bg-primary-strong text-white"
-                        : "border-border bg-raised text-ink-soft hover:border-border-strong"
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
-            </div>
+            {!hideRenderCount && (
+              <>
+                <div>
+                  <p className="text-[12px] font-semibold text-ink-soft">Variations</p>
+                  <div className="mt-1.5 flex gap-1.5">
+                    {VARIANT_COUNTS.map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        aria-pressed={settings.count === n}
+                        onClick={() => onChange({ count: n })}
+                        className={`h-7 flex-1 rounded-[9px] border text-[12px] font-semibold transition-colors ${
+                          settings.count === n
+                            ? "border-primary bg-primary-strong text-white"
+                            : "border-border bg-raised text-ink-soft hover:border-border-strong"
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-            <label className="flex items-center justify-between gap-3">
-              <span className="text-[12px] font-semibold text-ink-soft">
-                Lock seed
-              </span>
-              <input
-                type="text"
-                inputMode="numeric"
-                placeholder="random"
-                value={settings.seed}
-                aria-label="Seed"
-                onChange={(e) =>
-                  onChange({ seed: e.target.value.replace(/[^\d]/g, "") })
-                }
-                className="h-8 w-28 rounded-[9px] border border-border-strong bg-raised px-2.5 text-[12.5px] tabular-nums text-ink placeholder:text-muted focus:border-primary focus:outline-none"
-              />
-            </label>
+                <label className="flex items-center justify-between gap-3">
+                  <span className="text-[12px] font-semibold text-ink-soft">
+                    Lock seed
+                  </span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="random"
+                    value={settings.seed}
+                    aria-label="Seed"
+                    onChange={(e) =>
+                      onChange({ seed: e.target.value.replace(/[^\d]/g, "") })
+                    }
+                    className="h-8 w-28 rounded-[9px] border border-border-strong bg-raised px-2.5 text-[12.5px] tabular-nums text-ink placeholder:text-muted focus:border-primary focus:outline-none"
+                  />
+                </label>
+              </>
+            )}
 
             <div>
               <p className="text-[12px] font-semibold text-ink-soft">
@@ -173,6 +179,9 @@ export function PromptComposer({
   settings,
   onSettingsChange,
   busy,
+  actionLabel,
+  actionDisabled,
+  hideRenderCount,
   onGenerate,
   onCancel,
   onCopyPrompt,
@@ -210,6 +219,15 @@ export function PromptComposer({
   settings: GenerationSettings;
   onSettingsChange: (patch: Partial<GenerationSettings>) => void;
   busy: boolean;
+  /** Footer action button label — "Update scene" in scene edit mode
+   * (default "Generate"). The ⌘+Enter hint follows it. */
+  actionLabel?: string;
+  /** Disables the footer action button without flipping the footer into
+   * cancel mode (used when the selected scene started rendering). */
+  actionDisabled?: boolean;
+  /** Hides the Variations pill and the Variations + Lock seed rows in the
+   * advanced popover — story scenes always render count 1 with no seed. */
+  hideRenderCount?: boolean;
   onGenerate: () => void;
   onCancel: () => void;
   onCopyPrompt: () => void;
@@ -518,21 +536,24 @@ export function PromptComposer({
             }
           />
         )}
-        <PillSelect
-          icon="layers"
-          label="Variations"
-          value={String(settings.count)}
-          options={VARIANT_COUNTS.map((n) => ({
-            value: String(n),
-            label: `${n} variation${n > 1 ? "s" : ""}`,
-          }))}
-          onChange={(value) => onSettingsChange({ count: Number(value) })}
-        />
+        {!hideRenderCount && (
+          <PillSelect
+            icon="layers"
+            label="Variations"
+            value={String(settings.count)}
+            options={VARIANT_COUNTS.map((n) => ({
+              value: String(n),
+              label: `${n} variation${n > 1 ? "s" : ""}`,
+            }))}
+            onChange={(value) => onSettingsChange({ count: Number(value) })}
+          />
+        )}
 
         <AdvancedPanel
           settings={settings}
           onChange={onSettingsChange}
           onCopyPrompt={onCopyPrompt}
+          hideRenderCount={hideRenderCount}
         />
       </div>
 
@@ -546,7 +567,7 @@ export function PromptComposer({
           {prompt.length}/{promptMax}
         </span>
         <span className="hidden text-[11.5px] text-muted lg:block">
-          · ⌘ + Enter to generate
+          · ⌘ + Enter to {(actionLabel ?? "Generate").toLowerCase()}
         </span>
 
         {busy ? (
@@ -558,9 +579,10 @@ export function PromptComposer({
             size="sm"
             icon="sparkle"
             onClick={onGenerate}
+            disabled={actionDisabled}
             className="ml-auto shrink-0"
           >
-            Generate
+            {actionLabel ?? "Generate"}
           </Button>
         )}
       </div>
