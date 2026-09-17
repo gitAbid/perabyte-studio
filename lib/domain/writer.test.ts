@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   WRITER_DRAFT_MAX,
   WRITER_IDEA_MAX,
+  breakIntoScenePromptChunks,
   clampScenePrompt,
   enhanceDraftInstruction,
   extractStoryScenes,
@@ -9,6 +10,7 @@ import {
   parseSplitBody,
   parseWriteBody,
   splitScenesInstruction,
+  suggestSceneCount,
   writeStoryInstruction,
 } from "@/lib/domain/writer";
 
@@ -107,32 +109,35 @@ describe("extractStoryScenes", () => {
   it("parses a clean JSON object", () => {
     const parsed = extractStoryScenes(
       JSON.stringify({ title: "The Chase", scenes: ["scene one", "scene two"] }),
-      2,
     );
     expect(parsed).toEqual({ title: "The Chase", scenes: ["scene one", "scene two"] });
   });
 
   it("survives code fences and surrounding chatter", () => {
     const raw = 'Here you go!\n```json\n{"title":"T","scenes":["a","b"]}\n```\nHope that helps.';
-    expect(extractStoryScenes(raw, 2)).toEqual({ title: "T", scenes: ["a", "b"] });
+    expect(extractStoryScenes(raw)).toEqual({ title: "T", scenes: ["a", "b"] });
   });
 
-  it("filters empty scenes and clamps to the requested count", () => {
+  it("filters empty scenes and keeps over-count replies (scene count is a guide, not a cap)", () => {
     const raw = JSON.stringify({ title: "T", scenes: ["a", "", "  ", "b", "c", "d"] });
-    expect(extractStoryScenes(raw, 3)).toEqual({ title: "T", scenes: ["a", "b", "c"] });
+    expect(extractStoryScenes(raw)).toEqual({ title: "T", scenes: ["a", "b", "c", "d"] });
   });
 
   it("returns null on unusable replies", () => {
-    expect(extractStoryScenes("no json at all", 3)).toBeNull();
-    expect(extractStoryScenes('{"scenes": "not an array"}', 3)).toBeNull();
-    expect(extractStoryScenes('{"title":"T","scenes":[]}', 3)).toBeNull();
+    expect(extractStoryScenes("no json at all")).toBeNull();
+    expect(extractStoryScenes('{"scenes": "not an array"}')).toBeNull();
+    expect(extractStoryScenes('{"title":"T","scenes":[]}')).toBeNull();
   });
 
-  it("trims over-length scenes at a sentence boundary", () => {
+  it("subdivides over-length scenes into ≤1000-char prompts without losing content", () => {
     const long = `${"A".repeat(900)}. ${"B".repeat(900)}.`;
-    const parsed = extractStoryScenes(JSON.stringify({ scenes: [long] }), 1);
-    expect(parsed!.scenes[0].length).toBeLessThanOrEqual(1000);
+    const parsed = extractStoryScenes(JSON.stringify({ scenes: [long] }));
+    expect(parsed!.scenes.length).toBe(2);
+    expect(parsed!.scenes.every((s) => s.length <= 1000)).toBe(true);
     expect(parsed!.scenes[0].endsWith(".")).toBe(true);
+    // no text dropped — both halves survive across the chunks
+    expect(parsed!.scenes.join(" ")).toContain("A".repeat(50));
+    expect(parsed!.scenes.join(" ")).toContain("B".repeat(50));
   });
 });
 
@@ -142,5 +147,40 @@ describe("clampScenePrompt", () => {
   });
   it("falls back to a hard cut without sentence punctuation", () => {
     expect(clampScenePrompt("x".repeat(1400)).length).toBe(1000);
+  });
+});
+
+describe("breakIntoScenePromptChunks", () => {
+  it("returns short text as a single chunk", () => {
+    expect(breakIntoScenePromptChunks("short")).toEqual(["short"]);
+  });
+
+  it("packs sentences into chunks of at most 1000 characters", () => {
+    const text = Array.from({ length: 30 }, (_, i) => `${"word".repeat(8)} number ${i}.`).join(" ");
+    const chunks = breakIntoScenePromptChunks(text);
+    expect(chunks.length).toBeGreaterThan(1);
+    expect(chunks.every((c) => c.length <= 1000)).toBe(true);
+    expect(chunks.join(" ")).toBe(text);
+  });
+
+  it("hard-cuts a single sentence longer than the limit instead of dropping it", () => {
+    const chunks = breakIntoScenePromptChunks("y".repeat(2500));
+    expect(chunks.length).toBe(3);
+    expect(chunks.join("").length).toBe(2500);
+  });
+});
+
+describe("suggestSceneCount", () => {
+  it("suggests one scene per 1000 characters when the count is too low", () => {
+    expect(suggestSceneCount("x".repeat(4800), 3)).toBe(5);
+  });
+
+  it("returns null when the chosen count already covers the draft", () => {
+    expect(suggestSceneCount("x".repeat(2500), 5)).toBeNull();
+    expect(suggestSceneCount("", 5)).toBeNull();
+  });
+
+  it("never suggests more than the picker maximum", () => {
+    expect(suggestSceneCount("x".repeat(20000), 5)).toBe(12);
   });
 });

@@ -64,9 +64,10 @@ function engineLabel(entry: {
   };
 }
 
-/** Sogni's chat endpoint defaults to 700 output tokens; a 12-scene JSON
- * reply needs far more, and truncation is unrepairable. */
-const SPLIT_MAX_TOKENS = 2048;
+/** Sogni's chat endpoint defaults to 700 output tokens — that truncates both
+ * a 12-scene JSON reply and stories longer than ~500 words. Everything the
+ * writer generates gets the wider budget; truncation is unrepairable. */
+const OUTPUT_MAX_TOKENS = 2048;
 
 /** The writer is a fiction author, NOT a prompt rewriter — the enhancer's
  * default system prompt poisons story tasks (it says "reply with the
@@ -175,12 +176,12 @@ export async function runWriterAction(
         attempt === 0 ? base : `${base}\n${STRICT_SPLIT_SUFFIX}`;
       const { text, engine } = await completeViaChain(instruction, {
         signal: options.signal,
-        maxTokens: SPLIT_MAX_TOKENS,
+        maxTokens: OUTPUT_MAX_TOKENS,
         modelId,
         systemPrompt: WRITER_SYSTEM_PROMPT,
         logger: log,
       });
-      const parsed = extractStoryScenes(text, request.sceneCount);
+      const parsed = extractStoryScenes(text);
       if (parsed) {
         log.info("story split", {
           ...engineLabel(engine),
