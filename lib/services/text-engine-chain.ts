@@ -19,7 +19,12 @@ export interface TextEngineEntry {
   modelId?: string;
   complete: (
     instruction: string,
-    options?: { signal?: AbortSignal; modelId?: string; maxTokens?: number },
+    options?: {
+      signal?: AbortSignal;
+      modelId?: string;
+      maxTokens?: number;
+      systemPrompt?: string;
+    },
   ) => Promise<string>;
 }
 
@@ -46,6 +51,7 @@ function customEngineFor(
       customTextComplete(entry.id, instruction, {
         signal: options?.signal,
         modelId: options?.modelId ?? modelId,
+        ...(options?.systemPrompt ? { systemPrompt: options.systemPrompt } : {}),
       }),
   };
 }
@@ -67,6 +73,7 @@ function customFallbackEngines(
         customTextComplete(entry.id, instruction, {
           signal: options?.signal,
           modelId,
+          ...(options?.systemPrompt ? { systemPrompt: options.systemPrompt } : {}),
         }),
     });
   }
