@@ -3,6 +3,7 @@ import {
   WRITER_DRAFT_MAX,
   WRITER_IDEA_MAX,
   breakIntoScenePromptChunks,
+  segmentDraftIntoScenes,
   clampScenePrompt,
   enhanceDraftInstruction,
   extractStoryScenes,
@@ -167,6 +168,45 @@ describe("breakIntoScenePromptChunks", () => {
     const chunks = breakIntoScenePromptChunks("y".repeat(2500));
     expect(chunks.length).toBe(3);
     expect(chunks.join("").length).toBe(2500);
+  });
+});
+
+describe("segmentDraftIntoScenes", () => {
+  it("splits on --- divider lines instead of packing by characters", () => {
+    const draft = "First scene, short and whole.\n---\nSecond scene, also short.\n---\nThird scene.";
+    expect(segmentDraftIntoScenes(draft)).toEqual([
+      "First scene, short and whole.",
+      "Second scene, also short.",
+      "Third scene.",
+    ]);
+  });
+
+  it("drops empty sections around repeated dividers", () => {
+    const draft = "---\nOnly one real scene.\n---\n---\n---\nAnother real one.\n---";
+    expect(segmentDraftIntoScenes(draft)).toEqual(["Only one real scene.", "Another real one."]);
+  });
+
+  it("still subdivides an over-length section per 1000 chars", () => {
+    const section = `${"A".repeat(900)}. ${"B".repeat(900)}.`;
+    const draft = `Intro beat.\n---\n${section}`;
+    const scenes = segmentDraftIntoScenes(draft);
+    expect(scenes.length).toBe(3);
+    expect(scenes.every((s) => s.length <= 1000)).toBe(true);
+  });
+
+  it("ignores --- that is not a standalone divider line", () => {
+    const draft = "Three dashes inside a sentence --- stay part of the scene.";
+    expect(segmentDraftIntoScenes(draft)).toEqual([draft]);
+  });
+
+  it("falls back to character-wise packing when no divider exists", () => {
+    const text = Array.from({ length: 30 }, (_, i) => `${"word".repeat(8)} number ${i}.`).join(" ");
+    expect(segmentDraftIntoScenes(text)).toEqual(breakIntoScenePromptChunks(text));
+  });
+
+  it("returns empty for an empty or divider-only draft", () => {
+    expect(segmentDraftIntoScenes("")).toEqual([]);
+    expect(segmentDraftIntoScenes("---\n---")).toEqual([]);
   });
 });
 
