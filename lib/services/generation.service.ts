@@ -14,6 +14,13 @@ import { getStudioEnv } from "@/lib/config/env";
 import type { Logger } from "@/lib/logging/logger";
 import { logger as rootLogger } from "@/lib/logging/logger";
 import { getGenerationRegistry } from "@/lib/providers/registry";
+import {
+  jevConfigured,
+  shouldBlock,
+  triagePrompt,
+  vaguenessHint,
+  type PromptTriage,
+} from "@/lib/jev/triage";
 import { fetchLoraCatalog } from "@/lib/providers/sogni/lora-catalog";
 import {
   ProviderError,
@@ -416,6 +423,29 @@ export async function prepareGeneration(
 ): Promise<PreparedGeneration> {
   const registry = getGenerationRegistry();
 
+  // Jev prompt triage (optional accelerator): one parallel pass answers
+  // safety, vagueness, and style-intent for the prompt in ~100ms at
+  // negligible cost. Unconfigured or failed calls degrade to nulls and the
+  // pipeline proceeds exactly as before — Jev refines, never gates.
+  const log0 = (options.logger ?? rootLogger).child({ requestId });
+  let triage: PromptTriage = {
+    unsafeProbability: null,
+    vagueProbability: null,
+    styleHint: null,
+  };
+  if (jevConfigured()) {
+    const t0 = Date.now();
+    triage = await triagePrompt(request.rawPrompt);
+    log0.info("jev triage", { ms: Date.now() - t0, ...triage });
+    if (shouldBlock(triage)) {
+      throw new GenerationServiceError(
+        "This prompt was flagged as unsafe. Try rephrasing what you want to create.",
+        { field: "prompt" },
+      );
+    }
+  }
+  const vagueness = vaguenessHint(triage);
+
   // Model resolution: explicit pick → default for the kind.
   let modelId = request.modelId;
   if (modelId) {
@@ -488,11 +518,13 @@ export async function prepareGeneration(
   const normalized: NormalizedGenerationRequest = {
     kind: request.kind,
     // Style presets are folded into the prompt only when the model supports
-    // them (provider-workflow video models take just the raw prompt).
+    // them (provider-workflow video models take just the raw prompt). Jev's
+    // vagueness hint appends enrichment context when the prompt scored as
+    // underspecified — empty string when Jev is off or the prompt was fine.
     prompt:
       effective.model.stylesSupported === false
-        ? request.rawPrompt
-        : styleWithPrompt(request.rawPrompt, request.style),
+        ? `${request.rawPrompt}${vagueness ? ` ${vagueness}` : ""}`.trim()
+        : styleWithPrompt(`${request.rawPrompt}${vagueness ? ` ${vagueness}` : ""}`.trim(), request.style),
     negativePrompt: request.negativePrompt,
     aspect: request.aspect,
     resolution: request.resolution,
