@@ -427,7 +427,6 @@ export async function prepareGeneration(
   // safety, vagueness, and style-intent for the prompt in ~100ms at
   // negligible cost. Unconfigured or failed calls degrade to nulls and the
   // pipeline proceeds exactly as before — Jev refines, never gates.
-  const log0 = (options.logger ?? rootLogger).child({ requestId });
   let triage: PromptTriage = {
     unsafeProbability: null,
     vagueProbability: null,
@@ -436,7 +435,7 @@ export async function prepareGeneration(
   if (jevConfigured()) {
     const t0 = Date.now();
     triage = await triagePrompt(request.rawPrompt);
-    log0.info("jev triage", { ms: Date.now() - t0, ...triage });
+    baseLog.info("jev triage", { ms: Date.now() - t0, ...triage });
     if (shouldBlock(triage)) {
       throw new GenerationServiceError(
         "This prompt was flagged as unsafe. Try rephrasing what you want to create.",
