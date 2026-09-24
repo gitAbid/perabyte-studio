@@ -257,6 +257,30 @@ export function PromptComposer({
     loraCapable && loraModel && loraCatalog?.length
       ? visibleLoras(lorasForModel(loraCatalog, loraModel), allowNsfwLoras)
       : [];
+  const loraPresetSummary =
+    loraEntries.length > 0 && settings.loras?.length
+      ? matchLoraPreset(settings.loras)?.label ?? "Custom LoRA"
+      : null;
+  const renderOptionsSummary = [
+    allowed.aspects.length > 0 ? settings.aspect : null,
+    allowed.resolutions.length > 0 ? settings.resolution : null,
+    stylesSupported !== false ? settings.style : null,
+    kind === "video" ? settings.duration : null,
+    !hideRenderCount
+      ? `${settings.count} variation${settings.count === 1 ? "" : "s"}`
+      : null,
+    loraPresetSummary,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(" · ");
+  const hasEditableRenderOptions =
+    allowed.aspects.length > 0 ||
+    allowed.resolutions.length > 0 ||
+    stylesSupported !== false ||
+    kind === "video" ||
+    !hideRenderCount ||
+    loraEntries.length > 0;
+  const [renderOptionsExpanded, setRenderOptionsExpanded] = useState(false);
   const attachedCharacters = (characters ?? []).filter((character) =>
     characterIds?.includes(character.id),
   );
@@ -397,7 +421,7 @@ export function PromptComposer({
 
       {/* Render settings use labeled controls so a model or aspect change is
           clear without having to decode the icon. */}
-      <section className="relative mt-4 border-t border-border pt-3" aria-label="Render settings">
+      <section className="@container relative mt-4 border-t border-border pt-3" aria-label="Render settings">
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-[12px] font-bold text-ink">Render settings</h3>
           <div className="relative flex flex-wrap items-center gap-1.5">
@@ -416,116 +440,158 @@ export function PromptComposer({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-        {(() => {
-          if (!models || models.length === 0 || !onModelChange) return null;
-          const sections = modelPickerSections(models);
-          return (
-            <div className="col-span-2 min-w-0">
-              <PillSelect
-                presentation="field"
-                icon="chip"
-                label="Model"
-                value={modelId ?? models[0].id}
-                options={sections.recommended}
-                tail={sections.tail.length ? { label: sections.tailLabel, options: sections.tail } : undefined}
-                onChange={onModelChange}
+        <div>
+          {(() => {
+            if (!models || models.length === 0 || !onModelChange) return null;
+            const sections = modelPickerSections(models);
+            return (
+              <div className="min-w-0">
+                <PillSelect
+                  presentation="field"
+                  icon="chip"
+                  label="Model"
+                  value={modelId ?? models[0].id}
+                  options={sections.recommended}
+                  tail={sections.tail.length ? { label: sections.tailLabel, options: sections.tail } : undefined}
+                  onChange={onModelChange}
+                />
+              </div>
+            );
+          })()}
+          {hasEditableRenderOptions && (
+            <button
+              type="button"
+              aria-expanded={renderOptionsExpanded}
+              aria-controls="render-options-panel"
+              aria-label={`${renderOptionsExpanded ? "Hide" : "Show"} render options${renderOptionsSummary ? `: ${renderOptionsSummary}` : ""}`}
+              onClick={() => setRenderOptionsExpanded((expanded) => !expanded)}
+              className="mt-2 flex min-h-9 w-full items-center gap-2 rounded-[8px] px-2 text-left text-[11.5px] transition-colors hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              <Icon
+                name="chevron-down"
+                size={14}
+                className={`shrink-0 transition-transform ${renderOptionsExpanded ? "rotate-180" : ""}`}
               />
+              <span className="shrink-0 font-semibold text-ink-soft">
+                Render options
+              </span>
+              {renderOptionsSummary && (
+                <span className="min-w-0 truncate text-muted">
+                  {renderOptionsSummary}
+                </span>
+              )}
+            </button>
+          )}
+          {hasEditableRenderOptions && (
+            <div
+              id="render-options-panel"
+              role="region"
+              aria-label="Additional render options"
+              hidden={!renderOptionsExpanded}
+              className={
+                renderOptionsExpanded
+                  ? "mt-2 grid grid-cols-1 gap-2 @sm:grid-cols-2"
+                  : "hidden"
+              }
+            >
+              {renderOptionsExpanded && (
+                <>
+                  {loraEntries.length > 0 && (
+                    <div className="min-w-0">
+                      <PillSelect
+                        presentation="field"
+                        icon="sparkle"
+                        label="Preset"
+                        value={matchLoraPreset(settings.loras ?? [])?.id ?? (settings.loras?.length ? "custom" : "none")}
+                        options={[
+                          { value: "none", label: "None" },
+                          { value: "custom", label: "Custom" },
+                          ...LORA_PRESETS.filter((p) => !p.mature || allowNsfwLoras).map((preset) => ({ value: preset.id, label: preset.label, hint: preset.hint, group: preset.mature ? "Mature" : "Looks" })),
+                        ]}
+                        onChange={(value) => {
+                          if (value === "custom") return;
+                          const preset = LORA_PRESETS.find((p) => p.id === value);
+                          onSettingsChange({ loras: preset ? preset.loras.map((l) => ({ ...l })) : [] });
+                        }}
+                      />
+                    </div>
+                  )}
+                  {allowed.aspects.length > 0 && (
+                    <PillSelect
+                      presentation="field"
+                      icon="grid"
+                      label="Aspect ratio"
+                      value={settings.aspect}
+                      options={allowed.aspects.map((value) => ({
+                        value,
+                        label: ASPECTS[value].label,
+                        hint: ASPECTS[value].hint,
+                      }))}
+                      onChange={(value) =>
+                        onSettingsChange({ aspect: value as AspectKey })
+                      }
+                    />
+                  )}
+                  {allowed.resolutions.length > 0 && (
+                    <PillSelect
+                      presentation="field"
+                      icon="sparkle"
+                      label="Resolution"
+                      value={settings.resolution}
+                      options={allowed.resolutions.map((value) => ({
+                        value,
+                        label: value,
+                        hint: RESOLUTIONS[value].label.split("·")[1]?.trim(),
+                      }))}
+                      onChange={(value) =>
+                        onSettingsChange({ resolution: value as ResolutionKey })
+                      }
+                    />
+                  )}
+                  <PillSelect
+                    presentation="field"
+                    icon="image"
+                    label="Style"
+                    // Styleless models show a neutral value instead of a stale preset.
+                    value={stylesSupported === false ? "none" : settings.style}
+                    options={
+                      stylesSupported === false
+                        ? [{ value: "none", label: "None" }]
+                        : Object.keys(styles).map((name) => ({ value: name, label: name }))
+                    }
+                    onChange={(value) => onSettingsChange({ style: value })}
+                    disabled={stylesSupported === false}
+                    disabledHint="This model doesn't support style presets"
+                  />
+                  {kind === "video" && (
+                    <PillSelect
+                      presentation="field"
+                      icon="clock"
+                      label="Duration"
+                      value={settings.duration}
+                      options={allowed.durations.map((value) => ({ value, label: value }))}
+                      onChange={(value) =>
+                        onSettingsChange({ duration: value as DurationKey })
+                      }
+                    />
+                  )}
+                  {!hideRenderCount && (
+                    <PillSelect
+                      presentation="field"
+                      icon="layers"
+                      label="Variations"
+                      value={String(settings.count)}
+                      options={VARIANT_COUNTS.map((n) => ({
+                        value: String(n),
+                        label: `${n} variation${n > 1 ? "s" : ""}`,
+                      }))}
+                      onChange={(value) => onSettingsChange({ count: Number(value) })}
+                    />
+                  )}
+                </>
+              )}
             </div>
-          );
-        })()}
-        {loraEntries.length > 0 && (
-          <div className="min-w-0">
-            <PillSelect
-              presentation="field"
-              icon="sparkle"
-              label="Preset"
-              value={matchLoraPreset(settings.loras ?? [])?.id ?? (settings.loras?.length ? "custom" : "none")}
-              options={[
-                { value: "none", label: "None" },
-                { value: "custom", label: "Custom" },
-                ...LORA_PRESETS.filter((p) => !p.mature || allowNsfwLoras).map((preset) => ({ value: preset.id, label: preset.label, hint: preset.hint, group: preset.mature ? "Mature" : "Looks" })),
-              ]}
-              onChange={(value) => {
-                if (value === "custom") return;
-                const preset = LORA_PRESETS.find((p) => p.id === value);
-                onSettingsChange({ loras: preset ? preset.loras.map((l) => ({ ...l })) : [] });
-              }}
-            />
-          </div>
-        )}
-        {allowed.aspects.length > 0 && (
-          <PillSelect
-            presentation="field"
-            icon="grid"
-            label="Aspect ratio"
-            value={settings.aspect}
-            options={allowed.aspects.map((value) => ({
-              value,
-              label: ASPECTS[value].label,
-              hint: ASPECTS[value].hint,
-            }))}
-            onChange={(value) =>
-              onSettingsChange({ aspect: value as AspectKey })
-            }
-          />
-        )}
-        {allowed.resolutions.length > 0 && (
-          <PillSelect
-            presentation="field"
-            icon="sparkle"
-            label="Resolution"
-            value={settings.resolution}
-            options={allowed.resolutions.map((value) => ({
-              value,
-              label: value,
-              hint: RESOLUTIONS[value].label.split("·")[1]?.trim(),
-            }))}
-            onChange={(value) =>
-              onSettingsChange({ resolution: value as ResolutionKey })
-            }
-          />
-        )}
-        <PillSelect
-          presentation="field"
-          icon="image"
-          label="Style"
-          // Styleless models show a neutral value instead of a stale preset.
-          value={stylesSupported === false ? "none" : settings.style}
-          options={
-            stylesSupported === false
-              ? [{ value: "none", label: "None" }]
-              : Object.keys(styles).map((name) => ({ value: name, label: name }))
-          }
-          onChange={(value) => onSettingsChange({ style: value })}
-          disabled={stylesSupported === false}
-          disabledHint="This model doesn't support style presets"
-        />
-        {kind === "video" && (
-          <PillSelect
-            presentation="field"
-            icon="clock"
-            label="Duration"
-            value={settings.duration}
-            options={allowed.durations.map((value) => ({ value, label: value }))}
-            onChange={(value) =>
-              onSettingsChange({ duration: value as DurationKey })
-            }
-          />
-        )}
-        {!hideRenderCount && (
-          <PillSelect
-            presentation="field"
-            icon="layers"
-            label="Variations"
-            value={String(settings.count)}
-            options={VARIANT_COUNTS.map((n) => ({
-              value: String(n),
-              label: `${n} variation${n > 1 ? "s" : ""}`,
-            }))}
-            onChange={(value) => onSettingsChange({ count: Number(value) })}
-          />
-        )}
+          )}
         </div>
       </section>
 
