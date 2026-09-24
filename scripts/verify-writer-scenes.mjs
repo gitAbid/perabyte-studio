@@ -159,12 +159,17 @@ try {
 
   holdNextSplit = true;
   await page.getByRole("button", { name: "Generate outline", exact: true }).click();
-  while (!releaseHeldSplit) await new Promise((resolve) => setTimeout(resolve, 20));
+  const splitDeadline = Date.now() + 10_000;
+  while (!releaseHeldSplit && Date.now() < splitDeadline) {
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  if (!releaseHeldSplit) throw new Error("Timed out waiting for the held split request.");
   const draftInput = page.locator("#writer-draft");
   const originalDraft = await draftInput.inputValue();
   await draftInput.fill("A changed story draft.");
   await draftInput.fill(originalDraft);
   releaseHeldSplit();
+  releaseHeldSplit = undefined;
   await page.getByRole("button", { name: "Generate outline", exact: true }).waitFor();
   check(
     "late split response cannot revive a stale outline after inputs change",
@@ -182,6 +187,7 @@ try {
   );
   await page.goBack();
   await page.waitForURL((url) => url.pathname === "/writer");
+  await page.locator("#writer-draft").fill(originalDraft);
   if (!(await visible(page.getByText("Available cast", { exact: true })))) {
     await page.getByRole("button", { name: "Character cast" }).click();
     await page.getByRole("checkbox", { name: "Ada" }).click();
