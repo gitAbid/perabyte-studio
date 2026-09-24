@@ -6,6 +6,7 @@ import type {
   ResolutionKey,
   VideoStyleKey,
 } from "./constants";
+import type { TimeOfDay } from "./domain/enhancement";
 
 export type JobStatus =
   | "queued"
@@ -85,6 +86,31 @@ export interface StorySceneProgress {
   percent?: number;
 }
 
+/**
+ * Structured per-scene world state (what the Writer's `plan` pass emits).
+ * The prompt stays prose; this is the machine-readable half the runner
+ * composes into the shot prompt and, later, resolves to reference assets.
+ */
+export interface SceneState {
+  /** Resolved location asset; unset while only prose is known. */
+  locationId?: string;
+  /** Free-text location when no location asset matches yet. */
+  locationText?: string;
+  timeOfDay?: TimeOfDay;
+  /** Who is present, keyed to the story cast; `outfit` overrides the
+   * character's default for this scene only. */
+  characters?: { id: string; outfit?: string }[];
+  props?: string[];
+}
+
+/** Keyframe quality-gate verdict (0–1 per dimension) + free-text notes. */
+export interface SceneScore {
+  identity: number;
+  outfit: number;
+  location: number;
+  notes?: string;
+}
+
 export interface StoryScene {
   id: string;
   prompt: string;
@@ -98,8 +124,8 @@ export interface StoryScene {
   progress?: StorySceneProgress;
   /** Manual reference frame uploaded by the user (media-cache ref). */
   startImageRef?: string;
-  /** Anchor-composed prompt snapshotted at Generate — what the server run
-   * actually renders (the tile keeps the clean prompt). */
+  /** Composed render prompt (anchors + state clauses) — server-side truth
+   * since the runner composes it; the tile keeps the clean prompt. */
   runPrompt?: string;
   endImageRef?: string;
   /** Sparse per-scene settings overrides, merged over the story's settings at
@@ -116,6 +142,24 @@ export interface StoryScene {
   frameUsed?: boolean;
   /** Provider safety-checker state used for this scene's render — drives 18+ masking. */
   safe?: boolean;
+  /** Structured world state (location/time/cast/props) from the Writer plan. */
+  state?: SceneState;
+  /** Deterministic seed for this scene — derived from the story's base seed
+   * once and reused across re-runs so retries differ only when asked to. */
+  seed?: number;
+  /** Rendered keyframe still (media-cache ref) this scene animates from. */
+  keyframeRef?: string;
+  /** Keyframe attempts so far (gate retries included). */
+  attempts?: number;
+  /** Latest quality-gate verdict for the keyframe. */
+  score?: SceneScore;
+}
+
+/** Story-level consistency world: one base seed all scene seeds derive from,
+ * plus the location assets this story may cut between. */
+export interface StoryWorld {
+  baseSeed?: number;
+  locationIds?: string[];
 }
 
 export interface Asset {
@@ -134,6 +178,8 @@ export interface Asset {
   scenes?: StoryScene[];
   /** Free-form asset metadata; `characterIds` carries the attached cast. */
   meta?: Record<string, string | number | boolean | string[]>;
+  /** Consistency world (typed — `meta` cannot hold nested objects). */
+  world?: StoryWorld;
 }
 
 export interface ApiError {

@@ -22,6 +22,10 @@ export interface EnhancementRequest {
   /** Story mode position of the prompt being enhanced. */
   sceneIndex?: number | null;
   sceneCount?: number | null;
+  /** Where this scene takes place — anchors the rewrite's environment. */
+  location?: string | null;
+  /** One-line summary of the previous scene — continuity context. */
+  priorScene?: string | null;
   negativePrompt?: string | null;
   /** Uncensored Mode — keep adult/explicit intent in the rewrite. */
   uncensored?: boolean;
@@ -57,6 +61,8 @@ export async function requestPromptEnhancement(
     sceneIndex: request.sceneIndex ?? null,
     sceneCount: request.sceneCount ?? null,
     timeOfDay: timeOfDayFromDate(new Date()),
+    location: request.location ?? null,
+    priorScene: request.priorScene ?? null,
     negativePrompt: request.negativePrompt ?? null,
     uncensored: request.uncensored === true,
   };

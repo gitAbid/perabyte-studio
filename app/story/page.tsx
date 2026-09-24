@@ -25,7 +25,6 @@ import {
 } from "@/lib/enhancement";
 import { useModelCatalog, type ModelOption } from "@/lib/model-catalog";
 import { snapLorasForModel } from "@/lib/lora-options";
-import { composeSceneWithCharacters } from "@/lib/character";
 import { refFromMediaUrl, uploadFrameRef } from "@/lib/media/frame";
 import {
   addAsset,
@@ -52,6 +51,10 @@ import {
   putStoryAsset,
   storyExistsOnServer,
 } from "@/lib/story/records";
+import {
+  plansToSceneStates,
+  requestScenePlan,
+} from "@/lib/story/plan";
 import { isVideoSource } from "@/lib/renderer";
 import {
   setSelectedModel,
@@ -59,7 +62,7 @@ import {
   useSettings,
 } from "@/lib/repositories/settings.repository";
 import { useCharacters } from "@/lib/character-store";
-import type { Asset, GenerationSettings, StoryScene } from "@/lib/types";
+import type { Asset, GenerationSettings, SceneState, StoryScene } from "@/lib/types";
 
 const CONTINUATIONS = [
   "an establishing wide shot that sets the scene",
@@ -391,16 +394,62 @@ export default function StoryPage() {
 
   /* --------------------------- server run API --------------------------- */
 
-  /** The anchor-composed prompts the server run will render, snapshotted at
-   * Generate (the tiles keep the clean prompts). */
-  function composeRunPrompts(sceneList: StoryScene[]): Record<string, string> {
-    const specs = attachedCharacters.map((c) => c.spec);
-    const uncensored = userSettings.uncensoredEnabled;
-    const out: Record<string, string> = {};
-    for (const scene of sceneList) {
-      out[scene.id] = composeSceneWithCharacters(scene.prompt, specs, uncensored);
-    }
-    return out;
+  /** Auto-plan: scenes without structured state get one writer `plan` pass.
+   * Silent degrade — when no text engine answers, the story renders exactly
+   * as before (prose-only). Retries only when the un-planned set CHANGES (a
+   * new scene was added), never per poll tick while engines are down. */
+  const planBusyRef = useRef(false);
+  const lastPlanKeyRef = useRef("");
+  useEffect(() => {
+    if (!storyId || planBusyRef.current) return;
+    const pending = scenes.filter(
+      (s) =>
+        !s.state &&
+        s.prompt?.trim() &&
+        s.status !== "generating" &&
+        s.status !== "completed",
+    );
+    if (!pending.length) return;
+    const planKey = `${storyId}:${pending.map((s) => s.id).join(",")}`;
+    if (lastPlanKeyRef.current === planKey) return;
+    lastPlanKeyRef.current = planKey;
+    planBusyRef.current = true;
+    requestScenePlan({
+      scenes: pending.map((s) => s.prompt),
+      characterNames: attachedCharacters.map((c) => c.name),
+      uncensored: userSettings.uncensoredEnabled,
+    })
+      .then((plans) => {
+        if (!plans.length) return;
+        const states = plansToSceneStates(
+          plans,
+          pending.map((s) => s.id),
+          attachedCharacters.map((c) => ({ id: c.id, name: c.name })),
+        );
+        const applied = Object.keys(states).length;
+        for (const [sceneId, state] of Object.entries(states)) {
+          void mutateScene({ op: "update", sceneId, patch: { state } });
+        }
+        if (applied) {
+          toast.push("Scene plan ready — location, time of day and outfits noted.");
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        planBusyRef.current = false;
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- plan reads live cast/settings; guarded by refs
+  }, [storyId, scenes]);
+
+  /** One-line continuity summary of a scene's state (for enhance context). */
+  function sceneStateSummary(state?: SceneState): string | null {
+    if (!state) return null;
+    const parts = [
+      state.locationText,
+      state.timeOfDay,
+      state.props?.length ? `props: ${state.props.join(", ")}` : null,
+    ].filter(Boolean);
+    return parts.length ? parts.join("; ") : null;
   }
 
   async function runStoryAction(
@@ -462,10 +511,9 @@ export default function StoryPage() {
     setDraftRefs({});
     const id =
       storyId ?? `s_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
-    const runBody = {
-      settingsPatch: currentSettings(),
-      runPrompts: composeRunPrompts(draft),
-    };
+    // Prompts and seeds are composed server-side (single prompt truth) — the
+    // run body only carries the picker snapshot.
+    const runBody = { settingsPatch: currentSettings() };
     function buildStoryAsset(): Asset {
       return {
         id,
@@ -663,13 +711,8 @@ export default function StoryPage() {
       scene.settings,
       diffSettingsBaseline(sceneBaseline ?? currentSettings(), sceneSettings),
     );
-    // Anchor-composed prompt recomposed NOW so a mid-run chain never renders
-    // a stale snapshot (Generate recomposes again for the whole story).
-    const runPrompt = composeSceneWithCharacters(
-      nextPrompt,
-      attachedCharacters.map((c) => c.spec),
-      userSettings.uncensoredEnabled,
-    );
+    // The render prompt is recomposed server-side from this patch — the
+    // client never snapshots one.
     await mutateScene({
       op: "update",
       sceneId: scene.id,
@@ -679,7 +722,6 @@ export default function StoryPage() {
         settings: Object.keys(overrides).length ? overrides : {},
         startImageRef: sceneRefs.startImageRef ?? null,
         endImageRef: sceneRefs.endImageRef ?? null,
-        runPrompt,
       },
     });
     const wasFailed = scene.status === "failed";
@@ -920,6 +962,12 @@ export default function StoryPage() {
         duration: activeKind === "video" ? activeSettings.duration : null,
         sceneIndex: editing ? editingIndex + 1 : Math.max(1, scenes.length),
         sceneCount: Math.max(1, scenes.length),
+        // Continuity context from the plan: where this scene happens and
+        // what the previous scene established.
+        location: sceneStateSummary(selectedScene?.state),
+        priorScene: sceneStateSummary(
+          editing ? scenes[editingIndex - 1]?.state : scenes[scenes.length - 1]?.state,
+        ),
         negativePrompt: activeSettings.negativePrompt || null,
         uncensored: userSettings.uncensoredEnabled,
       });

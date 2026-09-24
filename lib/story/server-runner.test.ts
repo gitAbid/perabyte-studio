@@ -8,6 +8,11 @@ import {
   setAssetsPathForTests,
 } from "@/lib/repositories/assets.repository";
 import {
+  putCharacterRepository,
+  setCharactersPathForTests,
+} from "@/lib/repositories/characters.repository";
+import { DEFAULT_CHARACTER_SPEC } from "@/lib/character";
+import {
   getStoriesRepository,
   patchStoryRepository,
   putStoryRepository,
@@ -112,13 +117,14 @@ beforeEach(() => {
   setAssetsPathForTests(path.join(tmp, "assets.json"));
   setJobsPathForTests(path.join(tmp, "jobs.json"));
   setProviderConfigPathForTests(path.join(tmp, "settings.json"));
+  setCharactersPathForTests(path.join(tmp, "characters.json"));
   enqueued.jobs = [];
   enqueued.body = {};
   failEnqueueWith = null;
 });
 
 describe("server story runner", () => {
-  it("start resets failed/canceled scenes, snapshots prompts/settings, enqueues the first runnable", async () => {
+  it("start resets failed/canceled scenes, composes prompts server-side, enqueues the first runnable", async () => {
     // A completed scene is NOT re-rendered by Generate (per-scene re-run
     // handles that) — same semantics as the client runner's start().
     putStory(story("s1", [
@@ -127,7 +133,6 @@ describe("server story runner", () => {
     ]));
     const result = await startStoryRun("s1", {
       settingsPatch: { modelId: "sogni:krea2_turbo_fp8_scaled", safe: false },
-      runPrompts: { sc1: "composed one", sc2: "composed two" },
     });
 
     expect(result.meta?.running).toBe(true);
@@ -137,10 +142,35 @@ describe("server story runner", () => {
     expect(sceneStatus("sc2")).toBe("generating");
     expect(enqueued.jobs).toHaveLength(1);
     expect(enqueued.jobs[0].clientTag).toBe("s1:sc2");
-    expect(enqueued.body.prompt).toBe("composed two"); // snapshot wins
+    // Server-composed prompt: no cast and no state → the clean prompt.
+    expect(enqueued.body.prompt).toBe("prompt for sc2");
+    expect(enqueued.body.seed).toBeTypeOf("number");
     expect(enqueued.body.modelId).toBe("sogni:krea2_turbo_fp8_scaled");
     expect(enqueued.body.safe).toBe(false);
     expect(current().settings.modelId).toBe("sogni:krea2_turbo_fp8_scaled");
+  });
+
+  it("mints the world base seed once and keeps scene seeds stable across runs", async () => {
+    putStory(story("s-seed", [scene("sc1"), scene("sc2")]));
+    await startStoryRun("s-seed");
+    const first = current();
+    const baseSeed = first.world?.baseSeed;
+    expect(baseSeed).toBeTypeOf("number");
+    const seeds = first.scenes!.map((s) => s.seed);
+    for (const seed of seeds) expect(seed).toBeTypeOf("number");
+    // The enqueued request carries the scene's persisted seed.
+    expect(enqueued.body.seed).toBe(seeds[0]);
+
+    // A second start reuses the SAME base seed and scene seeds.
+    patchStoryRepository(storyId, {
+      scenes: current().scenes!.map((sc) =>
+        sc.id === "sc1" ? { ...sc, status: "failed" as const } : sc,
+      ),
+      meta: { ...(current().meta ?? {}), running: false },
+    });
+    await startStoryRun("s-seed");
+    expect(current().world?.baseSeed).toBe(baseSeed);
+    expect(current().scenes!.map((s) => s.seed)).toEqual(seeds);
   });
 
   it("advance runs scenes one at a time and threads the chain ref", async () => {
@@ -323,7 +353,6 @@ describe("mutateStoryScenes update", () => {
         settings: { aspect: "9:16" },
         startImageRef: "ref-start",
         endImageRef: null,
-        runPrompt: "composed prompt",
       },
     });
     const sc1 = updated?.scenes?.[0];
@@ -332,7 +361,62 @@ describe("mutateStoryScenes update", () => {
     expect(sc1?.settings).toEqual({ aspect: "9:16" });
     expect(sc1?.startImageRef).toBe("ref-start");
     expect(sc1?.endImageRef).toBeUndefined();
-    expect(sc1?.runPrompt).toBe("composed prompt");
+    // The render prompt is recomposed server-side — the client never sends one.
+    expect(sc1?.runPrompt).toBe("new prompt");
+  });
+
+  it("state rides the update patch into the recomposed prompt and clears with null", () => {
+    putQueued("u-state");
+    let updated = mutateStoryScenes(storyId, {
+      op: "update",
+      sceneId: "sc1",
+      patch: {
+        state: {
+          locationText: "a rooftop bar downtown",
+          timeOfDay: "night",
+          props: ["red umbrella"],
+        },
+      },
+    });
+    let sc1 = updated?.scenes?.[0];
+    expect(sc1?.state?.locationText).toBe("a rooftop bar downtown");
+    expect(sc1?.runPrompt).toContain("Setting: a rooftop bar downtown");
+    expect(sc1?.runPrompt).toContain("Time of day: night");
+    expect(sc1?.runPrompt).toContain("red umbrella");
+
+    updated = mutateStoryScenes(storyId, {
+      op: "update",
+      sceneId: "sc1",
+      patch: { state: null },
+    });
+    sc1 = updated?.scenes?.[0];
+    expect(sc1?.state).toBeUndefined();
+    expect(sc1?.runPrompt).not.toContain("Setting:");
+  });
+
+  it("recomposes the prompt with the live cast anchors and outfit overrides", () => {
+    putCharacterRepository({
+      id: "ch_1",
+      name: "Mara",
+      spec: { ...DEFAULT_CHARACTER_SPEC, age: 30, outfit: "Formal" },
+      createdAt: 1,
+      updatedAt: 1,
+    });
+    putStory(
+      story("u-cast", [scene("sc1")], {
+        meta: { continuity: true, running: false, characterIds: ["ch_1"] },
+      }),
+    );
+    const updated = mutateStoryScenes(storyId, {
+      op: "update",
+      sceneId: "sc1",
+      patch: {
+        state: { characters: [{ id: "ch_1", outfit: "Modern streetwear" }] },
+      },
+    });
+    const sc1 = updated?.scenes?.[0];
+    expect(sc1?.runPrompt).toContain("wearing modern streetwear");
+    expect(sc1?.runPrompt).not.toContain("formal");
   });
 
   it("refuses a generating scene", () => {

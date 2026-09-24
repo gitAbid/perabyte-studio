@@ -14,6 +14,9 @@ import {
   splitScenesInstruction,
   suggestSceneCount,
   writeStoryInstruction,
+  extractScenePlan,
+  parsePlanBody,
+  planScenesInstruction,
 } from "@/lib/domain/writer";
 
 describe("writer request validation", () => {
@@ -280,5 +283,74 @@ describe("suggestSceneCount", () => {
   it("defaults the per-scene budget to the studio prompt limit", () => {
     expect(suggestSceneCount("x".repeat(PROMPT_MAX * 6), 5)).toBe(6);
     expect(suggestSceneCount("x".repeat(PROMPT_MAX * 3), 5)).toBeNull();
+  });
+});
+
+describe("scene planning", () => {
+  const scenes = ["scene one", "scene two"];
+
+  it("validates the plan request body", () => {
+    expect(() => parsePlanBody({ scenes: [] })).toThrow();
+    expect(() => parsePlanBody({ scenes: ["  ", ""] })).toThrow();
+    expect(parsePlanBody({ scenes }).scenes).toEqual(scenes);
+    const parsed = parsePlanBody({
+      scenes: [...scenes, "three"],
+      characterNames: [" Mara ", "", "Ivy"],
+      uncensored: true,
+    });
+    expect(parsed.characterNames).toEqual(["Mara", "Ivy"]);
+    expect(parsed.uncensored).toBe(true);
+    // Scene count is a cap, not a target.
+    expect(parsePlanBody({ scenes: Array.from({ length: 20 }, (_, i) => `s${i}`) }).scenes).toHaveLength(12);
+  });
+
+  it("builds a strict-JSON instruction with cast and continuity rules", () => {
+    const instruction = planScenesInstruction(scenes, ["Mara"], true);
+    expect(instruction).toContain('"scenes"');
+    expect(instruction).toContain("1. scene one");
+    expect(instruction).toContain("2. scene two");
+    expect(instruction).toContain("Mara");
+    expect(instruction).toContain("Do not sanitize");
+    const plain = planScenesInstruction(scenes, [], false);
+    expect(plain).not.toContain("Do not sanitize");
+  });
+
+  it("extracts plans by index and clamps fields", () => {
+    const raw = JSON.stringify({
+      scenes: [
+        { index: 2, location: "rooftop bar", timeOfDay: "night", characters: [{ name: "Mara", outfit: "red dress" }], props: ["glass"] },
+        { index: 1, location: "x".repeat(400), timeOfDay: "afternoon", characters: [{ name: "Ivy" }] },
+      ],
+    });
+    const plans = extractScenePlan(raw, 2)!;
+    expect(plans).toHaveLength(2);
+    const first = plans.find((p) => p.index === 1)!;
+    expect(first.location).toHaveLength(200); // clamped
+    expect(first.timeOfDay).toBe("afternoon");
+    const second = plans.find((p) => p.index === 2)!;
+    expect(second.characters?.[0]).toEqual({ name: "Mara", outfit: "red dress" });
+  });
+
+  it("tolerates fences, falls back to array order and drops junk fields", () => {
+    const fenced = "```json\n" + JSON.stringify({
+      scenes: [{ location: "alley", timeOfDay: "not-a-time", characters: "Mara", props: [1, "case"] }],
+    }) + "\n```";
+    const plans = extractScenePlan(fenced, 1)!;
+    expect(plans[0].index).toBe(1);
+    expect(plans[0].location).toBe("alley");
+    expect(plans[0].timeOfDay).toBeNull();
+    expect(plans[0].characters).toBeUndefined();
+    expect(plans[0].props).toEqual(["case"]);
+  });
+
+  it("returns null for unusable replies and ignores over-count entries", () => {
+    expect(extractScenePlan("", 2)).toBeNull();
+    expect(extractScenePlan("no json here", 2)).toBeNull();
+    expect(extractScenePlan('{"scenes": []}', 2)).toBeNull();
+    expect(extractScenePlan('{"scenes": [{"location":"a"},{"location":"b"},{"location":"c"}]}', 2))
+      .toEqual([
+        { index: 1, location: "a", timeOfDay: null },
+        { index: 2, location: "b", timeOfDay: null },
+      ]);
   });
 });

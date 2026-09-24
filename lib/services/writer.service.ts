@@ -1,12 +1,16 @@
 import {
   enhanceDraftInstruction,
+  extractScenePlan,
   extractStoryScenes,
   parseEnhanceBody,
+  parsePlanBody,
   parseSplitBody,
   parseWriteBody,
+  planScenesInstruction,
   splitScenesInstruction,
   STRICT_SPLIT_SUFFIX,
   writeStoryInstruction,
+  type ScenePlan,
 } from "@/lib/domain/writer";
 import type { Logger } from "@/lib/logging/logger";
 import { logger as rootLogger } from "@/lib/logging/logger";
@@ -31,6 +35,12 @@ export interface WriterTextResult {
 export interface WriterSplitResult {
   title: string;
   scenes: string[];
+  model: string;
+  provider: string;
+}
+
+export interface WriterPlanResult {
+  scenes: ScenePlan[];
   model: string;
   provider: string;
 }
@@ -135,7 +145,7 @@ async function completeViaChain(
 export async function runWriterAction(
   body: Record<string, unknown>,
   options: { signal?: AbortSignal; logger?: Logger } = {},
-): Promise<WriterTextResult | WriterSplitResult> {
+): Promise<WriterTextResult | WriterSplitResult | WriterPlanResult> {
   const log = (options.logger ?? rootLogger).child({ surface: "writer" });
   const action = body.action;
   const modelId = sessionModelId(body);
@@ -209,6 +219,48 @@ export async function runWriterAction(
       "The writer could not split that draft into scenes — try rephrasing or retry.",
       { retryable: true },
     );
+  }
+
+  if (action === "plan") {
+    const request = parsePlanBody(body);
+    const started = Date.now();
+    const base = planScenesInstruction(
+      request.scenes,
+      request.characterNames,
+      request.uncensored,
+    );
+    // Same one-stricter-retry contract as split: a JSON reply is mandatory.
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const instruction =
+        attempt === 0 ? base : `${base}\n${STRICT_SPLIT_SUFFIX}`;
+      const { text, engine } = await completeViaChain(instruction, {
+        signal: options.signal,
+        maxTokens: OUTPUT_MAX_TOKENS,
+        modelId,
+        systemPrompt: WRITER_SYSTEM_PROMPT,
+        preferUncensored: request.uncensored,
+        logger: log,
+      });
+      const plans = extractScenePlan(text, request.scenes.length);
+      if (plans) {
+        log.info("scene plan built", {
+          ...engineLabel(engine),
+          scenes: plans.length,
+          attempts: attempt + 1,
+          elapsedMs: Date.now() - started,
+        });
+        return { scenes: plans, ...engineLabel(engine) };
+      }
+      log.warn("plan reply unparseable", { attempt: attempt + 1 });
+    }
+    // Planning enriches scenes; an unparseable reply degrades to un-planned
+    // scenes rather than failing a story that is perfectly renderable.
+    log.warn("scene plan unavailable — continuing without state");
+    return {
+      scenes: [],
+      model: "none",
+      provider: "none",
+    };
   }
 
   throw new WriterServiceError("Unknown writer action.", { field: "action", retryable: false });

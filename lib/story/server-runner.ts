@@ -1,33 +1,37 @@
 import { chainPredecessor } from "@/lib/story/chain";
 import { mergedSceneSettings } from "@/lib/story/scene-settings";
+import { composeShot } from "@/lib/story/compose-shot";
+import { deriveSceneSeed, mintSeed } from "@/lib/story/seeds";
 import { getJobExecutor } from "@/lib/jobs/executor";
 import {
   getStoriesRepository,
   patchStoryRepository,
 } from "@/lib/repositories/stories.repository";
+import { listCharactersRepository } from "@/lib/repositories/characters.repository";
 import { listActiveJobsRepository } from "@/lib/repositories/jobs.repository";
 import { getProviderConfig } from "@/lib/repositories/provider-config.repository";
 import { createJob } from "@/lib/jobs/jobs.service";
 import { GenerationServiceError } from "@/lib/services/generation.service";
 import { logger as rootLogger, type Logger } from "@/lib/logging/logger";
 import type { GenerationKind } from "@/lib/constants";
-import type { Asset, GenerationSettings, StoryScene } from "@/lib/types";
+import type { Asset, GenerationSettings, SceneState, StoryScene, StoryWorld } from "@/lib/types";
 
 /**
  * The server-side story runner (Phase C). The story record IS the run: the
- * generate route snapshots the composed prompts and settings, then this
- * module drives the chain — enqueue the first runnable scene, and on every
- * absorbed completion enqueue the next — so a story keeps rendering with no
- * browser open. Canceled scenes stay transparent to the chain (the same
- * single rule the client runner and the UI agreed on); a failed scene halts
- * the run until the user re-runs it.
+ * generate route snapshots the settings, then this module drives the chain —
+ * enqueue the first runnable scene, and on every absorbed completion enqueue
+ * the next — so a story keeps rendering with no browser open. Canceled scenes
+ * stay transparent to the chain (the same single rule the client runner and
+ * the UI agreed on); a failed scene halts the run until the user re-runs it.
+ *
+ * Prompts and seeds are composed HERE (composeShot + deriveSceneSeed): the
+ * runner is the single prompt truth, and scene seeds stay stable across
+ * re-runs instead of re-rolling per render.
  */
 
 export interface StoryRunInput {
   /** Current picker state, folded into the story's settings snapshot. */
   settingsPatch?: Partial<GenerationSettings>;
-  /** sceneId → anchor-composed prompt, snapshotted at Generate. */
-  runPrompts?: Record<string, string>;
 }
 
 function log(): Logger {
@@ -36,6 +40,34 @@ function log(): Logger {
 
 export function isStoryRunning(story: Asset): boolean {
   return story.meta?.running === true;
+}
+
+/** The attached cast, in story order (meta.characterIds). */
+function storyCast(story: Asset) {
+  const ids = story.meta?.characterIds;
+  if (!Array.isArray(ids)) return [];
+  const wanted = new Set(ids.filter((id): id is string => typeof id === "string"));
+  const rows = listCharactersRepository().filter((row) => wanted.has(row.id));
+  const order = new Map((ids as string[]).map((id, index) => [id, index]));
+  return rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+}
+
+/** Mint the story's base seed once; every scene seed derives from it. */
+function ensureWorld(story: Asset): { world: StoryWorld; changed: boolean } {
+  const existing = story.world;
+  if (existing?.baseSeed !== undefined) return { world: existing, changed: false };
+  return { world: { ...existing, baseSeed: mintSeed() }, changed: true };
+}
+
+/** Stamp any scene still missing its deterministic seed. */
+function withSeeds(world: StoryWorld, scenes: StoryScene[]): { scenes: StoryScene[]; changed: boolean } {
+  let changed = false;
+  const next = scenes.map((scene) => {
+    if (scene.seed !== undefined) return scene;
+    changed = true;
+    return { ...scene, seed: deriveSceneSeed(world.baseSeed ?? 0, scene.id) };
+  });
+  return { scenes: next, changed };
 }
 
 /** Compose one scene's render request. The scene's settings overrides ride
@@ -61,6 +93,9 @@ export function sceneRequestBody(story: Asset, scene: StoryScene): Record<string
     style: settings.style,
     duration: settings.duration,
     count: 1,
+    // Deterministic per scene (seeded once at Generate); null = the service
+    // rolls a fresh seed, the pre-consistency behavior for legacy scenes.
+    seed: scene.seed ?? null,
     negativePrompt: settings.negativePrompt ?? "",
     enhance: settings.enhance ?? false,
     safe: settings.safe !== false,
@@ -73,8 +108,8 @@ export function sceneRequestBody(story: Asset, scene: StoryScene): Record<string
 
 /**
  * Start (or resume) a story's server run: reset settled scenes to queued,
- * snapshot settings/prompts, then advance. Idempotent — a run already in
- * flight is resumed, never duplicated.
+ * snapshot settings, seed the world and compose the shot prompts, then
+ * advance. Idempotent — a run already in flight is resumed, never duplicated.
  */
 export async function startStoryRun(storyId: string, input: StoryRunInput = {}): Promise<Asset> {
   const story = getStoriesRepository(storyId);
@@ -97,16 +132,21 @@ export async function startStoryRun(storyId: string, input: StoryRunInput = {}):
       ? { ...scene, status: "queued" as const, error: undefined }
       : scene,
   );
-  const runPrompts = input.runPrompts ?? {};
-  const withPrompts: StoryScene[] = settled.map((scene) => ({
+  const { world, changed: worldChanged } = ensureWorld(story);
+  const { scenes: seeded, changed: seedsChanged } = withSeeds(world, settled);
+  const cast = storyCast(story);
+  const ctx = { characters: cast };
+  const withPrompts: StoryScene[] = seeded.map((scene) => ({
     ...scene,
-    ...(runPrompts[scene.id] ? { runPrompt: runPrompts[scene.id] } : {}),
+    runPrompt: composeShot({ ...story, settings }, scene, ctx),
   }));
   patchStoryRepository(storyId, {
     settings,
     scenes: withPrompts,
+    ...(worldChanged ? { world } : {}),
     meta: { ...(story.meta ?? {}), running: true },
   });
+  if (worldChanged) log().info("story world seeded", { storyId, baseSeed: world.baseSeed });
   log().info("story run started", { storyId, scenes: settled.length });
   return advanceStoryChain(storyId);
 }
@@ -220,17 +260,23 @@ export async function cancelStoryScene(storyId: string, sceneId: string): Promis
 }
 
 /** Re-run one settled scene: back to queued, then the chain advances if a
- * run is active (mirrors the client runner's requeueScene). */
+ * run is active (mirrors the client runner's requeueScene). The scene keeps
+ * its seed — a re-roll must be an explicit choice, not a side effect. */
 export async function requeueStoryScene(storyId: string, sceneId: string): Promise<Asset | undefined> {
   const story = getStoriesRepository(storyId);
   const scene = story?.scenes?.find((s) => s.id === sceneId);
   if (!story || !scene || scene.status === "generating" || scene.status === "queued") {
     return story;
   }
+  const world = story.world ?? { baseSeed: mintSeed() };
+  const seed = scene.seed ?? deriveSceneSeed(world.baseSeed ?? 0, sceneId);
   patchStoryRepository(storyId, {
     scenes: (story.scenes ?? []).map((s) =>
-      s.id === sceneId ? { ...s, status: "queued" as const, error: undefined } : s,
+      s.id === sceneId
+        ? { ...s, status: "queued" as const, error: undefined, seed }
+        : s,
     ),
+    ...(story.world ? {} : { world }),
   });
   log().info("story scene requeued", { storyId, sceneId });
   if (isStoryRunning(story)) return advanceStoryChain(storyId);
@@ -249,17 +295,18 @@ export type SceneMutation =
   | { op: "continuity"; value: boolean }
   | { op: "update"; sceneId: string; patch: SceneUpdatePatch };
 
-/** Per-scene update from the composer's scene edit mode. Ref values of null
- * clear the ref; `runPrompt` arrives recomposed so a mid-run chain never
- * renders a stale anchor snapshot. An explicit empty `settings` object clears
- * the scene's overrides; an absent key preserves them. */
+/** Per-scene update from the composer's scene edit mode (or the Writer plan).
+ * Ref values of null clear the ref. The render prompt is recomposed HERE from
+ * the fresh prompt/state — the client never sends one. An explicit empty
+ * `settings` object clears the scene's overrides; an absent key preserves
+ * them. */
 export interface SceneUpdatePatch {
   prompt?: string;
   kind?: GenerationKind;
   settings?: Partial<GenerationSettings>;
   startImageRef?: string | null;
   endImageRef?: string | null;
-  runPrompt?: string;
+  state?: SceneState | null;
 }
 
 /** Apply one scene-level edit to the live story record. A generating scene
@@ -329,6 +376,8 @@ export function mutateStoryScenes(
     const nextSettings = clearSettings
       ? undefined
       : (patch.settings as Partial<GenerationSettings> | undefined);
+    const clearState = patch.state === null;
+    const nextState = clearState ? undefined : patch.state;
     patchStoryRepository(storyId, {
       scenes: scenes.map((s) => {
         if (s.id !== mutation.sceneId) return s;
@@ -343,11 +392,13 @@ export function mutateStoryScenes(
           ...(patch.endImageRef !== undefined
             ? { endImageRef: patch.endImageRef ?? undefined }
             : {}),
-          ...(typeof patch.runPrompt === "string" && patch.runPrompt.trim()
-            ? { runPrompt: patch.runPrompt }
-            : {}),
+          ...(nextState ? { state: nextState } : {}),
         };
         if (clearSettings) delete next.settings;
+        if (clearState) delete next.state;
+        // One prompt truth: recomposed server-side from the fresh prompt +
+        // state with the live cast — the client never sends a runPrompt.
+        next.runPrompt = composeShot(story, next, { characters: storyCast(story) });
         return next;
       }),
     });

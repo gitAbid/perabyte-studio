@@ -19,8 +19,8 @@ const log = logger.child({ route: "api/stories/[id]" });
 /**
  * Story run controls (Phase C). POST ?action=
  * - generate — start (or resume) the server-side run. Body may carry the
- *   current picker state (`settingsPatch`) and the anchor-composed prompts
- *   (`runPrompts`) snapshotted for this run.
+ *   current picker state (`settingsPatch`); prompts and seeds are composed
+ *   server-side by the runner.
  * - cancel   — stop the run and cancel its in-flight jobs.
  * - rerun    — re-queue one settled scene (?sceneId=); the chain advances
  *              only while a run is active.
@@ -45,9 +45,6 @@ export async function POST(
       const input: StoryRunInput = {
         ...(body.settingsPatch && typeof body.settingsPatch === "object"
           ? { settingsPatch: body.settingsPatch as StoryRunInput["settingsPatch"] }
-          : {}),
-        ...(body.runPrompts && typeof body.runPrompts === "object"
-          ? { runPrompts: body.runPrompts as Record<string, string> }
           : {}),
       };
       const story = await startStoryRun(id, input);
