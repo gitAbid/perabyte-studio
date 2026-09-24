@@ -66,6 +66,10 @@ export function WriterView() {
 
   const [idea, setIdea] = useState("");
   const [activePane, setActivePane] = useState<"brief" | "draft" | "outline">("draft");
+  const [briefCollapsed, setBriefCollapsed] = useState(false);
+  const [draftCollapsed, setDraftCollapsed] = useState(false);
+  const [outlineCollapsed, setOutlineCollapsed] = useState(false);
+  const [collapsedScenes, setCollapsedScenes] = useState<Set<number>>(() => new Set());
   const [sceneCount, setSceneCount] = useState<WriterSceneCount>("smart");
   const [tone, setTone] = useState<WriterToneKey>("none");
   const [kind, setKind] = useState<GenerationKind>("image");
@@ -87,6 +91,15 @@ export function WriterView() {
   function invalidateOutline() {
     outlineRequestVersion.current += 1;
     setOutline(null);
+  }
+
+  function toggleSceneCard(index: number) {
+    setCollapsedScenes((current) => {
+      const next = new Set(current);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
   }
 
   /* Restore the autosaved draft once on mount. */
@@ -280,6 +293,7 @@ export function WriterView() {
           modelId: modelId || undefined,
         });
         if ("scenes" in result && requestVersion === outlineRequestVersion.current) {
+          setCollapsedScenes(new Set());
           setOutline({ title: result.title, scenes: result.scenes, signature });
           setActivePane("outline");
         }
@@ -341,167 +355,270 @@ export function WriterView() {
 
       <div className="grid min-h-0 min-w-0 flex-1 gap-3 xl:grid-cols-[minmax(230px,0.72fr)_minmax(360px,1.35fr)_minmax(260px,0.8fr)] xl:items-stretch">
         <section aria-label="Story brief" className={`${activePane === "brief" ? "flex" : "hidden"} min-h-0 min-w-0 flex-col border border-border bg-surface p-3.5 sm:p-4 xl:flex`}>
-          <div className="flex shrink-0 items-center gap-2 border-b border-border pb-3">
-            <span className="grid size-7 place-items-center bg-primary-soft text-primary"><Icon name="sparkle" size={14} /></span>
-            <div>
-              <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted">Step 01 · Setup</p>
-              <h2 className="mt-0.5 text-[14px] font-bold text-ink">Story brief</h2>
+          <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border pb-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="grid size-7 shrink-0 place-items-center bg-primary-soft text-primary"><Icon name="sparkle" size={14} /></span>
+              <div>
+                <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted">Step 01 · Setup</p>
+                <h2 id="writer-brief-heading" className="mt-0.5 text-[14px] font-bold text-ink">Story brief</h2>
+              </div>
             </div>
+            <button
+              type="button"
+              aria-label={`${briefCollapsed ? "Expand" : "Collapse"} story brief`}
+              aria-expanded={!briefCollapsed}
+              aria-controls="writer-brief-content"
+              onClick={() => setBriefCollapsed((collapsed) => !collapsed)}
+              className="grid size-11 shrink-0 place-items-center rounded-[8px] text-muted transition-colors hover:bg-raised hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <Icon name="chevron-down" size={15} className={`transition-transform ${briefCollapsed ? "-rotate-90" : ""}`} />
+            </button>
           </div>
-          <label className="sr-only" htmlFor="writer-idea">Story brief</label>
-          <textarea
-            id="writer-idea"
-            value={idea}
-            onChange={(event) => setIdea(event.target.value.slice(0, WRITER_IDEA_MAX))}
-            rows={6}
-            placeholder="Who is this about? What happens, and what makes it matter?"
-            className="mt-3 min-h-20 w-full min-w-0 flex-1 resize-none border-0 border-l-2 border-accent/50 bg-transparent py-1 pl-3 text-[13px] leading-[1.75] text-ink placeholder:text-muted/70 focus:border-primary focus:outline-none focus:ring-0"
-          />
-          <div className="mt-3 flex shrink-0 flex-wrap items-center gap-2 border-t border-border pt-3">
-            <PillSelect
-              icon="layers"
-              label="Scene count"
-              placement="up"
-              value={String(sceneCount)}
-              options={SCENE_CHOICES.map((choice) => ({ value: String(choice.value), label: choice.label }))}
-              onChange={(next) => {
-                setSceneCount(supportedSceneCount(next === "smart" ? next : Number(next)));
-                invalidateOutline();
-              }}
+          {briefCollapsed && (
+            <p className="border-b border-border py-2 text-[11px] leading-relaxed text-muted">
+              {sceneCount === "smart" ? "Smart" : `${sceneCount} scenes`} · {characterNames.length ? characterNames.join(", ") : "No cast selected"}
+            </p>
+          )}
+          <div
+            id="writer-brief-content"
+            aria-labelledby="writer-brief-heading"
+            hidden={briefCollapsed}
+            className={briefCollapsed ? "hidden" : "flex min-h-0 flex-1 flex-col"}
+          >
+            <label className="sr-only" htmlFor="writer-idea">Story brief</label>
+            <textarea
+              id="writer-idea"
+              value={idea}
+              onChange={(event) => setIdea(event.target.value.slice(0, WRITER_IDEA_MAX))}
+              rows={6}
+              placeholder="Who is this about? What happens, and what makes it matter?"
+              className="mt-3 min-h-20 w-full min-w-0 flex-1 resize-none border-0 border-l-2 border-accent/50 bg-transparent py-1 pl-3 text-[13px] leading-[1.75] text-ink placeholder:text-muted/70 focus:border-primary focus:outline-none focus:ring-0"
             />
-            <PillSelect
-              icon="sliders"
-              label="Tone"
-              placement="up"
-              value={tone}
-              options={Object.entries(WRITER_TONES).map(([value, label]) => ({ value, label }))}
-              onChange={(next) => setTone(next as WriterToneKey)}
-            />
-            <div className="relative">
-              <CastPicker
-                characters={characters}
-                selectedIds={castIds}
+            <div className="mt-3 flex shrink-0 flex-wrap items-center gap-2 border-t border-border pt-3">
+              <PillSelect
+                icon="layers"
+                label="Scene count"
+                placement="up"
+                value={String(sceneCount)}
+                options={SCENE_CHOICES.map((choice) => ({ value: String(choice.value), label: choice.label }))}
                 onChange={(next) => {
-                  setCastIds(next);
+                  setSceneCount(supportedSceneCount(next === "smart" ? next : Number(next)));
                   invalidateOutline();
                 }}
               />
-            </div>
-            {characterNames.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5" aria-label="Available cast">
-                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">Available cast</span>
-                {characterNames.map((name) => (
-                  <span key={name} className="rounded-full border border-primary/30 bg-primary-soft px-2 py-1 text-[10px] font-semibold text-primary">
-                    {name}
-                  </span>
-                ))}
+              <PillSelect
+                icon="sliders"
+                label="Tone"
+                placement="up"
+                value={tone}
+                options={Object.entries(WRITER_TONES).map(([value, label]) => ({ value, label }))}
+                onChange={(next) => setTone(next as WriterToneKey)}
+              />
+              <div className="relative">
+                <CastPicker
+                  characters={characters}
+                  selectedIds={castIds}
+                  onChange={(next) => {
+                    setCastIds(next);
+                    invalidateOutline();
+                  }}
+                />
               </div>
-            )}
-          </div>
-          <div className="mt-3 shrink-0">
-            {error && errorPane === "brief" && <p className="mb-2 text-[11px] font-medium text-danger" role="alert">{error}</p>}
-            <Button variant="primary" block icon="sparkle" onClick={() => runAction("write")} disabled={busy !== null}>
-              {busy === "write" ? "Writing story…" : "Write the story"}
-            </Button>
+              {characterNames.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5" aria-label="Available cast">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">Available cast</span>
+                  {characterNames.map((name) => (
+                    <span key={name} className="rounded-full border border-primary/30 bg-primary-soft px-2 py-1 text-[10px] font-semibold text-primary">
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="mt-3 shrink-0">
+              {error && errorPane === "brief" && <p className="mb-2 text-[11px] font-medium text-danger" role="alert">{error}</p>}
+              <Button variant="primary" block icon="sparkle" onClick={() => runAction("write")} disabled={busy !== null}>
+                {busy === "write" ? "Writing story…" : "Write the story"}
+              </Button>
+            </div>
           </div>
         </section>
 
         <section aria-label="Story draft" className={`${activePane === "draft" ? "flex" : "hidden"} min-h-0 min-w-0 flex-col overflow-hidden border border-border bg-raised p-3.5 sm:p-4 xl:flex`}>
           <div className="flex shrink-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 border-b border-border pb-3">
-            <div>
+            <div className="min-w-0">
               <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted">Step 02 · Write</p>
-              <label className="mt-0.5 block text-[14px] font-bold text-ink" htmlFor="writer-draft">Your draft</label>
+              <label id="writer-draft-heading" className="mt-0.5 block text-[14px] font-bold text-ink" htmlFor="writer-draft">Your draft</label>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-[10px] text-muted">Autosaved</span>
+            <div className="flex items-center gap-2">
+              {draftCollapsed ? (
+                <span className="text-[10px] text-muted">{draft.length} characters</span>
+              ) : (
+                <span className="text-[10px] text-muted">Autosaved</span>
+              )}
               {undoDraft !== null && (
                 <button type="button" className="text-[11px] font-semibold text-primary hover:underline" onClick={() => { setDraft(undoDraft); setUndoDraft(null); invalidateOutline(); }}>Undo rewrite</button>
               )}
+              <button
+                type="button"
+                aria-label={`${draftCollapsed ? "Expand" : "Collapse"} story draft`}
+                aria-expanded={!draftCollapsed}
+                aria-controls="writer-draft-content"
+                onClick={() => setDraftCollapsed((collapsed) => !collapsed)}
+                className="grid size-11 shrink-0 place-items-center rounded-[8px] text-muted transition-colors hover:bg-surface-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <Icon name="chevron-down" size={15} className={`transition-transform ${draftCollapsed ? "-rotate-90" : ""}`} />
+              </button>
             </div>
           </div>
-          <textarea
-            id="writer-draft"
-            value={draft}
-            onChange={(event) => {
-              setDraft(event.target.value.slice(0, WRITER_DRAFT_MAX));
-              invalidateOutline();
-            }}
-            rows={20}
-            placeholder="Start writing here, or create a first draft from your brief."
-            className="mt-2 min-h-20 w-full min-w-0 flex-1 resize-none border-0 bg-transparent px-2 py-1 text-[14px] leading-[1.8] text-ink placeholder:text-muted/70 focus:outline-none focus:ring-0"
-          />
-          <div className="mt-2 flex shrink-0 flex-wrap items-center gap-2 border-t border-border pt-3">
-            <input
-              value={instruction}
-              onChange={(event) => setInstruction(event.target.value.slice(0, WRITER_INSTRUCTION_MAX))}
-              placeholder="Ask for a change: tighten the opening…"
-              aria-label="Draft refinement instruction"
-              className="h-10 min-w-[150px] flex-1 border border-border bg-canvas px-3 text-[12px] text-ink placeholder:text-muted/70 focus:border-primary focus:outline-none"
+          <div
+            id="writer-draft-content"
+            aria-labelledby="writer-draft-heading"
+            hidden={draftCollapsed}
+            className={draftCollapsed ? "hidden" : "flex min-h-0 flex-1 flex-col overflow-hidden"}
+          >
+            <textarea
+              id="writer-draft"
+              value={draft}
+              onChange={(event) => {
+                setDraft(event.target.value.slice(0, WRITER_DRAFT_MAX));
+                invalidateOutline();
+              }}
+              rows={20}
+              placeholder="Start writing here, or create a first draft from your brief."
+              className="mt-2 min-h-20 w-full min-w-0 flex-1 resize-none border-0 bg-transparent px-2 py-1 text-[14px] leading-[1.8] text-ink placeholder:text-muted/70 focus:outline-none focus:ring-0"
             />
-            <Button variant="secondary" size="sm" icon="sparkle" onClick={() => runAction("enhance")} disabled={busy !== null}>
-              {busy === "enhance" ? "Rewriting…" : "Refine"}
-            </Button>
+            <div className="mt-2 flex shrink-0 flex-wrap items-center gap-2 border-t border-border pt-3">
+              <input
+                value={instruction}
+                onChange={(event) => setInstruction(event.target.value.slice(0, WRITER_INSTRUCTION_MAX))}
+                placeholder="Ask for a change: tighten the opening…"
+                aria-label="Draft refinement instruction"
+                className="h-10 min-w-[150px] flex-1 border border-border bg-canvas px-3 text-[12px] text-ink placeholder:text-muted/70 focus:border-primary focus:outline-none"
+              />
+              <Button variant="secondary" size="sm" icon="sparkle" onClick={() => runAction("enhance")} disabled={busy !== null}>
+                {busy === "enhance" ? "Rewriting…" : "Refine"}
+              </Button>
+            </div>
+            {error && errorPane === "draft" && <p className="mt-2 shrink-0 text-[11px] font-medium text-danger" role="alert">{error}</p>}
+            <div className="mt-2 flex shrink-0 justify-between gap-2 text-[10px] text-muted"><span>{draft.length.toLocaleString()} / {WRITER_DRAFT_MAX.toLocaleString()} characters</span><span>Saved on this device</span></div>
           </div>
-          {error && errorPane === "draft" && <p className="mt-2 shrink-0 text-[11px] font-medium text-danger" role="alert">{error}</p>}
-          <div className="mt-2 flex shrink-0 justify-between gap-2 text-[10px] text-muted"><span>{draft.length.toLocaleString()} / {WRITER_DRAFT_MAX.toLocaleString()} characters</span><span>Saved on this device</span></div>
         </section>
 
         <aside aria-label="Scene outline and export" className={`${activePane === "outline" ? "flex" : "hidden"} min-h-0 min-w-0 flex-col overflow-hidden border border-border bg-surface p-3.5 sm:p-4 xl:flex`}>
           <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border pb-3">
             <div>
               <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted">Step 03 · Send to studio</p>
-              <h2 className="mt-0.5 text-[14px] font-bold text-ink">Scene outline</h2>
+              <h2 id="writer-outline-heading" className="mt-0.5 text-[14px] font-bold text-ink">Scene outline</h2>
             </div>
-            <span className="grid size-8 place-items-center rounded-full bg-primary-soft font-mono text-[11px] font-bold text-primary">{String(reviewedOutline?.scenes.length ?? 0).padStart(2, "0")}</span>
+            <div className="flex shrink-0 items-center gap-1">
+              <span className="grid size-8 place-items-center rounded-full bg-primary-soft font-mono text-[11px] font-bold text-primary">{String(reviewedOutline?.scenes.length ?? 0).padStart(2, "0")}</span>
+              <button
+                type="button"
+                aria-label={`${outlineCollapsed ? "Expand" : "Collapse"} scene outline`}
+                aria-expanded={!outlineCollapsed}
+                aria-controls="writer-outline-content"
+                onClick={() => setOutlineCollapsed((collapsed) => !collapsed)}
+                className="grid size-11 shrink-0 place-items-center rounded-[8px] text-muted transition-colors hover:bg-raised hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <Icon name="chevron-down" size={15} className={`transition-transform ${outlineCollapsed ? "-rotate-90" : ""}`} />
+              </button>
+            </div>
           </div>
-
-          <div className="mt-3 flex shrink-0 flex-wrap items-center justify-between gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">Build for</span>
-            <Segmented
-              ariaLabel="Story media type"
-              size="sm"
-              value={kind}
-              onChange={(next) => {
-                setKind(next);
-                invalidateOutline();
-              }}
-              options={[{ value: "image", label: "Images", icon: "image" }, { value: "video", label: "Video", icon: "video" }]}
-            />
-          </div>
-
-          {!reviewedOutline ? (
-            <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-2 py-5 text-center">
-              <span className="grid size-10 shrink-0 place-items-center border border-dashed border-border-strong text-muted"><Icon name="story" size={17} /></span>
-              <p className="mt-3 text-[12px] font-semibold text-ink">Scenes show up here</p>
-              <p className="mt-1 max-w-[230px] text-[11px] leading-relaxed text-muted">Write a draft, then generate a scene outline to review here.</p>
-            </div>
-          ) : (
-            <div className="thin-scrollbar mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
-              {reviewedOutline.scenes.map((scene, index) => (
-                <article key={index} className="border-l-2 border-primary bg-raised px-3 py-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-primary">Scene {String(index + 1).padStart(2, "0")}</span>
-                    <span className="font-mono text-[9px] text-muted">{scene.length} ch</span>
-                  </div>
-                  <p className="mt-1.5 line-clamp-4 whitespace-pre-wrap text-[11px] leading-relaxed text-ink-soft">{scene}</p>
-                </article>
-              ))}
-            </div>
+          {outlineCollapsed && (
+            <p className="border-b border-border py-2 text-[11px] leading-relaxed text-muted">
+              {reviewedOutline ? `${reviewedOutline.title} · ${reviewedOutline.scenes.length} scenes` : "No outline generated"}
+            </p>
           )}
+          <div
+            id="writer-outline-content"
+            aria-labelledby="writer-outline-heading"
+            hidden={outlineCollapsed}
+            className={outlineCollapsed ? "hidden" : "flex min-h-0 flex-1 flex-col"}
+          >
+            <div className="mt-3 flex shrink-0 flex-wrap items-center justify-between gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">Build for</span>
+              <Segmented
+                ariaLabel="Story media type"
+                size="sm"
+                value={kind}
+                onChange={(next) => {
+                  setKind(next);
+                  invalidateOutline();
+                }}
+                options={[{ value: "image", label: "Images", icon: "image" }, { value: "video", label: "Video", icon: "video" }]}
+              />
+            </div>
 
-          <div className="mt-3 shrink-0 border-t border-border pt-3">
-            <p className="mb-2 text-[10px] leading-relaxed text-muted">{reviewedOutline ? `${reviewedOutline.scenes.length} reviewed scene${reviewedOutline.scenes.length === 1 ? "" : "s"} ready. Create the story or continue with the first scene.` : "Generate an outline before creating a story."}</p>
-            {error && errorPane === "outline" && <p className="mb-2 text-[11px] font-medium text-danger" role="alert">{error}</p>}
-            <div className="flex flex-col gap-2">
-              <Button variant="primary" block icon="sparkle" onClick={() => runAction("outline")} disabled={busy !== null || !draft.trim()}>
-                {busy === "outline" ? "Generating outline…" : "Generate outline"}
-              </Button>
-              <Button variant="primary" block icon="arrow-right" onClick={() => runAction("save")} disabled={busy !== null || !reviewedOutline}>
-                {busy === "save" ? "Creating story…" : "Create story"}
-              </Button>
-              <Button variant="secondary" block size="sm" icon={kind === "image" ? "image" : "video"} onClick={() => runAction("solo")} disabled={busy !== null || !reviewedOutline}>
-                Open first scene in {kind === "image" ? "image" : "video"} studio
-              </Button>
+            {!reviewedOutline ? (
+              <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-2 py-5 text-center">
+                <span className="grid size-10 shrink-0 place-items-center border border-dashed border-border-strong text-muted"><Icon name="story" size={17} /></span>
+                <p className="mt-3 text-[12px] font-semibold text-ink">Scenes show up here</p>
+                <p className="mt-1 max-w-[230px] text-[11px] leading-relaxed text-muted">Write a draft, then generate a scene outline to review here.</p>
+              </div>
+            ) : (
+              <div className="thin-scrollbar mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+                {reviewedOutline.scenes.map((scene, index) => {
+                  const collapsed = collapsedScenes.has(index);
+                  const sceneNumber = index + 1;
+                  const sceneContentId = `writer-scene-${sceneNumber}-content`;
+                  const sceneHeadingId = `writer-scene-${sceneNumber}-heading`;
+                  const scenePreview = scene.length > 70 ? `${scene.slice(0, 70)}…` : scene;
+                  return (
+                    <article key={index} className="border-l-2 border-primary bg-raised px-3 py-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span id={sceneHeadingId} className="text-[9px] font-bold uppercase tracking-[0.15em] text-primary">Scene {String(sceneNumber).padStart(2, "0")}</span>
+                        <div className="flex shrink-0 items-center gap-1">
+                          <span className="font-mono text-[9px] text-muted">{scene.length} ch</span>
+                          <button
+                            type="button"
+                            aria-label={`${collapsed ? "Expand" : "Collapse"} scene ${sceneNumber}`}
+                            aria-expanded={!collapsed}
+                            aria-controls={sceneContentId}
+                            onClick={() => toggleSceneCard(index)}
+                            className="grid size-11 shrink-0 place-items-center rounded-[8px] text-muted transition-colors hover:bg-surface-2 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                          >
+                            <Icon name="chevron-down" size={14} className={`transition-transform ${collapsed ? "-rotate-90" : ""}`} />
+                          </button>
+                        </div>
+                      </div>
+                      {collapsed && (
+                        <p
+                          id={`writer-scene-${sceneNumber}-preview`}
+                          aria-label={`Scene ${sceneNumber} preview`}
+                          className="mt-1.5 text-[11px] leading-relaxed text-ink-soft"
+                        >
+                          {scenePreview}
+                        </p>
+                      )}
+                      <div
+                        id={sceneContentId}
+                        aria-labelledby={sceneHeadingId}
+                        hidden={collapsed}
+                        className={collapsed ? "hidden" : undefined}
+                      >
+                        <p className="mt-1.5 whitespace-pre-wrap text-[11px] leading-relaxed text-ink-soft">{scene}</p>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="mt-3 shrink-0 border-t border-border pt-3">
+              <p className="mb-2 text-[10px] leading-relaxed text-muted">{reviewedOutline ? `${reviewedOutline.scenes.length} reviewed scene${reviewedOutline.scenes.length === 1 ? "" : "s"} ready. Create the story or continue with the first scene.` : "Generate an outline before creating a story."}</p>
+              {error && errorPane === "outline" && <p className="mb-2 text-[11px] font-medium text-danger" role="alert">{error}</p>}
+              <div className="flex flex-col gap-2">
+                <Button variant="primary" block icon="sparkle" onClick={() => runAction("outline")} disabled={busy !== null || !draft.trim()}>
+                  {busy === "outline" ? "Generating outline…" : "Generate outline"}
+                </Button>
+                <Button variant="primary" block icon="arrow-right" onClick={() => runAction("save")} disabled={busy !== null || !reviewedOutline}>
+                  {busy === "save" ? "Creating story…" : "Create story"}
+                </Button>
+                <Button variant="secondary" block size="sm" icon={kind === "image" ? "image" : "video"} onClick={() => runAction("solo")} disabled={busy !== null || !reviewedOutline}>
+                  Open first scene in {kind === "image" ? "image" : "video"} studio
+                </Button>
+              </div>
             </div>
           </div>
         </aside>

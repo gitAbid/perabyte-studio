@@ -17,6 +17,37 @@ async function visible(locator) {
   return locator.isVisible().catch(() => false);
 }
 
+async function verifyPanelDisclosure(label, visibleHeadingSelector, summary) {
+  const collapseButton = page.getByRole("button", { name: `Collapse ${label}`, exact: true });
+  if (await collapseButton.count() !== 1) {
+    check(`${label} panel collapses and expands accessibly`, false, "missing collapse button");
+    return;
+  }
+
+  const contentId = await collapseButton.getAttribute("aria-controls");
+  const content = contentId ? page.locator(`#${contentId}`) : null;
+  const startsExpanded = await collapseButton.getAttribute("aria-expanded") === "true" &&
+    content !== null && await visible(content);
+
+  await collapseButton.click();
+  const expandButton = page.getByRole("button", { name: `Expand ${label}`, exact: true });
+  const summaryRemains = await visible(page.getByText(summary, { exact: true }));
+  const collapses = await expandButton.count() === 1 &&
+    await expandButton.getAttribute("aria-expanded") === "false" &&
+    content !== null && !(await visible(content)) &&
+    await visible(page.locator(visibleHeadingSelector));
+
+  if (await expandButton.count() === 1) await expandButton.click();
+  const restores = await page.getByRole("button", { name: `Collapse ${label}`, exact: true }).getAttribute("aria-expanded") === "true" &&
+    content !== null && await visible(content);
+
+  check(
+    `${label} panel collapses and expands accessibly`,
+    startsExpanded && collapses && summaryRemains && restores,
+    `starts expanded: ${startsExpanded}; summary remains: ${summaryRemains}`,
+  );
+}
+
 const ada = {
   id: "ch_ada",
   name: "Ada",
@@ -156,6 +187,85 @@ try {
       await visible(page.getByText(outline[4], { exact: true })),
   );
   check("outline remains available for review in Writer", new URL(page.url()).pathname === "/writer");
+
+  await verifyPanelDisclosure("story brief", "#writer-brief-heading", "5 scenes · Ada");
+  await verifyPanelDisclosure("story draft", "#writer-draft-heading", `${(await page.locator("#writer-draft").inputValue()).length} characters`);
+  await verifyPanelDisclosure("scene outline", "#writer-outline-heading", "Ada and the comet · 5 scenes");
+
+  const sceneCards = [];
+  for (let index = 0; index < outline.length; index += 1) {
+    const sceneNumber = index + 1;
+    const sceneCard = page.locator("article").filter({ hasText: `Scene ${String(sceneNumber).padStart(2, "0")}` }).first();
+    const collapseButton = sceneCard.getByRole("button", { name: `Collapse scene ${sceneNumber}`, exact: true });
+    const controlsId = await collapseButton.count() === 1 ? await collapseButton.getAttribute("aria-controls") : null;
+    const content = controlsId ? page.locator(`#${controlsId}`) : null;
+    sceneCards.push({
+      sceneNumber,
+      scene: outline[index],
+      card: sceneCard,
+      collapseButton,
+      expandButton: sceneCard.getByRole("button", { name: `Expand scene ${sceneNumber}`, exact: true }),
+      content,
+      preview: page.locator(`#writer-scene-${sceneNumber}-preview`),
+    });
+  }
+  const sceneControlIds = await Promise.all(sceneCards.map(async (row) => row.content ? row.content.getAttribute("id") : null));
+  const initialCardStates = await Promise.all(sceneCards.map(async (row) =>
+    await row.collapseButton.count() === 1 &&
+      await row.collapseButton.getAttribute("aria-expanded") === "true" &&
+      row.content !== null && await visible(row.content) &&
+      await visible(row.content.getByText(row.scene, { exact: true })),
+  ));
+  const startsExpanded = sceneCards.length === outline.length &&
+    sceneControlIds.every(Boolean) && new Set(sceneControlIds).size === outline.length &&
+    initialCardStates.every(Boolean);
+  check("all scene cards start expanded with accessible controls", startsExpanded);
+
+  for (const row of sceneCards) {
+    if (await row.collapseButton.count() === 1) await row.collapseButton.click();
+  }
+  const allCollapsed = await Promise.all(sceneCards.map(async (row) =>
+    await row.expandButton.count() === 1 &&
+      await row.expandButton.getAttribute("aria-expanded") === "false" &&
+      row.content !== null && !(await visible(row.content)) &&
+      await visible(row.card.getByText(`Scene ${String(row.sceneNumber).padStart(2, "0")}`, { exact: true })) &&
+      await visible(row.preview),
+  )).then((states) => states.every(Boolean));
+  check("all scene cards collapse to their labels and short previews", allCollapsed);
+
+  for (const row of sceneCards) {
+    if (await row.expandButton.count() === 1) await row.expandButton.click();
+  }
+  const allExpandedAgain = await Promise.all(sceneCards.map(async (row) =>
+    await row.collapseButton.count() === 1 &&
+      await row.collapseButton.getAttribute("aria-expanded") === "true" &&
+      row.content !== null && await visible(row.content) &&
+      await visible(row.content.getByText(row.scene, { exact: true })),
+  )).then((states) => states.every(Boolean));
+  check("all scene cards expand back to their full prompts", allExpandedAgain);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  let mobileTabsWork = true;
+  const mobileTabDetails = [];
+  for (const [tabName, sectionLabel] of [
+    ["Brief", "Story brief"],
+    ["Draft", "Story draft"],
+    ["Scenes 5", "Scene outline and export"],
+  ]) {
+    const tab = page.getByRole("tab", { name: tabName, exact: true });
+    const tabVisible = await visible(tab);
+    let selected = false;
+    let paneVisible = false;
+    if (tabVisible) {
+      await tab.click();
+      selected = await tab.getAttribute("aria-selected") === "true";
+      paneVisible = await visible(page.locator(`[aria-label="${sectionLabel}"]`));
+    }
+    mobileTabDetails.push(`${tabName}: visible ${tabVisible}, selected ${selected}, pane ${paneVisible}`);
+    mobileTabsWork = mobileTabsWork && tabVisible && selected && paneVisible;
+  }
+  await page.setViewportSize({ width: 1440, height: 900 });
+  check("mobile workspace tabs remain visible and selectable", mobileTabsWork, mobileTabDetails.join("; "));
 
   holdNextSplit = true;
   await page.getByRole("button", { name: "Generate outline", exact: true }).click();
