@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CastPicker } from "@/components/CastPicker";
 import { Icon } from "@/components/Icon";
@@ -9,35 +9,53 @@ import { Button, Segmented, useToast } from "@/components/ui";
 import { useCharacters } from "@/lib/character-store";
 import {
   WRITER_TONES,
-  titleFromPrompt,
   type GenerationKind,
   type WriterToneKey,
 } from "@/lib/constants";
 import {
-  WRITER_DEFAULT_SCENES,
   WRITER_DRAFT_MAX,
   WRITER_IDEA_MAX,
   WRITER_INSTRUCTION_MAX,
-  segmentDraftIntoScenes,
-  suggestSceneCount,
+  type WriterSceneCount,
 } from "@/lib/domain/writer";
 import { requestWriterAction, WriterError } from "@/lib/writer";
-import { usePromptMax } from "@/lib/prompt-limit";
 import { putStoryAsset } from "@/lib/story/records";
 import { useSettings } from "@/lib/repositories/settings.repository";
 import { addAsset } from "@/lib/store";
 import { createWriterStoryAsset } from "@/lib/writer-story";
 
 const DRAFT_KEY = "perabyte.writer.draft.v1";
-const SCENE_CHOICES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+const SCENE_CHOICES: { value: WriterSceneCount; label: string }[] = [
+  { value: "smart", label: "Smart" },
+  { value: 3, label: "3 scenes" },
+  { value: 5, label: "5 scenes" },
+  { value: 8, label: "8 scenes" },
+  { value: 12, label: "12 scenes" },
+];
 
 interface SavedWriterDraft {
   idea: string;
-  sceneCount: number;
+  sceneCount: WriterSceneCount;
   tone: WriterToneKey;
   kind: GenerationKind;
   draft: string;
   updatedAt: number;
+}
+
+interface SceneOutlinePreview {
+  title: string;
+  scenes: string[];
+  signature: string;
+}
+
+function supportedSceneCount(value: unknown): WriterSceneCount {
+  if (value === "smart") return "smart";
+  if (typeof value !== "number" || !Number.isFinite(value)) return "smart";
+  return SCENE_CHOICES.slice(1).reduce((nearest, option) =>
+    Math.abs((option.value as number) - value) < Math.abs((nearest.value as number) - value)
+      ? option
+      : nearest,
+  ).value;
 }
 
 export function WriterView() {
@@ -48,14 +66,15 @@ export function WriterView() {
 
   const [idea, setIdea] = useState("");
   const [activePane, setActivePane] = useState<"brief" | "draft" | "outline">("draft");
-  const [sceneCount, setSceneCount] = useState(WRITER_DEFAULT_SCENES);
+  const [sceneCount, setSceneCount] = useState<WriterSceneCount>("smart");
   const [tone, setTone] = useState<WriterToneKey>("none");
   const [kind, setKind] = useState<GenerationKind>("image");
   const [castIds, setCastIds] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
   const [instruction, setInstruction] = useState("");
   const [undoDraft, setUndoDraft] = useState<string | null>(null);
-  const [busy, setBusy] = useState<null | "write" | "enhance" | "split" | "solo">(null);
+  const [outline, setOutline] = useState<SceneOutlinePreview | null>(null);
+  const [busy, setBusy] = useState<null | "write" | "enhance" | "outline" | "save">(null);
   const [error, setError] = useState<string | null>(null);
   const [errorPane, setErrorPane] = useState<"brief" | "draft" | "outline">("draft");
   // "" = Auto — the Settings "Story writer" pick (or chain order) resolves at
@@ -63,10 +82,6 @@ export function WriterView() {
   const [modelId, setModelId] = useState("");
   const [modelOptions, setModelOptions] = useState<{ value: string; label: string }[]>([]);
   const [tasksWriterId, setTasksWriterId] = useState<string | null>(null);
-  // Live scene-prompt budget (Settings → General): guides the scene-count
-  // suggestion and the split preview's per-scene packing.
-  const promptMax = usePromptMax();
-
   /* Restore the autosaved draft once on mount. */
   useEffect(() => {
     try {
@@ -75,7 +90,7 @@ export function WriterView() {
       const saved = JSON.parse(raw) as Partial<SavedWriterDraft>;
       if (typeof saved.idea === "string") setIdea(saved.idea);
       if (typeof saved.draft === "string") setDraft(saved.draft);
-      if (typeof saved.sceneCount === "number") setSceneCount(saved.sceneCount);
+      if (saved.sceneCount !== undefined) setSceneCount(supportedSceneCount(saved.sceneCount));
       if (saved.tone && saved.tone in WRITER_TONES) setTone(saved.tone);
       if (saved.kind === "image" || saved.kind === "video") setKind(saved.kind);
     } catch {
@@ -144,37 +159,32 @@ export function WriterView() {
     };
   }, []);
 
-  // ~1 scene per prompt-budget of draft characters keeps every scene prompt
-  // inside the render-side budget; the split itself also subdivides
-  // losslessly, so this is guidance, never a blocker.
-  const sceneSuggestion = suggestSceneCount(draft, sceneCount, promptMax);
-
-  // The live split preview: the exact scenes Split will commit, derived from
-  // the draft alone. A `---` line is an explicit divider; without one the
-  // draft packs at ~one budget per scene. Updates as you type.
-  const previewScenes = useMemo(
-    () => segmentDraftIntoScenes(draft, promptMax),
-    [draft, promptMax],
-  );
-
-  const characterNames = useCallback(
-    () =>
-      castIds
-        .map((id) => characters.find((c) => c.id === id)?.name)
-        .filter((n): n is string => Boolean(n)),
+  const characterNames = useMemo(
+    () => castIds
+      .map((id) => characters.find((c) => c.id === id)?.name)
+      .filter((n): n is string => Boolean(n)),
     [castIds, characters],
   );
+  const outlineSignature = useMemo(
+    () => JSON.stringify({ draft, castIds, sceneCount, kind }),
+    [draft, castIds, sceneCount, kind],
+  );
+  const reviewedOutline = outline?.signature === outlineSignature ? outline : null;
 
-  async function runAction(action: "write" | "enhance" | "split" | "solo") {
+  async function runAction(action: "write" | "enhance" | "outline" | "save" | "solo") {
     if (busy) return;
     setError(null);
-    setErrorPane(action === "write" ? "brief" : action === "split" || action === "solo" ? "outline" : "draft");
+    setErrorPane(action === "write" ? "brief" : action === "outline" || action === "save" || action === "solo" ? "outline" : "draft");
     if (action === "write" && !idea.trim()) {
       setError("Describe your story idea first.");
       return;
     }
-    if (action !== "write" && !previewScenes.length) {
+    if ((action === "enhance" || action === "outline") && !draft.trim()) {
       setError("Write or generate a draft first.");
+      return;
+    }
+    if ((action === "save" || action === "solo") && !reviewedOutline) {
+      setError("Generate an outline to review first.");
       return;
     }
     if (action === "enhance" && !instruction.trim()) {
@@ -182,27 +192,30 @@ export function WriterView() {
       return;
     }
 
-    // Split and Use in Solo are instant: they commit the previewed scenes —
-    // no engine call, nothing to wait for beyond the record save.
-    if (action === "split") {
-      setBusy("split");
+    if (action === "save") {
+      const outlineToSave = reviewedOutline;
+      if (!outlineToSave) return;
+      setBusy("save");
       try {
         const asset = createWriterStoryAsset({
-          title: titleFromPrompt(draft),
+          title: outlineToSave.title,
           prose: draft,
-          scenes: previewScenes,
+          scenes: outlineToSave.scenes,
           characterIds: castIds,
           kind,
         });
         const created = await putStoryAsset(asset);
         if (!created) {
           toast.push("We could not save the story. Your draft is still here — retry.", "error");
+          setError("We could not save the story. Your draft and outline are still here.");
           return;
         }
         // Mirror the story page's own create sequence: the server has the
         // record, the local store cache adopts it too (upsert is idempotent).
         addAsset(asset);
         router.push(`/story?id=${asset.id}`);
+      } catch {
+        setError("We could not save the story. Your draft and outline are still here.");
       } finally {
         setBusy(null);
       }
@@ -210,11 +223,12 @@ export function WriterView() {
     }
 
     if (action === "solo") {
-      router.push(`/generate/${kind}?prompt=${encodeURIComponent(previewScenes[0])}`);
+      const firstScene = reviewedOutline?.scenes[0];
+      if (firstScene) router.push(`/generate/${kind}?prompt=${encodeURIComponent(firstScene)}`);
       return;
     }
 
-    setBusy(action);
+    setBusy(action === "outline" || action === "enhance" || action === "write" ? action : null);
     try {
       if (action === "write") {
         const result = await requestWriterAction({
@@ -225,15 +239,16 @@ export function WriterView() {
             // "none" means no tone — the service folds the tone key into the
             // writing instruction, and a literal "Tone: none." reads wrong.
             tone: tone === "none" ? null : tone,
-            characterNames: characterNames(),
+            characterNames,
             uncensored: userSettings.uncensoredEnabled,
           },
           modelId: modelId || undefined,
         });
         setUndoDraft(draft || null);
         setDraft("text" in result ? result.text : draft);
+        setOutline(null);
         setActivePane("draft");
-      } else {
+      } else if (action === "enhance") {
         const result = await requestWriterAction({
           action: "enhance",
           draft,
@@ -243,7 +258,23 @@ export function WriterView() {
         });
         setUndoDraft(draft);
         setDraft("text" in result ? result.text : draft);
+        setOutline(null);
         setInstruction("");
+      } else {
+        const signature = outlineSignature;
+        const result = await requestWriterAction({
+          action: "split",
+          draft,
+          sceneCount,
+          characterNames,
+          kind,
+          uncensored: userSettings.uncensoredEnabled,
+          modelId: modelId || undefined,
+        });
+        if ("scenes" in result && signature === outlineSignature) {
+          setOutline({ title: result.title, scenes: result.scenes, signature });
+          setActivePane("outline");
+        }
       }
     } catch (e) {
       if ((e as Error)?.name === "AbortError") return;
@@ -295,7 +326,7 @@ export function WriterView() {
           options={[
             { value: "brief", label: "Brief", icon: "sparkle" },
             { value: "draft", label: "Draft", icon: "pen" },
-            { value: "outline", label: `Scenes ${previewScenes.length}`, icon: "story" },
+            { value: "outline", label: `Scenes ${reviewedOutline?.scenes.length ?? 0}`, icon: "story" },
           ]}
         />
       </div>
@@ -324,8 +355,11 @@ export function WriterView() {
               label="Scene count"
               placement="up"
               value={String(sceneCount)}
-              options={SCENE_CHOICES.map((n) => ({ value: String(n), label: `${n} scene${n === 1 ? "" : "s"}` }))}
-              onChange={(next) => setSceneCount(Number(next))}
+              options={SCENE_CHOICES.map((choice) => ({ value: String(choice.value), label: choice.label }))}
+              onChange={(next) => {
+                setSceneCount(supportedSceneCount(next === "smart" ? next : Number(next)));
+                setOutline(null);
+              }}
             />
             <PillSelect
               icon="sliders"
@@ -336,8 +370,25 @@ export function WriterView() {
               onChange={(next) => setTone(next as WriterToneKey)}
             />
             <div className="relative">
-              <CastPicker characters={characters} selectedIds={castIds} onChange={setCastIds} />
+              <CastPicker
+                characters={characters}
+                selectedIds={castIds}
+                onChange={(next) => {
+                  setCastIds(next);
+                  setOutline(null);
+                }}
+              />
             </div>
+            {characterNames.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5" aria-label="Available cast">
+                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">Available cast</span>
+                {characterNames.map((name) => (
+                  <span key={name} className="rounded-full border border-primary/30 bg-primary-soft px-2 py-1 text-[10px] font-semibold text-primary">
+                    {name}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
           <div className="mt-3 shrink-0">
             {error && errorPane === "brief" && <p className="mb-2 text-[11px] font-medium text-danger" role="alert">{error}</p>}
@@ -363,7 +414,10 @@ export function WriterView() {
           <textarea
             id="writer-draft"
             value={draft}
-            onChange={(event) => setDraft(event.target.value.slice(0, WRITER_DRAFT_MAX))}
+            onChange={(event) => {
+              setDraft(event.target.value.slice(0, WRITER_DRAFT_MAX));
+              setOutline(null);
+            }}
             rows={20}
             placeholder="Start writing here, or create a first draft from your brief."
             className="mt-2 min-h-20 w-full min-w-0 flex-1 resize-none border-0 bg-transparent px-2 py-1 text-[14px] leading-[1.8] text-ink placeholder:text-muted/70 focus:outline-none focus:ring-0"
@@ -390,7 +444,7 @@ export function WriterView() {
               <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted">Step 03 · Send to studio</p>
               <h2 className="mt-0.5 text-[14px] font-bold text-ink">Scene outline</h2>
             </div>
-            <span className="grid size-8 place-items-center rounded-full bg-primary-soft font-mono text-[11px] font-bold text-primary">{String(previewScenes.length).padStart(2, "0")}</span>
+            <span className="grid size-8 place-items-center rounded-full bg-primary-soft font-mono text-[11px] font-bold text-primary">{String(reviewedOutline?.scenes.length ?? 0).padStart(2, "0")}</span>
           </div>
 
           <div className="mt-3 flex shrink-0 flex-wrap items-center justify-between gap-2">
@@ -399,27 +453,23 @@ export function WriterView() {
               ariaLabel="Story media type"
               size="sm"
               value={kind}
-              onChange={(next) => setKind(next)}
+              onChange={(next) => {
+                setKind(next);
+                setOutline(null);
+              }}
               options={[{ value: "image", label: "Images", icon: "image" }, { value: "video", label: "Video", icon: "video" }]}
             />
           </div>
 
-          {sceneSuggestion !== null && (
-            <div className="mt-3 flex shrink-0 items-center justify-between gap-2 border border-primary/20 bg-primary-soft/50 px-3 py-2">
-              <p className="text-[10px] leading-relaxed text-ink-soft">Long draft · {sceneSuggestion} scenes may fit better.</p>
-              <button type="button" onClick={() => setSceneCount(sceneSuggestion)} className="shrink-0 text-[10px] font-bold text-primary hover:underline">Apply</button>
-            </div>
-          )}
-
-          {previewScenes.length === 0 ? (
+          {!reviewedOutline ? (
             <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-2 py-5 text-center">
               <span className="grid size-10 shrink-0 place-items-center border border-dashed border-border-strong text-muted"><Icon name="story" size={17} /></span>
               <p className="mt-3 text-[12px] font-semibold text-ink">Scenes show up here</p>
-              <p className="mt-1 max-w-[230px] text-[11px] leading-relaxed text-muted">Add text to your draft. Use <code className="font-mono text-primary">---</code> on its own line to choose a scene break.</p>
+              <p className="mt-1 max-w-[230px] text-[11px] leading-relaxed text-muted">Write a draft, then generate a scene outline to review here.</p>
             </div>
           ) : (
             <div className="thin-scrollbar mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
-              {previewScenes.map((scene, index) => (
+              {reviewedOutline.scenes.map((scene, index) => (
                 <article key={index} className="border-l-2 border-primary bg-raised px-3 py-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-primary">Scene {String(index + 1).padStart(2, "0")}</span>
@@ -432,13 +482,16 @@ export function WriterView() {
           )}
 
           <div className="mt-3 shrink-0 border-t border-border pt-3">
-            <p className="mb-2 text-[10px] leading-relaxed text-muted">{previewScenes.length ? `${previewScenes.length} scene${previewScenes.length === 1 ? "" : "s"} ready. Save the sequence or continue with the first scene.` : "Your draft is split into scenes automatically."}</p>
+            <p className="mb-2 text-[10px] leading-relaxed text-muted">{reviewedOutline ? `${reviewedOutline.scenes.length} reviewed scene${reviewedOutline.scenes.length === 1 ? "" : "s"} ready. Create the story or continue with the first scene.` : "Generate an outline before creating a story."}</p>
             {error && errorPane === "outline" && <p className="mb-2 text-[11px] font-medium text-danger" role="alert">{error}</p>}
             <div className="flex flex-col gap-2">
-              <Button variant="primary" block icon="arrow-right" onClick={() => runAction("split")} disabled={busy !== null || !previewScenes.length}>
-                {busy === "split" ? "Saving story…" : `Create ${previewScenes.length} scene${previewScenes.length === 1 ? "" : "s"}`}
+              <Button variant="primary" block icon="sparkle" onClick={() => runAction("outline")} disabled={busy !== null || !draft.trim()}>
+                {busy === "outline" ? "Generating outline…" : "Generate outline"}
               </Button>
-              <Button variant="secondary" block size="sm" icon={kind === "image" ? "image" : "video"} onClick={() => runAction("solo")} disabled={busy !== null || !previewScenes.length}>
+              <Button variant="primary" block icon="arrow-right" onClick={() => runAction("save")} disabled={busy !== null || !reviewedOutline}>
+                {busy === "save" ? "Creating story…" : "Create story"}
+              </Button>
+              <Button variant="secondary" block size="sm" icon={kind === "image" ? "image" : "video"} onClick={() => runAction("solo")} disabled={busy !== null || !reviewedOutline}>
                 Open first scene in {kind === "image" ? "image" : "video"} studio
               </Button>
             </div>
