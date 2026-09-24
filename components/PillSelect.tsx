@@ -17,14 +17,13 @@ export interface PillOption {
 }
 
 const PILL_BASE =
-  "inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12.5px] font-semibold transition-colors";
+  "inline-flex h-9 items-center gap-1.5 rounded-[8px] border px-3 text-[12.5px] font-semibold transition-colors";
 const PILL_IDLE =
   "border-border bg-raised text-ink-soft hover:border-border-strong hover:text-ink";
 
 /**
- * A badge-shaped dropdown. Values live inline in the prompt box so the whole
- * studio stays on one screen, without a separate settings column. Shared by
- * the prompt composer and the character review step.
+ * Compact dropdown used in the writer, review step, and conversion dialog.
+ * The composer opts into the taller labeled-field presentation.
  */
 export function PillSelect({
   icon,
@@ -34,6 +33,7 @@ export function PillSelect({
   onChange,
   align = "left",
   placement = "up",
+  presentation = "chip",
   disabled = false,
   disabledHint,
   tail,
@@ -44,6 +44,8 @@ export function PillSelect({
   options: PillOption[];
   onChange: (value: string) => void;
   align?: "left" | "right";
+  /** Field treatment for labeled controls inside the generator settings grid. */
+  presentation?: "chip" | "field";
   /** Panel opens up (default — composer pills live near the viewport bottom)
    * or down (pills in page headers near the top would clip above the window). */
   placement?: "up" | "down";
@@ -173,7 +175,10 @@ export function PillSelect({
         onClick={() => {
           if (!disabled) setOpen((v) => !v);
         }}
-        className={`${PILL_BASE} ${
+        className={`${presentation === "field"
+          ? "flex h-12 w-full min-w-0 items-center gap-2 rounded-[8px] border px-2.5 text-left transition-colors"
+          : PILL_BASE
+        } ${
           disabled
             ? "cursor-not-allowed border-border bg-surface text-muted"
             : open
@@ -181,9 +186,22 @@ export function PillSelect({
               : PILL_IDLE
         }`}
       >
-        <Icon name={icon} size={13} />
-        <span className="whitespace-nowrap">{current?.label ?? value}</span>
-        <Icon name="chevron-down" size={12} className="opacity-70" />
+        {presentation === "field" ? (
+          <>
+            <Icon name={icon} size={15} className="shrink-0" />
+            <span className="min-w-0 flex-1 leading-tight">
+              <span className="block text-[10px] font-bold uppercase tracking-[0.1em] text-muted">{label}</span>
+              <span className="mt-0.5 block truncate text-[12.5px] font-semibold text-ink-soft">{current?.label ?? value}</span>
+            </span>
+            <Icon name="chevron-down" size={13} className="shrink-0 opacity-70" />
+          </>
+        ) : (
+          <>
+            <Icon name={icon} size={13} />
+            <span className="whitespace-nowrap">{current?.label ?? value}</span>
+            <Icon name="chevron-down" size={12} className="opacity-70" />
+          </>
+        )}
       </button>
 
       {open && (

@@ -9,6 +9,8 @@ const COLORS = [
   { name: "Warm stock", role: "Canvas", value: "#F4F1E9", text: "#202B27" },
   { name: "Raised paper", role: "Panels", value: "#FBF9F4", text: "#202B27" },
   { name: "Soft surface", role: "Grouping", value: "#E9E5DB", text: "#202B27" },
+  { name: "Ink", role: "Headings", value: "#202B27", text: "#FFFFFF" },
+  { name: "Muted text", role: "Supporting copy", value: "#5F6B64", text: "#FFFFFF" },
   { name: "Clay", role: "Wayfinding", value: "#C96C4C", text: "#FFFFFF" },
 ];
 

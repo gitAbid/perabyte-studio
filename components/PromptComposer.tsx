@@ -29,8 +29,6 @@ import type { ModelVideoLimits } from "@/lib/domain/models";
 import type { SavedCharacter } from "@/lib/character-store";
 import type { GenerationSettings } from "@/lib/types";
 
-const PILL_BASE =
-  "inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12.5px] font-semibold transition-colors";
 const PILL_IDLE =
   "border-border bg-raised text-ink-soft hover:border-border-strong hover:text-ink";
 
@@ -77,13 +75,14 @@ function AdvancedPanel({
         aria-label="More options"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className={`inline-flex size-8 items-center justify-center rounded-full border transition-colors ${
+        className={`inline-flex h-9 items-center gap-2 rounded-[8px] border px-2.5 text-[11.5px] font-semibold transition-colors ${
           open
             ? "border-primary bg-primary-soft text-primary"
             : PILL_IDLE
         }`}
       >
         <Icon name="sliders" size={14} />
+        More options
       </button>
 
       {open && (
@@ -96,45 +95,18 @@ function AdvancedPanel({
 
           <div className="mt-3 space-y-3.5">
             {!hideRenderCount && (
-              <>
-                <div>
-                  <p className="text-[12px] font-semibold text-ink-soft">Variations</p>
-                  <div className="mt-1.5 flex gap-1.5">
-                    {VARIANT_COUNTS.map((n) => (
-                      <button
-                        key={n}
-                        type="button"
-                        aria-pressed={settings.count === n}
-                        onClick={() => onChange({ count: n })}
-                        className={`h-7 flex-1 rounded-[9px] border text-[12px] font-semibold transition-colors ${
-                          settings.count === n
-                            ? "border-primary bg-primary-strong text-white"
-                            : "border-border bg-raised text-ink-soft hover:border-border-strong"
-                        }`}
-                      >
-                        {n}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <label className="flex items-center justify-between gap-3">
-                  <span className="text-[12px] font-semibold text-ink-soft">
-                    Lock seed
-                  </span>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="random"
-                    value={settings.seed}
-                    aria-label="Seed"
-                    onChange={(e) =>
-                      onChange({ seed: e.target.value.replace(/[^\d]/g, "") })
-                    }
-                    className="h-8 w-28 rounded-[9px] border border-border-strong bg-raised px-2.5 text-[12.5px] tabular-nums text-ink placeholder:text-muted focus:border-primary focus:outline-none"
-                  />
-                </label>
-              </>
+              <label className="flex items-center justify-between gap-3">
+                <span className="text-[12px] font-semibold text-ink-soft">Lock seed</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="random"
+                  value={settings.seed}
+                  aria-label="Seed"
+                  onChange={(e) => onChange({ seed: e.target.value.replace(/[^\d]/g, "") })}
+                  className="h-9 w-32 rounded-[8px] border border-border-strong bg-raised px-2.5 text-[12.5px] tabular-nums text-ink placeholder:text-muted focus:border-primary focus:outline-none"
+                />
+              </label>
             )}
 
             <div>
@@ -350,15 +322,20 @@ export function PromptComposer({
         </div>
       )}
 
-      <label htmlFor="prompt-input" className="sr-only">
-        {kind === "video" ? "Describe your video" : "Describe your image"}
-      </label>
       {/* Tinted prompt surface; focus eases the tint instead of drawing a ring. */}
       <div
         className={`mt-3 flex min-h-0 flex-1 flex-col rounded-[8px] border px-3.5 pb-2 pt-3 transition-colors ${
           promptError ? "border-danger bg-surface" : "border-border bg-surface focus-within:bg-raised"
         }`}
       >
+        <div className="mb-2 flex shrink-0 items-center justify-between gap-3">
+          <label htmlFor="prompt-input" className="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">
+            {kind === "video" ? "Video prompt" : "Image prompt"}
+          </label>
+          <span className={`text-[11px] tabular-nums ${prompt.length > promptMax - 60 ? "text-warning" : "text-muted"}`}>
+            {prompt.length} / {promptMax}
+          </span>
+        </div>
         <textarea
           id="prompt-input"
           rows={3}
@@ -418,71 +395,68 @@ export function PromptComposer({
         </p>
       )}
 
-      {/* Settings badges live inline in the prompt box. Model leads so the
-          active engine is always the first thing you see. */}
-      <div className="relative mt-3 flex flex-wrap items-center gap-1.5 border-t border-border pt-3">
+      {/* Render settings use labeled controls so a model or aspect change is
+          clear without having to decode the icon. */}
+      <section className="relative mt-4 border-t border-border pt-3" aria-label="Render settings">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-[12px] font-bold text-ink">Render settings</h3>
+          <div className="relative flex flex-wrap items-center gap-1.5">
+            {onCharactersChange && characters && characters.length > 0 && (
+              <CastPicker characters={characters} selectedIds={characterIds ?? []} onChange={onCharactersChange} />
+            )}
+            {loraEntries.length > 0 && (
+              <LoraPicker entries={loraEntries} selection={settings.loras ?? []} onChange={(loras) => onSettingsChange({ loras })} maxPerRequest={loraMaxPerRequest} />
+            )}
+            <AdvancedPanel
+              settings={settings}
+              onChange={onSettingsChange}
+              onCopyPrompt={onCopyPrompt}
+              hideRenderCount={hideRenderCount}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
         {(() => {
           if (!models || models.length === 0 || !onModelChange) return null;
           const sections = modelPickerSections(models);
           return (
-            <PillSelect
-              icon="chip"
-              label="Model"
-              value={modelId ?? models[0].id}
-              options={sections.recommended}
-              tail={
-                sections.tail.length
-                  ? { label: sections.tailLabel, options: sections.tail }
-                  : undefined
-              }
-              onChange={onModelChange}
-            />
+            <div className="col-span-2 min-w-0">
+              <PillSelect
+                presentation="field"
+                icon="chip"
+                label="Model"
+                value={modelId ?? models[0].id}
+                options={sections.recommended}
+                tail={sections.tail.length ? { label: sections.tailLabel, options: sections.tail } : undefined}
+                onChange={onModelChange}
+              />
+            </div>
           );
         })()}
-        {onCharactersChange && characters && characters.length > 0 && (
-          <CastPicker
-            characters={characters}
-            selectedIds={characterIds ?? []}
-            onChange={onCharactersChange}
-          />
-        )}
         {loraEntries.length > 0 && (
-          <>
+          <div className="min-w-0">
             <PillSelect
+              presentation="field"
               icon="sparkle"
               label="Preset"
-              value={
-                matchLoraPreset(settings.loras ?? [])?.id ??
-                (settings.loras?.length ? "custom" : "none")
-              }
+              value={matchLoraPreset(settings.loras ?? [])?.id ?? (settings.loras?.length ? "custom" : "none")}
               options={[
                 { value: "none", label: "None" },
                 { value: "custom", label: "Custom" },
-                ...LORA_PRESETS.filter((p) => !p.mature || allowNsfwLoras).map((preset) => ({
-                  value: preset.id,
-                  label: preset.label,
-                  hint: preset.hint,
-                  group: preset.mature ? "Mature" : "Looks",
-                })),
+                ...LORA_PRESETS.filter((p) => !p.mature || allowNsfwLoras).map((preset) => ({ value: preset.id, label: preset.label, hint: preset.hint, group: preset.mature ? "Mature" : "Looks" })),
               ]}
               onChange={(value) => {
-                // "custom" is a state label only — hand-tweaks happen in the
-                // LoRA popover; picking it here changes nothing.
                 if (value === "custom") return;
                 const preset = LORA_PRESETS.find((p) => p.id === value);
                 onSettingsChange({ loras: preset ? preset.loras.map((l) => ({ ...l })) : [] });
               }}
             />
-            <LoraPicker
-              entries={loraEntries}
-              selection={settings.loras ?? []}
-              onChange={(loras) => onSettingsChange({ loras })}
-              maxPerRequest={loraMaxPerRequest}
-            />
-          </>
+          </div>
         )}
         {allowed.aspects.length > 0 && (
           <PillSelect
+            presentation="field"
             icon="grid"
             label="Aspect ratio"
             value={settings.aspect}
@@ -498,6 +472,7 @@ export function PromptComposer({
         )}
         {allowed.resolutions.length > 0 && (
           <PillSelect
+            presentation="field"
             icon="sparkle"
             label="Resolution"
             value={settings.resolution}
@@ -512,6 +487,7 @@ export function PromptComposer({
           />
         )}
         <PillSelect
+          presentation="field"
           icon="image"
           label="Style"
           // Styleless models show a neutral value instead of a stale preset.
@@ -527,6 +503,7 @@ export function PromptComposer({
         />
         {kind === "video" && (
           <PillSelect
+            presentation="field"
             icon="clock"
             label="Duration"
             value={settings.duration}
@@ -538,6 +515,7 @@ export function PromptComposer({
         )}
         {!hideRenderCount && (
           <PillSelect
+            presentation="field"
             icon="layers"
             label="Variations"
             value={String(settings.count)}
@@ -548,24 +526,10 @@ export function PromptComposer({
             onChange={(value) => onSettingsChange({ count: Number(value) })}
           />
         )}
-
-        <AdvancedPanel
-          settings={settings}
-          onChange={onSettingsChange}
-          onCopyPrompt={onCopyPrompt}
-          hideRenderCount={hideRenderCount}
-        />
-      </div>
+        </div>
+      </section>
 
       <div className="mt-2.5 flex shrink-0 items-center gap-2">
-        {/* Amber as the prompt approaches the configured ceiling. */}
-        <span
-          className={`text-[11.5px] tabular-nums text-muted ${
-            prompt.length > promptMax - 60 ? "text-warning" : ""
-          }`}
-        >
-          {prompt.length}/{promptMax}
-        </span>
         <span className="hidden text-[11.5px] text-muted lg:block">
           · ⌘ + Enter to {(actionLabel ?? "Generate").toLowerCase()}
         </span>

@@ -6,7 +6,7 @@ import { MAX_SCENE_CHARACTERS } from "@/lib/character";
 import type { SavedCharacter } from "@/lib/character-store";
 
 /**
- * Cast picker pill + popover for the composer's badge row. Multi-select over
+ * Cast picker control + popover for the composer's settings row. Multi-select over
  * the saved characters (unlike the other pill dropdowns): each checked entry
  * is folded into the scene prompt at generate time, in check order, capped at
  * MAX_SCENE_CHARACTERS because text-only identity degrades fast past that.
@@ -65,7 +65,7 @@ export function CastPicker({
         aria-expanded={open}
         title="Attach saved characters — their look and outfit are folded into the scene"
         onClick={() => setOpen((v) => !v)}
-        className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12.5px] font-semibold transition-colors ${
+        className={`inline-flex h-9 items-center gap-1.5 rounded-[8px] border px-2.5 text-[12px] font-semibold transition-colors ${
           open || selectedIds.length ? "border-primary bg-primary-soft text-primary" : PILL_IDLE
         }`}
       >

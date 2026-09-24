@@ -365,14 +365,14 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
     // crushing the panels.
     <div className="mx-auto flex w-full max-w-[1680px] flex-1 flex-col px-4 py-5 sm:px-6 sm:py-6 lg:h-dvh lg:flex-none lg:overflow-hidden xl:px-9">
       <header className="flex shrink-0 flex-wrap items-end justify-between gap-4 border-b border-border pb-4">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex w-full items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <div className="min-w-0">
-              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-accent">Create / {kind === "image" ? "Still" : "Motion"}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-accent">Create / {kind === "image" ? "Still" : "Motion"}</p>
               <h1 className="mt-1 truncate text-[27px] font-medium leading-none tracking-[-0.04em] text-ink sm:text-[32px]">
                 {copy.title}
               </h1>
-              <p className="mt-1 hidden truncate text-[11px] text-muted lg:block">
+              <p className="mt-1 hidden truncate text-[12px] text-muted lg:block">
                 {copy.subtitle}
               </p>
             </div>
@@ -462,18 +462,14 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
           />
         </div>
 
-        {/* Preview — the ratio-locked canvas sits top-left; a strip below the
+        {/* Preview — the ratio-locked canvas sits in the middle of the stage; a strip below the
             canvas shows variations, or previous generations when there are
             none, or examples on a first run. */}
         <div className="studio-preview-panel relative order-2 flex min-h-[300px] flex-col gap-3 overflow-hidden border border-border bg-raised p-3.5 sm:min-h-[360px] sm:p-4 lg:min-h-0">
-          {/* Canvas — a size container so ratio boxes fit-contain within it.
-              The box hugs its ratio and hangs from the top, centred. */}
+          {/* Canvas — a size container so ratio boxes fit-contain and center
+              within the available stage at every aspect ratio. */}
           <div
-            className={`studio-canvas relative flex min-h-0 flex-1 [container-type:size] ${
-              job.phase === "idle" || job.phase === "completed"
-                ? "items-start justify-center"
-                : "items-center justify-center"
-            }`}
+            className="studio-canvas relative flex min-h-0 flex-1 items-center justify-center [container-type:size]"
           >
             {job.phase === "idle" && (
               <div

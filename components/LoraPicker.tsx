@@ -7,7 +7,7 @@ import type { LoraOption } from "@/lib/providers/sogni/lora-catalog";
 import type { LoraSelection } from "@/lib/types";
 
 /**
- * LoRA picker pill + popover for the composer's badge row. Entries are the
+ * LoRA picker control + popover for the composer's settings row. Entries are the
  * visible catalog for the active model (model join + nsfw gate applied by the
  * parent); toggling a LoRA on starts it at its own `default` strength — which
  * is often 0 or 0.8, deliberately NOT the provider's implicit 1.0.
@@ -142,7 +142,7 @@ export function LoraPicker({
         aria-expanded={open}
         title="LoRA adapters — style, lighting and character sliders"
         onClick={() => setOpen((v) => !v)}
-        className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12.5px] font-semibold transition-colors ${
+        className={`inline-flex h-9 items-center gap-1.5 rounded-[8px] border px-2.5 text-[12px] font-semibold transition-colors ${
           open || selection.length ? "border-primary bg-primary-soft text-primary" : PILL_IDLE
         }`}
       >

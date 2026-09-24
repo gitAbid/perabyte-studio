@@ -1056,9 +1056,9 @@ export default function StoryPage() {
     <div className="mx-auto flex w-full max-w-[1680px] flex-1 flex-col px-4 py-5 sm:px-6 sm:py-6 lg:h-dvh lg:flex-none lg:overflow-hidden xl:px-9">
       <header className="flex shrink-0 flex-wrap items-end justify-between gap-4 border-b border-border pb-4">
           <div className="min-w-0">
-            <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-accent">Create / Sequence</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-accent">Create / Sequence</p>
             <h1 className="mt-1 truncate text-[27px] font-medium leading-none tracking-[-0.04em] text-ink sm:text-[32px]">Scene studio</h1>
-            <p className="mt-1 hidden truncate text-[11px] text-muted lg:block">Compose a sequence and carry the visual thread between frames.</p>
+            <p className="mt-1 hidden truncate text-[12px] text-muted lg:block">Compose a sequence and carry the visual thread between frames.</p>
           </div>
 
           {/* New story clears the queue from the UI (and stops any run);
@@ -1325,12 +1325,12 @@ export default function StoryPage() {
               matter how many scenes there are or which aspect ratio they use. */}
           <div className="mb-3 flex shrink-0 items-center justify-between border-b border-border pb-3">
             <div>
-              <p className="text-[9px] font-bold uppercase tracking-[0.17em] text-accent">Storyboard</p>
-              <p className="mt-0.5 text-[12px] font-semibold text-ink">{scenes.length || 1} scene{(scenes.length || 1) === 1 ? "" : "s"} in sequence</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-accent">Storyboard</p>
+              <p className="mt-0.5 text-[13px] font-semibold text-ink">{scenes.length || 1} scene{(scenes.length || 1) === 1 ? "" : "s"} in sequence</p>
             </div>
             <span className="font-mono text-[10px] text-muted">{String(completedScenes).padStart(2, "0")} / {String(scenes.length || 1).padStart(2, "0")} ready</span>
           </div>
-          <div className="thin-scrollbar grid flex-1 content-start gap-x-3 gap-y-5 sm:grid-cols-2 lg:min-h-0 lg:grid-cols-3 lg:overflow-y-auto lg:pr-1">
+          <div className={`thin-scrollbar grid flex-1 gap-x-4 gap-y-5 sm:grid-cols-2 lg:min-h-0 lg:grid-cols-2 lg:overflow-y-auto lg:pr-1 2xl:grid-cols-3 ${scenes.length <= 2 ? "content-center" : "content-start"}`}>
             {Array.from({ length: Math.max(2, scenes.length) }, (_, index) => {
               const typed = scenes[index] as StoryScene | undefined;
               // Per-scene overrides are visible in the grid: tiles show the
