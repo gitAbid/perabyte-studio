@@ -356,14 +356,10 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
   }, [assets, assetId]);
 
   return (
-    // `main` is a flex column: on desktop the workspace stretches to exactly
-    // the viewport (h-dvh is the hard boundary — the body only has
-    // min-h-dvh, so min-h-0 alone would let tall content grow the page) and
-    // nothing may spill past it (overflow hidden) — the composer and preview
-    // panels scroll inside themselves instead of scrolling the page; on
-    // mobile the stack flows naturally and the page scrolls instead of
-    // crushing the panels.
-    <div className="mx-auto flex w-full max-w-[1680px] flex-1 flex-col px-4 py-5 sm:px-6 sm:py-6 lg:h-dvh lg:flex-none lg:overflow-hidden xl:px-9">
+    // `main` is a flex column: at xl/1280px and wider the workspace is fixed
+    // to the viewport and its panels scroll internally. Below xl, the panels
+    // stack and the page scrolls naturally.
+    <div className="mx-auto flex w-full max-w-[1680px] flex-1 flex-col px-4 py-5 sm:px-6 sm:py-6 xl:h-dvh xl:flex-none xl:overflow-hidden xl:px-9">
       <header className="flex shrink-0 flex-wrap items-end justify-between gap-4 border-b border-border pb-4">
         <div className="flex w-full items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -400,12 +396,11 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
       </header>
 
       {/* ---------------------------- Workspace ---------------------------- */}
-      <div className="mt-4 grid min-w-0 gap-4 lg:mt-5 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(360px,440px)_minmax(0,1fr)] lg:items-stretch">
-        {/* Composer — first in the stack on every size; it fills its column
-            on desktop so no space is wasted above or below it. On short
-            desktop viewports the column scrolls internally (expanded picker
-            sections) rather than growing the page. */}
-        <div className="order-1 flex min-h-0 min-w-0 flex-col thin-scrollbar lg:overflow-y-auto">
+      <div className="mt-4 grid min-w-0 gap-4 lg:mt-5 xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(360px,440px)_minmax(0,1fr)] xl:items-stretch">
+        {/* Composer — first in the stack on every size; at xl it fills its
+            column, scrolling internally when expanded picker sections exceed
+            the available height. */}
+        <div className="order-1 flex min-h-0 min-w-0 flex-col thin-scrollbar xl:overflow-y-auto">
           <PromptComposer
             kind={kind}
             prompt={prompt}
@@ -465,7 +460,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
         {/* Preview — the ratio-locked canvas sits in the middle of the stage; a strip below the
             canvas shows variations, or previous generations when there are
             none, or examples on a first run. */}
-        <div className="studio-preview-panel relative order-2 flex min-h-[300px] flex-col gap-3 overflow-hidden border border-border bg-raised p-3.5 sm:min-h-[360px] sm:p-4 lg:min-h-0">
+        <div className="studio-preview-panel relative order-2 flex min-h-[300px] flex-col gap-3 overflow-hidden border border-border bg-raised p-3.5 sm:min-h-[360px] sm:p-4 xl:min-h-0">
           {/* Canvas — a size container so ratio boxes fit-contain and center
               within the available stage at every aspect ratio. */}
           <div

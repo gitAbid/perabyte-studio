@@ -1047,13 +1047,10 @@ export default function StoryPage() {
   );
 
   return (
-    // Same workspace contract as the solo generator: on desktop the two panels
-    // stretch to exactly the viewport (h-dvh is the hard boundary — the body
-    // only has min-h-dvh, so min-h-0 alone would let tall content grow the
-    // page) and nothing may spill past it (overflow hidden) — the scenes grid
-    // and composer scroll inside their own panels instead. On mobile the
-    // stack flows and the page scrolls when scenes grow beyond it.
-    <div className="mx-auto flex w-full max-w-[1680px] flex-1 flex-col px-4 py-5 sm:px-6 sm:py-6 lg:h-dvh lg:flex-none lg:overflow-hidden xl:px-9">
+    // Same workspace contract as the solo generator: at xl/1280px and wider
+    // the workspace is fixed to the viewport and its panels scroll internally.
+    // Below xl, the composer and storyboard stack and the page scrolls naturally.
+    <div className="mx-auto flex w-full max-w-[1680px] flex-1 flex-col px-4 py-5 sm:px-6 sm:py-6 xl:h-dvh xl:flex-none xl:overflow-hidden xl:px-9">
       <header className="flex shrink-0 flex-wrap items-end justify-between gap-4 border-b border-border pb-4">
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-accent">Create / Sequence</p>
@@ -1118,10 +1115,10 @@ export default function StoryPage() {
       </header>
 
       {/* ---------------------------- Workspace ---------------------------- */}
-      <div className="mt-4 grid min-w-0 gap-4 sm:mt-5 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(360px,440px)_minmax(0,1fr)] lg:items-stretch">
-        {/* Composer column — scrolls internally at lg when the picker sections
-            outgrow a short viewport, so the page itself never scrolls. */}
-        <div className="order-1 flex min-h-0 min-w-0 flex-col thin-scrollbar lg:overflow-y-auto">
+      <div className="mt-4 grid min-w-0 gap-4 sm:mt-5 xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(360px,440px)_minmax(0,1fr)] xl:items-stretch">
+        {/* Composer column — scrolls internally at xl when picker sections
+            outgrow the available height. */}
+        <div className="order-1 flex min-h-0 min-w-0 flex-col thin-scrollbar xl:overflow-y-auto">
           <div className="flex min-h-0 flex-1 flex-col">
             <PromptComposer
               kind={activeKind}
@@ -1308,9 +1305,9 @@ export default function StoryPage() {
           </span>
         </div>
 
-        {/* Scenes column — the panel keeps the viewport height at lg and the
+        {/* Scenes column — the panel keeps the viewport height at xl and the
             scene grid scrolls inside it; the action bar stays pinned below. */}
-        <div className="order-2 relative flex min-h-[300px] min-w-0 flex-col border border-border bg-surface p-3.5 sm:min-h-[360px] sm:p-4 lg:min-h-0 lg:overflow-hidden">
+        <div className="order-2 relative flex min-h-[300px] min-w-0 flex-col border border-border bg-surface p-3.5 sm:min-h-[360px] sm:p-4 xl:min-h-0 xl:overflow-hidden">
           {convertOpen && (
             <ConvertDialog
               clipCount={clipCount}
@@ -1320,7 +1317,7 @@ export default function StoryPage() {
               onClose={() => setConvertOpen(false)}
             />
           )}
-          {/* Scenes flow top-left, left to right, wrapping downward. At lg the
+          {/* Scenes flow top-left, left to right, wrapping downward. At xl the
               grid scrolls within the panel instead of growing the page — no
               matter how many scenes there are or which aspect ratio they use. */}
           <div className="mb-3 flex shrink-0 items-center justify-between border-b border-border pb-3">
@@ -1330,7 +1327,7 @@ export default function StoryPage() {
             </div>
             <span className="font-mono text-[10px] text-muted">{String(completedScenes).padStart(2, "0")} / {String(scenes.length || 1).padStart(2, "0")} ready</span>
           </div>
-          <div className={`thin-scrollbar grid flex-1 gap-x-4 gap-y-5 sm:grid-cols-2 lg:min-h-0 lg:grid-cols-2 lg:overflow-y-auto lg:pr-1 2xl:grid-cols-3 ${scenes.length <= 2 ? "content-center" : "content-start"}`}>
+          <div className={`thin-scrollbar grid flex-1 gap-x-4 gap-y-5 sm:grid-cols-2 xl:min-h-0 xl:grid-cols-2 xl:overflow-y-auto xl:pr-1 2xl:grid-cols-3 ${scenes.length <= 2 ? "content-center" : "content-start"}`}>
             {Array.from({ length: Math.max(2, scenes.length) }, (_, index) => {
               const typed = scenes[index] as StoryScene | undefined;
               // Per-scene overrides are visible in the grid: tiles show the
