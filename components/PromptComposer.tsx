@@ -282,6 +282,7 @@ export function PromptComposer({
     loraEntries.length > 0;
   const [renderOptionsExpanded, setRenderOptionsExpanded] = useState(false);
   const renderOptionsPanelId = useId();
+  const promptInputId = `${renderOptionsPanelId}-prompt`;
   const attachedCharacters = (characters ?? []).filter((character) =>
     characterIds?.includes(character.id),
   );
@@ -354,7 +355,7 @@ export function PromptComposer({
         }`}
       >
         <div className="mb-2 flex shrink-0 items-center justify-between gap-3">
-          <label htmlFor="prompt-input" className="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">
+          <label htmlFor={promptInputId} className="text-[11px] font-bold uppercase tracking-[0.12em] text-ink-soft">
             {kind === "video" ? "Video prompt" : "Image prompt"}
           </label>
           <span className={`text-[11px] tabular-nums ${prompt.length > promptMax - 60 ? "text-warning" : "text-muted"}`}>
@@ -362,7 +363,7 @@ export function PromptComposer({
           </span>
         </div>
         <textarea
-          id="prompt-input"
+          id={promptInputId}
           rows={3}
           value={prompt}
           maxLength={promptMax}
