@@ -303,7 +303,7 @@ export function PromptComposer({
     // prompt area absorbs the available height instead of leaving dead space.
     // The card keeps a static border; focusing the prompt only shifts its
     // surface tone slightly — no selection ring.
-    <div className="flex h-full min-h-0 flex-col rounded-[11px] border border-border bg-raised p-4 shadow-card sm:p-5">
+    <div className="flex h-full min-h-0 flex-col rounded-[11px] border border-border bg-raised p-4 shadow-card sm:p-5 xl:overflow-y-auto">
       <div className="flex shrink-0 items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[13px] font-bold text-ink">{title}</p>
@@ -350,7 +350,7 @@ export function PromptComposer({
 
       {/* Tinted prompt surface; focus eases the tint instead of drawing a ring. */}
       <div
-        className={`mt-3 flex min-h-0 flex-1 flex-col rounded-[8px] border px-3.5 pb-2 pt-3 transition-colors ${
+        className={`mt-3 flex min-h-[176px] flex-1 flex-col rounded-[8px] border px-3.5 pb-2 pt-3 transition-colors ${
           promptError ? "border-danger bg-surface" : "border-border bg-surface focus-within:bg-raised"
         }`}
       >
@@ -423,7 +423,7 @@ export function PromptComposer({
 
       {/* Render settings use labeled controls so a model or aspect change is
           clear without having to decode the icon. */}
-      <section className="@container relative mt-4 border-t border-border pt-3" aria-label="Render settings">
+      <section className="@container relative mt-4 shrink-0 border-t border-border pt-3" aria-label="Render settings">
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-[12px] font-bold text-ink">Render settings</h3>
           <div className="relative flex flex-wrap items-center gap-1.5">
