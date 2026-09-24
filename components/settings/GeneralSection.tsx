@@ -25,12 +25,14 @@ export function GeneralSection({
   enhanceModel,
   writerModel,
   promptMaxChars,
+  sceneConsistency,
   onUpdate,
 }: {
   providers: ProviderView[];
   enhanceModel: string | null;
   writerModel: string | null;
   promptMaxChars: number;
+  sceneConsistency: boolean;
   onUpdate: OnUpdate;
 }) {
   return (
@@ -40,6 +42,7 @@ export function GeneralSection({
       description="Content preferences and default models"
     >
       <ContentPreferencesCard />
+      <SceneConsistencyCard sceneConsistency={sceneConsistency} onUpdate={onUpdate} />
       <TaskModelsCard
         providers={providers}
         enhanceModel={enhanceModel}
@@ -48,6 +51,41 @@ export function GeneralSection({
       />
       <PromptLimitCard promptMaxChars={promptMaxChars} onUpdate={onUpdate} />
     </SectionShell>
+  );
+}
+
+function SceneConsistencyCard({
+  sceneConsistency,
+  onUpdate,
+}: {
+  sceneConsistency: boolean;
+  onUpdate: OnUpdate;
+}) {
+  const toast = useToast();
+  return (
+    <div className="rounded-[14px] border border-border bg-surface p-4">
+      <p className="text-[12px] font-bold uppercase tracking-wide text-muted">
+        Story
+      </p>
+      <div className="mt-3">
+        <Toggle
+          label="Scene consistency"
+          description="Keyframe every scene from your characters and locations before animating. A vision check scores each keyframe against the scene; a low score re-rolls it once before the animation starts. On by default."
+          checked={sceneConsistency}
+          onChange={(next) => {
+            onUpdate({ sceneConsistency: next })
+              .then(() =>
+                toast.push(
+                  next
+                    ? "Scene consistency on — video scenes anchor to keyframes."
+                    : "Scene consistency off — scenes animate straight from prompts.",
+                ),
+              )
+              .catch(() => undefined);
+          }}
+        />
+      </div>
+    </div>
   );
 }
 

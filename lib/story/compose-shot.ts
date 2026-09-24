@@ -64,9 +64,10 @@ function locationTextKey(state: SceneState, locations: readonly ShotLocation[]):
 /**
  * Cast order and outfits for this scene: `state.characters` wins when present
  * (presence order becomes First/Second/Third, `outfit` overrides the default),
- * otherwise the story cast order applies unchanged.
+ * otherwise the story cast order applies unchanged. Shared with the keyframe
+ * runner so both label people in the same order.
  */
-function sceneCast(state: SceneState | undefined, ctx: ShotContext): CharacterRow[] {
+export function sceneCast(state: SceneState | undefined, ctx: ShotContext): CharacterRow[] {
   const byId = new Map(ctx.characters.map((c) => [c.id, c]));
   const ordered = state?.characters?.length
     ? state.characters

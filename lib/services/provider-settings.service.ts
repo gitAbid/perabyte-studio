@@ -78,6 +78,8 @@ export interface ProviderSettingsPayload {
   renderTimeouts: { image: number; video: number; staleness: number };
   /** Generation-prompt budget in characters (Settings → General). */
   promptMaxChars: number;
+  /** Story keyframing (Settings → General). */
+  sceneConsistency: boolean;
 }
 
 export interface ProviderSettingsUpdate {
@@ -90,6 +92,8 @@ export interface ProviderSettingsUpdate {
   renderTimeouts?: { image?: number; video?: number; staleness?: number };
   /** Generation-prompt budget in characters; clamped server-side. */
   promptMaxChars?: number;
+  /** Story keyframing toggle (Settings → General). */
+  sceneConsistency?: boolean;
 }
 
 export class ProviderSettingsError extends Error {
@@ -232,6 +236,7 @@ export function getProviderSettings(): ProviderSettingsPayload {
       staleness: config.renderTimeouts.staleness,
     },
     promptMaxChars: config.promptMaxChars,
+    sceneConsistency: config.sceneConsistency,
   };
 }
 
@@ -554,6 +559,15 @@ export function applyProviderSettingsUpdate(body: unknown): ProviderSettingsPayl
     // Out-of-range values clamp to the sane band in the repository merge,
     // mirroring renderTimeouts — an odd value never fails the save.
     patch.promptMaxChars = Math.round(raw.promptMaxChars);
+  }
+
+  if (raw.sceneConsistency !== undefined) {
+    if (typeof raw.sceneConsistency !== "boolean") {
+      throw new ProviderSettingsError("Scene consistency must be true or false.", {
+        field: "sceneConsistency",
+      });
+    }
+    patch.sceneConsistency = raw.sceneConsistency;
   }
 
   if (raw.customProviders !== undefined) {

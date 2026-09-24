@@ -150,6 +150,9 @@ export interface ProviderConfig {
   renderTimeouts: RenderTimeoutsConfig;
   /** Generation-prompt budget in characters (Settings → General). */
   promptMaxChars: number;
+  /** Story keyframing (Settings → General): render a character/location-
+   * anchored keyframe per video scene before animating. On by default. */
+  sceneConsistency: boolean;
   customProviders: CustomProviderEntry[];
 }
 
@@ -165,6 +168,7 @@ export interface ProviderConfigPatch {
   tasks?: Partial<TaskModelConfig>;
   renderTimeouts?: Partial<RenderTimeoutsConfig>;
   promptMaxChars?: number;
+  sceneConsistency?: boolean;
   customProviders?: CustomProvidersPatch;
 }
 
@@ -223,6 +227,7 @@ export function getDefaultProviderConfig(): ProviderConfig {
     },
     renderTimeouts: { ...RENDER_TIMEOUT_DEFAULTS },
     promptMaxChars: PROMPT_MAX,
+    sceneConsistency: true,
     customProviders: [],
   };
 }
@@ -325,6 +330,11 @@ function sanitizeLoadedConfig(raw: unknown): ProviderConfig {
     obj.promptMaxChars,
     defaults.promptMaxChars,
   );
+  // Missing key keeps the default (true); anything truthy-false explicitly
+  // stored as false disables keyframing.
+  if (typeof obj.sceneConsistency === "boolean") {
+    defaults.sceneConsistency = obj.sceneConsistency;
+  }
   defaults.customProviders = sanitizeCustomProviders(obj.customProviders);
 
   return defaults;
@@ -363,6 +373,7 @@ export function mergeProviderConfigPatch(patch: ProviderConfigPatch): ProviderCo
     tasks: { ...current.tasks },
     renderTimeouts: { ...current.renderTimeouts },
     promptMaxChars: current.promptMaxChars,
+    sceneConsistency: current.sceneConsistency,
     customProviders: cloneCustomProviders(current.customProviders),
   };
 
@@ -409,6 +420,10 @@ export function mergeProviderConfigPatch(patch: ProviderConfigPatch): ProviderCo
       patch.promptMaxChars,
       next.promptMaxChars,
     );
+  }
+
+  if (typeof patch.sceneConsistency === "boolean") {
+    next.sceneConsistency = patch.sceneConsistency;
   }
 
   if (patch.customProviders) {

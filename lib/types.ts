@@ -79,9 +79,11 @@ export interface GenerationResponse {
   frameUsed?: boolean;
 }
 
-/** Live progress tick for a story scene while its render is in flight. */
+/** Live progress tick for a story scene while its render is in flight.
+ * `keyframe` is the pre-animation anchoring stage the runner sets while the
+ * scene's keyframe still renders. */
 export interface StorySceneProgress {
-  stage: "submitted" | "rendering" | "downloading";
+  stage: "submitted" | "rendering" | "downloading" | "keyframe";
   message: string;
   percent?: number;
 }

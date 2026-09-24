@@ -56,6 +56,8 @@ import {
   requestScenePlan,
 } from "@/lib/story/plan";
 import { isVideoSource } from "@/lib/renderer";
+import { GATE_PASS_THRESHOLD } from "@/lib/domain/keyframe-gate";
+import type { LocationRow } from "@/lib/repositories/location-row";
 import {
   setSelectedModel,
   setStoryCharacters,
@@ -269,6 +271,21 @@ export default function StoryPage() {
   const attachedCharacters = characters.filter((character) =>
     userSettings.storyCharacterIds.includes(character.id),
   );
+  // Location anchors (scene consistency): the story's world pick drives the
+  // keyframe's environment reference. Loaded once per mount.
+  const [locations, setLocations] = useState<LocationRow[]>([]);
+  useEffect(() => {
+    let stop = false;
+    fetch("/api/locations", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { locations?: LocationRow[] } | null) => {
+        if (!stop && data?.locations) setLocations(data.locations);
+      })
+      .catch(() => undefined);
+    return () => {
+      stop = true;
+    };
+  }, []);
   const catalog = useModelCatalog(kind);
   // Catalog for the scene being edited — may differ from the story kind.
   const editCatalog = useModelCatalog(activeKind);
@@ -1258,6 +1275,31 @@ export default function StoryPage() {
               <Icon name="link" size={13} />
               Continuity: {continuityOn ? "On" : "Off"}
             </button>
+            {/* Scene consistency: the story's location anchor — keyframes
+                compose this place into every scene's references. */}
+            {!editing && locations.length > 0 && (
+              <PillSelect
+                icon="image"
+                label="Location"
+                value={story?.world?.locationIds?.[0] ?? ""}
+                options={[
+                  { value: "", label: "None" },
+                  ...locations.map((location) => ({
+                    value: location.id,
+                    label: location.name,
+                  })),
+                ]}
+                onChange={(next) =>
+                  void mutateScene({
+                    op: "world",
+                    world: {
+                      ...(story?.world ?? {}),
+                      locationIds: next ? [next] : [],
+                    },
+                  })
+                }
+              />
+            )}
             {/* Chain preset: scene 1 renders on the picked model, every
                 frame-carrying scene on this. Auto = the family's i2v sibling
                 (the service swaps); a pick here overrides it for this story. */}
@@ -1553,6 +1595,25 @@ export default function StoryPage() {
                         <Icon name="upload" size={9} /> end
                       </span>
                     )}
+                    {typed?.keyframeRef && (
+                      <span
+                        className="inline-flex items-center gap-0.5 rounded-full bg-primary-soft px-1.5 py-0.5 text-[10px] font-bold text-primary"
+                        title="This scene animates from a keyframe render anchored to your characters and location"
+                      >
+                        <Icon name="image" size={9} /> key
+                      </span>
+                    )}
+                    {typed?.score &&
+                      (typed.score.identity < GATE_PASS_THRESHOLD ||
+                        typed.score.outfit < GATE_PASS_THRESHOLD ||
+                        typed.score.location < GATE_PASS_THRESHOLD) && (
+                        <span
+                          className="inline-flex items-center gap-0.5 rounded-full bg-warning-soft px-1.5 py-0.5 text-[10px] font-bold text-warning"
+                          title={`Low consistency after ${typed.attempts ?? 1} attempt(s) — identity ${typed.score.identity.toFixed(2)}, outfit ${typed.score.outfit.toFixed(2)}, location ${typed.score.location.toFixed(2)}${typed.score.notes ? `: ${typed.score.notes}` : ""}`}
+                        >
+                          <Icon name="alert" size={9} /> low match
+                        </span>
+                      )}
                     {typed?.status === "completed" &&
                       scenes[index + 1]?.status === "queued" &&
                       continuityOn &&

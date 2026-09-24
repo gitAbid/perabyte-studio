@@ -11,11 +11,20 @@ import {
 import { getProviderConfig } from "@/lib/repositories/provider-config.repository";
 import { getStoriesRepository, patchStoryRepository } from "@/lib/repositories/stories.repository";
 import { deriveEndFrameRefServerSide } from "@/lib/media/frame-server";
-import { advanceStoryChain } from "@/lib/story/server-runner";
+import {
+  advanceSceneAfterKeyframe,
+  advanceStoryChain,
+  storyCast,
+} from "@/lib/story/server-runner";
+import { sceneCast } from "@/lib/story/compose-shot";
+import { buildGateExpectations } from "@/lib/story/keyframe";
+import { getLocationsRepository } from "@/lib/repositories/locations.repository";
+import { scoreKeyframeRef } from "@/lib/services/keyframe-gate.service";
+import { onKeyframeGate } from "@/lib/story/consistency-hooks";
 import { putRecord } from "@/lib/services/records.service";
 import { warmModeration } from "@/lib/services/moderation.service";
 import { titleFromPrompt } from "@/lib/constants";
-import type { Asset, GenerationSettings } from "@/lib/types";
+import type { Asset, GenerationSettings, SceneScore } from "@/lib/types";
 import {
   GenerationServiceError,
   persistArtifacts,
@@ -377,12 +386,15 @@ export class JobExecutor {
 
       // Server-side absorption (Phase B): a completed job lands in its
       // consumer even when no browser is watching — a story scene patch for
-      // tagged jobs, a History asset for solo renders. Idempotent with the
-      // client runner's own writes (same values, same ids).
+      // tagged jobs, a keyframe + gate for `k_`-tagged jobs, a History asset
+      // for solo renders. Idempotent with the client runner's own writes
+      // (same values, same ids).
       if (!job) return;
-      const sceneTag = job.clientTag?.match(/^(s_[^:]+):(.+)$/);
-      if (sceneTag) {
-        this.absorbStoryScene(jobId, sceneTag[1], sceneTag[2], media, prepared, log);
+      const tag = parseStoryTag(job.clientTag);
+      if (tag?.kind === "scene") {
+        this.absorbStoryScene(jobId, tag.storyId, tag.sceneId, media, prepared, log);
+      } else if (tag?.kind === "keyframe") {
+        await this.absorbStoryKeyframe(jobId, tag.storyId, tag.sceneId, media, prepared, log);
       } else {
         const assetId = this.absorbSoloAsset(jobId, job, media, prepared, log);
         patchJobRepository(jobId, { assetId });
@@ -440,6 +452,120 @@ export class JobExecutor {
     log.info("job absorbed into story scene", { jobId, storyId, sceneId });
     warmModeration(primary?.url ?? null, log);
     await advanceStoryChain(storyId);
+  }
+
+  /** Attach a finished keyframe still to its scene, then run the quality
+   * gate (story consistency): a failing score re-queues the scene for one
+   * more keyframe (a different roll — the attempt number enters the seed);
+   * a pass, an unavailable gate, or an exhausted attempt ladder starts the
+   * scene's own render, anchored on the keyframe. */
+  private async absorbStoryKeyframe(
+    jobId: string,
+    storyId: string,
+    sceneId: string,
+    media: Awaited<ReturnType<typeof this.persist>>,
+    _prepared: Awaited<ReturnType<typeof prepareGeneration>>,
+    log: Logger,
+  ): Promise<void> {
+    const story = getStoriesRepository(storyId);
+    if (!story?.scenes) return;
+    const scene = story.scenes.find((sc) => sc.id === sceneId);
+    if (!scene || scene.status !== "generating") {
+      log.info("keyframe absorb skipped (scene not generating)", { jobId, sceneId });
+      return;
+    }
+    const primary = media[0];
+    // The keyframe IS a still: the ref is the image itself — the same
+    // media-persistence helper the scene absorb uses, but no frame export
+    // or ffmpeg work. A bare cache ref, never the full URL.
+    const ref = primary
+      ? await deriveEndFrameRefServerSide(
+          { url: primary.url, ...(primary.endFrameUrl ? { endFrameUrl: primary.endFrameUrl } : {}) },
+          "image",
+        )
+      : null;
+    if (!ref) {
+      // Without a stored ref there is nothing to anchor or animate — the
+      // honest outcome is a failed scene and a halted run.
+      patchStoryRepository(storyId, {
+        scenes: story.scenes.map((sc) =>
+          sc.id === sceneId
+            ? {
+                ...sc,
+                status: "failed" as const,
+                error: "The keyframe render could not be stored. Re-run the scene.",
+                progress: undefined,
+              }
+            : sc,
+        ),
+        meta: { ...(story.meta ?? {}), running: false },
+      });
+      log.warn("story run halted on unusable keyframe media", { jobId, storyId, sceneId });
+      return;
+    }
+    patchStoryRepository(storyId, {
+      scenes: story.scenes.map((sc) =>
+        sc.id === sceneId ? { ...sc, keyframeRef: ref, progress: undefined } : sc,
+      ),
+    });
+    log.info("keyframe absorbed into story scene", { jobId, storyId, sceneId, ref });
+
+    // Gate: the same expectations the keyframe strategy was built from,
+    // recomputed here from the live record. No expectations (no cast, no
+    // location) means nothing to score — the keyframe is accepted as-is.
+    const cast = sceneCast(scene.state, { characters: storyCast(story) });
+    const location = getLocationsRepository(
+      scene.state?.locationId ?? story.world?.locationIds?.[0] ?? "",
+    );
+    const expectations = buildGateExpectations(scene, cast, location);
+    let verdict: (SceneScore & { passed: boolean }) | null = null;
+    if (expectations) {
+      const decision = await scoreKeyframeRef(ref, expectations);
+      verdict = decision.verdict;
+      if (verdict) {
+        await onKeyframeGate({ storyId, sceneId, ref, score: verdict, passed: verdict.passed });
+      }
+    }
+
+    if (verdict && !verdict.passed && (scene.attempts ?? 0) < 2) {
+      const attempts = (scene.attempts ?? 0) + 1;
+      patchStoryRepository(storyId, {
+        scenes: (getStoriesRepository(storyId)?.scenes ?? story.scenes).map((sc) =>
+          sc.id === sceneId
+            ? {
+                ...sc,
+                attempts,
+                keyframeRef: undefined,
+                score: verdict,
+                status: "queued" as const,
+              }
+            : sc,
+        ),
+      });
+      log.warn("keyframe failed the gate — re-rolling", {
+        storyId,
+        sceneId,
+        attempt: attempts,
+        score: verdict,
+      });
+      await advanceStoryChain(storyId);
+      return;
+    }
+    if (verdict && !verdict.passed) {
+      // Attempts exhausted on a failing score: flag it (the UI shows the
+      // low-consistency chip) and animate anyway rather than stranding the run.
+      log.warn("keyframe failed the gate with attempts exhausted — animating anyway", {
+        storyId,
+        sceneId,
+        score: verdict,
+      });
+    }
+    patchStoryRepository(storyId, {
+      scenes: (getStoriesRepository(storyId)?.scenes ?? story.scenes).map((sc) =>
+        sc.id === sceneId ? { ...sc, score: verdict ?? undefined } : sc,
+      ),
+    });
+    await advanceSceneAfterKeyframe(storyId, sceneId);
   }
 
   /** Solo renders become History assets server-side, so closing the tab
@@ -521,24 +647,25 @@ export class JobExecutor {
       retryable,
       finishedAt: this.now(),
     });
-    // A failed story-scene job writes the failure into its scene and halts
-    // the run — a stuck "generating" tile must never wait on a dead job.
-    const sceneTag = current.clientTag?.match(/^(s_[^:]+):(.+)$/);
-    if (sceneTag) {
-      const story = getStoriesRepository(sceneTag[1]);
+    // A failed story-scene or keyframe job writes the failure into its scene
+    // and halts the run — a stuck "generating" tile must never wait on a
+    // dead job.
+    const tag = parseStoryTag(current.clientTag);
+    if (tag) {
+      const story = getStoriesRepository(tag.storyId);
       if (story?.scenes) {
-        patchStoryRepository(sceneTag[1], {
+        patchStoryRepository(tag.storyId, {
           scenes: story.scenes.map((sc) =>
-            sc.id === sceneTag[2] && sc.status === "generating"
+            sc.id === tag.sceneId && sc.status === "generating"
               ? { ...sc, status: "failed" as const, error: message, progress: undefined }
               : sc,
           ),
           meta: { ...(story.meta ?? {}), running: false },
         });
-        log.warn("story run halted on scene failure", {
+        log.warn(tag.kind === "keyframe" ? "story run halted on keyframe failure" : "story run halted on scene failure", {
           jobId,
-          storyId: sceneTag[1],
-          sceneId: sceneTag[2],
+          storyId: tag.storyId,
+          sceneId: tag.sceneId,
           message,
         });
       }
@@ -554,6 +681,27 @@ export class JobExecutor {
 
 function describeError(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+/** Story absorption tags: `<storyId>:<sceneId>` for scene renders and
+ * `k_<storyId>:<sceneId>` for keyframe renders. Anything else (solo asset
+ * tags) parses to null and falls through to the History absorb. */
+type StoryTag = { kind: "scene" | "keyframe"; storyId: string; sceneId: string };
+
+function parseStoryTag(tag: string | null | undefined): StoryTag | null {
+  if (!tag) return null;
+  let rest = tag;
+  let kind: StoryTag["kind"] = "scene";
+  if (rest.startsWith("k_")) {
+    kind = "keyframe";
+    rest = rest.slice(2);
+  }
+  const at = rest.indexOf(":");
+  if (at <= 0) return null;
+  const storyId = rest.slice(0, at);
+  const sceneId = rest.slice(at + 1);
+  if (!storyId.startsWith("s_") || !sceneId) return null;
+  return { kind, storyId, sceneId };
 }
 
 /* ------------------------------------------------------------------ */

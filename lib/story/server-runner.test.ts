@@ -20,9 +20,27 @@ import {
 } from "@/lib/repositories/stories.repository";
 import { setJobsPathForTests, type JobRecord } from "@/lib/repositories/jobs.repository";
 import {
+  setLocationsPathForTests,
+  putLocationRepository,
+} from "@/lib/repositories/locations.repository";
+import {
   setProviderConfigPathForTests,
   updateProviderConfig,
 } from "@/lib/repositories/provider-config.repository";
+import { advanceSceneAfterKeyframe } from "@/lib/story/server-runner";
+
+vi.mock("@/lib/story/keyframe-models", () => ({
+  listImageModelDescriptors: () => [
+    {
+      id: "sogni:qwen_image_edit_2511",
+      provider: "sogni",
+      model: "qwen_image_edit_2511",
+      label: "Qwen Edit",
+      kind: "image",
+      contextImages: { min: 1, max: 3 },
+    },
+  ],
+}));
 import {
   advanceStoryChain,
   cancelStoryRun,
@@ -118,6 +136,7 @@ beforeEach(() => {
   setJobsPathForTests(path.join(tmp, "jobs.json"));
   setProviderConfigPathForTests(path.join(tmp, "settings.json"));
   setCharactersPathForTests(path.join(tmp, "characters.json"));
+  setLocationsPathForTests(path.join(tmp, "locations.json"));
   enqueued.jobs = [];
   enqueued.body = {};
   failEnqueueWith = null;
@@ -479,5 +498,147 @@ describe("mutateStoryScenes update", () => {
     });
     expect(updated?.scenes?.[0]?.prompt).toBe("x".repeat(100));
     updateProviderConfig({ promptMaxChars: 5000 });
+  });
+});
+
+describe("keyframe substage", () => {
+  function anchorWorld() {
+    putCharacterRepository({
+      id: "ch_kf",
+      name: "Mara",
+      spec: { ...DEFAULT_CHARACTER_SPEC, age: 30 },
+      identity: { front: "front_mara.png" },
+      createdAt: 1,
+      updatedAt: 1,
+    });
+    putLocationRepository({
+      id: "loc_kf",
+      name: "Rooftop bar",
+      description: "neon rooftop",
+      ref: "loc_plate.png",
+      createdAt: 1,
+      updatedAt: 1,
+    });
+    putStory(
+      story("s_kf", [
+        scene("sc1", { kind: "video", state: { locationId: "loc_kf" } }),
+      ], {
+        meta: { continuity: true, running: false, characterIds: ["ch_kf"] },
+        world: { baseSeed: 424242, locationIds: ["loc_kf"] },
+      }),
+    );
+  }
+
+  it("anchors a video scene with a k_ keyframe image job first", async () => {
+    anchorWorld();
+    await startStoryRun("s_kf");
+    expect(enqueued.jobs).toHaveLength(1);
+    expect(enqueued.jobs[0].clientTag).toBe("k_s_kf:sc1");
+    expect(enqueued.jobs[0].kind).toBe("image");
+    expect(enqueued.jobs[0].modelId).toBe("sogni:qwen_image_edit_2511");
+    // References: first cast front, location plate (interleaved priority).
+    expect(enqueued.body.referenceImageRefs).toEqual(["front_mara.png", "loc_plate.png"]);
+    // Seed derives from the world base + scene + attempt 0.
+    expect(enqueued.body.seed).toBeTypeOf("number");
+    const sc1 = current().scenes![0];
+    expect(sc1.status).toBe("generating");
+    expect(sc1.progress?.stage).toBe("keyframe");
+  });
+
+  it("animates from the keyframe ref once it is absorbed", async () => {
+    anchorWorld();
+    await startStoryRun("s_kf");
+    patchStoryRepository(storyId, {
+      scenes: (current().scenes ?? []).map((s) =>
+        s.id === "sc1" ? { ...s, keyframeRef: "kf_still.png" } : s,
+      ),
+    });
+    enqueued.jobs = [];
+    await advanceSceneAfterKeyframe(storyId, "sc1");
+    expect(enqueued.jobs).toHaveLength(1);
+    expect(enqueued.jobs[0].clientTag).toBe("s_kf:sc1");
+    expect(enqueued.jobs[0].kind).toBe("video");
+    // The keyframe outranks the (absent) predecessor end frame.
+    expect(enqueued.body.startImageRef).toBe("kf_still.png");
+  });
+
+  it("a manual start frame skips the keyframe entirely", async () => {
+    anchorWorld();
+    patchStoryRepository(storyId, {
+      scenes: (current().scenes ?? []).map((s) =>
+        s.id === "sc1" ? { ...s, startImageRef: "manual.png" } : s,
+      ),
+    });
+    await startStoryRun("s_kf");
+    expect(enqueued.jobs).toHaveLength(1);
+    expect(enqueued.jobs[0].clientTag).toBe("s_kf:sc1");
+    expect(enqueued.body.startImageRef).toBe("manual.png");
+  });
+
+  it("consistency OFF renders the video directly", async () => {
+    anchorWorld();
+    updateProviderConfig({ sceneConsistency: false });
+    await startStoryRun("s_kf");
+    expect(enqueued.jobs).toHaveLength(1);
+    expect(enqueued.jobs[0].clientTag).toBe("s_kf:sc1");
+    expect(enqueued.body.referenceImageRefs).toBeUndefined();
+    updateProviderConfig({ sceneConsistency: true });
+  });
+
+  it("image-kind scenes never keyframe", async () => {
+    anchorWorld();
+    patchStoryRepository(storyId, {
+      scenes: (current().scenes ?? []).map((s) =>
+        s.id === "sc1" ? { ...s, kind: "image" as const } : s,
+      ),
+    });
+    await startStoryRun("s_kf");
+    expect(enqueued.jobs).toHaveLength(1);
+    expect(enqueued.jobs[0].clientTag).toBe("s_kf:sc1");
+    expect(enqueued.jobs[0].kind).toBe("image");
+    expect(enqueued.body.referenceImageRefs).toBeUndefined();
+  });
+
+  it("requeue drops the keyframe and gate attempts but keeps the seed", async () => {
+    anchorWorld();
+    await startStoryRun("s_kf");
+    const seeded = current().scenes![0].seed;
+    patchStoryRepository(storyId, {
+      scenes: (current().scenes ?? []).map((s) =>
+        s.id === "sc1"
+          ? { ...s, keyframeRef: "old_kf.png", score: { identity: 0.2, outfit: 0.2, location: 0.2 }, attempts: 2 }
+          : s,
+      ),
+    });
+    patchStoryRepository(storyId, { meta: { ...(current().meta ?? {}), running: false } });
+    // absorb flip left the scene generating; requeue only takes settled scenes.
+    patchStoryRepository(storyId, {
+      scenes: (current().scenes ?? []).map((s) =>
+        s.id === "sc1" ? { ...s, status: "failed" as const } : s,
+      ),
+    });
+    await requeueStoryScene(storyId, "sc1");
+    const sc1 = current().scenes![0];
+    expect(sc1.keyframeRef).toBeUndefined();
+    expect(sc1.score).toBeUndefined();
+    expect(sc1.attempts).toBe(0);
+    expect(sc1.seed).toBe(seeded);
+  });
+
+  it("the world mutation op persists the location pick", () => {
+    anchorWorld();
+    const updated = mutateStoryScenes(storyId, { op: "world", world: { baseSeed: 1, locationIds: [] } });
+    expect(updated?.world?.locationIds).toEqual([]);
+  });
+
+  it("free-text locations resolve against the world at run start", async () => {
+    anchorWorld();
+    patchStoryRepository(storyId, {
+      scenes: (current().scenes ?? []).map((s) =>
+        s.id === "sc1" ? { ...s, state: { locationText: "rooftop" } } : s,
+      ),
+    });
+    await startStoryRun("s_kf");
+    expect(current().scenes![0].state?.locationId).toBe("loc_kf");
   });
 });

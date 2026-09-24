@@ -101,9 +101,17 @@ export async function GET(
     return NextResponse.json({ error: "Story not found.", retryable: false }, { status: 404 });
   }
   const prefix = `${id}:`;
+  const keyPrefix = `k_${id}:`;
   const jobs = listActiveJobsRepository()
-    .filter((job) => job.clientTag?.startsWith(prefix))
-    .map((job) => ({ ...toSummary(job), sceneId: job.clientTag?.slice(prefix.length) }));
+    .filter((job) => job.clientTag?.startsWith(prefix) || job.clientTag?.startsWith(keyPrefix))
+    .map((job) => ({
+      ...toSummary(job),
+      // Keyframe jobs share the scene id — the `k_` prefix only marks the
+      // substage (progress ticks render as the scene's own progress).
+      sceneId: job.clientTag?.startsWith(keyPrefix)
+        ? job.clientTag.slice(keyPrefix.length)
+        : job.clientTag?.slice(prefix.length),
+    }));
   return NextResponse.json({ story, jobs }, { headers: { "cache-control": "no-store" } });
 }
 
