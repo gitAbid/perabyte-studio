@@ -143,8 +143,9 @@ export function writeStoryInstruction(brief: WriterBrief): string {
   const parts = [
     `Write a short narrative story based on this idea: ${brief.idea}.`,
     brief.sceneCount === "smart"
-      ? "Structure it in 3–8 natural story beats, choosing the number that best fits the story. Do not add numbered scene headings."
+      ? "Structure it in 3–8 natural story beats, choosing the number that best fits the story."
       : `Structure it in roughly ${brief.sceneCount} distinct beats/paragraphs.`,
+    "Do not add numbered scene headings; keep the prose as a continuous story with natural paragraph breaks.",
   ];
   if (brief.tone) parts.push(`Tone: ${brief.tone}.`);
   if (brief.characterNames.length) {

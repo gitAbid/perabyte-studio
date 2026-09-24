@@ -118,6 +118,14 @@ describe("instruction builders", () => {
     expect(text).toContain("Do not add numbered scene headings");
   });
 
+  it("keeps numbered scene headings out of preset-count story prose", () => {
+    const text = writeStoryInstruction({
+      idea: "a journey", sceneCount: 5, tone: null,
+      characterNames: [], uncensored: false,
+    });
+    expect(text).toContain("Do not add numbered scene headings");
+  });
+
   it("enhance instruction carries draft, instruction, and the uncensored clause", () => {
     const text = enhanceDraftInstruction("old draft", "make it darker", true);
     expect(text).toContain("old draft");
