@@ -1,6 +1,6 @@
 import { ASPECTS, type AspectKey, type ResolutionKey } from "@/lib/constants";
 import type { ModelDescriptor, NormalizedGenerationRequest } from "@/lib/domain/models";
-import { PROVIDER_ID } from "@/lib/providers/sogni/model-meta";
+import { PROVIDER_ID, sogniModelMeta } from "@/lib/providers/sogni/model-meta";
 import { isMinimaxH3, minimaxH3Dimensions, sogniVideoLimits } from "@/lib/providers/sogni/video-limits";
 
 /**
@@ -35,6 +35,10 @@ export interface SogniImageParams {
   outputFormat: "png";
   /** Img2img source (Buffer → SDK presigns an upload automatically). */
   startingImage?: Buffer;
+  /** Multi-reference payload (edit models, spec 2026-09-19): the input image
+   * leads, references follow — SDK `ImageProjectParams.contextImages`
+   * (contextImage1..16; GPT Image treats [0] as the image being edited). */
+  contextImages?: Buffer[];
   /** LoRA adapter ids in application order (max 8, server-enforced). */
   loras?: string[];
   /** Strength per `loras` entry, positionally matched — bipolar, not 0–1. */
@@ -97,6 +101,10 @@ export function toImageParams(
 ): SogniImageParams {
   const base = ASPECTS[request.aspect];
   const scale = resolutionScale(request.resolution);
+  // Edit-class models take every input through contextImages (input leads,
+  // references follow); classic models keep the single startingImage slot.
+  const contextCapable = sogniModelMeta(model)?.contextImages !== undefined;
+  const hasInputs = Boolean(request.startImage || request.referenceImages?.length);
   return {
     type: "image",
     modelId: model,
@@ -109,7 +117,16 @@ export function toImageParams(
     width: snap8(base.width * scale),
     height: snap8(base.height * scale),
     outputFormat: "png",
-    ...(request.startImage ? { startingImage: request.startImage.bytes } : {}),
+    ...(contextCapable && hasInputs
+      ? {
+          contextImages: [
+            ...(request.startImage ? [request.startImage.bytes] : []),
+            ...(request.referenceImages ?? []).map((reference) => reference.bytes),
+          ],
+        }
+      : request.startImage
+        ? { startingImage: request.startImage.bytes }
+        : {}),
     ...loraFields(request),
   };
 }

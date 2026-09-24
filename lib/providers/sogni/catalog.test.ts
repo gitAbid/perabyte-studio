@@ -45,12 +45,34 @@ describe("sogni catalog", () => {
     expect(catalog.videos.map((m) => m.model)).toContain("wan_v2.2-14b-fp8_t2v_lightx2v");
   });
 
-  it("keeps prompt-driven models and drops edit/segment/upscale/i2v/offline ones", () => {
+  it("keeps prompt-driven models, admits edit models, drops segment/upscale/i2v/offline ones", () => {
     const images = toDescriptors(LIVE_CATALOG, "image");
     const videos = toDescriptors(LIVE_CATALOG, "video");
 
-    expect(images.map((m) => m.model)).toEqual(["krea2_turbo_fp8_scaled", "flux1-dev-fp8"]);
+    expect(images.map((m) => m.model)).toEqual([
+      "krea2_turbo_fp8_scaled",
+      "qwen_image_edit_2511_fp8",
+      "flux1-dev-fp8",
+    ]);
     expect(videos.map((m) => m.model)).toEqual(["wan_v2.2-14b-fp8_t2v_lightx2v"]);
+  });
+
+  it("registers edit/identity families with their contextImages capability", () => {
+    const images = toDescriptors(
+      [
+        model({ id: "qwen_image_edit_2511_fp8", name: "Qwen Image Edit", media: "image" }),
+        model({ id: "krea2_identity_edit_v1_2", name: "Krea Identity Edit", media: "image" }),
+        model({ id: "gpt-image-2.5-sunburst", name: "GPT Image Sunburst", media: "image" }),
+      ],
+      "image",
+    );
+    const byId = new Map(images.map((m) => [m.model, m]));
+    // requiresContextImage families cap at 3; gpt-image reports maxContextImages 16.
+    expect(byId.get("qwen_image_edit_2511_fp8")?.contextImages).toEqual({ min: 1, max: 3 });
+    expect(byId.get("krea2_identity_edit_v1_2")?.contextImages).toEqual({ min: 1, max: 3 });
+    expect(byId.get("gpt-image-2.5-sunburst")?.contextImages).toEqual({ min: 0, max: 16 });
+    // Curated but never "recommended".
+    expect(byId.get("qwen_image_edit_2511_fp8")?.tier).toBeUndefined();
   });
 
   it("prefers curated labels and claims, else leaves models unclaimed", () => {
@@ -140,6 +162,7 @@ describe("sogni catalog", () => {
 
     const imageIds = sogniProvider.listImageModels().map((m) => m.model);
     expect(imageIds).toContain("flux1-dev-fp8");
+    expect(imageIds).toContain("qwen_image_edit_2511_fp8");
     expect(imageIds).not.toContain("sam3_image_segment_bf16");
     expect(sogniProvider.listVideoModels().map((m) => m.model)).toContain(
       "wan_v2.2-14b-fp8_t2v_lightx2v",

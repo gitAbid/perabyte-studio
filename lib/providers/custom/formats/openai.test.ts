@@ -220,6 +220,64 @@ describe("openai format — images", () => {
     expect(calls[1].url).toContain("/images/generations");
   });
 
+  it("sends multi-reference edits as a data-URI array (input first, references after)", async () => {
+    const startImage = { bytes: Buffer.from("frame"), contentType: "image/png" };
+    const referenceImages = [
+      { bytes: Buffer.from("ref-jpeg"), contentType: "image/jpeg" },
+      { bytes: Buffer.from("ref-png"), contentType: "image/png" },
+    ];
+    const { fetchImpl, calls } = fakeFetch([
+      {
+        method: "POST",
+        path: "/v1/images/edits",
+        body: { data: [{ b64_json: Buffer.from("ok").toString("base64") }] },
+      },
+    ]);
+    const format = createOpenAiFormat(fetchImpl as unknown as typeof fetch);
+    const artifacts = await format.generateImage!(
+      entry,
+      imageRequest({ startImage, referenceImages }),
+      imageModel,
+      ctx,
+    );
+    expect(artifacts[0].frameDropped).toBeUndefined();
+    expect(calls[0].url).toContain("/images/edits");
+    const sent = JSON.parse(calls[0].init!.body as string);
+    expect(sent.image).toHaveLength(3);
+    expect(sent.image[0]).toContain("data:image/png;base64,");
+    expect(sent.image[1]).toContain("data:image/jpeg;base64,");
+    expect(sent.image[2]).toContain("data:image/png;base64,");
+    expect(sent).toMatchObject({
+      model: "grok-imagine-image",
+      prompt: "a red apple",
+      n: 1,
+      response_format: "b64_json",
+    });
+  });
+
+  it("degrades multi-reference edits to prompt-only on 400", async () => {
+    const referenceImages = [{ bytes: Buffer.from("ref"), contentType: "image/png" }];
+    const { fetchImpl, calls } = fakeFetch([
+      { method: "POST", path: "/v1/images/edits", status: 400, body: { error: "no" } },
+      {
+        method: "POST",
+        path: "/v1/images/generations",
+        body: { data: [{ b64_json: Buffer.from("ok").toString("base64") }] },
+      },
+    ]);
+    const format = createOpenAiFormat(fetchImpl as unknown as typeof fetch);
+    const artifacts = await format.generateImage!(
+      entry,
+      imageRequest({ referenceImages }),
+      imageModel,
+      ctx,
+    );
+    expect(artifacts[0].frameDropped).toBe(true);
+    expect(calls[0].url).toContain("/images/edits");
+    expect(JSON.parse(calls[0].init!.body as string).image).toHaveLength(1);
+    expect(calls[1].url).toContain("/images/generations");
+  });
+
   it("retries without size when the payload is rejected", async () => {
     let attempt = 0;
     const fetchImpl = vi.fn(async (url: string, init?: RequestInit) => {

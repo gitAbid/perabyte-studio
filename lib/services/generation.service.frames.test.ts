@@ -53,6 +53,15 @@ const startOnlyModel: ModelDescriptor = {
   frameInput: { start: true, end: false },
 };
 
+const editModel: ModelDescriptor = {
+  id: "sogni:fake_edit",
+  providerId: "sogni",
+  kind: "image",
+  model: "fake_edit",
+  label: "Fake edit",
+  contextImages: { min: 1, max: 2 },
+};
+
 function fakeVideoProvider(models: ModelDescriptor[]): ProviderRegistry {
   const provider: ImageProvider & VideoProvider = {
     id: "sogni",
@@ -83,7 +92,7 @@ function fakeVideoProvider(models: ModelDescriptor[]): ProviderRegistry {
   };
 }
 
-function body(refs: Record<string, string>, modelId?: string): Record<string, unknown> {
+function body(refs: Record<string, unknown>, modelId?: string): Record<string, unknown> {
   return {
     kind: "video",
     prompt: "a fox trots through the meadow",
@@ -211,5 +220,53 @@ describe("runGeneration continuity frames", () => {
     expect(response.frameUsed).toBe(true);
     expect(received[0]?.startImage).toBeDefined();
     expect(received[0]?.endImage).toBeDefined();
+  });
+});
+
+describe("runGeneration reference images", () => {
+  it("rejects malformed reference refs", async () => {
+    setRegistryForTests(fakeVideoProvider([editModel]));
+    await expect(
+      runGeneration(body({ referenceImageRefs: ["../escape.png"] }, "sogni:fake_edit")),
+    ).rejects.toMatchObject({ field: "referenceImage", status: 400 });
+  });
+
+  it("rejects mp4 refs as reference images", async () => {
+    setRegistryForTests(fakeVideoProvider([editModel]));
+    const mp4Ref = `${"b".repeat(64)}.mp4`;
+    await expect(
+      runGeneration(body({ referenceImageRefs: [mp4Ref] }, "sogni:fake_edit")),
+    ).rejects.toMatchObject({ field: "referenceImage", status: 400 });
+  });
+
+  it("loads every reference ref from the media cache in order", async () => {
+    setRegistryForTests(fakeVideoProvider([editModel]));
+    const refA = await putFrame();
+    const refB = await putFrame();
+
+    await runGeneration(body({ referenceImageRefs: [refA, refB] }, "sogni:fake_edit"));
+
+    const refs = received[0]?.referenceImages;
+    expect(refs).toHaveLength(2);
+    expect(refs?.every((frame) => frame.bytes.equals(PNG_BYTES))).toBe(true);
+    expect(refs?.every((frame) => frame.contentType === "image/png")).toBe(true);
+  });
+
+  it("caps references at the model's contextImages.max, keeping the first", async () => {
+    setRegistryForTests(fakeVideoProvider([editModel])); // max: 2
+    const ref = await putFrame();
+
+    await runGeneration(body({ referenceImageRefs: [ref, ref, ref] }, "sogni:fake_edit"));
+
+    expect(received[0]?.referenceImages).toHaveLength(2);
+  });
+
+  it("drops reference images entirely for models without contextImages", async () => {
+    setRegistryForTests(fakeVideoProvider([t2vModel]));
+    const ref = await putFrame();
+
+    await runGeneration(body({ referenceImageRefs: [ref, ref] }, "sogni:fake_t2v"));
+
+    expect(received[0]?.referenceImages).toBeUndefined();
   });
 });

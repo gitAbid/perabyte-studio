@@ -88,11 +88,16 @@ export interface ValidatedRequest {
   modelId: string | null;
   startImageRef: string | null;
   endImageRef: string | null;
+  /** Extra identity/location refs for context-capable (edit-class) models. */
+  referenceImageRefs: string[];
   loras: LoraSelection[];
 }
 
 /** Continuity-frame cache refs must be real image refs from our media cache. */
-function validateFrameRef(value: unknown, field: "startImage" | "endImage"): string | null {
+function validateFrameRef(
+  value: unknown,
+  field: "startImage" | "endImage" | "referenceImage",
+): string | null {
   if (typeof value !== "string" || value === "") return null;
   if (!isValidMediaRef(value) || value.endsWith(".mp4")) {
     throw new GenerationServiceError("That continuity frame reference is not valid.", { field });
@@ -182,8 +187,30 @@ export function validateGenerationRequest(body: Record<string, unknown>): Valida
     modelId,
     startImageRef: validateFrameRef(body.startImageRef, "startImage"),
     endImageRef: validateFrameRef(body.endImageRef, "endImage"),
+    referenceImageRefs: validateReferenceImageRefs(body.referenceImageRefs),
     loras: validateLoras(body.loras),
   };
+}
+
+/** Client-supplied reference arrays are capped before validation so a runaway
+ * payload cannot fan out into unbounded cache reads (edit models take ≤16). */
+const MAX_REFERENCE_IMAGE_REFS = 16;
+
+/**
+ * Optional extra reference refs (multi-reference edit inputs, spec
+ * 2026-09-19). Every string entry must pass the same frame-ref rule as
+ * start/end — a malformed ref is a 400, not a silent drop; non-string or
+ * empty entries are skipped so stale client state can't kill the render.
+ */
+function validateReferenceImageRefs(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const refs: string[] = [];
+  for (const entry of value.slice(0, MAX_REFERENCE_IMAGE_REFS)) {
+    if (typeof entry !== "string" || entry === "") continue;
+    const ref = validateFrameRef(entry, "referenceImage");
+    if (ref) refs.push(ref);
+  }
+  return refs;
 }
 
 /** Hard loader bounds; per-LoRA catalog ranges are narrower and enforced
@@ -261,13 +288,18 @@ export async function resolveLoras(
 /* ------------------------------------------------------------------ */
 
 /** Load a continuity frame's bytes from the content-addressed media cache. */
-async function loadFrame(ref: string, field: "startImage" | "endImage"): Promise<FrameImage> {
+async function loadFrame(
+  ref: string,
+  field: "startImage" | "endImage" | "referenceImage",
+): Promise<FrameImage> {
   const stored = await getMediaRepository().get(ref);
   if (!stored) {
     throw new GenerationServiceError(
       field === "startImage"
         ? "Continuity frame missing. Re-generate the previous scene or turn Continuity off."
-        : "That end frame is no longer cached. Upload it again.",
+        : field === "endImage"
+          ? "That end frame is no longer cached. Upload it again."
+          : "That reference image is no longer cached.",
       { field },
     );
   }
@@ -481,6 +513,37 @@ export async function prepareGeneration(
   }
   const framesActive = Boolean(startImage) && effective.model.frameInput?.start === true;
 
+  // Multi-reference inputs: only context-capable (edit-class) models keep
+  // them — same degrade-don't-fail pattern as frames. Individual load
+  // failures are skipped (one missing reference must not cost the render)
+  // and the survivors are capped at the model's max.
+  let referenceImages: FrameImage[] = [];
+  const contextMax = effective.model.contextImages?.max;
+  if (request.referenceImageRefs.length) {
+    if (contextMax === undefined) {
+      log.warn("reference images dropped — model cannot take context references", {
+        model: effective.model.id,
+        dropped: request.referenceImageRefs.length,
+      });
+    } else {
+      for (const ref of request.referenceImageRefs) {
+        try {
+          referenceImages.push(await loadFrame(ref, "referenceImage"));
+        } catch (error) {
+          log.warn("reference image could not be loaded — skipping", { ref, error });
+        }
+      }
+      if (referenceImages.length > contextMax) {
+        log.warn("reference images dropped — model takes N", {
+          model: effective.model.id,
+          max: contextMax,
+          dropped: referenceImages.length - contextMax,
+        });
+        referenceImages = referenceImages.slice(0, contextMax);
+      }
+    }
+  }
+
   // Sensored models (no uncensored capability) always keep the safety
   // checker on, whatever the Uncensored Mode toggle says. LoRA gating uses
   // the same effective flag so the adapters can never outrun the filter.
@@ -508,6 +571,7 @@ export async function prepareGeneration(
       : {}),
     startImage: framesActive ? startImage : undefined,
     endImage,
+    ...(referenceImages.length ? { referenceImages } : {}),
   };
 
   return {

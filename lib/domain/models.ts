@@ -66,6 +66,9 @@ export interface ModelDescriptor {
    * shows the LoRA picker and the service keeps `loras` on the request.
    * Absent means prompt-only. */
   loraCapable?: boolean;
+  /** Multi-reference edit capability (spec 2026-09-19): how many context
+   * images the model accepts; min ≥ 1 means it requires at least one. */
+  contextImages?: { min: number; max: number };
 }
 
 export function buildModelId(providerId: string, model: string): string {
@@ -103,6 +106,9 @@ export interface NormalizedGenerationRequest {
   /** Continuity frames resolved by the service layer (media-cache bytes). */
   startImage?: FrameImage;
   endImage?: FrameImage;
+  /** Extra identity/location references (media-cache bytes). Consumed by
+   * context-capable edit models; ignored elsewhere. */
+  referenceImages?: FrameImage[];
 }
 
 export function durationToSeconds(duration: DurationKey): number {

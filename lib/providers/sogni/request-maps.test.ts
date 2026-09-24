@@ -35,6 +35,9 @@ describe("sogni request maps", () => {
       `${PROVIDER_ID}:flux1-schnell-fp8`,
       `${PROVIDER_ID}:z_image_turbo_bf16`,
       `${PROVIDER_ID}:chroma1-hd_fp8_scaled`,
+      `${PROVIDER_ID}:gpt-image-2.5-flare`,
+      `${PROVIDER_ID}:qwen_image_edit_2511_fp8`,
+      `${PROVIDER_ID}:krea2_identity_edit_v1_2`,
     ]);
     expect(SOGNI_VIDEO_MODELS.map((m) => m.id)).toEqual([
       `${PROVIDER_ID}:wan_v2.2-14b-fp8_t2v_lightx2v`,
@@ -217,6 +220,44 @@ describe("continuity frames", () => {
 
   it("image params omit startingImage when absent", () => {
     expect(toImageParams("krea2_turbo_fp8_scaled", imageRequest()).startingImage).toBeUndefined();
+  });
+
+  it("context-capable models send input image first, references after", () => {
+    const start = { bytes: Buffer.from("start-bytes"), contentType: "image/png" };
+    const ref1 = { bytes: Buffer.from("ref-1"), contentType: "image/png" };
+    const ref2 = { bytes: Buffer.from("ref-2"), contentType: "image/jpeg" };
+    const params = toImageParams(
+      "qwen_image_edit_2511_fp8",
+      imageRequest({ startImage: start, referenceImages: [ref1, ref2] }),
+    );
+    expect(params.contextImages).toEqual([start.bytes, ref1.bytes, ref2.bytes]);
+    // The input rides inside contextImages — no duplicate startingImage.
+    expect(params.startingImage).toBeUndefined();
+  });
+
+  it("context-capable models send references alone when there is no start frame", () => {
+    const ref = { bytes: Buffer.from("ref-only"), contentType: "image/png" };
+    const params = toImageParams(
+      "krea2_identity_edit_v1_2",
+      imageRequest({ referenceImages: [ref] }),
+    );
+    expect(params.contextImages).toEqual([ref.bytes]);
+    expect(params.startingImage).toBeUndefined();
+  });
+
+  it("a start frame alone on an edit model maps to a one-element contextImages", () => {
+    const params = toImageParams("gpt-image-2.5-flare", imageRequest({ startImage: FRAME }));
+    expect(params.contextImages).toEqual([FRAME.bytes]);
+  });
+
+  it("classic models ignore referenceImages and keep the legacy startingImage shape", () => {
+    const ref = { bytes: Buffer.from("ignored-ref"), contentType: "image/png" };
+    const params = toImageParams(
+      "krea2_turbo_fp8_scaled",
+      imageRequest({ startImage: FRAME, referenceImages: [ref] }),
+    );
+    expect(params.startingImage).toBe(FRAME.bytes);
+    expect(params.contextImages).toBeUndefined();
   });
 });
 

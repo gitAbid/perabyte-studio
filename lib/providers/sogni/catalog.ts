@@ -18,14 +18,16 @@ import {
  * cold start), while `warmSogniCatalog` refreshes in the background.
  */
 
-/** Model ids that need reference media or aren't prompt-to-media — skipped
- * until the studio can drive them (edit models, segmentation, 3D, upscalers,
- * image/video-to-video variants, audio/reference workflows). Matched
+/** Model ids that need media the studio can't provide or aren't
+ * prompt-to-media — skipped (segmentation, 3D, upscalers,
+ * image/video-to-video variants, audio/reference workflows). Edit/identity
+ * families are NOT excluded: they are multi-reference edit models the studio
+ * drives via `contextImages` (spec 2026-09-19). `r2v` reference-video
+ * workflows stay out (premium, separate render path). Matched
  * case-insensitively. `flf2v` models REQUIRE both frame anchors and reject
  * prompt-only renders — they are registered as hidden capability models (see
  * buildHiddenModels), never offered in the picker. */
 const EXCLUDED_ID_PATTERNS = [
-  "edit",
   "kontext",
   "segment",
   "sam3",
@@ -41,7 +43,6 @@ const EXCLUDED_ID_PATTERNS = [
   "animate",
   "inpaint",
   "outpaint",
-  "identity",
   "flf2v",
 ];
 
@@ -218,6 +219,7 @@ export function toDescriptors(
         ...(meta?.tier ? { tier: meta.tier } : {}),
         ...(meta?.useCase ? { useCase: meta.useCase } : {}),
         ...(meta?.costTier ? { costTier: meta.costTier } : {}),
+        ...(meta?.contextImages ? { contextImages: meta.contextImages } : {}),
         stylesSupported: meta ? meta.stylesSupported : supportsStyles(model.id),
         uncensored: supportsUncensored(model.id),
         ...(capability ? { frameInput: capability } : {}),
