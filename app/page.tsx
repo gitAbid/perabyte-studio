@@ -1,97 +1,66 @@
 import Link from "next/link";
-import { Icon } from "@/components/Icon";
+import { Icon, Logo } from "@/components/Icon";
 import { ThemeToggle } from "@/components/SiteChrome";
 
-/** Pre-rendered examples live in /public/demo so the landing page is instant. */
 const HERO_MAIN = "/demo/mountain-lake.jpg";
 const HERO_SIDE = [
-  { src: "/demo/fantasy-forest.jpg", alt: "Example render: an enchanted forest" },
-  { src: "/demo/city-night.jpg", alt: "Example render: a city street at night" },
+  { src: "/demo/fantasy-forest.jpg", alt: "An imagined forest rendered in PeraByte" },
+  { src: "/demo/city-night.jpg", alt: "A neon city scene rendered in PeraByte" },
 ];
 
-const FEATURES = [
+const WORKSPACES = [
   {
-    icon: "sparkle" as const,
-    title: "Solo Mode",
-    body: "One prompt, one render. Pick a model, aspect ratio, style and resolution with live controls — then re-roll variations until it clicks.",
+    index: "01",
+    title: "Image studio",
+    body: "Find the frame. Compare variations, keep the right details, and build on a reference.",
     href: "/generate/image",
-    cta: "Open Solo Mode",
-  },
-  {
-    icon: "story" as const,
-    title: "Story Mode",
-    body: "Build a story scene by scene: every render chains from the last frame, with a shared queue and one-click video conversion.",
-    href: "/story",
-    cta: "Open Story Mode",
-  },
-  {
-    icon: "character" as const,
-    title: "Character Studio",
-    body: "Design a reusable AI character in a guided wizard — face, hair, outfit — then attach them to any Solo or Story scene.",
-    href: "/character",
-    cta: "Open Character Studio",
-  },
-  {
     icon: "image" as const,
-    title: "Library",
-    body: "Every render is saved automatically. Browse, favourite, re-open and reuse past work across modes.",
-    href: "/images",
-    cta: "Browse the library",
+    label: "Make a still",
+  },
+  {
+    index: "02",
+    title: "Motion studio",
+    body: "Give a scene movement, set its opening and ending frames, then bring the clip into your library.",
+    href: "/generate/video",
+    icon: "video" as const,
+    label: "Make a clip",
+  },
+  {
+    index: "03",
+    title: "Story & scenes",
+    body: "Shape a premise into a sequence. Keep the cast and visual continuity close as the story grows.",
+    href: "/writer",
+    icon: "story" as const,
+    label: "Start a story",
+  },
+  {
+    index: "04",
+    title: "Characters & places",
+    body: "Build a small visual library of recurring faces and locations, ready to return in another scene.",
+    href: "/character",
+    icon: "character" as const,
+    label: "Build a world",
   },
 ];
 
-const STEPS = [
-  {
-    title: "Describe the shot",
-    body: "Write a prompt — or let Enhance expand it — then pick a style, ratio and model that fit the idea.",
-  },
-  {
-    title: "Generate & refine",
-    body: "Renders finish in seconds. Favourite the best take, re-roll variations, or tweak the prompt and try again.",
-  },
-  {
-    title: "Chain into a story",
-    body: "Keep going scene by scene — each frame continues from the last. Convert the whole story to video in one click.",
-  },
-];
-
-/** Slim landing-only top bar; sticky, glassy, and out of the content's way. */
 function LandingNav() {
   return (
-    <header className="sticky top-0 z-40 border-b border-border/70 bg-canvas/80 backdrop-blur-md">
-      <div className="mx-auto flex h-14 w-full max-w-[1200px] items-center gap-3 px-4 sm:px-6">
-        <Link
-          href="/"
-          aria-label="PeraByte home"
-          className="text-[15px] font-extrabold tracking-tight text-ink"
-        >
-          Pera<span className="text-primary">Byte</span>
-        </Link>
-        <nav
-          aria-label="Landing"
-          className="ml-5 hidden items-center gap-1 md:flex"
-        >
+    <header className="sticky top-0 z-40 border-b border-border/80 bg-canvas/95 backdrop-blur-md">
+      <div className="mx-auto flex h-[68px] w-full max-w-[1380px] items-center gap-5 px-4 sm:px-7 lg:px-10">
+        <Link href="/" aria-label="PeraByte home"><Logo size={30} /></Link>
+        <span className="hidden h-5 border-l border-border sm:block" />
+        <nav aria-label="Explore" className="hidden items-center gap-1 md:flex">
           {[
-            { href: "#features", label: "Features" },
-            { href: "#how", label: "How it works" },
-          ].map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className="rounded-[8px] px-2.5 py-1.5 text-[13px] font-semibold text-muted transition-colors hover:bg-surface-2 hover:text-ink"
-            >
-              {item.label}
-            </a>
+            ["#workspaces", "The studio"],
+            ["#approach", "How it works"],
+          ].map(([href, label]) => (
+            <a key={href} href={href} className="rounded-[8px] px-3 py-2 text-[12px] font-semibold text-ink-soft transition-colors hover:bg-surface hover:text-ink">{label}</a>
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <ThemeToggle />
-          <Link
-            href="/generate/image"
-            className="inline-flex h-9 items-center gap-1.5 rounded-[10px] bg-primary-strong px-3.5 text-[13px] font-bold text-white transition-colors hover:bg-primary-dark"
-          >
-            Get Started
-            <Icon name="arrow-right" size={14} />
+          <Link href="/generate/image" className="inline-flex h-10 items-center gap-2 rounded-[7px] bg-primary-strong px-4 text-[12px] font-bold text-white transition-colors hover:bg-primary-dark">
+            Open the studio <Icon name="arrow-right" size={15} />
           </Link>
         </div>
       </div>
@@ -104,203 +73,117 @@ export default function HomePage() {
     <div className="flex w-full flex-col">
       <LandingNav />
 
-      <main className="mx-auto w-full max-w-[1200px] px-4 sm:px-6">
-        {/* Hero — compact and above the fold; no full-viewport reservation. */}
-        <section className="grid items-center gap-10 py-12 sm:py-16 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,1fr)] lg:gap-14 lg:py-20">
-          <div className="animate-[fade-up_0.4s_ease-out_both]">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary-soft px-3 py-1 text-[12px] font-bold text-primary">
-              <Icon name="sparkle" size={12} />
-              Story Mode now chains scenes into video
-            </span>
-            <h1 className="mt-4 text-[34px] font-extrabold leading-[1.05] tracking-[-0.035em] text-ink sm:text-[44px] lg:text-[52px]">
-              Create stunning images and{" "}
-              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                videos
-              </span>{" "}
-              from a single prompt
+      <main className="mx-auto w-full max-w-[1380px] px-4 sm:px-7 lg:px-10">
+        <section className="grid items-center gap-9 border-b border-border py-10 sm:py-14 lg:min-h-[620px] lg:grid-cols-[0.92fr_1.08fr] lg:gap-12 lg:py-16">
+          <div className="relative z-10 animate-[fade-up_0.4s_ease-out_both]">
+            <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
+              <span className="inline-block h-px w-7 bg-accent" />
+              An image-making workspace
+            </p>
+            <h1 className="editorial-display mt-5 max-w-[660px] text-[43px] leading-[0.99] text-ink sm:text-[58px] lg:text-[70px]">
+              Give your ideas a world to live in.
             </h1>
-            <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-muted">
-              PeraByte Studio is an easy-to-use generation studio: describe an
-              idea, tune the settings, and watch it render — then keep the
-              story going.
+            <p className="mt-5 max-w-[470px] text-[14px] leading-[1.8] text-muted sm:text-[15px]">
+              Make an image, follow a scene into motion, or grow a story across connected frames. Keep your creative tools and visual references in one calm, focused studio.
             </p>
-
-            <div className="mt-6 flex flex-wrap items-center gap-3">
-              <Link
-                href="/generate/image"
-                className="inline-flex h-12 items-center gap-2 rounded-[14px] bg-primary-strong px-6 text-[14.5px] font-bold text-white shadow-[0_1px_2px_rgba(37,99,235,0.35)] transition-all hover:bg-primary-dark hover:shadow-lift"
-              >
-                Start creating
-                <Icon name="arrow-right" size={16} />
+            <div className="mt-7 flex flex-wrap items-center gap-3">
+              <Link href="/generate/image" className="inline-flex h-12 items-center gap-2 rounded-[7px] bg-primary-strong px-5 text-[13px] font-bold text-white shadow-card transition-colors hover:bg-primary-dark">
+                Create your first image <Icon name="arrow-right" size={16} />
               </Link>
-              <a
-                href="#how"
-                className="inline-flex h-12 items-center rounded-[14px] border border-border-strong bg-raised px-5 text-[13.5px] font-bold text-ink-soft transition-colors hover:border-primary/40 hover:text-ink"
-              >
-                See how it works
-              </a>
+              <Link href="/story" className="inline-flex h-12 items-center gap-2 rounded-[7px] border border-border-strong bg-transparent px-4 text-[12px] font-semibold text-ink-soft transition-colors hover:bg-surface hover:text-ink">
+                Explore scene studio <Icon name="chevron-down" size={14} className="-rotate-90" />
+              </Link>
             </div>
-
-            <ul className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[12.5px] font-medium text-muted">
-              {[
-                "Free to start",
-                "Brings your own API keys",
-                "Images & video",
-              ].map((item) => (
-                <li key={item} className="flex items-center gap-1.5">
-                  <Icon name="check" size={13} className="text-success" />
-                  {item}
-                </li>
-              ))}
-            </ul>
+            <div className="mt-10 flex max-w-[500px] items-center gap-4 border-t border-border pt-4">
+              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary"><Icon name="layers" size={17} /></span>
+              <p className="text-[11.5px] leading-relaxed text-muted">Keep the cast, the places, and the visual thread together as you create.</p>
+              <span className="ml-auto hidden text-[10px] font-bold uppercase tracking-[0.18em] text-muted sm:inline">01 — 04</span>
+            </div>
           </div>
 
-          {/* Hero visual: soft glow, main render with product chips, two
-              supporting previews. Literal-black chips stay readable on media
-              in both themes. */}
-          <div className="relative animate-[fade-up_0.5s_ease-out_both]">
-            <div
-              aria-hidden
-              className="absolute -inset-8 -z-10 rounded-[40px] bg-[radial-gradient(60%_60%_at_60%_35%,color-mix(in_srgb,var(--color-primary)_22%,transparent),transparent_70%),radial-gradient(45%_45%_at_25%_80%,color-mix(in_srgb,var(--color-accent)_18%,transparent),transparent_70%)] blur-2xl"
-            />
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:gap-4">
-              <div className="relative min-w-0 flex-1 overflow-hidden rounded-[24px] border border-border bg-surface shadow-lift">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={HERO_MAIN}
-                  alt="Example render: a mountain lake at sunrise"
-                  className="aspect-[16/11] w-full object-cover"
-                />
-                <span className="absolute bottom-3 left-3 rounded-full border border-white/20 bg-black/55 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
-                  Text-to-image &amp; video
-                </span>
-                <span className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-[10px] border border-border bg-raised/90 px-2.5 py-1.5 text-[11px] font-bold text-ink shadow-card backdrop-blur">
-                  <Icon name="sparkle" size={12} className="text-primary" />
-                  16:9 · 1080p
-                </span>
+          <div className="relative mx-auto w-full max-w-[720px] animate-[fade-up_0.55s_ease-out_both] lg:pl-4">
+            <div className="absolute -right-1 top-[-22px] hidden h-24 w-24 border-r border-t border-accent/60 sm:block" aria-hidden="true" />
+            <div className="relative overflow-hidden border border-border bg-surface p-2 shadow-lift sm:p-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={HERO_MAIN} alt="A mountain lake at sunrise, an example PeraByte render" className="aspect-[1.28] w-full object-cover" />
+              <div className="absolute bottom-5 left-5 flex items-center gap-2 border border-white/20 bg-black/55 px-3 py-2 text-white backdrop-blur-sm sm:bottom-7 sm:left-7">
+                <span className="size-1.5 rounded-full bg-accent" />
+                <span className="text-[10px] font-semibold uppercase tracking-[0.16em]">Image / 16:9</span>
               </div>
-              <div className="flex w-full flex-row gap-3 sm:w-[104px] sm:shrink-0 sm:flex-col lg:w-[118px]">
-                {HERO_SIDE.map(({ src, alt }) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    key={src}
-                    src={src}
-                    alt={alt}
-                    className="aspect-square w-full min-w-0 flex-1 rounded-[16px] border border-border object-cover shadow-card"
-                  />
-                ))}
-              </div>
+              <span className="absolute right-5 top-5 bg-canvas px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-[0.15em] text-ink sm:right-6 sm:top-6">Scene 01</span>
             </div>
-          </div>
-        </section>
-
-        {/* Features — 2×2 bento on desktop; tight and scannable. */}
-        <section id="features" className="scroll-mt-20 pb-4">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
-                Features
-              </p>
-              <h2 className="mt-1.5 text-[26px] font-extrabold tracking-[-0.02em] text-ink sm:text-[30px]">
-                Four ways to create
-              </h2>
-            </div>
-            <p className="max-w-xs text-[12.5px] leading-relaxed text-muted">
-              Everything runs on the providers you configure — swap models and
-              keys any time in Settings.
-            </p>
-          </div>
-
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            {FEATURES.map((feature) => (
-              <Link
-                key={feature.title}
-                href={feature.href}
-                className="group flex flex-col rounded-[20px] border border-border bg-raised p-5 shadow-card transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lift"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-[12px] bg-primary-soft text-primary">
-                    <Icon name={feature.icon} size={18} />
-                  </span>
-                  <span className="text-[15px] font-bold text-ink">
-                    {feature.title}
-                  </span>
+            <div className="absolute -bottom-6 right-0 flex w-[42%] gap-2 sm:-right-3 sm:bottom-[-34px] sm:w-[45%] sm:gap-3">
+              {HERO_SIDE.map((item, index) => (
+                <div key={item.src} className={`relative w-1/2 border border-border bg-canvas p-1.5 shadow-lift sm:p-2 ${index === 1 ? "translate-y-[-16px]" : ""}`}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={item.src} alt={item.alt} className="aspect-square w-full object-cover" />
                 </div>
-                <span className="mt-3 block text-[13px] leading-relaxed text-muted">
-                  {feature.body}
-                </span>
-                <span className="mt-auto inline-flex items-center gap-1.5 pt-4 text-[12.5px] font-bold text-primary">
-                  {feature.cta}
-                  <Icon
-                    name="arrow-right"
-                    size={14}
-                    className="transition-transform group-hover:translate-x-0.5"
-                  />
-                </span>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        {/* How it works — three numbered steps, one quiet row. */}
-        <section id="how" className="scroll-mt-20 py-12 sm:py-14">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
-            How it works
-          </p>
-          <h2 className="mt-1.5 text-[26px] font-extrabold tracking-[-0.02em] text-ink sm:text-[30px]">
-            From prompt to story in three steps
-          </h2>
-
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {STEPS.map((step, index) => (
-              <div
-                key={step.title}
-                className="rounded-[20px] border border-border bg-surface p-5"
-              >
-                <span
-                  aria-hidden
-                  className="text-[26px] font-extrabold leading-none text-primary/35"
-                >
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <p className="mt-3 text-[14.5px] font-bold text-ink">
-                  {step.title}
-                </p>
-                <p className="mt-1.5 text-[13px] leading-relaxed text-muted">
-                  {step.body}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Final CTA band — one gradient panel, one action. */}
-        <section className="pb-14">
-          <div className="relative overflow-hidden rounded-[28px] bg-[linear-gradient(130deg,var(--color-primary),var(--color-accent))] px-6 py-10 text-center shadow-lift sm:px-10 sm:py-12">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -left-16 -top-24 size-64 rounded-full bg-white/10"
-            />
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -bottom-28 -right-10 size-72 rounded-full bg-white/10"
-            />
-            <h2 className="relative text-[24px] font-extrabold tracking-[-0.02em] text-white sm:text-[28px]">
-              Start creating in seconds
-            </h2>
-            <p className="relative mx-auto mt-2 max-w-md text-[13.5px] leading-relaxed text-white/85">
-              Open the studio, describe an idea, and watch it render — no
-              setup required to try your first image.
-            </p>
-            <div className="relative mt-6 flex justify-center">
-              <Link
-                href="/generate/image"
-                className="inline-flex h-12 items-center gap-2 rounded-[14px] bg-white px-6 text-[14px] font-bold text-primary-strong shadow-lift transition-transform hover:scale-[1.02]"
-              >
-                Open the studio
-                <Icon name="arrow-right" size={16} />
-              </Link>
+              ))}
             </div>
+            <span className="absolute -left-3 bottom-12 hidden -rotate-90 text-[9px] font-bold uppercase tracking-[0.25em] text-muted lg:block">A study in atmosphere</span>
+          </div>
+        </section>
+
+        <section id="workspaces" className="scroll-mt-20 py-14 sm:py-20">
+          <div className="grid gap-5 sm:grid-cols-[0.8fr_1.2fr] sm:items-end">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">One desk, four ways in</p>
+              <h2 className="editorial-display mt-3 max-w-lg text-[35px] leading-[1.05] text-ink sm:text-[44px]">Start small. Let the idea grow.</h2>
+            </div>
+            <p className="max-w-lg pb-1 text-[13px] leading-[1.8] text-muted sm:justify-self-end">Move between single images, moving frames, story drafts, and the reusable pieces that make a world feel familiar.</p>
+          </div>
+
+          <div className="mt-8 grid border-y border-border sm:grid-cols-2 lg:grid-cols-4">
+            {WORKSPACES.map((item, index) => (
+              <Link key={item.index} href={item.href} className={`group flex min-h-[226px] flex-col border-border px-4 py-5 transition-colors hover:bg-surface sm:px-5 ${index > 0 ? "border-t sm:border-l" : ""} ${index > 1 ? "lg:border-t-0" : ""}`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold tracking-[0.16em] text-muted">{item.index}</span>
+                  <Icon name={item.icon} size={18} className="text-primary transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                </div>
+                <h3 className="editorial-display mt-6 text-[25px] leading-tight text-ink">{item.title}</h3>
+                <p className="mt-2 text-[12px] leading-[1.7] text-muted">{item.body}</p>
+                <span className="mt-auto inline-flex items-center gap-1.5 pt-5 text-[10px] font-bold uppercase tracking-[0.12em] text-primary">
+                  {item.label}<Icon name="arrow-right" size={13} className="transition-transform group-hover:translate-x-1" />
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section id="approach" className="scroll-mt-20 border-t border-border py-14 sm:py-20">
+          <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr]">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">A simple working rhythm</p>
+              <h2 className="editorial-display mt-3 max-w-sm text-[35px] leading-[1.05] text-ink sm:text-[42px]">From first thought to final frame.</h2>
+            </div>
+            <div className="grid gap-0 sm:grid-cols-3">
+              {[
+                ["01", "Put the idea down", "Write a prompt or begin with a story premise."],
+                ["02", "Shape the image", "Choose a model, tune the frame, and compare results."],
+                ["03", "Carry it forward", "Reuse a reference or cast member in your next scene."],
+              ].map(([number, title, body]) => (
+                <article key={number} className="border-t border-border py-4 sm:border-l sm:pl-4 sm:pr-3 first:sm:border-l-0 first:sm:pl-0">
+                  <span className="text-[10px] font-bold tracking-[0.16em] text-accent">{number}</span>
+                  <h3 className="mt-4 text-[13px] font-bold text-ink">{title}</h3>
+                  <p className="mt-1.5 max-w-[230px] text-[11.5px] leading-[1.7] text-muted">{body}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="pb-12 sm:pb-16">
+          <div className="relative flex flex-col gap-6 overflow-hidden bg-[#203b30] px-6 py-8 text-[#f5f2e9] sm:flex-row sm:items-center sm:justify-between sm:px-9 sm:py-10">
+            <div aria-hidden="true" className="pointer-events-none absolute -right-8 -top-20 size-64 rounded-full border border-white/10" />
+            <div aria-hidden="true" className="pointer-events-none absolute -right-1 top-[-54px] size-48 rounded-full border border-white/10" />
+            <div className="relative">
+              <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#c5d1a0]">Make room for the next idea</p>
+              <h2 className="editorial-display mt-2 text-[30px] leading-tight sm:text-[36px]">Your studio is ready.</h2>
+              <p className="mt-2 max-w-md text-[12px] leading-relaxed text-white/70">Open a blank canvas, bring a reference, and see where the scene takes you.</p>
+            </div>
+            <Link href="/generate/image" className="relative inline-flex h-11 shrink-0 items-center justify-center gap-2 bg-[#f4f1e9] px-5 text-[11px] font-bold text-[#203b30] transition-colors hover:bg-white">
+              Enter PeraByte <Icon name="arrow-right" size={14} />
+            </Link>
           </div>
         </section>
       </main>

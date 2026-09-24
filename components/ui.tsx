@@ -23,7 +23,7 @@ type Size = "sm" | "md" | "lg";
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    "bg-primary-strong text-white hover:bg-primary-dark active:bg-primary-dark shadow-[0_1px_2px_rgba(37,99,235,0.35)]",
+    "bg-primary-strong text-white shadow-[0_1px_2px_rgba(24,52,40,0.16)] hover:bg-primary-dark active:bg-primary-dark",
   secondary:
     "bg-raised text-ink border border-border-strong hover:border-muted hover:bg-surface",
   ghost: "bg-transparent text-ink hover:bg-surface-2",
@@ -63,7 +63,7 @@ export function Button({
       {...rest}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      className={`inline-flex items-center justify-center rounded-[12px] font-semibold transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-55 ${VARIANTS[variant]} ${SIZES[size]} ${block ? "w-full" : ""} ${className}`}
+      className={`inline-flex items-center justify-center rounded-[7px] font-semibold transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-55 ${VARIANTS[variant]} ${SIZES[size]} ${block ? "w-full" : ""} ${className}`}
     >
       {loading ? (
         <Spinner />
@@ -102,7 +102,7 @@ export function LinkButton({
     <Link
       href={href}
       {...rest}
-      className={`inline-flex items-center justify-center rounded-[12px] font-semibold transition-all duration-150 ${VARIANTS[variant]} ${SIZES[size]} ${block ? "w-full" : ""} ${className}`}
+      className={`inline-flex items-center justify-center rounded-[7px] font-semibold transition-colors duration-150 ${VARIANTS[variant]} ${SIZES[size]} ${block ? "w-full" : ""} ${className}`}
     >
       {icon && <Icon name={icon} size={size === "sm" ? 15 : 17} />}
       {children}
@@ -135,7 +135,7 @@ export function Card({
 }) {
   return (
     <Tag
-      className={`rounded-[20px] border border-border bg-raised p-6 shadow-card ${className}`}
+      className={`rounded-[12px] border border-border bg-raised p-6 shadow-card ${className}`}
     >
       {children}
     </Tag>
@@ -158,7 +158,7 @@ export function Badge({
   } as const;
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${tones[tone]}`}
+      className={`inline-flex items-center gap-1 rounded-[5px] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] ${tones[tone]}`}
     >
       {children}
     </span>
@@ -233,7 +233,7 @@ export function SelectField({
           id={id}
           {...rest}
           value={value}
-          className={`h-11 w-full appearance-none rounded-[12px] border bg-raised pl-3.5 pr-10 text-sm font-medium text-ink transition-colors hover:border-muted focus:border-primary focus:outline-none ${
+          className={`h-11 w-full appearance-none rounded-[8px] border bg-raised pl-3.5 pr-10 text-sm font-medium text-ink transition-colors hover:border-muted focus:border-primary focus:outline-none ${
             error ? "border-danger" : "border-border-strong"
           }`}
         >
@@ -285,7 +285,7 @@ export function TextAreaField({
         placeholder={placeholder}
         aria-invalid={error ? true : undefined}
         onChange={(e) => onChange(e.target.value)}
-        className={`w-full resize-y rounded-[12px] border bg-raised px-3.5 py-3 text-sm leading-relaxed text-ink placeholder:text-muted focus:border-primary focus:outline-none ${
+        className={`w-full resize-y rounded-[8px] border bg-raised px-3.5 py-3 text-sm leading-relaxed text-ink placeholder:text-muted focus:border-primary focus:outline-none ${
           error ? "border-danger" : "border-border-strong"
         }`}
       />
@@ -355,7 +355,7 @@ export function Segmented<T extends string>({
     <div
       role="tablist"
       aria-label={ariaLabel}
-      className="inline-flex items-center gap-1 rounded-[12px] border border-border bg-surface p-1"
+      className="inline-flex items-center gap-1 rounded-[8px] border border-border bg-surface p-1"
     >
       {options.map((option) => {
         const active = option.value === value;
@@ -474,7 +474,7 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-[20px] border border-dashed border-border-strong bg-surface px-6 py-14 text-center">
+    <div className="flex flex-col items-center justify-center rounded-[12px] border border-dashed border-border-strong bg-surface px-6 py-14 text-center">
       <span className="mb-4 inline-flex size-12 items-center justify-center rounded-full bg-raised text-muted shadow-card">
         <Icon name={icon} size={22} />
       </span>
@@ -508,7 +508,7 @@ export function ConfirmDialog({
       aria-label={title}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
     >
-      <div className="w-full max-w-sm rounded-[20px] border border-border bg-raised p-6 shadow-lift">
+      <div className="w-full max-w-sm rounded-[12px] border border-border bg-raised p-6 shadow-lift">
         <h2 className="text-base font-bold text-ink">{title}</h2>
         <p className="mt-2 text-sm text-muted">{body}</p>
         <div className="mt-5 flex justify-end gap-2">

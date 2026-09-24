@@ -4,94 +4,118 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ------------------------------------------------------------------
-   PeraByte Studio design tokens (mirrors /DESIGN.md)
+   PeraByte Studio — field-notes palette: warm stock, evergreen ink, clay.
+   The UI should feel like a working image-making desk, not a generic SaaS.
    ------------------------------------------------------------------ */
 @theme {
-  --color-primary: #2563eb;
-  /* Solid action/CTA backgrounds that carry white text — kept dark enough
-     for AA (4.5:1) in BOTH themes; see the .dark overrides. */
-  --color-primary-strong: #1d4ed8;
-  --color-primary-dark: #1d4ed8;
-  --color-primary-soft: #eff6ff;
-  --color-accent: #7c3aed;
+  --color-primary: #315f4b;
+  --color-primary-strong: #234c3b;
+  --color-primary-dark: #183d30;
+  --color-primary-soft: #e0eade;
+  --color-accent: #c96c4c;
 
-  --color-ink: #0f172a;
-  --color-ink-soft: #334155;
-  --color-muted: #64748b;
+  --color-ink: #202b27;
+  --color-ink-soft: #485650;
+  --color-muted: #758078;
 
-  --color-canvas: #ffffff;
-  --color-surface: #f8fafc;
-  --color-surface-2: #f1f5f9;
-  --color-raised: #ffffff;
-  --color-border: #e2e8f0;
-  --color-border-strong: #cbd5e1;
+  --color-canvas: #f4f1e9;
+  --color-surface: #e9e5db;
+  --color-surface-2: #dfdacd;
+  --color-raised: #fbf9f4;
+  --color-border: #d9d3c7;
+  --color-border-strong: #c3bbad;
 
-  --color-success: #15803d;
-  --color-success-soft: #f0fdf4;
-  --color-warning: #b45309;
-  --color-warning-soft: #fffbeb;
-  --color-danger: #b91c1c;
-  /* Solid danger fills under white text — AA in both themes. */
-  --color-danger-strong: #b91c1c;
-  --color-danger-soft: #fef2f2;
+  --color-success: #3d7657;
+  --color-success-soft: #e6efe6;
+  --color-warning: #97602e;
+  --color-warning-soft: #f5ebdb;
+  --color-danger: #a8463a;
+  --color-danger-strong: #923a31;
+  --color-danger-soft: #f5e5e0;
 
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 18px;
 
-  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+  --font-sans: Inter, "Avenir Next", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
 
-  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04),
-    0 8px 24px -12px rgba(15, 23, 42, 0.12);
-  --shadow-lift: 0 2px 4px rgba(15, 23, 42, 0.05),
-    0 18px 40px -18px rgba(15, 23, 42, 0.25);
+  --shadow-card: 0 1px 2px rgba(38, 45, 39, 0.04),
+    0 8px 24px -16px rgba(38, 45, 39, 0.2);
+  --shadow-lift: 0 16px 38px -24px rgba(26, 43, 34, 0.38);
 
   --animate-fade-up: fade-up 0.35s ease-out both;
   --animate-shimmer: shimmer 1.6s linear infinite;
 }
 
 /* ------------------------------------------------------------------
-   Dark theme — every semantic token flips; components never need
-   per-element dark: overrides. Scrim/media blacks use literal black,
-   so text-on-media chips stay readable in both themes.
+   Dark theme — charcoal-green canvas, parchment type and soft sage action.
    ------------------------------------------------------------------ */
 .dark {
   color-scheme: dark;
 
-  --color-primary: #3b82f6;
-  /* White text on solid action fills needs a darker blue than the accent
-     blue above (#3b82f6 tops out at 3.7:1 under white). */
-  --color-primary-strong: #2563eb;
-  --color-primary-dark: #2563eb;
-  --color-primary-soft: #0e1c38;
-  --color-accent: #a78bfa;
+  --color-primary: #a9c5a8;
+  --color-primary-strong: #315f49;
+  --color-primary-dark: #254d3b;
+  --color-primary-soft: #263b30;
+  --color-accent: #e28b68;
 
-  --color-ink: #f1f5f9;
-  --color-ink-soft: #cbd5e1;
-  --color-muted: #94a3b8;
+  --color-ink: #f0eee5;
+  --color-ink-soft: #c5cbc1;
+  --color-muted: #939f95;
 
-  --color-canvas: #0b1220;
-  --color-surface: #0f172a;
-  --color-surface-2: #1e293b;
-  --color-raised: #16213a;
-  --color-border: #24324a;
-  --color-border-strong: #3b4d6b;
+  --color-canvas: #151b18;
+  --color-surface: #1b2420;
+  --color-surface-2: #27312c;
+  --color-raised: #202a25;
+  --color-border: #35413a;
+  --color-border-strong: #4b5a50;
 
-  --color-success: #4ade80;
-  --color-success-soft: #12291c;
-  --color-warning: #fbbf24;
-  --color-warning-soft: #2f2410;
-  --color-danger: #f87171;
-  /* Bright #f87171 stays for danger TEXT; fills under white text use this. */
-  --color-danger-strong: #dc2626;
-  --color-danger-soft: #3c1a1e;
+  --color-success: #91c19b;
+  --color-success-soft: #263b2d;
+  --color-warning: #e6ba77;
+  --color-warning-soft: #403321;
+  --color-danger: #e28b7d;
+  --color-danger-strong: #a8483d;
+  --color-danger-soft: #402925;
 
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.45),
-    0 8px 24px -12px rgba(0, 0, 0, 0.55);
-  --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.4),
-    0 18px 40px -18px rgba(0, 0, 0, 0.7);
+  --shadow-card: 0 2px 5px rgba(0, 0, 0, 0.16),
+    0 10px 28px -18px rgba(0, 0, 0, 0.55);
+  --shadow-lift: 0 18px 42px -24px rgba(0, 0, 0, 0.78);
+}
+
+/* Persistent navigation keeps its own evergreen palette in either theme. */
+.workspace-sidebar {
+  --color-primary: #bed09a;
+  --color-primary-strong: #577a50;
+  --color-primary-dark: #496a43;
+  --color-primary-soft: #2d3e30;
+  --color-accent: #d88665;
+  --color-ink: #f2efe7;
+  --color-ink-soft: #c6cec4;
+  --color-muted: #8d9b90;
+  --color-canvas: #151b18;
+  --color-surface: #1a221e;
+  --color-surface-2: #26312b;
+  --color-raised: #1b2420;
+  --color-border: #303c35;
+  --color-border-strong: #455249;
+  --color-success: #91c19b;
+  --color-success-soft: #263b2d;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+.editorial-display {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+}
+
+h1 {
+  font-family: var(--font-display);
 }
 
 @keyframes fade-up {
@@ -135,13 +159,16 @@ html {
 
 body {
   min-height: 100%;
-}
-
-body {
   background: var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+}
+
+input,
+select,
+textarea {
+  accent-color: var(--color-primary);
 }
 
 *:focus-visible {
@@ -165,7 +192,7 @@ body {
   background: linear-gradient(
     90deg,
     var(--color-surface-2) 0%,
-    #e9eef5 40%,
+    #f1eee6 40%,
     var(--color-surface-2) 80%
   );
   background-size: 480px 100%;
@@ -176,7 +203,7 @@ body {
   background: linear-gradient(
     90deg,
     var(--color-surface-2) 0%,
-    #2a3a56 40%,
+    #334039 40%,
     var(--color-surface-2) 80%
   );
 }

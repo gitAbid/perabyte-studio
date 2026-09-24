@@ -40,12 +40,12 @@ import type { FrameRefs } from "@/components/FrameDock";
 
 const COPY = {
   image: {
-    title: "Generate Image",
+    title: "Image studio",
     subtitle: "Turn your idea into a stunning image.",
     emptyTitle: "Your image will appear here",
   },
   video: {
-    title: "Generate Video",
+    title: "Video studio",
     subtitle: "Bring your idea to life with motion.",
     emptyTitle: "Your video will appear here",
   },
@@ -363,7 +363,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
     // panels scroll inside themselves instead of scrolling the page; on
     // mobile the stack flows naturally and the page scrolls instead of
     // crushing the panels.
-    <div className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-4 py-4 sm:px-6 sm:py-5 lg:h-dvh lg:flex-none lg:overflow-hidden">
+    <div className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col px-4 py-4 sm:px-6 sm:py-5 lg:h-dvh lg:flex-none lg:overflow-hidden xl:px-8">
       <div className="relative flex shrink-0 flex-col gap-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2.5">
@@ -375,7 +375,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
               <Icon name="arrow-left" size={16} />
             </Link>
             <div className="min-w-0">
-              <h1 className="truncate text-[18px] font-extrabold tracking-[-0.02em] text-ink sm:text-[21px]">
+              <h1 className="truncate text-[20px] font-bold tracking-[-0.025em] text-ink sm:text-[23px]">
                 {copy.title}
               </h1>
               <p className="mt-0.5 hidden truncate text-[12px] text-muted lg:block">
@@ -422,7 +422,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
       </div>
 
       {/* ---------------------------- Workspace ---------------------------- */}
-      <div className="mt-3 grid min-w-0 gap-4 lg:mt-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(330px,400px)_minmax(0,1fr)] lg:items-stretch">
+      <div className="mt-3 grid min-w-0 gap-4 lg:mt-5 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(360px,420px)_minmax(0,1fr)] lg:items-stretch">
         {/* Composer — first in the stack on every size; it fills its column
             on desktop so no space is wasted above or below it. On short
             desktop viewports the column scrolls internally (expanded picker
@@ -487,7 +487,7 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
         {/* Preview — the ratio-locked canvas sits top-left; a strip below the
             canvas shows variations, or previous generations when there are
             none, or examples on a first run. */}
-        <div className="relative order-2 flex min-h-[300px] flex-col gap-3 overflow-hidden rounded-[20px] border border-border bg-surface p-3 sm:min-h-[360px] lg:min-h-0">
+        <div className="relative order-2 flex min-h-[300px] flex-col gap-3 overflow-hidden rounded-[11px] border border-border bg-raised p-4 shadow-card sm:min-h-[360px] lg:min-h-0">
           {/* Canvas — a size container so ratio boxes fit-contain within it.
               The box hugs its ratio and hangs from the top, centred. */}
           <div

@@ -1,56 +1,50 @@
 ---
-version: alpha
+version: studio
 name: PeraByte Studio
-description: Calm, polished AI media creation with a blue SaaS interface and visual-first workflows.
+description: An editorial, image-first workspace for creating connected visual worlds.
 colors:
-  primary: "#2563EB"
-  primary-dark: "#1D4ED8"
-  secondary: "#0F172A"
-  tertiary: "#7C3AED"
-  success: "#15803D"
-  warning: "#B45309"
-  danger: "#B91C1C"
-  neutral: "#F8FAFC"
-  surface: "#FFFFFF"
-  surface-muted: "#F1F5F9"
-  border: "#CBD5E1"
-  text: "#0F172A"
-  text-muted: "#475569"
+  primary: "#315F4B"
+  primary-dark: "#183D30"
+  secondary: "#202B27"
+  tertiary: "#C96C4C"
+  success: "#3D7657"
+  warning: "#97602E"
+  danger: "#A8463A"
+  neutral: "#F4F1E9"
+  surface: "#FBF9F4"
+  surface-muted: "#E9E5DB"
+  border: "#D9D3C7"
+  text: "#202B27"
+  text-muted: "#758078"
   on-primary: "#FFFFFF"
 typography:
   display:
-    fontFamily: Inter, ui-sans-serif, system-ui, sans-serif
-    fontSize: 3.5rem
-    fontWeight: 700
-    lineHeight: 1.05
-    letterSpacing: "-0.04em"
-  h1:
-    fontFamily: Inter, ui-sans-serif, system-ui, sans-serif
+    fontFamily: "Iowan Old Style, Palatino Linotype, Georgia, serif"
+    fontSize: 4.375rem
+    fontWeight: 500
+    lineHeight: 0.99
+    letterSpacing: "-0.045em"
+  heading:
+    fontFamily: "Iowan Old Style, Palatino Linotype, Georgia, serif"
     fontSize: 2.25rem
-    fontWeight: 700
-    lineHeight: 1.15
-    letterSpacing: "-0.03em"
-  h2:
-    fontFamily: Inter, ui-sans-serif, system-ui, sans-serif
-    fontSize: 1.5rem
-    fontWeight: 700
-    lineHeight: 1.25
-    letterSpacing: "-0.02em"
+    fontWeight: 500
+    lineHeight: 1.1
+    letterSpacing: "-0.04em"
   body:
-    fontFamily: Inter, ui-sans-serif, system-ui, sans-serif
-    fontSize: 1rem
+    fontFamily: "Inter, Avenir Next, ui-sans-serif, system-ui, sans-serif"
+    fontSize: 0.9375rem
     fontWeight: 400
-    lineHeight: 1.5
+    lineHeight: 1.7
   label:
-    fontFamily: Inter, ui-sans-serif, system-ui, sans-serif
-    fontSize: 0.875rem
-    fontWeight: 600
+    fontFamily: "Inter, Avenir Next, ui-sans-serif, system-ui, sans-serif"
+    fontSize: 0.75rem
+    fontWeight: 700
     lineHeight: 1.25
 rounded:
-  sm: 8px
-  md: 12px
-  lg: 20px
-  xl: 28px
+  sm: 5px
+  md: 8px
+  lg: 12px
+  xl: 18px
 spacing:
   xs: 4px
   sm: 8px
@@ -61,11 +55,6 @@ spacing:
 components:
   button-primary:
     backgroundColor: "{colors.primary}"
-    textColor: "{colors.on-primary}"
-    rounded: "{rounded.md}"
-    padding: 12px 18px
-  button-primary-hover:
-    backgroundColor: "{colors.primary-dark}"
     textColor: "{colors.on-primary}"
     rounded: "{rounded.md}"
     padding: 12px 18px
@@ -86,61 +75,31 @@ components:
     padding: 24px
 ---
 
-## Overview
+## Direction
 
-PeraByte should feel like a welcoming creative workspace rather than a technical AI console. Use generous whitespace, strong media previews, concise labels, and progressive disclosure for advanced controls.
+PeraByte is a working image-making studio for individual frames, motion, stories, reusable characters, and locations. The interface uses the language of an editorial art desk: warm stock, deep evergreen controls, clay accents, restrained borders, and expressive serif display type. Content and generated media carry the visual emphasis.
 
-## Colors
+## Palette
 
-- **Primary blue (#2563EB):** Main calls to action, active navigation, links, and selected controls.
-- **Deep navy (#0F172A):** Headings and high-emphasis text.
-- **Purple (#7C3AED):** Optional Story Mode or creative accent; do not compete with the primary action.
-- **Neutral surfaces:** White cards on a pale slate background create a clean SaaS canvas.
-- **Semantic colors:** Green for success, amber for warnings, and red for destructive/error states. Always pair color with text or an icon.
+- Warm paper canvas: `#F4F1E9`; raised surfaces: `#FBF9F4`.
+- Evergreen is the primary action and selection color: `#234C3B`.
+- Clay marks secondary emphasis and wayfinding: `#C96C4C`.
+- Ink and muted text use warm charcoal and grey-green, not blue-grey.
+- Dark mode uses charcoal green (`#151B18`), parchment text, and sage accents. The navigation rail retains its evergreen palette in both themes.
+- Keep status colors semantic and pair them with labels or icons.
 
-## Typography
+## Layout and interaction
 
-Use Inter or a metrically compatible sans-serif. Headings should be compact and confident; body text should remain highly readable. Avoid all-caps for essential instructions.
+- A full-height, fixed left rail anchors the desktop studio. Its groups follow the creative journey: Make, Collect, and Build a world.
+- On small screens, use a compact top bar and a slide-over navigation drawer with the same destinations.
+- Creation screens prioritize the prompt and settings beside a large preview. Keep primary actions easy to locate and show progress, errors, and saved results in context.
+- Library screens put search, sorting, and management controls close to the media grid.
+- Use editorial spacing, numbered steps, fine rules, and image-led compositions. Avoid decorative gradients, excessive pills, and stacked dashboard cards.
+- Keep controls clear and accessible, with visible focus, readable contrast, and touch targets of at least 44px where practical.
 
-## Layout
+## Components and motion
 
-Use a responsive 12-column desktop grid with a maximum content width of approximately 1280px. Generator screens use a two-panel workspace on desktop and a single stacked flow on mobile. Keep the primary action visible without requiring excessive scrolling.
-
-## Elevation & Depth
-
-Prefer borders and subtle shadows over heavy elevation. Media cards may use a slightly stronger shadow on hover. Avoid gradients behind important text or controls.
-
-## Shapes
-
-Use rounded cards and controls consistently. Cards are more rounded than inputs; buttons should remain compact and easy to scan. Maintain at least 44px touch targets on mobile.
-
-## Components
-
-Primary buttons are reserved for the main action, especially Generate, Create Story, and Export. Secondary buttons support navigation and reversible actions. Destructive actions require confirmation and use the danger semantic color.
-
-## Do's and Don'ts
-
-- **Do** keep generated media visually dominant.
-- **Do** show progress, cost, and recoverability before generation.
-- **Do** use skeletons and empty states to explain what is happening.
-- **Don't** hide essential errors inside a toast that disappears.
-- **Don't** use multiple competing primary buttons in one viewport.
-- **Don't** rely on color alone for status or selection.
-
-## App Shell
-
-Navigation lives in a floating capsule sidebar, not a top bar:
-
-- **Desktop (md+):** sticky left capsule (28px radius, raised surface, border + card shadow). Expanded 248px with icon + label rows; collapses to a 76px icon rail with dark hover tooltips. Collapse state persists in `localStorage` (`perabyte.sidebar-collapsed`).
-- **Groups:** primary routes (Home, Generate, Story, Character, History), a hairline divider, then Settings and Style guide. Theme toggle and collapse toggle sit at the bottom above the user block.
-- **Mobile:** slim blurred top bar with logo, theme toggle, and a hamburger that opens the same sidebar as a slide-over drawer (backdrop click, route change, or Escape closes it).
-- Active items use the primary-soft wash with primary text; hover uses surface-2.
-
-## Dark Mode
-
-Dark mode is token-driven: a `.dark` class on `<html>` re-points every semantic token in `globals.css`, so components never branch per theme.
-
-- **Toggle:** sun/moon button in the sidebar (and mobile top bar). Preference persists in `localStorage` (`perabyte.theme`); unset falls back to the OS preference. An inline pre-paint script applies the class before first render — no flash.
-- **Palette:** canvas #0B1220, surface #0F172A, raised #16213A, surface-2 #1E293B, border #24324A / strong #3B4D6B, ink #F1F5F9, ink-soft #CBD5E1, muted #94A3B8, primary #3B82F6, primary-soft #14284E, accent #A78BFA, danger #F87171 on danger-soft #3C1A1E. Shadows deepen rather than disappear.
-- **Raised token:** card/elevated surfaces use `bg-raised` (white in light, a step above canvas in dark) instead of literal `bg-white`.
-- **Literal blacks:** media letterboxes, scrims, and text-on-media chips stay literal black (`bg-black…`) in both themes so overlays over imagery remain readable.
+- Primary buttons use deep evergreen with white text. Secondary actions stay outlined or quiet.
+- Cards use warm raised surfaces and restrained shadow. Media itself may use a darker stage for contrast.
+- Motion should explain a state change or add a small amount of life; respect reduced-motion preferences.
+- The theme choice persists in local storage and follows the operating system before a preference is saved.

@@ -305,7 +305,7 @@ export function PromptComposer({
     // prompt area absorbs the available height instead of leaving dead space.
     // The card keeps a static border; focusing the prompt only shifts its
     // surface tone slightly — no selection ring.
-    <div className="flex h-full min-h-0 flex-col rounded-[20px] border border-border bg-raised p-4 shadow-card sm:p-5">
+    <div className="flex h-full min-h-0 flex-col rounded-[11px] border border-border bg-raised p-4 shadow-card sm:p-5">
       <div className="flex shrink-0 items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[13px] font-bold text-ink">{title}</p>
@@ -355,7 +355,7 @@ export function PromptComposer({
       </label>
       {/* Tinted prompt surface; focus eases the tint instead of drawing a ring. */}
       <div
-        className={`mt-3 flex min-h-0 flex-1 flex-col rounded-[12px] border px-3.5 pb-2 pt-3 transition-colors ${
+        className={`mt-3 flex min-h-0 flex-1 flex-col rounded-[8px] border px-3.5 pb-2 pt-3 transition-colors ${
           promptError ? "border-danger bg-surface" : "border-border bg-surface focus-within:bg-raised"
         }`}
       >
