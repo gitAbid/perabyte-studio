@@ -459,21 +459,22 @@ export function CharacterStudio({
   return (
     <div
       ref={scrollRef}
-      className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-4 py-5 sm:px-6 lg:py-7"
+      className="mx-auto flex w-full max-w-[1680px] flex-1 flex-col px-4 py-5 sm:px-6 lg:px-9 lg:py-7"
     >
-      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] lg:items-start lg:gap-6">
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(400px,0.95fr)] lg:items-start lg:gap-7">
         <div className="flex min-w-0 flex-col">
-          <div className="flex items-center gap-2.5">
+          <header className="flex items-center gap-3 border-b border-border pb-4">
             <button
               type="button"
               aria-label="Back to character library"
               onClick={backToLibrary}
-              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-raised text-ink-soft transition-colors hover:border-border-strong hover:text-ink"
+              className="inline-flex size-9 shrink-0 items-center justify-center border border-border bg-raised text-ink-soft transition-colors hover:border-primary/50 hover:text-primary"
             >
               <Icon name="arrow-left" size={16} />
             </button>
             <div className="min-w-0">
-              <h1 className="min-w-0 truncate text-[17px] font-extrabold tracking-[-0.02em] text-ink sm:text-[19px]">
+              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-accent">Character workshop</p>
+              <h1 className="mt-1 min-w-0 truncate text-[27px] font-medium leading-none tracking-[-0.04em] text-ink sm:text-[32px]">
                 {mode === "edit" && characterId
                   ? saveName || "Edit character"
                   : parentName
@@ -486,9 +487,9 @@ export function CharacterStudio({
                 </p>
               )}
             </div>
-          </div>
+          </header>
 
-          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border pb-3">
             <Segmented<CreationMode>
               ariaLabel="Creation mode"
               value={creationMode}
@@ -515,7 +516,7 @@ export function CharacterStudio({
             </div>
           )}
 
-          <div className="mt-4 rounded-[20px] border border-border bg-raised p-5 shadow-card sm:p-7">
+          <div className="mt-4 border border-border bg-surface p-4 sm:p-6 lg:min-h-[640px]">
             {creationMode === "simple" ? (
               <StepSimple
                 spec={spec}

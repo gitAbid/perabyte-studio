@@ -18,8 +18,7 @@ export function isSettingsSection(
   return SECTIONS.some((s) => s.id === value);
 }
 
-/** Second-level settings nav: sticky rail beside the content on md+, a
- * horizontally scrollable chip row above it on mobile. */
+/** Settings sections use a horizontal index so controls keep the full canvas. */
 export function SettingsNav({
   section,
   onSelect,
@@ -28,11 +27,8 @@ export function SettingsNav({
   onSelect: (id: SettingsSectionId) => void;
 }) {
   return (
-    <nav
-      aria-label="Settings sections"
-      className="w-full min-w-0 self-start md:sticky md:shrink-0 md:top-8 md:w-[188px]"
-    >
-      <div className="flex gap-1.5 overflow-x-auto pb-1 md:flex-col md:gap-0.5 md:overflow-visible md:pb-0">
+    <nav aria-label="Settings sections" className="w-full min-w-0 overflow-x-auto border-b border-border">
+      <div className="flex min-w-max items-stretch gap-5">
         {SECTIONS.map((s) => {
           const active = s.id === section;
           return (
@@ -41,13 +37,13 @@ export function SettingsNav({
               type="button"
               aria-current={active ? "page" : undefined}
               onClick={() => onSelect(s.id)}
-              className={`flex shrink-0 items-center gap-2.5 rounded-[10px] px-3 py-2 text-[13px] font-semibold transition-colors md:w-full ${
+              className={`relative flex shrink-0 items-center gap-2 border-b-2 px-1 pb-3 pt-2 text-[11px] font-bold uppercase tracking-[0.1em] transition-colors ${
                 active
-                  ? "bg-primary-soft text-primary"
-                  : "text-ink-soft hover:bg-surface-2"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted hover:text-ink"
               }`}
             >
-              <Icon name={s.icon} size={15} />
+              <Icon name={s.icon} size={14} />
               <span>{s.label}</span>
             </button>
           );

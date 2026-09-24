@@ -179,6 +179,9 @@ export default function StoryPage() {
   const story = (storyId ? liveStory ?? assets.find((a) => a.id === storyId) : undefined) as Asset | undefined;
   const scenes: StoryScene[] = useMemo(() => story?.scenes ?? [], [story]);
   const running = scenes.some((s) => s.status === "generating");
+  const queued = scenes.some((s) => s.status === "queued");
+  const storySnapshotRef = useRef<string | null>(null);
+  const progressSnapshotRef = useRef<string | null>(null);
   // Scene edit mode derivations: the composer faces the scene buffer while
   // editing, the story draft otherwise.
   const editing = selectedSceneId !== null;
@@ -235,7 +238,11 @@ export default function StoryPage() {
           }[];
         };
         if (stop || !data.story) return;
-        setLiveStory(data.story);
+        const snapshot = JSON.stringify(data.story);
+        if (storySnapshotRef.current !== snapshot) {
+          storySnapshotRef.current = snapshot;
+          setLiveStory(data.story);
+        }
         const next: Record<string, GenerationProgress> = {};
         for (const job of data.jobs ?? []) {
           if (job.sceneId && job.progress) {
@@ -249,12 +256,21 @@ export default function StoryPage() {
             };
           }
         }
-        setSceneProgress(next);
+        const progressSnapshot = JSON.stringify(next);
+        if (progressSnapshotRef.current !== progressSnapshot) {
+          progressSnapshotRef.current = progressSnapshot;
+          setSceneProgress(next);
+        }
       } catch {
         /* offline — the next tick retries; the server run continues */
       }
     }
     void tick();
+    if (!running && !queued) {
+      return () => {
+        stop = true;
+      };
+    }
     const timer = setInterval(tick, 2_500);
     return () => {
       stop = true;
@@ -262,7 +278,7 @@ export default function StoryPage() {
     };
     // Re-poll only while a run is active or scenes are pending.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storyId, running, scenes.some((s) => s.status === "queued")]);
+  }, [storyId, running, queued]);
 
   // Character reuse: the SERVER run folds the attached cast's sanitized
   // anchors into every scene prompt (snapshotted at Generate).
@@ -1037,25 +1053,12 @@ export default function StoryPage() {
     // page) and nothing may spill past it (overflow hidden) — the scenes grid
     // and composer scroll inside their own panels instead. On mobile the
     // stack flows and the page scrolls when scenes grow beyond it.
-    <div className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-4 py-4 sm:px-6 sm:py-5 lg:h-dvh lg:flex-none lg:overflow-hidden">
-      <div className="relative flex shrink-0 flex-col gap-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <Link
-              href="/"
-              aria-label="Back to home"
-              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-raised text-ink-soft transition-colors hover:border-border-strong hover:text-ink"
-            >
-              <Icon name="arrow-left" size={16} />
-            </Link>
-            <div className="min-w-0">
-              <h1 className="truncate text-[18px] font-extrabold tracking-[-0.02em] text-ink sm:text-[21px]">
-                Generate a Story
-              </h1>
-              <p className="mt-0.5 hidden truncate text-[12px] text-muted lg:block">
-                A sequence of scenes that tell one story.
-              </p>
-            </div>
+    <div className="mx-auto flex w-full max-w-[1680px] flex-1 flex-col px-4 py-5 sm:px-6 sm:py-6 lg:h-dvh lg:flex-none lg:overflow-hidden xl:px-9">
+      <header className="flex shrink-0 flex-wrap items-end justify-between gap-4 border-b border-border pb-4">
+          <div className="min-w-0">
+            <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-accent">Create / Sequence</p>
+            <h1 className="mt-1 truncate text-[27px] font-medium leading-none tracking-[-0.04em] text-ink sm:text-[32px]">Scene studio</h1>
+            <p className="mt-1 hidden truncate text-[11px] text-muted lg:block">Compose a sequence and carry the visual thread between frames.</p>
           </div>
 
           {/* New story clears the queue from the UI (and stops any run);
@@ -1112,27 +1115,10 @@ export default function StoryPage() {
               />
             </div>
           )}
-        </div>
-
-        {/* Centered Solo ⇄ Story mode switch */}
-        <div className="flex justify-center sm:absolute sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2">
-          <Segmented
-            ariaLabel="Studio mode"
-            size="sm"
-            value="story"
-            onChange={(next) => {
-              if (next === "solo") router.push("/generate/image");
-            }}
-            options={[
-              { value: "solo", label: "Solo Mode", icon: "user" },
-              { value: "story", label: "Story Mode", icon: "story" },
-            ]}
-          />
-        </div>
-      </div>
+      </header>
 
       {/* ---------------------------- Workspace ---------------------------- */}
-      <div className="mt-3 grid min-w-0 gap-4 sm:mt-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(330px,400px)_minmax(0,1fr)] lg:items-stretch">
+      <div className="mt-4 grid min-w-0 gap-4 sm:mt-5 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(360px,440px)_minmax(0,1fr)] lg:items-stretch">
         {/* Composer column — scrolls internally at lg when the picker sections
             outgrow a short viewport, so the page itself never scrolls. */}
         <div className="order-1 flex min-h-0 min-w-0 flex-col thin-scrollbar lg:overflow-y-auto">
@@ -1324,7 +1310,7 @@ export default function StoryPage() {
 
         {/* Scenes column — the panel keeps the viewport height at lg and the
             scene grid scrolls inside it; the action bar stays pinned below. */}
-        <div className="order-2 relative flex min-h-[300px] min-w-0 flex-col rounded-[20px] border border-border bg-surface p-4 sm:min-h-[360px] lg:min-h-0 lg:overflow-hidden">
+        <div className="order-2 relative flex min-h-[300px] min-w-0 flex-col border border-border bg-surface p-3.5 sm:min-h-[360px] sm:p-4 lg:min-h-0 lg:overflow-hidden">
           {convertOpen && (
             <ConvertDialog
               clipCount={clipCount}
@@ -1337,7 +1323,14 @@ export default function StoryPage() {
           {/* Scenes flow top-left, left to right, wrapping downward. At lg the
               grid scrolls within the panel instead of growing the page — no
               matter how many scenes there are or which aspect ratio they use. */}
-          <div className="thin-scrollbar grid flex-1 content-start gap-4 sm:grid-cols-2 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+          <div className="mb-3 flex shrink-0 items-center justify-between border-b border-border pb-3">
+            <div>
+              <p className="text-[9px] font-bold uppercase tracking-[0.17em] text-accent">Storyboard</p>
+              <p className="mt-0.5 text-[12px] font-semibold text-ink">{scenes.length || 1} scene{(scenes.length || 1) === 1 ? "" : "s"} in sequence</p>
+            </div>
+            <span className="font-mono text-[10px] text-muted">{String(completedScenes).padStart(2, "0")} / {String(scenes.length || 1).padStart(2, "0")} ready</span>
+          </div>
+          <div className="thin-scrollbar grid flex-1 content-start gap-x-3 gap-y-5 sm:grid-cols-2 lg:min-h-0 lg:grid-cols-3 lg:overflow-y-auto lg:pr-1">
             {Array.from({ length: Math.max(2, scenes.length) }, (_, index) => {
               const typed = scenes[index] as StoryScene | undefined;
               // Per-scene overrides are visible in the grid: tiles show the

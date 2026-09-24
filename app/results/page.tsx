@@ -157,32 +157,32 @@ export default function ResultsPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[1280px] flex-col px-4 pb-6 pt-6 sm:px-6 lg:h-dvh">
+    <div className="mx-auto flex w-full max-w-[1680px] flex-col px-4 pb-6 pt-5 sm:px-6 lg:h-dvh lg:px-9">
       {/* Top bar */}
-      <div className="flex flex-none items-center justify-between gap-3">
+      <header className="flex flex-none items-center justify-between gap-3 border-b border-border pb-4">
         <Link
           href="/images"
-          className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border bg-raised pl-2.5 pr-3.5 text-[12.5px] font-semibold text-ink-soft transition-colors hover:border-border-strong hover:text-ink"
+          className="inline-flex h-9 items-center gap-2 border border-border bg-raised px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-ink-soft transition-colors hover:border-primary/50 hover:text-primary"
         >
           <Icon name="arrow-left" size={14} />
-          Library
+          Back to archive
         </Link>
         {isStory && (
           <Link
             href={`/story?id=${asset.id}`}
-            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border bg-raised px-3.5 text-[12.5px] font-semibold text-ink-soft transition-colors hover:border-primary hover:text-primary"
+            className="inline-flex h-9 items-center gap-1.5 border border-border bg-raised px-3 text-[10px] font-bold uppercase tracking-[0.1em] text-ink-soft transition-colors hover:border-primary hover:text-primary"
           >
             <Icon name="video" size={14} />
             Open in editor
           </Link>
         )}
-      </div>
+      </header>
 
-      <div className="mt-4 grid min-h-0 flex-1 gap-6 overflow-y-auto lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:pr-1">
+      <div className="mt-4 grid min-h-0 flex-1 gap-5 overflow-y-auto lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] lg:items-stretch lg:pr-1">
         {/* ── Media stage ─────────────────────────────────────────── */}
         <div className="min-w-0">
-          <div className="mx-auto w-fit max-w-full rounded-[20px] bg-black p-2.5 shadow-lift sm:p-3">
-            <div className="mx-auto w-full" style={{ maxWidth: stageMaxWidth }}>
+          <div className="studio-canvas flex min-h-[48vh] w-full items-center justify-center border border-border p-3 sm:min-h-[55vh] lg:min-h-0 lg:h-full">
+            <div className="mx-auto w-fit max-w-full border border-border bg-black p-2 shadow-lift sm:p-2.5" style={{ maxWidth: stageMaxWidth }}>
               {isVideo ? (
                 <VideoStage
                   posterUrl={currentUrl}
@@ -240,11 +240,11 @@ export default function ResultsPage() {
         </div>
 
         {/* ── Info panel ──────────────────────────────────────────── */}
-        <aside className="flex min-w-0 flex-col gap-3 rounded-[20px] border border-border bg-raised p-4 shadow-card">
+        <aside className="flex min-w-0 flex-col gap-4 border border-border bg-raised p-4 sm:p-5 lg:overflow-y-auto">
           {/* Title + favourite */}
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h1 className="break-words text-[18px] font-extrabold leading-tight tracking-[-0.02em] text-ink">
+              <h1 className="break-words text-[25px] font-medium leading-tight tracking-[-0.04em] text-ink">
                 {asset.title}
               </h1>
               <p className="mt-0.5 text-[11.5px] text-muted">
@@ -269,7 +269,7 @@ export default function ResultsPage() {
           </div>
 
           {/* Prompt */}
-          <div className="rounded-[14px] border border-border bg-surface p-2.5">
+          <div className="border-y border-border py-3">
             <div className="flex items-center justify-between gap-2">
               <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
                 Prompt
@@ -339,7 +339,7 @@ export default function ResultsPage() {
           </div>
 
           {/* Reuse configuration */}
-          <div className="rounded-[14px] border border-border bg-surface p-2.5">
+          <div className="border-t border-border pt-3">
             <div className="flex items-center justify-between gap-2">
               <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
                 Reuse in generator
@@ -368,7 +368,7 @@ export default function ResultsPage() {
           </div>
 
           {/* Render details */}
-          <div className="rounded-[14px] border border-border bg-surface p-3">
+          <div className="border-t border-border pt-3">
             <span className="text-[11px] font-bold uppercase tracking-wide text-muted">
               Render details
             </span>

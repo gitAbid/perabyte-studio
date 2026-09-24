@@ -109,21 +109,24 @@ export default function SettingsPage() {
   }, []);
 
   return (
-    <div className="mx-auto flex w-full max-w-[980px] flex-1 flex-col gap-4 px-4 py-8 sm:px-6 md:flex-row md:gap-8">
-      <SettingsNav section={section} onSelect={onSection} />
-      <div className="min-w-0 flex-1">
-        <header>
-          <h1 className="text-lg font-bold text-ink">Settings</h1>
-          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-muted">
-            <span>Studio-wide preferences, stored on this device.</span>
-            <span className="inline-flex items-center gap-1 text-[12px]">
-              <Icon name="check" size={12} className="text-success" />
-              Changes save automatically.
-            </span>
-          </p>
-        </header>
+    <div className="mx-auto flex w-full max-w-[1500px] flex-1 flex-col px-4 py-6 sm:px-6 lg:px-10 lg:py-9">
+      <header className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">Studio / Configuration</p>
+          <h1 className="mt-2 text-[34px] font-medium leading-none tracking-[-0.04em] text-ink sm:text-[42px]">Settings</h1>
+          <p className="mt-2 text-[12px] text-muted">Tune the tools and defaults behind your creative workspace.</p>
+        </div>
+        <span className="inline-flex items-center gap-1.5 border border-success/25 bg-success-soft px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-success">
+          <Icon name="check" size={12} /> Saves automatically
+        </span>
+      </header>
 
-        <div className="mt-6 pb-10">
+      <div className="mt-5">
+        <SettingsNav section={section} onSelect={onSection} />
+      </div>
+
+      <div className="mt-7 min-w-0 flex-1">
+        <div className="max-w-[1180px] pb-10">
           {loadError ? (
             <p className="text-[13px] font-medium text-danger">{loadError}</p>
           ) : null}

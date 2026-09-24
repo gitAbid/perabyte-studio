@@ -363,22 +363,16 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
     // panels scroll inside themselves instead of scrolling the page; on
     // mobile the stack flows naturally and the page scrolls instead of
     // crushing the panels.
-    <div className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col px-4 py-4 sm:px-6 sm:py-5 lg:h-dvh lg:flex-none lg:overflow-hidden xl:px-8">
-      <div className="relative flex shrink-0 flex-col gap-3">
+    <div className="mx-auto flex w-full max-w-[1680px] flex-1 flex-col px-4 py-5 sm:px-6 sm:py-6 lg:h-dvh lg:flex-none lg:overflow-hidden xl:px-9">
+      <header className="flex shrink-0 flex-wrap items-end justify-between gap-4 border-b border-border pb-4">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <Link
-              href="/"
-              aria-label="Back to home"
-              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-raised text-ink-soft transition-colors hover:border-border-strong hover:text-ink"
-            >
-              <Icon name="arrow-left" size={16} />
-            </Link>
+          <div className="flex min-w-0 items-center gap-3">
             <div className="min-w-0">
-              <h1 className="truncate text-[20px] font-bold tracking-[-0.025em] text-ink sm:text-[23px]">
+              <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-accent">Create / {kind === "image" ? "Still" : "Motion"}</p>
+              <h1 className="mt-1 truncate text-[27px] font-medium leading-none tracking-[-0.04em] text-ink sm:text-[32px]">
                 {copy.title}
               </h1>
-              <p className="mt-0.5 hidden truncate text-[12px] text-muted lg:block">
+              <p className="mt-1 hidden truncate text-[11px] text-muted lg:block">
                 {copy.subtitle}
               </p>
             </div>
@@ -403,26 +397,10 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
             ]}
           />
         </div>
-
-        {/* Centered Solo ⇄ Story mode switch */}
-        <div className="flex justify-center sm:absolute sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2">
-          <Segmented
-            ariaLabel="Studio mode"
-            size="sm"
-            value="solo"
-            onChange={(next) => {
-              if (next === "story") router.push("/story");
-            }}
-            options={[
-              { value: "solo", label: "Solo Mode", icon: "user" },
-              { value: "story", label: "Story Mode", icon: "story" },
-            ]}
-          />
-        </div>
-      </div>
+      </header>
 
       {/* ---------------------------- Workspace ---------------------------- */}
-      <div className="mt-3 grid min-w-0 gap-4 lg:mt-5 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(360px,420px)_minmax(0,1fr)] lg:items-stretch">
+      <div className="mt-4 grid min-w-0 gap-4 lg:mt-5 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(360px,440px)_minmax(0,1fr)] lg:items-stretch">
         {/* Composer — first in the stack on every size; it fills its column
             on desktop so no space is wasted above or below it. On short
             desktop viewports the column scrolls internally (expanded picker
@@ -487,11 +465,11 @@ export function GeneratorScreen({ kind }: { kind: "image" | "video" }) {
         {/* Preview — the ratio-locked canvas sits top-left; a strip below the
             canvas shows variations, or previous generations when there are
             none, or examples on a first run. */}
-        <div className="relative order-2 flex min-h-[300px] flex-col gap-3 overflow-hidden rounded-[11px] border border-border bg-raised p-4 shadow-card sm:min-h-[360px] lg:min-h-0">
+        <div className="studio-preview-panel relative order-2 flex min-h-[300px] flex-col gap-3 overflow-hidden border border-border bg-raised p-3.5 sm:min-h-[360px] sm:p-4 lg:min-h-0">
           {/* Canvas — a size container so ratio boxes fit-contain within it.
               The box hugs its ratio and hangs from the top, centred. */}
           <div
-            className={`relative flex min-h-0 flex-1 [container-type:size] ${
+            className={`studio-canvas relative flex min-h-0 flex-1 [container-type:size] ${
               job.phase === "idle" || job.phase === "completed"
                 ? "items-start justify-center"
                 : "items-center justify-center"

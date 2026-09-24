@@ -172,8 +172,8 @@ export function CharacterDetail({ characterId }: { characterId: string }) {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-4 py-5 sm:px-6 lg:py-7">
-      <div className="flex items-center gap-2.5">
+    <div className="mx-auto flex w-full max-w-[1680px] flex-1 flex-col px-4 py-5 sm:px-6 lg:px-9 lg:py-7">
+      <header className="flex flex-wrap items-center gap-3 border-b border-border pb-4">
         <LinkButton
           href="/character"
           variant="ghost"
@@ -184,7 +184,8 @@ export function CharacterDetail({ characterId }: { characterId: string }) {
           Library
         </LinkButton>
         <div className="min-w-0 flex-1">
-          <h1 className="min-w-0 truncate text-[17px] font-extrabold tracking-[-0.02em] text-ink sm:text-[19px]">
+          <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-accent">Character archive / profile</p>
+          <h1 className="mt-1 min-w-0 truncate text-[27px] font-medium leading-none tracking-[-0.04em] text-ink sm:text-[32px]">
             {character.name}
           </h1>
           <p className="text-[11.5px] text-muted">
@@ -223,12 +224,12 @@ export function CharacterDetail({ characterId }: { characterId: string }) {
             <span className="hidden sm:inline">Edit</span>
           </LinkButton>
         </div>
-      </div>
+      </header>
 
-      <div className="mt-5 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] lg:items-start lg:gap-6">
+      <div className="mt-5 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(320px,390px)] lg:items-start lg:gap-7">
         {/* Media column */}
         <div className="flex min-w-0 flex-col gap-4">
-          <div className="rounded-[20px] border border-border bg-raised p-4 shadow-card sm:p-5">
+          <div className="border border-border bg-surface p-3.5 sm:p-4">
             <div className="flex items-center justify-between gap-2">
               <p className="text-[13.5px] font-bold text-ink">Poster</p>
               <Button variant="ghost" size="sm" icon="download" onClick={handleDownload}>
@@ -236,7 +237,7 @@ export function CharacterDetail({ characterId }: { characterId: string }) {
               </Button>
             </div>
             <div
-              className="mx-auto mt-3 w-full"
+              className="studio-canvas mx-auto mt-3 w-full border border-border p-2"
               style={{ maxWidth: `calc(66vh * ${posterRatio.replace("/", " / ")})` }}
             >
               {posterUrl ? (
@@ -260,7 +261,7 @@ export function CharacterDetail({ characterId }: { characterId: string }) {
           </div>
 
           {sheetViews.length > 0 && (
-            <div className="rounded-[20px] border border-border bg-raised p-4 shadow-card sm:p-5">
+            <div className="border border-border bg-raised p-3.5 sm:p-4">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-[13.5px] font-bold text-ink">Character sheet</p>
                 <Badge tone="primary">
@@ -337,7 +338,7 @@ export function CharacterDetail({ characterId }: { characterId: string }) {
           )}
 
           {renders.length > 0 && (
-            <div className="rounded-[20px] border border-border bg-raised p-4 shadow-card sm:p-5">
+            <div className="border border-border bg-raised p-3.5 sm:p-4">
               <p className="text-[13.5px] font-bold text-ink">
                 Renders <span className="font-medium text-muted">({renders.length})</span>
               </p>
@@ -368,7 +369,7 @@ export function CharacterDetail({ characterId }: { characterId: string }) {
 
         {/* Specifications column */}
         <aside className="mt-4 lg:sticky lg:top-6 lg:mt-0">
-          <div className="rounded-[20px] border border-border bg-raised p-4 shadow-card sm:p-5">
+          <div className="border-l-2 border-primary bg-surface p-4 sm:p-5">
             <div className="flex items-center gap-2">
               <span className="inline-flex size-8 items-center justify-center rounded-[9px] bg-primary-soft text-primary">
                 <Icon name="character" size={15} />

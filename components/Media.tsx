@@ -393,8 +393,8 @@ export function VideoStage({
   useEffect(() => {
     if (!playing || videoUrl) return;
     const id = window.setInterval(() => {
-      setElapsed((prev) => (prev + 0.1 >= duration ? 0 : prev + 0.1));
-    }, 100);
+      setElapsed((prev) => (prev + 0.25 >= duration ? 0 : prev + 0.25));
+    }, 250);
     return () => window.clearInterval(id);
   }, [playing, duration, videoUrl]);
 

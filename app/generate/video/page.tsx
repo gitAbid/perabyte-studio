@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { GeneratorScreen } from "@/components/GeneratorScreen";
 
 export const metadata: Metadata = {
-  title: "Generate Video",
+  title: "Video studio",
   description:
     "Bring your ideas to life with motion. Choose duration, aspect ratio and cinematic style.",
 };

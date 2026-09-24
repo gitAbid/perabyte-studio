@@ -90,11 +90,13 @@ PeraByte is a working image-making studio for individual frames, motion, stories
 
 ## Layout and interaction
 
-- A full-height, fixed left rail anchors the desktop studio. Its groups follow the creative journey: Make, Collect, and Build a world.
+- A full-height left rail anchors the desktop studio. Its groups follow the creative journey: Make, Collect, and Build a world. Users can collapse it to an icon rail; persist the preference under `perabyte.sidebar-collapsed` and expose accessible labels on icon-only controls.
 - On small screens, use a compact top bar and a slide-over navigation drawer with the same destinations.
-- Creation screens prioritize the prompt and settings beside a large preview. Keep primary actions easy to locate and show progress, errors, and saved results in context.
-- Library screens put search, sorting, and management controls close to the media grid.
-- Use editorial spacing, numbered steps, fine rules, and image-led compositions. Avoid decorative gradients, excessive pills, and stacked dashboard cards.
+- Image and motion creation screens put the prompt beside a large, distinct canvas; keep primary actions easy to locate and show progress, errors, and saved results in context.
+- The scene studio is a sequence workspace: show the sequence status and scene order before scene-level editing. The writer is a drafting desk with manuscript, brief, and outline visible together.
+- Library screens put search, sorting, and management controls close to the media grid. Detail and setup screens organize content around a clear subject header and task-specific information hierarchy.
+- Settings use a section index and a clear configuration column. Results pages give the selected render a dedicated canvas with its relevant actions and metadata alongside it.
+- Use editorial spacing, numbered steps, fine rules, and image-led compositions. Avoid generic dashboard grids, decorative gradients, excessive pills, and stacked dashboard cards.
 - Keep controls clear and accessible, with visible focus, readable contrast, and touch targets of at least 44px where practical.
 
 ## Components and motion

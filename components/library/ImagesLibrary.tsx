@@ -283,7 +283,7 @@ export function ImagesLibrary() {
                 src={asset.posterUrl ?? asset.url}
                 alt={asset.title}
                 ratio={aspectRatio(asset.settings.aspect)}
-                rounded="rounded-[15px]"
+                rounded="rounded-t-[15px]"
                 className={CARD_MEDIA}
                 sensitive={isSensitiveAsset(asset)}
               />
@@ -334,7 +334,7 @@ export function ImagesLibrary() {
                     <span className="shrink-0">{formatDate(asset.createdAt)}</span>
                   </div>
                   <div className={CARD_INFO_REVEAL}>
-                    <p className="mt-1.5 line-clamp-2 text-[11.5px] leading-snug text-white/90">
+                    <p className="line-clamp-2 text-[11.5px] leading-snug text-ink-soft">
                       {asset.prompt}
                     </p>
                   </div>

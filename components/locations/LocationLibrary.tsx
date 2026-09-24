@@ -355,7 +355,7 @@ export function LocationLibrary() {
               type="button"
               aria-label="New location"
               onClick={() => setEditor(draftFor(null))}
-              className="flex aspect-[16/10] flex-col items-center justify-center gap-2 rounded-[16px] border-2 border-dashed border-border-strong bg-surface text-muted transition-colors hover:border-primary hover:text-primary"
+              className="flex aspect-[16/10] flex-col items-center justify-center gap-2 rounded-[16px] border border-dashed border-border bg-surface text-muted transition-colors hover:border-primary hover:bg-primary-soft/40 hover:text-primary"
             >
               <Icon name="plus" size={22} />
               <span className="text-[13px] font-semibold">New location</span>
@@ -401,7 +401,7 @@ export function LocationLibrary() {
                     <span className="shrink-0">{formatDate(location.updatedAt)}</span>
                   </div>
                   <div className={CARD_INFO_REVEAL}>
-                    <p className="mt-1.5 line-clamp-2 text-[11.5px] leading-snug text-white/90">
+                    <p className="line-clamp-2 text-[11.5px] leading-snug text-ink-soft">
                       {location.description || "No description yet."}
                     </p>
                   </div>
@@ -620,7 +620,7 @@ function LocationPlate({ location }: { location: LocationRow }) {
         src={`/api/media?f=${location.ref}`}
         alt={location.name}
         ratio="16/10"
-        rounded="rounded-[15px]"
+        rounded="rounded-t-[15px]"
         className={CARD_MEDIA}
       />
     );

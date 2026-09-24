@@ -51,19 +51,18 @@ export function LibraryShell({
   children: ReactNode;
 }) {
   return (
-    <div className="mx-auto w-full max-w-[1100px] px-4 pb-12 pt-8 sm:px-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-[28px] font-extrabold tracking-[-0.03em] text-ink sm:text-[34px]">
-            {title}
-          </h1>
-          <p className="mt-2 text-sm text-muted">{caption}</p>
+    <div className="mx-auto w-full max-w-[1680px] px-4 pb-12 pt-6 sm:px-6 lg:px-10 lg:pt-9">
+      <header className="flex flex-col gap-5 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
+        <div className="max-w-3xl">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">Collection / Studio archive</p>
+          <h1 className="mt-2 text-[34px] font-medium leading-none tracking-[-0.04em] text-ink sm:text-[44px]">{title}</h1>
+          <p className="mt-2 text-[12px] leading-relaxed text-muted">{caption}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">{cta}</div>
-      </div>
+      </header>
 
-      <div className="mt-6 flex flex-col gap-3 lg:flex-row lg:items-center">
-        <div className="relative w-full lg:max-w-xs">
+      <div className="mt-5 flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-center">
+        <div className="relative w-full lg:max-w-[420px]">
           <Icon
             name="search"
             size={16}
@@ -75,17 +74,17 @@ export function LibraryShell({
             onChange={(e) => onQueryChange(e.target.value)}
             placeholder={searchPlaceholder}
             aria-label={`Search ${title.toLowerCase()}`}
-            className="h-11 w-full rounded-[12px] border border-border-strong bg-raised pl-9 pr-3 text-sm text-ink placeholder:text-muted focus:border-primary focus:outline-none"
+            className="h-11 w-full rounded-[5px] border border-border bg-raised pl-10 pr-3 text-[13px] text-ink placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
           />
         </div>
 
-        <label className="flex items-center gap-2 text-[12.5px] font-semibold text-muted">
-          Sort
+        <label className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-[0.15em] text-muted">
+          Order
           <select
             value={sort}
             onChange={(e) => onSortChange(e.target.value as SortMode)}
             aria-label={`Sort ${title.toLowerCase()}`}
-            className="h-11 rounded-[12px] border border-border-strong bg-raised px-3 text-sm font-medium text-ink focus:border-primary focus:outline-none"
+            className="h-10 rounded-[5px] border border-border bg-raised px-3 text-[12px] font-medium normal-case tracking-normal text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
           >
             <option value="newest">Newest first</option>
             <option value="oldest">Oldest first</option>
@@ -93,7 +92,7 @@ export function LibraryShell({
           </select>
         </label>
 
-        <div className="flex flex-wrap items-center gap-2 lg:ml-auto">
+        <div className="flex flex-wrap items-center gap-1.5 lg:ml-auto">
           <Button
             variant="secondary"
             size="sm"
@@ -115,10 +114,10 @@ export function LibraryShell({
         </div>
       </div>
 
-      {filters && <div className="mt-4 flex flex-wrap items-center gap-2">{filters}</div>}
+      {filters && <div className="mt-3 flex flex-wrap items-center gap-1.5">{filters}</div>}
 
       {manage && manageBar && (
-        <div className="mt-4 flex flex-wrap items-center gap-2 rounded-[14px] border border-border bg-surface px-3.5 py-3">
+        <div className="mt-4 flex flex-wrap items-center gap-2 rounded-[14px] border border-primary/20 bg-primary-soft/35 px-3.5 py-3">
           {manageBar}
         </div>
       )}

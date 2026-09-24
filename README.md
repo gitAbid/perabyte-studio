@@ -8,13 +8,18 @@ Tailwind CSS v4** on Vercel.
 
 | Screen | Route | Notes |
 | --- | --- | --- |
-| Homepage | `/` | Hero preview cluster, mode cards, "Start creating" section |
-| Generator — Solo Mode (Image) | `/generate/image` | Single-screen composer: prompt + settings badges, preview fills the viewport |
-| Generator — Solo Mode (Video) | `/generate/video` | Same, plus a duration badge and an animated preview with transport controls |
-| Generator — Story Mode | `/story` | Scene slots (first scene + placeholders), per-scene generation |
-| Results — image & video preview | `/results?id=…` | Viewer, variations, metadata, actions |
-| History | `/history` | Search, type filters, sort, favourites, per-row actions |
-| UI elements & style guide | `/styleguide` | Colour, type, button, input, card and icon tokens |
+| Homepage | `/` | Product overview with direct entry points for generation, writing, scene work and reusable assets |
+| Image studio | `/generate/image` | Prompt composer, model and render controls, reference frames, variations and preview |
+| Video studio | `/generate/video` | Video prompt and duration controls, reference frames, and video or keyframe preview |
+| Story writer | `/writer` | Draft from a premise, refine text, preview scene splits, then open Solo or Scene Studio |
+| Scene studio | `/story` | Build a scene sequence, keep continuity with frame references, queue renders and convert to video preview |
+| Results | `/results?id=…` | Full media viewer, variations, metadata, download and reuse actions |
+| Images & video library | `/images` | Search, filter, favourite, tag, organize and reopen generated media |
+| Stories library | `/stories` | Find, reopen and manage saved story sequences |
+| Character library & studio | `/character`, `/character/new`, `/character/[id]/edit` | Create reusable characters, edit their reference sheets and attach them to renders |
+| Locations | `/locations` | Save reference plates and world details for consistent scene settings |
+| Settings | `/settings` | Configure providers, models, writer and enhancement defaults, and advanced options |
+| UI style guide | `/styleguide` | Colour, type, button, input, card and icon tokens |
 
 ## Generator layout
 
