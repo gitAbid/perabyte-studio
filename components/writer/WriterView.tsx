@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CastPicker } from "@/components/CastPicker";
 import { Icon } from "@/components/Icon";
@@ -82,6 +82,13 @@ export function WriterView() {
   const [modelId, setModelId] = useState("");
   const [modelOptions, setModelOptions] = useState<{ value: string; label: string }[]>([]);
   const [tasksWriterId, setTasksWriterId] = useState<string | null>(null);
+  const outlineRequestVersion = useRef(0);
+
+  function invalidateOutline() {
+    outlineRequestVersion.current += 1;
+    setOutline(null);
+  }
+
   /* Restore the autosaved draft once on mount. */
   useEffect(() => {
     try {
@@ -246,7 +253,7 @@ export function WriterView() {
         });
         setUndoDraft(draft || null);
         setDraft("text" in result ? result.text : draft);
-        setOutline(null);
+        invalidateOutline();
         setActivePane("draft");
       } else if (action === "enhance") {
         const result = await requestWriterAction({
@@ -258,9 +265,10 @@ export function WriterView() {
         });
         setUndoDraft(draft);
         setDraft("text" in result ? result.text : draft);
-        setOutline(null);
+        invalidateOutline();
         setInstruction("");
       } else {
+        const requestVersion = ++outlineRequestVersion.current;
         const signature = outlineSignature;
         const result = await requestWriterAction({
           action: "split",
@@ -271,7 +279,7 @@ export function WriterView() {
           uncensored: userSettings.uncensoredEnabled,
           modelId: modelId || undefined,
         });
-        if ("scenes" in result && signature === outlineSignature) {
+        if ("scenes" in result && requestVersion === outlineRequestVersion.current) {
           setOutline({ title: result.title, scenes: result.scenes, signature });
           setActivePane("outline");
         }
@@ -358,7 +366,7 @@ export function WriterView() {
               options={SCENE_CHOICES.map((choice) => ({ value: String(choice.value), label: choice.label }))}
               onChange={(next) => {
                 setSceneCount(supportedSceneCount(next === "smart" ? next : Number(next)));
-                setOutline(null);
+                invalidateOutline();
               }}
             />
             <PillSelect
@@ -375,7 +383,7 @@ export function WriterView() {
                 selectedIds={castIds}
                 onChange={(next) => {
                   setCastIds(next);
-                  setOutline(null);
+                  invalidateOutline();
                 }}
               />
             </div>
@@ -407,7 +415,7 @@ export function WriterView() {
             <div className="flex items-center gap-3">
               <span className="text-[10px] text-muted">Autosaved</span>
               {undoDraft !== null && (
-                <button type="button" className="text-[11px] font-semibold text-primary hover:underline" onClick={() => { setDraft(undoDraft); setUndoDraft(null); }}>Undo rewrite</button>
+                <button type="button" className="text-[11px] font-semibold text-primary hover:underline" onClick={() => { setDraft(undoDraft); setUndoDraft(null); invalidateOutline(); }}>Undo rewrite</button>
               )}
             </div>
           </div>
@@ -416,7 +424,7 @@ export function WriterView() {
             value={draft}
             onChange={(event) => {
               setDraft(event.target.value.slice(0, WRITER_DRAFT_MAX));
-              setOutline(null);
+              invalidateOutline();
             }}
             rows={20}
             placeholder="Start writing here, or create a first draft from your brief."
@@ -455,7 +463,7 @@ export function WriterView() {
               value={kind}
               onChange={(next) => {
                 setKind(next);
-                setOutline(null);
+                invalidateOutline();
               }}
               options={[{ value: "image", label: "Images", icon: "image" }, { value: "video", label: "Video", icon: "video" }]}
             />

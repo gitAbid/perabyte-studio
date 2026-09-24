@@ -33,6 +33,9 @@ const outline = [
 ];
 const writerRequests = [];
 const savedAssets = [];
+let holdNextSplit = false;
+let releaseHeldSplit;
+let failNextAssetSave = false;
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
@@ -44,7 +47,13 @@ await page.route("**/api/assets", async (route) => {
     return;
   }
   if (route.request().method() === "POST") {
-    savedAssets.push(route.request().postDataJSON());
+    const asset = route.request().postDataJSON();
+    if (failNextAssetSave) {
+      failNextAssetSave = false;
+      await route.fulfill({ status: 500, json: { error: "mock save failed" } });
+      return;
+    }
+    savedAssets.push(asset);
     await route.fulfill({ json: { asset: savedAssets.at(-1) } });
     return;
   }
@@ -75,6 +84,10 @@ await page.route("**/api/writer", async (route) => {
     return;
   }
   if (request.action === "split") {
+    if (holdNextSplit) {
+      holdNextSplit = false;
+      await new Promise((resolve) => { releaseHeldSplit = resolve; });
+    }
     await route.fulfill({ json: {
       title: "Ada and the comet",
       scenes: outline,
@@ -131,6 +144,8 @@ try {
     split?.sceneCount === 5 &&
       JSON.stringify(split?.characterNames) === JSON.stringify(["Ada"]) &&
       split?.kind === "image" &&
+      split?.uncensored === false &&
+      split?.modelId === undefined &&
       split?.draft === "Ada follows a comet to the old observatory and discovers a message in the stars.",
     JSON.stringify(split ?? {}),
   );
@@ -141,6 +156,51 @@ try {
       await visible(page.getByText(outline[4], { exact: true })),
   );
   check("outline remains available for review in Writer", new URL(page.url()).pathname === "/writer");
+
+  holdNextSplit = true;
+  await page.getByRole("button", { name: "Generate outline", exact: true }).click();
+  while (!releaseHeldSplit) await new Promise((resolve) => setTimeout(resolve, 20));
+  const draftInput = page.locator("#writer-draft");
+  const originalDraft = await draftInput.inputValue();
+  await draftInput.fill("A changed story draft.");
+  await draftInput.fill(originalDraft);
+  releaseHeldSplit();
+  await page.getByRole("button", { name: "Generate outline", exact: true }).waitFor();
+  check(
+    "late split response cannot revive a stale outline after inputs change",
+    !(await visible(page.getByText(outline[0], { exact: true }))) &&
+      await page.getByRole("button", { name: "Create story", exact: true }).isDisabled(),
+  );
+
+  await page.getByRole("button", { name: "Generate outline", exact: true }).click();
+  await page.getByText(outline[0], { exact: true }).waitFor();
+  await page.getByRole("button", { name: /^Open first scene/ }).click();
+  await page.waitForURL((url) => url.pathname === "/generate/image");
+  check(
+    "Use in Solo opens the first reviewed visual prompt",
+    new URL(page.url()).searchParams.get("prompt") === outline[0],
+  );
+  await page.goBack();
+  await page.waitForURL((url) => url.pathname === "/writer");
+  if (!(await visible(page.getByText("Available cast", { exact: true })))) {
+    await page.getByRole("button", { name: "Character cast" }).click();
+    await page.getByRole("checkbox", { name: "Ada" }).click();
+  }
+  if (await page.getByRole("button", { name: "Create story", exact: true }).isDisabled()) {
+    await page.getByRole("button", { name: "Generate outline", exact: true }).click();
+    await page.getByText(outline[0], { exact: true }).waitFor();
+  }
+
+  failNextAssetSave = true;
+  await page.getByRole("button", { name: "Create story", exact: true }).click();
+  await page.getByRole("alert").getByText("We could not save the story. Your draft and outline are still here.", { exact: true }).waitFor();
+  check(
+    "failed save keeps the draft and reviewed outline available for retry",
+    new URL(page.url()).pathname === "/writer" &&
+      (await page.locator("#writer-draft").inputValue()) === originalDraft &&
+      await visible(page.getByText(outline[0], { exact: true })) &&
+      !(await page.getByRole("button", { name: "Create story", exact: true }).isDisabled()),
+  );
 
   await page.getByRole("button", { name: "Create story", exact: true }).click();
   await page.waitForURL(`${BASE}/story?id=*`);
