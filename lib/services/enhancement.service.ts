@@ -90,6 +90,15 @@ export function validateEnhancementRequest(
   const negativePrompt =
     typeof body.negativePrompt === "string" ? body.negativePrompt : "";
 
+  const location =
+    typeof body.location === "string" && body.location.trim()
+      ? body.location.trim().slice(0, 300)
+      : null;
+  const priorScene =
+    typeof body.priorScene === "string" && body.priorScene.trim()
+      ? body.priorScene.trim().slice(0, 300)
+      : null;
+
   return {
     prompt,
     maxChars: promptMax,
@@ -101,6 +110,8 @@ export function validateEnhancementRequest(
     sceneIndex,
     sceneCount,
     timeOfDay,
+    location,
+    priorScene,
     negativePrompt,
     uncensored: body.uncensored === true,
   };

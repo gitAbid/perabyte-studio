@@ -21,6 +21,7 @@ const PRIMARY_NAV: NavItem[] = [
   { href: "/generate/image", label: "Generate", icon: "sparkle" },
   { href: "/writer", label: "Writer", icon: "pen" },
   { href: "/character", label: "Characters", icon: "character" },
+  { href: "/locations", label: "Locations", icon: "image" },
   { href: "/images", label: "Images", icon: "image" },
   { href: "/stories", label: "Stories", icon: "grid" },
 ];
@@ -35,6 +36,7 @@ const NAV_POSE: Record<string, { hover: string; active: string }> = {
     active: "rotate-45",
   },
   "/character": { hover: "group-hover:scale-125", active: "scale-110" },
+  "/locations": { hover: "group-hover:-rotate-6 group-hover:scale-110", active: "scale-110" },
   "/images": {
     hover: "group-hover:-rotate-6 group-hover:scale-110",
     active: "-rotate-3",

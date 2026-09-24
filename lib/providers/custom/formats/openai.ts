@@ -169,7 +169,19 @@ export function createOpenAiFormat(fetchImpl?: FetchImpl): ProviderFormat {
 
       let data: OpenAiImageResponse;
       let frameDropped = false;
-      if (request.startImage) {
+      // Multi-reference edits send every input as a data-URI array (input
+      // image leads, references follow); a lone start frame keeps the
+      // single-image shape relays already accept.
+      const referenceImages = request.referenceImages ?? [];
+      const editImage: string[] | { url: string } | null = referenceImages.length
+        ? [
+            ...(request.startImage ? [frameToDataUri(request.startImage)] : []),
+            ...referenceImages.map(frameToDataUri),
+          ]
+        : request.startImage
+          ? { url: frameToDataUri(request.startImage) }
+          : null;
+      if (editImage) {
         try {
           data = await postJson<OpenAiImageResponse>(
             cfg,
@@ -179,13 +191,13 @@ export function createOpenAiFormat(fetchImpl?: FetchImpl): ProviderFormat {
               prompt,
               n: count,
               response_format: "b64_json",
-              image: { url: frameToDataUri(request.startImage) },
+              image: editImage,
             },
             callOptions,
           );
         } catch (error) {
           if (error instanceof ProviderError && error.status === 400) {
-            ctx.logger.warn("custom provider rejected the start frame — retrying prompt-only");
+            ctx.logger.warn("custom provider rejected the image inputs — retrying prompt-only");
             frameDropped = true;
             data = await postJsonWithFallback(cfg, generationsPayload, generationsFallback, callOptions);
           } else {

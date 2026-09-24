@@ -4,6 +4,9 @@ import {
   durationToSeconds,
   isSensitiveAsset,
   parseModelId,
+  type FrameImage,
+  type ModelDescriptor,
+  type NormalizedGenerationRequest,
 } from "@/lib/domain/models";
 import type { Asset } from "@/lib/types";
 import { DEFAULT_IMAGE_SETTINGS } from "@/lib/constants";
@@ -34,6 +37,40 @@ describe("durationToSeconds", () => {
 
   it("falls back to 5 seconds for garbage", () => {
     expect(durationToSeconds("long" as never)).toBe(5);
+  });
+});
+
+describe("multi-reference capability", () => {
+  const frame: FrameImage = { bytes: Buffer.from("ref-bytes"), contentType: "image/png" };
+
+  it("round-trips contextImages on a model descriptor", () => {
+    const descriptor: ModelDescriptor = {
+      id: "sogni:qwen_image_edit_2511_fp8",
+      providerId: "sogni",
+      kind: "image",
+      model: "qwen_image_edit_2511_fp8",
+      label: "Qwen Image Edit",
+      contextImages: { min: 1, max: 3 },
+    };
+    const spread: ModelDescriptor = { ...descriptor };
+    expect(spread.contextImages).toEqual({ min: 1, max: 3 });
+  });
+
+  it("carries referenceImages on a normalized request", () => {
+    const request: NormalizedGenerationRequest = {
+      kind: "image",
+      prompt: "same character",
+      negativePrompt: "",
+      aspect: "16:9",
+      resolution: "1080p",
+      durationSeconds: 0,
+      count: 1,
+      seed: null,
+      safe: true,
+      enhance: true,
+      referenceImages: [frame],
+    };
+    expect(request.referenceImages).toEqual([frame]);
   });
 });
 

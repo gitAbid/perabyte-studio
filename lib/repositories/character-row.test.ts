@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseCharacterRow } from "@/lib/repositories/character-row";
+import {
+  parseCharacterRow,
+  type CharacterIdentity,
+} from "@/lib/repositories/character-row";
 import { DEFAULT_CHARACTER_SPEC } from "@/lib/character";
 
 const base = {
@@ -67,5 +70,29 @@ describe("parseCharacterRow", () => {
     expect(good!.tags).toEqual(["a", "b"]);
     expect(good!.thumbnail).toBe("/api/media?f=y");
     expect(good!.parentId).toBeUndefined(); // empty string drops
+  });
+
+  it("persists identity through the parser (round-trip)", () => {
+    const identity: CharacterIdentity = {
+      front: "a1b2c3d4e5f6a7b8a1b2c3d4e5f6a7b8a1b2c3d4e5f6a7b8a1b2c3d4e5f6a7b8.png",
+      angles: ["c3d4e5f6a7b8a1b2c3d4e5f6a7b8a1b2c3d4e5f6a7b8a1b2c3d4e5f6a7b8a1b2.png"],
+      seed: 42,
+      modelId: "flux-dev",
+    };
+    const row = parseCharacterRow({ ...base, identity });
+    expect(row).not.toBeNull();
+    expect(row!.identity).toEqual(identity);
+  });
+
+  it("leaves a partial identity untouched (presence-only, extras passthrough)", () => {
+    const row = parseCharacterRow({ ...base, identity: { front: "abc.png" } });
+    expect(row!.identity).toEqual({ front: "abc.png" });
+    expect(parseCharacterRow(base)!.identity).toBeUndefined();
+  });
+
+  it("drops a wrong-typed identity instead of crashing consumers", () => {
+    expect(parseCharacterRow({ ...base, identity: "abc.png" })!.identity).toBeUndefined();
+    expect(parseCharacterRow({ ...base, identity: null })!.identity).toBeUndefined();
+    expect(parseCharacterRow({ ...base, identity: 7 })!.identity).toBeUndefined();
   });
 });

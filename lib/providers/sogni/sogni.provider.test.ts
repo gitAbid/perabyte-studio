@@ -130,7 +130,7 @@ describe("sogni provider", () => {
   });
 
   it("lists curated models only when configured", () => {
-    expect(sogniProvider.listImageModels().length).toBe(4);
+    expect(sogniProvider.listImageModels().length).toBe(7); // + curated edit/identity families
     expect(sogniProvider.listVideoModels().length).toBe(4); // + curated Seedance 2.0
   });
 

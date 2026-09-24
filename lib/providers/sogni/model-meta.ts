@@ -26,6 +26,10 @@ interface CuratedModel {
    * exist in COLD_START_HIDDEN) so frame chaining works before the live
    * catalog warms. */
   i2vModel?: string;
+  /** Multi-reference edit capability, from the live-catalog params
+   * (2026-09-19): `maxContextImages` → `{ min: 0, max: N }`;
+   * `requiresContextImage` → `{ min: 1, max: 3 }` (SDK doc: qwen edit ≤3). */
+  contextImages?: { min: number; max: number };
 }
 
 const CURATED: CuratedModel[] = [
@@ -68,6 +72,38 @@ const CURATED: CuratedModel[] = [
     useCase: "Maximum detail on complex scenes",
     costTier: "credits",
     familyBase: "chroma1-hd",
+  },
+  // Edit/identity families (verified live 2026-09-19, spec: multi-reference
+  // images) — curated with their own use case but never "recommended" tier.
+  {
+    kind: "image",
+    model: "gpt-image-2.5-flare",
+    label: "GPT Image 2.5 Flare",
+    hint: "multi-image edit",
+    useCase: "reference edit",
+    costTier: "credits",
+    contextImages: { min: 0, max: 16 },
+    familyBase: "gpt-image-2.5",
+  },
+  {
+    kind: "image",
+    model: "qwen_image_edit_2511_fp8",
+    label: "Qwen Image Edit",
+    hint: "multi-image edit",
+    useCase: "reference edit",
+    costTier: "credits",
+    contextImages: { min: 1, max: 3 },
+    familyBase: "qwen_image_edit_2511",
+  },
+  {
+    kind: "image",
+    model: "krea2_identity_edit_v1_2",
+    label: "Krea 2 Identity Edit",
+    hint: "multi-image edit",
+    useCase: "reference edit",
+    costTier: "credits",
+    contextImages: { min: 1, max: 3 },
+    familyBase: "krea2_identity_edit",
   },
   {
     kind: "video",
@@ -126,6 +162,7 @@ function toDescriptor(entry: CuratedModel): ModelDescriptor {
     ...(entry.useCase ? { useCase: entry.useCase } : {}),
     ...(entry.costTier ? { costTier: entry.costTier } : {}),
     ...(entry.stylesSupported === false ? { stylesSupported: false } : {}),
+    ...(entry.contextImages ? { contextImages: entry.contextImages } : {}),
     ...(entry.i2vModel ? { i2vModelId: buildModelId(PROVIDER_ID, entry.i2vModel) } : {}),
   };
 }

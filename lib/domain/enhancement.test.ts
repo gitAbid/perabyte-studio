@@ -220,3 +220,41 @@ describe("deterministicEnhancement", () => {
     expect(result).not.toContain("anime");
   });
 });
+
+describe("plan context in enhancement", () => {
+  const base = { kind: "image" as const, sceneCount: 2 };
+
+  it("anchors the rewrite to the planned location", () => {
+    const instruction = enhancementInstruction("she walks", {
+      ...base,
+      location: "a rooftop bar downtown",
+    });
+    expect(instruction).toContain("takes place at: a rooftop bar downtown");
+    const deterministic = deterministicEnhancement("she walks", {
+      ...base,
+      location: "a rooftop bar downtown",
+    });
+    expect(deterministic).toContain("set in a rooftop bar downtown");
+  });
+
+  it("does not duplicate a location the prompt already names", () => {
+    const instruction = enhancementInstruction("inside the rooftop bar she walks", {
+      ...base,
+      location: "the rooftop bar",
+    });
+    expect(instruction).not.toContain("takes place at");
+    expect(deterministicEnhancement("inside the rooftop bar she walks", {
+      ...base,
+      location: "the rooftop bar",
+    })).not.toContain("set in");
+  });
+
+  it("passes the previous scene as continuity context", () => {
+    const instruction = enhancementInstruction("she walks", {
+      ...base,
+      priorScene: "rooftop bar; night; props: red umbrella",
+    });
+    expect(instruction).toContain("previous scene: rooftop bar; night");
+    expect(instruction).toContain("Continue from that moment");
+  });
+});

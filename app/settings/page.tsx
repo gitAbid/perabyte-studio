@@ -134,6 +134,7 @@ export default function SettingsPage() {
               enhanceModel={data?.tasks.enhance ?? null}
               writerModel={data?.tasks.writer ?? null}
               promptMaxChars={data?.promptMaxChars ?? PROMPT_MAX}
+              sceneConsistency={data?.sceneConsistency ?? true}
               onUpdate={onUpdate}
             />
           ) : null}
@@ -230,5 +231,9 @@ function optimisticMerge(
       patch.promptMaxChars !== undefined
         ? patch.promptMaxChars
         : current.promptMaxChars,
+    sceneConsistency:
+      patch.sceneConsistency !== undefined
+        ? patch.sceneConsistency
+        : current.sceneConsistency,
   };
 }

@@ -36,7 +36,33 @@ describe("sogni model meta", () => {
 
   it("returns null for unknown models — no guessed claims", () => {
     expect(sogniModelMeta("some_brand_new_model_fp8")).toBeNull();
-    expect(sogniModelMeta("gpt-image-2.5-flare")).toBeNull();
+  });
+
+  it("curates the edit/identity families as reference-edit models, never recommended", () => {
+    const gpt = sogniModelMeta("gpt-image-2.5-flare");
+    expect(gpt?.useCase).toBe("reference edit");
+    // maxContextImages: 16 on the live catalog.
+    expect(gpt?.contextImages).toEqual({ min: 0, max: 16 });
+    expect(gpt?.tier).toBeUndefined();
+
+    // requiresContextImage families cap at 3 (SDK doc: qwen edit ≤3); the
+    // whole family inherits via prefix, including lightning/alpha variants.
+    expect(sogniModelMeta("qwen_image_edit_2511_lightning")?.contextImages).toEqual({
+      min: 1,
+      max: 3,
+    });
+    expect(sogniModelMeta("krea2_identity_edit_v1_2_dark_beast")?.contextImages).toEqual({
+      min: 1,
+      max: 3,
+    });
+    expect(sogniModelMeta("qwen_image_edit_2511_fp8")?.tier).toBeUndefined();
+  });
+
+  it("carries contextImages through the cold-start descriptors", () => {
+    const edit = SOGNI_IMAGE_MODELS.find((m) => m.model === "qwen_image_edit_2511_fp8");
+    expect(edit?.contextImages).toEqual({ min: 1, max: 3 });
+    const classic = SOGNI_IMAGE_MODELS.find((m) => m.model === "krea2_turbo_fp8_scaled");
+    expect(classic?.contextImages).toBeUndefined();
   });
 
   it("gives the curated label only to verbatim ids — variants keep their API name", () => {

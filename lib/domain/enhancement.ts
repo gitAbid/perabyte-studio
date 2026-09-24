@@ -50,6 +50,11 @@ export interface EnhancementContext {
   sceneCount?: number | null;
   /** Client-local bucket; the server never assumes its own timezone. */
   timeOfDay?: TimeOfDay | null;
+  /** Where this scene takes place (plan/location asset) — the rewrite keeps
+   * the environment anchored instead of inventing a new one. */
+  location?: string | null;
+  /** One-line summary of the previous scene's state — continuity context. */
+  priorScene?: string | null;
   negativePrompt?: string | null;
   /** Character budget the rewrite must fit (Settings → General). */
   maxChars?: number;
@@ -133,6 +138,17 @@ export function enhancementInstruction(
     const sceneIndex = ctx.sceneIndex ?? 1;
     lines.push(
       `- This is scene ${sceneIndex} of a ${sceneCount}-scene story; keep characters and environment consistent so the scenes read as one story.`,
+    );
+  }
+
+  if (ctx.location && !prompt.toLowerCase().includes(ctx.location.toLowerCase().slice(0, 24))) {
+    lines.push(
+      `- The scene takes place at: ${ctx.location}. Anchor the environment there; do not move the action somewhere else.`,
+    );
+  }
+  if (ctx.priorScene) {
+    lines.push(
+      `- The previous scene: ${ctx.priorScene}. Continue from that moment.`,
     );
   }
 
@@ -235,10 +251,15 @@ export function deterministicEnhancement(
     ctx.stylesSupported === false ? null : styleDescriptor(ctx.kind, ctx.style);
   const timeClause =
     ctx.timeOfDay && !hasTimeOfDayMention(base) ? TIME_LIGHTING[ctx.timeOfDay] : null;
+  const locationClause =
+    ctx.location && !base.toLowerCase().includes(ctx.location.toLowerCase().slice(0, 24))
+      ? `set in ${ctx.location}`
+      : null;
 
   const extras = [
     descriptor ?? "highly detailed, balanced composition",
     timeClause,
+    locationClause,
     "atmospheric depth, high resolution",
   ].filter((clause): clause is string => {
     if (!clause) return false;

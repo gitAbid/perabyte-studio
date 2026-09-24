@@ -25,7 +25,6 @@ import {
 } from "@/lib/enhancement";
 import { useModelCatalog, type ModelOption } from "@/lib/model-catalog";
 import { snapLorasForModel } from "@/lib/lora-options";
-import { composeSceneWithCharacters } from "@/lib/character";
 import { refFromMediaUrl, uploadFrameRef } from "@/lib/media/frame";
 import {
   addAsset,
@@ -52,14 +51,20 @@ import {
   putStoryAsset,
   storyExistsOnServer,
 } from "@/lib/story/records";
+import {
+  plansToSceneStates,
+  requestScenePlan,
+} from "@/lib/story/plan";
 import { isVideoSource } from "@/lib/renderer";
+import { GATE_PASS_THRESHOLD } from "@/lib/domain/keyframe-gate";
+import type { LocationRow } from "@/lib/repositories/location-row";
 import {
   setSelectedModel,
   setStoryCharacters,
   useSettings,
 } from "@/lib/repositories/settings.repository";
 import { useCharacters } from "@/lib/character-store";
-import type { Asset, GenerationSettings, StoryScene } from "@/lib/types";
+import type { Asset, GenerationSettings, SceneState, StoryScene } from "@/lib/types";
 
 const CONTINUATIONS = [
   "an establishing wide shot that sets the scene",
@@ -266,6 +271,21 @@ export default function StoryPage() {
   const attachedCharacters = characters.filter((character) =>
     userSettings.storyCharacterIds.includes(character.id),
   );
+  // Location anchors (scene consistency): the story's world pick drives the
+  // keyframe's environment reference. Loaded once per mount.
+  const [locations, setLocations] = useState<LocationRow[]>([]);
+  useEffect(() => {
+    let stop = false;
+    fetch("/api/locations", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { locations?: LocationRow[] } | null) => {
+        if (!stop && data?.locations) setLocations(data.locations);
+      })
+      .catch(() => undefined);
+    return () => {
+      stop = true;
+    };
+  }, []);
   const catalog = useModelCatalog(kind);
   // Catalog for the scene being edited — may differ from the story kind.
   const editCatalog = useModelCatalog(activeKind);
@@ -391,16 +411,62 @@ export default function StoryPage() {
 
   /* --------------------------- server run API --------------------------- */
 
-  /** The anchor-composed prompts the server run will render, snapshotted at
-   * Generate (the tiles keep the clean prompts). */
-  function composeRunPrompts(sceneList: StoryScene[]): Record<string, string> {
-    const specs = attachedCharacters.map((c) => c.spec);
-    const uncensored = userSettings.uncensoredEnabled;
-    const out: Record<string, string> = {};
-    for (const scene of sceneList) {
-      out[scene.id] = composeSceneWithCharacters(scene.prompt, specs, uncensored);
-    }
-    return out;
+  /** Auto-plan: scenes without structured state get one writer `plan` pass.
+   * Silent degrade — when no text engine answers, the story renders exactly
+   * as before (prose-only). Retries only when the un-planned set CHANGES (a
+   * new scene was added), never per poll tick while engines are down. */
+  const planBusyRef = useRef(false);
+  const lastPlanKeyRef = useRef("");
+  useEffect(() => {
+    if (!storyId || planBusyRef.current) return;
+    const pending = scenes.filter(
+      (s) =>
+        !s.state &&
+        s.prompt?.trim() &&
+        s.status !== "generating" &&
+        s.status !== "completed",
+    );
+    if (!pending.length) return;
+    const planKey = `${storyId}:${pending.map((s) => s.id).join(",")}`;
+    if (lastPlanKeyRef.current === planKey) return;
+    lastPlanKeyRef.current = planKey;
+    planBusyRef.current = true;
+    requestScenePlan({
+      scenes: pending.map((s) => s.prompt),
+      characterNames: attachedCharacters.map((c) => c.name),
+      uncensored: userSettings.uncensoredEnabled,
+    })
+      .then((plans) => {
+        if (!plans.length) return;
+        const states = plansToSceneStates(
+          plans,
+          pending.map((s) => s.id),
+          attachedCharacters.map((c) => ({ id: c.id, name: c.name })),
+        );
+        const applied = Object.keys(states).length;
+        for (const [sceneId, state] of Object.entries(states)) {
+          void mutateScene({ op: "update", sceneId, patch: { state } });
+        }
+        if (applied) {
+          toast.push("Scene plan ready — location, time of day and outfits noted.");
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        planBusyRef.current = false;
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- plan reads live cast/settings; guarded by refs
+  }, [storyId, scenes]);
+
+  /** One-line continuity summary of a scene's state (for enhance context). */
+  function sceneStateSummary(state?: SceneState): string | null {
+    if (!state) return null;
+    const parts = [
+      state.locationText,
+      state.timeOfDay,
+      state.props?.length ? `props: ${state.props.join(", ")}` : null,
+    ].filter(Boolean);
+    return parts.length ? parts.join("; ") : null;
   }
 
   async function runStoryAction(
@@ -462,10 +528,9 @@ export default function StoryPage() {
     setDraftRefs({});
     const id =
       storyId ?? `s_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
-    const runBody = {
-      settingsPatch: currentSettings(),
-      runPrompts: composeRunPrompts(draft),
-    };
+    // Prompts and seeds are composed server-side (single prompt truth) — the
+    // run body only carries the picker snapshot.
+    const runBody = { settingsPatch: currentSettings() };
     function buildStoryAsset(): Asset {
       return {
         id,
@@ -663,13 +728,8 @@ export default function StoryPage() {
       scene.settings,
       diffSettingsBaseline(sceneBaseline ?? currentSettings(), sceneSettings),
     );
-    // Anchor-composed prompt recomposed NOW so a mid-run chain never renders
-    // a stale snapshot (Generate recomposes again for the whole story).
-    const runPrompt = composeSceneWithCharacters(
-      nextPrompt,
-      attachedCharacters.map((c) => c.spec),
-      userSettings.uncensoredEnabled,
-    );
+    // The render prompt is recomposed server-side from this patch — the
+    // client never snapshots one.
     await mutateScene({
       op: "update",
       sceneId: scene.id,
@@ -679,7 +739,6 @@ export default function StoryPage() {
         settings: Object.keys(overrides).length ? overrides : {},
         startImageRef: sceneRefs.startImageRef ?? null,
         endImageRef: sceneRefs.endImageRef ?? null,
-        runPrompt,
       },
     });
     const wasFailed = scene.status === "failed";
@@ -920,6 +979,12 @@ export default function StoryPage() {
         duration: activeKind === "video" ? activeSettings.duration : null,
         sceneIndex: editing ? editingIndex + 1 : Math.max(1, scenes.length),
         sceneCount: Math.max(1, scenes.length),
+        // Continuity context from the plan: where this scene happens and
+        // what the previous scene established.
+        location: sceneStateSummary(selectedScene?.state),
+        priorScene: sceneStateSummary(
+          editing ? scenes[editingIndex - 1]?.state : scenes[scenes.length - 1]?.state,
+        ),
         negativePrompt: activeSettings.negativePrompt || null,
         uncensored: userSettings.uncensoredEnabled,
       });
@@ -1210,6 +1275,31 @@ export default function StoryPage() {
               <Icon name="link" size={13} />
               Continuity: {continuityOn ? "On" : "Off"}
             </button>
+            {/* Scene consistency: the story's location anchor — keyframes
+                compose this place into every scene's references. */}
+            {!editing && locations.length > 0 && (
+              <PillSelect
+                icon="image"
+                label="Location"
+                value={story?.world?.locationIds?.[0] ?? ""}
+                options={[
+                  { value: "", label: "None" },
+                  ...locations.map((location) => ({
+                    value: location.id,
+                    label: location.name,
+                  })),
+                ]}
+                onChange={(next) =>
+                  void mutateScene({
+                    op: "world",
+                    world: {
+                      ...(story?.world ?? {}),
+                      locationIds: next ? [next] : [],
+                    },
+                  })
+                }
+              />
+            )}
             {/* Chain preset: scene 1 renders on the picked model, every
                 frame-carrying scene on this. Auto = the family's i2v sibling
                 (the service swaps); a pick here overrides it for this story. */}
@@ -1505,6 +1595,25 @@ export default function StoryPage() {
                         <Icon name="upload" size={9} /> end
                       </span>
                     )}
+                    {typed?.keyframeRef && (
+                      <span
+                        className="inline-flex items-center gap-0.5 rounded-full bg-primary-soft px-1.5 py-0.5 text-[10px] font-bold text-primary"
+                        title="This scene animates from a keyframe render anchored to your characters and location"
+                      >
+                        <Icon name="image" size={9} /> key
+                      </span>
+                    )}
+                    {typed?.score &&
+                      (typed.score.identity < GATE_PASS_THRESHOLD ||
+                        typed.score.outfit < GATE_PASS_THRESHOLD ||
+                        typed.score.location < GATE_PASS_THRESHOLD) && (
+                        <span
+                          className="inline-flex items-center gap-0.5 rounded-full bg-warning-soft px-1.5 py-0.5 text-[10px] font-bold text-warning"
+                          title={`Low consistency after ${typed.attempts ?? 1} attempt(s) — identity ${typed.score.identity.toFixed(2)}, outfit ${typed.score.outfit.toFixed(2)}, location ${typed.score.location.toFixed(2)}${typed.score.notes ? `: ${typed.score.notes}` : ""}`}
+                        >
+                          <Icon name="alert" size={9} /> low match
+                        </span>
+                      )}
                     {typed?.status === "completed" &&
                       scenes[index + 1]?.status === "queued" &&
                       continuityOn &&

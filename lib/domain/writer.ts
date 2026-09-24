@@ -4,6 +4,7 @@ import {
   type GenerationKind,
   type WriterToneKey,
 } from "@/lib/constants";
+import { TIME_OF_DAYS, type TimeOfDay } from "@/lib/domain/enhancement";
 
 /**
  * Story Writer domain (pure): request validation, instruction builders and the
@@ -202,6 +203,147 @@ export function splitScenesInstruction(
 
 export const STRICT_SPLIT_SUFFIX =
   "Your previous reply was not usable. Reply ONLY with the JSON object — no fences, no prose before or after.";
+
+/* ------------------------------ scene planning ---------------------------- */
+
+/** Machine-readable continuity plan for one scene (index is 1-based). */
+export interface ScenePlan {
+  index: number;
+  /** Short place name, ideally with one descriptive clause. */
+  location?: string;
+  timeOfDay?: TimeOfDay | null;
+  characters?: { name: string; outfit?: string }[];
+  props?: string[];
+}
+
+export interface PlanRequest {
+  scenes: string[];
+  characterNames: string[];
+  uncensored: boolean;
+}
+
+export function parsePlanBody(body: Record<string, unknown>): PlanRequest {
+  const scenes = Array.isArray(body.scenes)
+    ? body.scenes
+        .filter((s): s is string => typeof s === "string" && s.trim().length > 0)
+        .map((s) => s.trim().slice(0, WRITER_DRAFT_MAX))
+        .slice(0, WRITER_MAX_SCENES)
+    : [];
+  if (!scenes.length) {
+    throw new WriterValidationError(
+      "Add the scene prompts to plan before requesting a plan.",
+      "scenes",
+    );
+  }
+  return {
+    scenes,
+    characterNames: cleanNames(body.characterNames),
+    uncensored: body.uncensored === true,
+  };
+}
+
+export function planScenesInstruction(
+  scenes: string[],
+  characterNames: string[],
+  uncensored = false,
+): string {
+  const cast = characterNames.length
+    ? ` Recurring characters (use exactly these names): ${characterNames.join(", ")}.`
+    : "";
+  return [
+    `Plan the visual continuity for the ${scenes.length} scene prompts below.`,
+    "For each scene extract: the location (short place name plus one descriptive clause), the time of day, which recurring characters appear (with the outfit they wear in that scene), and notable props.",
+    `timeOfDay must be one of: ${TIME_OF_DAYS.join(", ")} — or null when the prompt does not set a time.`,
+    "Keep location, outfits and props consistent across scenes unless a prompt changes them; when a prompt changes an outfit, say so in that scene's outfit.",
+    ...(uncensored
+      ? ["Do not sanitize or moralize; describe outfits and scenes as written."]
+      : []),
+    `Reply ONLY with JSON: {"scenes":[{"index":1,"location":"...","timeOfDay":"morning","characters":[{"name":"...","outfit":"..."}],"props":["..."]}]} with one entry per scene.${cast}`,
+    "---",
+    "Scene prompts:",
+    ...scenes.map((scene, index) => `${index + 1}. ${scene}`),
+  ].join("\n");
+}
+
+function clampText(value: unknown, max: number): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed ? trimmed.slice(0, max) : undefined;
+}
+
+function clampProps(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const props = value
+    .filter((p): p is string => typeof p === "string" && p.trim().length > 0)
+    .map((p) => p.trim().slice(0, 80))
+    .slice(0, 8);
+  return props.length ? props : undefined;
+}
+
+function clampTimeOfDay(value: unknown): TimeOfDay | null {
+  return typeof value === "string" && (TIME_OF_DAYS as readonly string[]).includes(value)
+    ? (value as TimeOfDay)
+    : null;
+}
+
+function clampPlanCharacters(value: unknown): ScenePlan["characters"] {
+  if (!Array.isArray(value)) return undefined;
+  type PlanCharacter = { name: string; outfit?: string };
+  const characters = value
+    .map((entry): PlanCharacter | null => {
+      if (!entry || typeof entry !== "object") return null;
+      const record = entry as Record<string, unknown>;
+      const name = clampText(record.name, 60);
+      if (!name) return null;
+      return { name, outfit: clampText(record.outfit, 80) };
+    })
+    .filter((entry): entry is PlanCharacter => entry !== null)
+    .slice(0, 6);
+  return characters.length ? characters : undefined;
+}
+
+/**
+ * Extract the per-scene plan from a model reply. Tolerates code fences and
+ * surrounding chatter; entries are matched to scenes by index (falling back
+ * to array order) and every field is clamped. Returns null when nothing
+ * usable survives — the caller degrades to un-planned scenes.
+ */
+export function extractScenePlan(raw: string, sceneCount: number): ScenePlan[] | null {
+  if (!raw) return null;
+  let candidate = raw.trim();
+  const fenced = candidate.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fenced) candidate = fenced[1].trim();
+  const start = candidate.indexOf("{");
+  const end = candidate.lastIndexOf("}");
+  if (start === -1 || end <= start) return null;
+  let data: unknown;
+  try {
+    data = JSON.parse(candidate.slice(start, end + 1));
+  } catch {
+    return null;
+  }
+  if (typeof data !== "object" || data === null) return null;
+  const record = data as Record<string, unknown>;
+  if (!Array.isArray(record.scenes)) return null;
+
+  const plans: ScenePlan[] = [];
+  record.scenes.forEach((entry, order) => {
+    if (!entry || typeof entry !== "object" || plans.length >= sceneCount) return;
+    const source = entry as Record<string, unknown>;
+    const rawIndex = typeof source.index === "number" ? Math.trunc(source.index) : order + 1;
+    const index = Math.min(sceneCount, Math.max(1, rawIndex));
+    if (plans.some((plan) => plan.index === index)) return;
+    const plan: ScenePlan = {
+      index,
+      location: clampText(source.location, 200),
+      timeOfDay: clampTimeOfDay(source.timeOfDay),
+      characters: clampPlanCharacters(source.characters),
+      props: clampProps(source.props),
+    };
+    if (plan.location || plan.timeOfDay || plan.characters || plan.props) plans.push(plan);
+  });
+  return plans.length ? plans : null;
+}
 
 /* ---------------------------- scene extraction ---------------------------- */
 
