@@ -17,6 +17,7 @@ import {
   extractScenePlan,
   parsePlanBody,
   planScenesInstruction,
+  sceneCountSatisfied,
 } from "@/lib/domain/writer";
 
 describe("writer request validation", () => {
@@ -33,6 +34,13 @@ describe("writer request validation", () => {
     expect(parseWriteBody({ action: "write", brief: { idea: "a chase" } }).sceneCount).toBe(5);
     expect(parseWriteBody({ action: "write", brief: { idea: "a", sceneCount: 0 } }).sceneCount).toBe(1);
     expect(parseWriteBody({ action: "write", brief: { idea: "a", sceneCount: 99 } }).sceneCount).toBe(12);
+  });
+
+  it("preserves Smart and numeric scene count choices", () => {
+    expect(parseWriteBody({ brief: { idea: "a", sceneCount: "smart" } }).sceneCount).toBe("smart");
+    expect(parseWriteBody({ brief: { idea: "a", sceneCount: 7 } }).sceneCount).toBe(7);
+    expect(parseSplitBody({ draft: "prose", sceneCount: "smart" }).sceneCount).toBe("smart");
+    expect(parseSplitBody({ draft: "prose", sceneCount: 7 }).sceneCount).toBe(7);
   });
 
   it("ignores unknown tone names and normalizes character names", () => {
@@ -97,6 +105,27 @@ describe("instruction builders", () => {
     expect(text).not.toContain("Do not sanitize or moralize");
   });
 
+  it("asks Smart for natural beats without numbered headings and uses available cast names", () => {
+    const text = writeStoryInstruction({
+      idea: "a journey", sceneCount: "smart", tone: null,
+      characterNames: ["Ada", "Riven"], uncensored: false,
+    });
+    expect(text).toContain("3–8");
+    expect(text).toContain("natural story beats");
+    expect(text).toMatch(/available characters/i);
+    expect(text).toContain("exact display names");
+    expect(text).toContain("Ada, Riven");
+    expect(text).toContain("Do not add numbered scene headings");
+  });
+
+  it("keeps numbered scene headings out of preset-count story prose", () => {
+    const text = writeStoryInstruction({
+      idea: "a journey", sceneCount: 5, tone: null,
+      characterNames: [], uncensored: false,
+    });
+    expect(text).toContain("Do not add numbered scene headings");
+  });
+
   it("enhance instruction carries draft, instruction, and the uncensored clause", () => {
     const text = enhanceDraftInstruction("old draft", "make it darker", true);
     expect(text).toContain("old draft");
@@ -131,6 +160,16 @@ describe("instruction builders", () => {
     expect(text).toContain("JSON");
   });
 
+  it("asks Smart for 3–8 scenes while numeric values stay exact", () => {
+    const smart = splitScenesInstruction("prose", "smart", ["Ada"]);
+    expect(smart).toContain("3–8 scenes");
+    expect(smart).toMatch(/available characters/i);
+    expect(smart).toContain("exact display names");
+    expect(smart).toContain('"scenes"');
+    expect(splitScenesInstruction("prose", 4, [])).toContain("exactly 4 scenes");
+    expect(splitScenesInstruction("prose", 4, [])).toContain("4 scene strings");
+  });
+
   it("split instruction adds a video-clip rule only for video kind", () => {
     const video = splitScenesInstruction("prose", 4, [], "video");
     expect(video).toContain("motion");
@@ -152,6 +191,19 @@ describe("instruction builders", () => {
 });
 
 describe("extractStoryScenes", () => {
+  it("accepts numeric counts only when the scene array has that exact length", () => {
+    expect(sceneCountSatisfied(["a", "b", "c"], 3)).toBe(true);
+    expect(sceneCountSatisfied(["a", "b"], 3)).toBe(false);
+    expect(sceneCountSatisfied(["a", "b", "c", "d"], 3)).toBe(false);
+  });
+
+  it("accepts Smart counts only from 3 through 8 scenes", () => {
+    expect(sceneCountSatisfied(["a", "b"], "smart")).toBe(false);
+    expect(sceneCountSatisfied(["a", "b", "c"], "smart")).toBe(true);
+    expect(sceneCountSatisfied(Array(8).fill("scene"), "smart")).toBe(true);
+    expect(sceneCountSatisfied(Array(9).fill("scene"), "smart")).toBe(false);
+  });
+
   it("parses a clean JSON object", () => {
     const parsed = extractStoryScenes(
       JSON.stringify({ title: "The Chase", scenes: ["scene one", "scene two"] }),

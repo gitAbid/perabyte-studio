@@ -18,9 +18,11 @@ export const WRITER_MIN_SCENES = 1;
 export const WRITER_MAX_SCENES = 12;
 export const WRITER_DEFAULT_SCENES = 5;
 
+export type WriterSceneCount = number | "smart";
+
 export interface WriterBrief {
   idea: string;
-  sceneCount: number;
+  sceneCount: WriterSceneCount;
   tone: WriterToneKey | null;
   characterNames: string[];
   uncensored: boolean;
@@ -71,9 +73,12 @@ export function parseWriteBody(body: Record<string, unknown>): WriterBrief {
     typeof brief.tone === "string" && brief.tone in WRITER_TONES && brief.tone !== "none"
       ? (brief.tone as WriterToneKey)
       : null;
+  const sceneCount = brief.sceneCount === "smart"
+    ? "smart"
+    : clampInt(brief.sceneCount, WRITER_MIN_SCENES, WRITER_MAX_SCENES, WRITER_DEFAULT_SCENES);
   return {
     idea,
-    sceneCount: clampInt(brief.sceneCount, WRITER_MIN_SCENES, WRITER_MAX_SCENES, WRITER_DEFAULT_SCENES),
+    sceneCount,
     tone,
     characterNames: cleanNames(brief.characterNames),
     uncensored: brief.uncensored === true,
@@ -106,7 +111,7 @@ export function parseEnhanceBody(body: Record<string, unknown>): EnhanceRequest 
 
 export interface SplitRequest {
   draft: string;
-  sceneCount: number;
+  sceneCount: WriterSceneCount;
   characterNames: string[];
   /** What the scenes will render as. Anything but "video" parses as "image". */
   kind: GenerationKind;
@@ -123,12 +128,9 @@ export function parseSplitBody(body: Record<string, unknown>): SplitRequest {
   );
   return {
     draft,
-    sceneCount: clampInt(
-      body.sceneCount,
-      WRITER_MIN_SCENES,
-      WRITER_MAX_SCENES,
-      WRITER_DEFAULT_SCENES,
-    ),
+    sceneCount: body.sceneCount === "smart"
+      ? "smart"
+      : clampInt(body.sceneCount, WRITER_MIN_SCENES, WRITER_MAX_SCENES, WRITER_DEFAULT_SCENES),
     characterNames: cleanNames(body.characterNames),
     kind: body.kind === "video" ? "video" : "image",
     uncensored: body.uncensored === true,
@@ -140,11 +142,14 @@ export function parseSplitBody(body: Record<string, unknown>): SplitRequest {
 export function writeStoryInstruction(brief: WriterBrief): string {
   const parts = [
     `Write a short narrative story based on this idea: ${brief.idea}.`,
-    `Structure it in roughly ${brief.sceneCount} distinct beats/paragraphs.`,
+    brief.sceneCount === "smart"
+      ? "Structure it in 3–8 natural story beats, choosing the number that best fits the story."
+      : `Structure it in roughly ${brief.sceneCount} distinct beats/paragraphs.`,
+    "Do not add numbered scene headings; keep the prose as a continuous story with natural paragraph breaks.",
   ];
   if (brief.tone) parts.push(`Tone: ${brief.tone}.`);
   if (brief.characterNames.length) {
-    parts.push(`Recurring characters (use these names): ${brief.characterNames.join(", ")}.`);
+    parts.push(`Available characters (use their exact display names where relevant): ${brief.characterNames.join(", ")}.`);
   }
   if (brief.uncensored) {
     parts.push("Do not sanitize or moralize; write the scene as imagined.");
@@ -180,22 +185,28 @@ const VIDEO_SCENE_RULE =
 
 export function splitScenesInstruction(
   draft: string,
-  sceneCount: number,
+  sceneCount: WriterSceneCount,
   characterNames: string[],
   kind: GenerationKind = "image",
   uncensored = false,
 ): string {
   const cast = characterNames.length
-    ? ` Recurring characters: ${characterNames.join(", ")}.`
+    ? ` Available characters (use their exact display names where relevant): ${characterNames.join(", ")}.`
     : "";
+  const countInstruction = sceneCount === "smart"
+    ? "Split the story below into 3–8 scenes, choosing the number that best fits its natural beats."
+    : `Split the story below into exactly ${sceneCount} scenes.`;
+  const shapeInstruction = sceneCount === "smart"
+    ? 'Reply ONLY with JSON: {"title": "short story title", "scenes": ["scene 1 prompt", …]} with 3–8 scene strings.'
+    : `Reply ONLY with JSON: {"title": "short story title", "scenes": ["scene 1 prompt", …]} with ${sceneCount} scene strings.`;
   return [
-    `Split the story below into exactly ${sceneCount} scenes.`,
+    countInstruction,
     ...SCENE_PROMPT_RULES,
     ...(kind === "video" ? [VIDEO_SCENE_RULE] : []),
     ...(uncensored
       ? ["Do not sanitize or moralize; keep adult visual detail as imagined."]
       : []),
-    `Reply ONLY with JSON: {"title": "short story title", "scenes": ["scene 1 prompt", …]} with ${sceneCount} scene strings.${cast}`,
+    `${shapeInstruction}${cast}`,
     "---",
     draft,
   ].join("\n");
@@ -203,6 +214,13 @@ export function splitScenesInstruction(
 
 export const STRICT_SPLIT_SUFFIX =
   "Your previous reply was not usable. Reply ONLY with the JSON object — no fences, no prose before or after.";
+
+/** Whether a parsed split satisfies the requested count mode. */
+export function sceneCountSatisfied(scenes: string[], sceneCount: WriterSceneCount): boolean {
+  return sceneCount === "smart"
+    ? scenes.length >= 3 && scenes.length <= 8
+    : scenes.length === sceneCount;
+}
 
 /* ------------------------------ scene planning ---------------------------- */
 

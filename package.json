@@ -13,7 +13,8 @@
     "deploy:vercel": "bash scripts/deploy-vercel.sh",
     "verify:generator": "node scripts/verify-generator.mjs",
     "verify:provider": "node scripts/verify-provider-ui.mjs",
-    "verify:moderation": "node scripts/verify-moderation.mjs"
+    "verify:moderation": "node scripts/verify-moderation.mjs",
+    "verify:writer": "node scripts/verify-writer-scenes.mjs http://127.0.0.1:3100"
   },
   "dependencies": {
     "@sogni-ai/sogni-client": "^5.49.0",
