@@ -37,11 +37,22 @@ import {
   getCharacter,
   updateCharacter,
 } from "@/lib/character-store";
+import type { CharacterIdentity } from "@/lib/repositories/character-row";
 import { addAsset, updateAsset, useAssets } from "@/lib/store";
 import { titleFromPrompt } from "@/lib/constants";
 import type { Asset } from "@/lib/types";
 
 type CreationMode = "simple" | "details";
+
+/** The bare media-cache ref of a generated `/api/media?f=<ref>` URL (same
+ * extraction the sheet panel uses for its img2img chaining). */
+function mediaRefFromUrl(url: string): string | null {
+  try {
+    return new URL(url, "http://perabyte.invalid").searchParams.get("f");
+  } catch {
+    return null;
+  }
+}
 
 /** Minimal model-picker entry shared by Simple mode and the Review step. */
 export interface ModelOption {
@@ -279,6 +290,22 @@ export function CharacterStudio({
     );
   }
 
+  /** Identity auto-pin: the front view's media-cache ref, recording the seed
+   * and active model it was produced with — null when there is no front view
+   * or its URL carries no extractable ref (plain-URL renders are skipped). */
+  function autoIdentityPatch(): { identity: CharacterIdentity } | null {
+    const front = completedViews.find((view) => view.id === "front");
+    const frontRef = front ? mediaRefFromUrl(front.url) : null;
+    if (!frontRef) return null;
+    return {
+      identity: {
+        front: frontRef,
+        ...(front?.seed !== undefined ? { seed: front.seed } : {}),
+        ...(characterModelId ? { modelId: characterModelId } : {}),
+      },
+    };
+  }
+
   function handleSaveCharacter() {
     const poster = posterUrl();
     if (!poster || savedCharacterId) return;
@@ -289,6 +316,10 @@ export function CharacterStudio({
       parentId ? { parentId } : undefined,
     );
     setSavedCharacterId(character.id);
+    // Fresh saves start without a canonical identity — auto-pin the front
+    // view's ref so story keyframes can re-anchor to this face.
+    const identityPatch = autoIdentityPatch();
+    if (identityPatch) updateCharacter(character.id, identityPatch);
     // If the sheet was already saved to History, tag it to the character so
     // the library picks it up even though the save order was reversed.
     if (lastSavedAsset) {
@@ -308,10 +339,14 @@ export function CharacterStudio({
     if (!characterId || !saveName.trim() || savingChanges) return;
     setSavingChanges(true);
     const poster = posterUrl();
+    // Auto-pin the front view's ref while the record has no canonical identity.
+    const identityPatch =
+      getCharacter(characterId)?.identity?.front ? null : autoIdentityPatch();
     updateCharacter(characterId, {
       name: saveName.trim(),
       spec,
       ...(poster ? { thumbnail: poster } : {}),
+      ...(identityPatch ?? {}),
     });
     setSavingChanges(false);
     setSavedCharacterId(characterId);

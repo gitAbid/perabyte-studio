@@ -37,9 +37,15 @@ export function patchCharacter(
 ): CharacterRow | null {
   const current = getCharactersRepository(id);
   if (!current) return null;
+  // `identity: null` is the wire form of "clear" — JSON cannot carry
+  // undefined, so the client sends null and we translate it here.
+  const effective =
+    patch.identity === null
+      ? { ...patch, identity: undefined }
+      : patch;
   const merged = parseCharacterRow({
     ...current,
-    ...patch,
+    ...effective,
     id,
     updatedAt: Date.now(),
   });

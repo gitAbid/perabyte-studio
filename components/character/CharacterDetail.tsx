@@ -22,6 +22,7 @@ import {
   updateCharacter,
   type SavedCharacter,
 } from "@/lib/character-store";
+import type { CharacterIdentity } from "@/lib/repositories/character-row";
 import { useAssets } from "@/lib/store";
 
 /**
@@ -30,6 +31,16 @@ import { useAssets } from "@/lib/store";
  * full specification, with Edit / Copy / New generation as the actions. The
  * wizard lives one click away at /character/[id]/edit.
  */
+
+/** The bare media-cache ref of a generated `/api/media?f=<ref>` URL (same
+ * extraction the sheet panel uses for its img2img chaining). */
+function mediaRefFromUrl(url: string): string | null {
+  try {
+    return new URL(url, "http://perabyte.invalid").searchParams.get("f");
+  } catch {
+    return null;
+  }
+}
 export function CharacterDetail({ characterId }: { characterId: string }) {
   const toast = useToast();
   const router = useRouter();
@@ -68,11 +79,18 @@ export function CharacterDetail({ characterId }: { characterId: string }) {
     const latestSheet = renders.find((a) => Array.isArray(a.meta?.sheetOrder));
     if (!latestSheet) return [];
     const order = latestSheet.meta?.sheetOrder as string[];
-    const views: { id: SheetViewId; label: string; url: string }[] = [];
+    const views: {
+      id: SheetViewId;
+      label: string;
+      url: string;
+      ref: string | null;
+    }[] = [];
     order.forEach((id, index) => {
       const url = latestSheet.variants[index];
       const view = sheetViewById(id);
-      if (url && view) views.push({ id: view.id, label: view.label, url });
+      if (url && view) {
+        views.push({ id: view.id, label: view.label, url, ref: mediaRefFromUrl(url) });
+      }
     });
     return views;
   }, [renders]);
@@ -115,6 +133,7 @@ export function CharacterDetail({ characterId }: { characterId: string }) {
     { ...DEFAULT_CHARACTER_SPEC, ...character.spec },
     true,
   );
+  const identityFront = character.identity?.front ?? null;
 
   function handleCopy() {
     const copy = cloneForDuplicate(character!);
@@ -127,6 +146,25 @@ export function CharacterDetail({ characterId }: { characterId: string }) {
     updateCharacter(characterId, { thumbnail: url });
     setCharacter((current) => (current ? { ...current, thumbnail: url } : current));
     toast.push("Poster updated.", "success");
+  }
+
+  /** Pin a sheet view as the canonical identity image for keyframe
+   * re-anchoring — `front` is the primary; angles/seed are not tracked here. */
+  function handleSetIdentity(ref: string) {
+    const identity: CharacterIdentity = { front: ref };
+    updateCharacter(characterId, { identity });
+    setCharacter((current) => (current ? { ...current, identity } : current));
+    toast.push("Identity image pinned.", "success");
+  }
+
+  function handleClearIdentity() {
+    // `null` survives JSON.stringify (undefined is dropped en route) — the
+    // service maps it to a real deletion.
+    updateCharacter(characterId, { identity: null as unknown as CharacterIdentity });
+    setCharacter((current) =>
+      current ? { ...current, identity: undefined } : current,
+    );
+    toast.push("Identity image cleared.", "success");
   }
 
   function handleDownload() {
@@ -155,6 +193,21 @@ export function CharacterDetail({ characterId }: { characterId: string }) {
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          {identityFront && (
+            <Badge tone="primary">
+              <Icon name="user" size={11} />
+              Identity set
+              <button
+                type="button"
+                title="Clear identity image"
+                aria-label="Clear identity image"
+                onClick={handleClearIdentity}
+                className="inline-flex items-center justify-center rounded-full transition-colors hover:bg-primary/20"
+              >
+                <Icon name="close" size={11} />
+              </button>
+            </Badge>
+          )}
           <Button variant="secondary" size="sm" icon="copy" onClick={handleCopy}>
             <span className="hidden sm:inline">Copy</span>
           </Button>
@@ -215,43 +268,70 @@ export function CharacterDetail({ characterId }: { characterId: string }) {
                 </Badge>
               </div>
               <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {sheetViews.map((view) => (
-                  <div
-                    key={view.id}
-                    className="group relative overflow-hidden rounded-[12px] border border-border bg-surface"
-                  >
-                    <p className="absolute left-1.5 top-1.5 z-10 rounded-full bg-black/55 px-1.5 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
-                      {view.label}
-                    </p>
-                    <MediaFrame
-                      src={view.url}
-                      alt={`${character.name} — ${view.label} view`}
-                      ratio={view.id === "front" || view.id === "back" ? posterRatio : "1/1"}
-                      rounded="rounded-[11px]"
-                      sensitive
-                    />
-                    <div className="absolute inset-x-1.5 bottom-1.5 z-10 flex items-center justify-center gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
-                      <a
-                        href={view.url}
-                        download={`${character.name}-${view.id}.png`}
-                        title={`Download ${view.label}`}
-                        aria-label={`Download ${view.label} view`}
-                        className="inline-flex size-7 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/75"
-                      >
-                        <Icon name="download" size={13} />
-                      </a>
+                {sheetViews.map((view) => {
+                  const isIdentity = view.ref !== null && view.ref === identityFront;
+                  return (
+                    <div
+                      key={view.id}
+                      className="group relative overflow-hidden rounded-[12px] border border-border bg-surface"
+                    >
+                      <p className="absolute left-1.5 top-1.5 z-10 rounded-full bg-black/55 px-1.5 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
+                        {view.label}
+                      </p>
                       <button
                         type="button"
-                        title={`Set ${view.label} as poster`}
-                        aria-label={`Set ${view.label} view as poster`}
-                        onClick={() => handleSetPoster(view.url)}
-                        className="inline-flex size-7 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/75"
+                        title={isIdentity ? "Clear identity image" : "Use as identity"}
+                        aria-label={
+                          isIdentity
+                            ? `Clear ${view.label} view as identity`
+                            : `Use ${view.label} view as identity`
+                        }
+                        aria-pressed={isIdentity}
+                        disabled={view.ref === null}
+                        onClick={() => {
+                          if (view.ref === null) return;
+                          if (isIdentity) handleClearIdentity();
+                          else handleSetIdentity(view.ref);
+                        }}
+                        className={
+                          "absolute right-1.5 top-1.5 z-10 inline-flex size-7 items-center justify-center rounded-full backdrop-blur-sm transition-colors focus-visible:opacity-100 disabled:opacity-40 " +
+                          (isIdentity
+                            ? "bg-primary-strong text-white opacity-100"
+                            : "bg-black/55 text-white opacity-0 hover:bg-black/75 group-hover:opacity-100")
+                        }
                       >
-                        <Icon name="star" size={13} />
+                        <Icon name="user" size={13} />
                       </button>
+                      <MediaFrame
+                        src={view.url}
+                        alt={`${character.name} — ${view.label} view`}
+                        ratio={view.id === "front" || view.id === "back" ? posterRatio : "1/1"}
+                        rounded="rounded-[11px]"
+                        sensitive
+                      />
+                      <div className="absolute inset-x-1.5 bottom-1.5 z-10 flex items-center justify-center gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+                        <a
+                          href={view.url}
+                          download={`${character.name}-${view.id}.png`}
+                          title={`Download ${view.label}`}
+                          aria-label={`Download ${view.label} view`}
+                          className="inline-flex size-7 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/75"
+                        >
+                          <Icon name="download" size={13} />
+                        </a>
+                        <button
+                          type="button"
+                          title={`Set ${view.label} as poster`}
+                          aria-label={`Set ${view.label} view as poster`}
+                          onClick={() => handleSetPoster(view.url)}
+                          className="inline-flex size-7 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/75"
+                        >
+                          <Icon name="star" size={13} />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
