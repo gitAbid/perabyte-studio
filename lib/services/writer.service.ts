@@ -192,7 +192,7 @@ export async function runWriterAction(
       request.kind,
       request.uncensored,
     );
-    // One stricter retry when the reply isn't parseable (spec: parse failure).
+    // One stricter retry when the reply is unparseable or misses the requested scene count.
     for (let attempt = 0; attempt < 2; attempt += 1) {
       const instruction =
         attempt === 0
