@@ -1,6 +1,6 @@
 "use client";
 
-import type { WriterBrief } from "@/lib/domain/writer";
+import type { WriterBrief, WriterSceneCount } from "@/lib/domain/writer";
 import { logClientEvent } from "@/lib/logging/logger";
 
 /**
@@ -29,7 +29,7 @@ export type WriterPayload =
   | {
       action: "split";
       draft: string;
-      sceneCount: number;
+      sceneCount: WriterSceneCount;
       characterNames?: string[];
       /** What the split scenes will render as; omitted = image. */
       kind?: "image" | "video";

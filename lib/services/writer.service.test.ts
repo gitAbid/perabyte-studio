@@ -116,6 +116,43 @@ describe("writer service", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it("retries an exact-count mismatch and accepts the requested count", async () => {
+    const twoScenes = JSON.stringify({ title: "The Chase", scenes: ["s1", "s2"] });
+    const fetchMock = stubReplies([twoScenes, SPLIT_JSON]);
+    const result = await runWriterAction({
+      action: "split",
+      draft: "prose to split",
+      sceneCount: 3,
+    });
+    expect(result).toMatchObject({ scenes: ["s1", "s2", "s3"] });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const [, retryInit] = fetchMock.mock.calls[1] as unknown as [string, RequestInit];
+    const retryBody = JSON.parse(String(retryInit.body));
+    const retryInstruction = (retryBody.messages as Array<{ role: string; content: string }>).find(
+      (message) => message.role === "user",
+    )?.content ?? "";
+    expect(retryInstruction).toContain("exactly 3 scenes");
+  });
+
+  it("accepts an in-range Smart split and sends named cast with the instruction", async () => {
+    const smartReply = JSON.stringify({ title: "The Chase", scenes: ["s1", "s2", "s3", "s4"] });
+    const fetchMock = stubReplies([smartReply]);
+    const result = await runWriterAction({
+      action: "split",
+      draft: "prose to split",
+      sceneCount: "smart",
+      characterNames: ["Ada", "Riven"],
+    });
+    expect(result).toMatchObject({ scenes: ["s1", "s2", "s3", "s4"] });
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    const body = JSON.parse(String(init.body));
+    const instruction = (body.messages as Array<{ role: string; content: string }>).find(
+      (message) => message.role === "user",
+    )?.content ?? "";
+    expect(instruction).toMatch(/available characters/i);
+    expect(instruction).toContain("Ada, Riven");
+  });
+
   it("requests a larger output budget for split than the 700-token default", async () => {
     const fetchMock = stubReplies([SPLIT_JSON]);
     await runWriterAction({ action: "split", draft: "prose", sceneCount: 3 });

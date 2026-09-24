@@ -17,6 +17,7 @@ import {
   extractScenePlan,
   parsePlanBody,
   planScenesInstruction,
+  sceneCountSatisfied,
 } from "@/lib/domain/writer";
 
 describe("writer request validation", () => {
@@ -182,6 +183,19 @@ describe("instruction builders", () => {
 });
 
 describe("extractStoryScenes", () => {
+  it("accepts numeric counts only when the scene array has that exact length", () => {
+    expect(sceneCountSatisfied(["a", "b", "c"], 3)).toBe(true);
+    expect(sceneCountSatisfied(["a", "b"], 3)).toBe(false);
+    expect(sceneCountSatisfied(["a", "b", "c", "d"], 3)).toBe(false);
+  });
+
+  it("accepts Smart counts only from 3 through 8 scenes", () => {
+    expect(sceneCountSatisfied(["a", "b"], "smart")).toBe(false);
+    expect(sceneCountSatisfied(["a", "b", "c"], "smart")).toBe(true);
+    expect(sceneCountSatisfied(Array(8).fill("scene"), "smart")).toBe(true);
+    expect(sceneCountSatisfied(Array(9).fill("scene"), "smart")).toBe(false);
+  });
+
   it("parses a clean JSON object", () => {
     const parsed = extractStoryScenes(
       JSON.stringify({ title: "The Chase", scenes: ["scene one", "scene two"] }),

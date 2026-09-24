@@ -214,6 +214,13 @@ export function splitScenesInstruction(
 export const STRICT_SPLIT_SUFFIX =
   "Your previous reply was not usable. Reply ONLY with the JSON object — no fences, no prose before or after.";
 
+/** Whether a parsed split satisfies the requested count mode. */
+export function sceneCountSatisfied(scenes: string[], sceneCount: WriterSceneCount): boolean {
+  return sceneCount === "smart"
+    ? scenes.length >= 3 && scenes.length <= 8
+    : scenes.length === sceneCount;
+}
+
 /* ------------------------------ scene planning ---------------------------- */
 
 /** Machine-readable continuity plan for one scene (index is 1-based). */

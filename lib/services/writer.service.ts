@@ -6,6 +6,7 @@ import {
   parsePlanBody,
   parseSplitBody,
   parseWriteBody,
+  sceneCountSatisfied,
   planScenesInstruction,
   splitScenesInstruction,
   STRICT_SPLIT_SUFFIX,
@@ -194,7 +195,11 @@ export async function runWriterAction(
     // One stricter retry when the reply isn't parseable (spec: parse failure).
     for (let attempt = 0; attempt < 2; attempt += 1) {
       const instruction =
-        attempt === 0 ? base : `${base}\n${STRICT_SPLIT_SUFFIX}`;
+        attempt === 0
+          ? base
+          : `${base}\n${STRICT_SPLIT_SUFFIX} ${request.sceneCount === "smart"
+              ? "The scenes array must contain between 3 and 8 scenes."
+              : `The scenes array must contain exactly ${request.sceneCount} scenes.`}`;
       const { text, engine } = await completeViaChain(instruction, {
         signal: options.signal,
         maxTokens: OUTPUT_MAX_TOKENS,
@@ -204,7 +209,7 @@ export async function runWriterAction(
         logger: log,
       });
       const parsed = extractStoryScenes(text, getProviderConfig().promptMaxChars);
-      if (parsed) {
+      if (parsed && sceneCountSatisfied(parsed.scenes, request.sceneCount)) {
         log.info("story split", {
           ...engineLabel(engine),
           scenes: parsed.scenes.length,
@@ -213,7 +218,11 @@ export async function runWriterAction(
         });
         return { ...parsed, ...engineLabel(engine) };
       }
-      log.warn("split reply unparseable", { attempt: attempt + 1 });
+      log.warn("split reply invalid", {
+        attempt: attempt + 1,
+        parseable: parsed !== null,
+        scenes: parsed?.scenes.length,
+      });
     }
     throw new WriterServiceError(
       "The writer could not split that draft into scenes — try rephrasing or retry.",
