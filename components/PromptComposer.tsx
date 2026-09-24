@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Icon } from "./Icon";
 import { Button } from "./ui";
 import { PillSelect } from "./PillSelect";
@@ -281,6 +281,7 @@ export function PromptComposer({
     !hideRenderCount ||
     loraEntries.length > 0;
   const [renderOptionsExpanded, setRenderOptionsExpanded] = useState(false);
+  const renderOptionsPanelId = useId();
   const attachedCharacters = (characters ?? []).filter((character) =>
     characterIds?.includes(character.id),
   );
@@ -462,7 +463,7 @@ export function PromptComposer({
             <button
               type="button"
               aria-expanded={renderOptionsExpanded}
-              aria-controls="render-options-panel"
+              aria-controls={renderOptionsPanelId}
               aria-label={`${renderOptionsExpanded ? "Hide" : "Show"} render options${renderOptionsSummary ? `: ${renderOptionsSummary}` : ""}`}
               onClick={() => setRenderOptionsExpanded((expanded) => !expanded)}
               className="mt-2 flex min-h-9 w-full items-center gap-2 rounded-[8px] px-2 text-left text-[11.5px] transition-colors hover:bg-surface-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
@@ -484,7 +485,7 @@ export function PromptComposer({
           )}
           {hasEditableRenderOptions && (
             <div
-              id="render-options-panel"
+              id={renderOptionsPanelId}
               role="region"
               aria-label="Additional render options"
               hidden={!renderOptionsExpanded}
