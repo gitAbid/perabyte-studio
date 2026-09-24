@@ -47,6 +47,7 @@ export function WriterView() {
   const { settings: userSettings } = useSettings();
 
   const [idea, setIdea] = useState("");
+  const [activePane, setActivePane] = useState<"brief" | "draft" | "outline">("draft");
   const [sceneCount, setSceneCount] = useState(WRITER_DEFAULT_SCENES);
   const [tone, setTone] = useState<WriterToneKey>("none");
   const [kind, setKind] = useState<GenerationKind>("image");
@@ -56,6 +57,7 @@ export function WriterView() {
   const [undoDraft, setUndoDraft] = useState<string | null>(null);
   const [busy, setBusy] = useState<null | "write" | "enhance" | "split" | "solo">(null);
   const [error, setError] = useState<string | null>(null);
+  const [errorPane, setErrorPane] = useState<"brief" | "draft" | "outline">("draft");
   // "" = Auto — the Settings "Story writer" pick (or chain order) resolves at
   // request time, so Settings changes apply without touching this page.
   const [modelId, setModelId] = useState("");
@@ -166,6 +168,7 @@ export function WriterView() {
   async function runAction(action: "write" | "enhance" | "split" | "solo") {
     if (busy) return;
     setError(null);
+    setErrorPane(action === "write" ? "brief" : action === "split" || action === "solo" ? "outline" : "draft");
     if (action === "write" && !idea.trim()) {
       setError("Describe your story idea first.");
       return;
@@ -207,7 +210,7 @@ export function WriterView() {
     }
 
     if (action === "solo") {
-      router.push(`/generate/image?prompt=${encodeURIComponent(previewScenes[0])}`);
+      router.push(`/generate/${kind}?prompt=${encodeURIComponent(previewScenes[0])}`);
       return;
     }
 
@@ -229,6 +232,7 @@ export function WriterView() {
         });
         setUndoDraft(draft || null);
         setDraft("text" in result ? result.text : draft);
+        setActivePane("draft");
       } else {
         const result = await requestWriterAction({
           action: "enhance",
@@ -260,15 +264,15 @@ export function WriterView() {
   ];
 
   return (
-    <div className="mx-auto flex w-full max-w-[1680px] flex-1 flex-col gap-6 px-4 py-5 sm:px-6 lg:px-9 lg:py-7">
-      <header className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">Narrative desk / 01</p>
-          <h1 className="mt-2 text-[34px] font-medium leading-none tracking-[-0.04em] text-ink sm:text-[42px]">Story writer</h1>
-          <p className="mt-2 text-[12px] text-muted">Move from a loose idea to scenes ready for the studio.</p>
+    <div className="mx-auto flex h-[calc(100dvh-58px)] min-h-0 w-full max-w-[1680px] flex-none flex-col gap-3 overflow-hidden px-3 py-3 sm:px-5 md:h-dvh md:px-6 xl:px-9">
+      <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border pb-3">
+        <div className="min-w-0">
+          <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-accent">Create / Narrative</p>
+          <h1 className="mt-1 text-[26px] font-medium leading-none tracking-[-0.04em] text-ink sm:text-[30px]">Story writer</h1>
+          <p className="mt-1 hidden text-[11px] text-muted sm:block">Shape an idea, write the draft, then send scenes to the studio.</p>
         </div>
-        <div className="flex items-end gap-2">
-          <span className="hidden pb-2 text-[10px] font-bold uppercase tracking-[0.14em] text-muted sm:inline">Writing model</span>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="hidden text-[10px] font-bold uppercase tracking-[0.12em] text-muted 2xl:inline">Writer model</span>
           <PillSelect
             icon="chip"
             label="Writer model"
@@ -281,13 +285,28 @@ export function WriterView() {
         </div>
       </header>
 
-      <div className="grid min-w-0 gap-4 lg:flex-1 lg:grid-cols-[minmax(220px,0.72fr)_minmax(360px,1.35fr)_minmax(250px,0.8fr)] lg:items-stretch">
-        <section className="flex min-w-0 flex-col border border-border bg-surface p-4 sm:p-5 lg:min-h-[640px]">
-          <div className="flex items-center gap-2 border-b border-border pb-3">
+      <div className="flex shrink-0 items-center justify-between gap-2 xl:hidden">
+        <p className="hidden text-[10px] font-bold uppercase tracking-[0.14em] text-muted sm:block">Workspace</p>
+        <Segmented
+          ariaLabel="Writer workspace view"
+          size="sm"
+          value={activePane}
+          onChange={(next) => setActivePane(next)}
+          options={[
+            { value: "brief", label: "Brief", icon: "sparkle" },
+            { value: "draft", label: "Draft", icon: "pen" },
+            { value: "outline", label: `Scenes ${previewScenes.length}`, icon: "story" },
+          ]}
+        />
+      </div>
+
+      <div className="grid min-h-0 min-w-0 flex-1 gap-3 xl:grid-cols-[minmax(230px,0.72fr)_minmax(360px,1.35fr)_minmax(260px,0.8fr)] xl:items-stretch">
+        <section aria-label="Story brief" className={`${activePane === "brief" ? "flex" : "hidden"} min-h-0 min-w-0 flex-col border border-border bg-surface p-3.5 sm:p-4 xl:flex`}>
+          <div className="flex shrink-0 items-center gap-2 border-b border-border pb-3">
             <span className="grid size-7 place-items-center bg-primary-soft text-primary"><Icon name="sparkle" size={14} /></span>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted">Starting point</p>
-              <h2 className="mt-0.5 text-[14px] font-bold text-ink">The brief</h2>
+              <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted">Step 01 · Setup</p>
+              <h2 className="mt-0.5 text-[14px] font-bold text-ink">Story brief</h2>
             </div>
           </div>
           <label className="sr-only" htmlFor="writer-idea">Story brief</label>
@@ -296,14 +315,14 @@ export function WriterView() {
             value={idea}
             onChange={(event) => setIdea(event.target.value.slice(0, WRITER_IDEA_MAX))}
             rows={6}
-            placeholder="A neon-noir chase through a rainy megacity where the courier discovers the package is a person…"
-            className="mt-4 min-h-36 w-full flex-1 resize-y border-0 border-l-2 border-accent/50 bg-transparent py-1 pl-3 text-[13px] leading-[1.8] text-ink placeholder:text-muted/70 focus:border-primary focus:outline-none focus:ring-0"
+            placeholder="Who is this about? What happens, and what makes it matter?"
+            className="mt-3 min-h-20 w-full min-w-0 flex-1 resize-none border-0 border-l-2 border-accent/50 bg-transparent py-1 pl-3 text-[13px] leading-[1.75] text-ink placeholder:text-muted/70 focus:border-primary focus:outline-none focus:ring-0"
           />
-          <div className="mt-4 space-y-2 border-t border-border pt-4">
+          <div className="mt-3 flex shrink-0 flex-wrap items-center gap-2 border-t border-border pt-3">
             <PillSelect
               icon="layers"
               label="Scene count"
-              placement="down"
+              placement="up"
               value={String(sceneCount)}
               options={SCENE_CHOICES.map((n) => ({ value: String(n), label: `${n} scene${n === 1 ? "" : "s"}` }))}
               onChange={(next) => setSceneCount(Number(next))}
@@ -311,104 +330,120 @@ export function WriterView() {
             <PillSelect
               icon="sliders"
               label="Tone"
-              placement="down"
+              placement="up"
               value={tone}
               options={Object.entries(WRITER_TONES).map(([value, label]) => ({ value, label }))}
               onChange={(next) => setTone(next as WriterToneKey)}
             />
-            <CastPicker characters={characters} selectedIds={castIds} onChange={setCastIds} />
+            <div className="relative">
+              <CastPicker characters={characters} selectedIds={castIds} onChange={setCastIds} />
+            </div>
           </div>
-          <Button variant="primary" block className="mt-4" icon="sparkle" onClick={() => runAction("write")} disabled={busy !== null}>
-            {busy === "write" ? "Writing…" : "Draft from brief"}
-          </Button>
+          <div className="mt-3 shrink-0">
+            {error && errorPane === "brief" && <p className="mb-2 text-[11px] font-medium text-danger" role="alert">{error}</p>}
+            <Button variant="primary" block icon="sparkle" onClick={() => runAction("write")} disabled={busy !== null}>
+              {busy === "write" ? "Writing story…" : "Write the story"}
+            </Button>
+          </div>
         </section>
 
-        <section className="flex min-w-0 flex-col border border-border bg-raised p-4 sm:p-5 lg:min-h-[640px]">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
+        <section aria-label="Story draft" className={`${activePane === "draft" ? "flex" : "hidden"} min-h-0 min-w-0 flex-col overflow-hidden border border-border bg-raised p-3.5 sm:p-4 xl:flex`}>
+          <div className="flex shrink-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 border-b border-border pb-3">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted">Working manuscript</p>
-              <label className="mt-0.5 block text-[14px] font-bold text-ink" htmlFor="writer-draft">The draft</label>
+              <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted">Step 02 · Write</p>
+              <label className="mt-0.5 block text-[14px] font-bold text-ink" htmlFor="writer-draft">Your draft</label>
             </div>
-            <span className="text-[10px] text-muted">Saved on this device</span>
-            {undoDraft !== null && (
-              <button type="button" className="text-[11px] font-semibold text-primary hover:underline" onClick={() => { setDraft(undoDraft); setUndoDraft(null); }}>Undo rewrite</button>
-            )}
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] text-muted">Autosaved</span>
+              {undoDraft !== null && (
+                <button type="button" className="text-[11px] font-semibold text-primary hover:underline" onClick={() => { setDraft(undoDraft); setUndoDraft(null); }}>Undo rewrite</button>
+              )}
+            </div>
           </div>
           <textarea
             id="writer-draft"
             value={draft}
             onChange={(event) => setDraft(event.target.value.slice(0, WRITER_DRAFT_MAX))}
             rows={20}
-            placeholder="Write a first scene, or describe the story in the brief and ask the writer to draft it…"
-            className="mt-4 min-h-[390px] w-full flex-1 resize-y border-0 bg-transparent px-2 py-1 text-[14px] leading-[1.9] text-ink placeholder:text-muted/70 focus:outline-none focus:ring-0"
+            placeholder="Start writing here, or create a first draft from your brief."
+            className="mt-2 min-h-20 w-full min-w-0 flex-1 resize-none border-0 bg-transparent px-2 py-1 text-[14px] leading-[1.8] text-ink placeholder:text-muted/70 focus:outline-none focus:ring-0"
           />
-          <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
+          <div className="mt-2 flex shrink-0 flex-wrap items-center gap-2 border-t border-border pt-3">
             <input
               value={instruction}
               onChange={(event) => setInstruction(event.target.value.slice(0, WRITER_INSTRUCTION_MAX))}
-              placeholder="Tell the writer what to change…"
-              className="h-10 min-w-[180px] flex-1 border border-border bg-canvas px-3 text-[12px] text-ink placeholder:text-muted/70 focus:border-primary focus:outline-none"
+              placeholder="Ask for a change: tighten the opening…"
+              aria-label="Draft refinement instruction"
+              className="h-10 min-w-[150px] flex-1 border border-border bg-canvas px-3 text-[12px] text-ink placeholder:text-muted/70 focus:border-primary focus:outline-none"
             />
             <Button variant="secondary" size="sm" icon="sparkle" onClick={() => runAction("enhance")} disabled={busy !== null}>
-              {busy === "enhance" ? "Rewriting…" : "Refine draft"}
+              {busy === "enhance" ? "Rewriting…" : "Refine"}
             </Button>
           </div>
-          <div className="mt-2 flex justify-between text-[10px] text-muted"><span>{draft.length.toLocaleString()} / {WRITER_DRAFT_MAX.toLocaleString()} characters</span><span>Autosaves as you write</span></div>
+          {error && errorPane === "draft" && <p className="mt-2 shrink-0 text-[11px] font-medium text-danger" role="alert">{error}</p>}
+          <div className="mt-2 flex shrink-0 justify-between gap-2 text-[10px] text-muted"><span>{draft.length.toLocaleString()} / {WRITER_DRAFT_MAX.toLocaleString()} characters</span><span>Saved on this device</span></div>
         </section>
 
-        <aside className="flex min-w-0 flex-col border border-border bg-surface p-4 sm:p-5 lg:min-h-[640px]">
-          <div className="flex items-center justify-between border-b border-border pb-3">
+        <aside aria-label="Scene outline and export" className={`${activePane === "outline" ? "flex" : "hidden"} min-h-0 min-w-0 flex-col overflow-hidden border border-border bg-surface p-3.5 sm:p-4 xl:flex`}>
+          <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border pb-3">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted">Live outline</p>
-              <h2 className="mt-0.5 text-[14px] font-bold text-ink">Scene cuts</h2>
+              <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-muted">Step 03 · Send to studio</p>
+              <h2 className="mt-0.5 text-[14px] font-bold text-ink">Scene outline</h2>
             </div>
-            <span className="font-mono text-[11px] text-primary">{String(previewScenes.length).padStart(2, "0")}</span>
+            <span className="grid size-8 place-items-center rounded-full bg-primary-soft font-mono text-[11px] font-bold text-primary">{String(previewScenes.length).padStart(2, "0")}</span>
           </div>
+
+          <div className="mt-3 flex shrink-0 flex-wrap items-center justify-between gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">Build for</span>
+            <Segmented
+              ariaLabel="Story media type"
+              size="sm"
+              value={kind}
+              onChange={(next) => setKind(next)}
+              options={[{ value: "image", label: "Images", icon: "image" }, { value: "video", label: "Video", icon: "video" }]}
+            />
+          </div>
+
+          {sceneSuggestion !== null && (
+            <div className="mt-3 flex shrink-0 items-center justify-between gap-2 border border-primary/20 bg-primary-soft/50 px-3 py-2">
+              <p className="text-[10px] leading-relaxed text-ink-soft">Long draft · {sceneSuggestion} scenes may fit better.</p>
+              <button type="button" onClick={() => setSceneCount(sceneSuggestion)} className="shrink-0 text-[10px] font-bold text-primary hover:underline">Apply</button>
+            </div>
+          )}
+
           {previewScenes.length === 0 ? (
-            <div className="flex flex-1 flex-col items-center justify-center px-2 py-10 text-center">
-              <span className="grid size-11 place-items-center border border-dashed border-border-strong text-muted"><Icon name="story" size={18} /></span>
-              <p className="mt-3 text-[12px] font-semibold text-ink">Your outline appears here</p>
-              <p className="mt-1 max-w-[230px] text-[11px] leading-relaxed text-muted">Add draft text, then use <code className="font-mono text-primary">---</code> on its own line to place a scene cut.</p>
+            <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-2 py-5 text-center">
+              <span className="grid size-10 shrink-0 place-items-center border border-dashed border-border-strong text-muted"><Icon name="story" size={17} /></span>
+              <p className="mt-3 text-[12px] font-semibold text-ink">Scenes show up here</p>
+              <p className="mt-1 max-w-[230px] text-[11px] leading-relaxed text-muted">Add text to your draft. Use <code className="font-mono text-primary">---</code> on its own line to choose a scene break.</p>
             </div>
           ) : (
-            <div className="thin-scrollbar mt-3 flex-1 space-y-2 overflow-y-auto pr-1">
+            <div className="thin-scrollbar mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
               {previewScenes.map((scene, index) => (
                 <article key={index} className="border-l-2 border-primary bg-raised px-3 py-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-primary">Scene {String(index + 1).padStart(2, "0")}</span>
                     <span className="font-mono text-[9px] text-muted">{scene.length} ch</span>
                   </div>
-                  <p className="mt-1.5 line-clamp-5 whitespace-pre-wrap text-[11px] leading-relaxed text-ink-soft">{scene}</p>
+                  <p className="mt-1.5 line-clamp-4 whitespace-pre-wrap text-[11px] leading-relaxed text-ink-soft">{scene}</p>
                 </article>
               ))}
             </div>
           )}
-          <p className="mt-3 border-t border-border pt-3 text-[10px] leading-relaxed text-muted">The split is a live preview. Saving creates one scene for each card.</p>
-        </aside>
-      </div>
 
-      <div className="border-t border-border pt-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap items-center gap-3">
-            <Segmented
-              ariaLabel="Story media type"
-              size="sm"
-              value={kind}
-              onChange={(next) => setKind(next)}
-              options={[{ value: "image", label: "Image story", icon: "image" }, { value: "video", label: "Video story", icon: "video" }]}
-            />
-            {sceneSuggestion !== null && (
-              <p className="text-[10.5px] text-muted">Long draft · about {sceneSuggestion} scenes <button type="button" onClick={() => setSceneCount(sceneSuggestion)} className="font-semibold text-primary hover:underline">Use suggestion</button></p>
-            )}
+          <div className="mt-3 shrink-0 border-t border-border pt-3">
+            <p className="mb-2 text-[10px] leading-relaxed text-muted">{previewScenes.length ? `${previewScenes.length} scene${previewScenes.length === 1 ? "" : "s"} ready. Save the sequence or continue with the first scene.` : "Your draft is split into scenes automatically."}</p>
+            {error && errorPane === "outline" && <p className="mb-2 text-[11px] font-medium text-danger" role="alert">{error}</p>}
+            <div className="flex flex-col gap-2">
+              <Button variant="primary" block icon="arrow-right" onClick={() => runAction("split")} disabled={busy !== null || !previewScenes.length}>
+                {busy === "split" ? "Saving story…" : `Create ${previewScenes.length} scene${previewScenes.length === 1 ? "" : "s"}`}
+              </Button>
+              <Button variant="secondary" block size="sm" icon={kind === "image" ? "image" : "video"} onClick={() => runAction("solo")} disabled={busy !== null || !previewScenes.length}>
+                Open first scene in {kind === "image" ? "image" : "video"} studio
+              </Button>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {error && <p className="mr-2 text-[11px] font-medium text-danger" role="alert">{error}</p>}
-            <Button variant="secondary" size="sm" onClick={() => runAction("solo")} disabled={busy !== null || !previewScenes.length}>Use first scene</Button>
-            <Button variant="primary" icon="arrow-right" iconRight={undefined} onClick={() => runAction("split")} disabled={busy !== null || !previewScenes.length}>
-              {busy === "split" ? "Saving…" : `Create ${previewScenes.length} scene${previewScenes.length === 1 ? "" : "s"}`}
-            </Button>
-          </div>
-        </div>
+        </aside>
       </div>
     </div>
   );
