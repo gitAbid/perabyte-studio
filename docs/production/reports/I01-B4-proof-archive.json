@@ -1,0 +1,57 @@
+{
+  "purpose": "Preserved prospective mutation proof only; mutant never integrated. B4 remains pending helper and combined service acceptance.",
+  "files": [
+    {
+      "path": "evidence/integration/i01-b4-proof/baseline/queue.test.ts",
+      "sha256": "4873520f0fe0bae183b83cb83f9e775a42addae0ce8415708f7e5aa96710ae43"
+    },
+    {
+      "path": "evidence/integration/i01-b4-proof/baseline/worker.test.ts",
+      "sha256": "401b593dec061cd0fde2a981c3d5ff5962352b54ce71ee0ae2dd73cb239fdfdf"
+    },
+    {
+      "path": "evidence/integration/i01-b4-proof/baseline-source-test-sha256.txt",
+      "sha256": "2324328415e9bff3de8a290d6c7af86b2faf89961ecbd455f16de6c2035134b0"
+    },
+    {
+      "path": "evidence/integration/i01-b4-proof/independent-review.json",
+      "sha256": "2a1b279aaf40c9edd73acefa581f566aae0c2aab26fa2801e527abd2931d9086"
+    },
+    {
+      "path": "evidence/integration/i01-b4-proof/mutated-rollback.log",
+      "sha256": "5e80006d1c14e0ce04868b3c1045f98d759ff92317ff05022b76162204649f8d"
+    },
+    {
+      "path": "evidence/integration/i01-b4-proof/mutated-wrong-file-skipped.log",
+      "sha256": "791a9edda7503381c8d3ffd151e4db9b5bf1c9da1189dd9c7790ba22b8875151"
+    },
+    {
+      "path": "evidence/integration/i01-b4-proof/non-atomic-beginSubmission.patch",
+      "sha256": "0cd0ce9725daea45c69b7522c7c958fa2fdc1f165f9a4b3202f994d60ff6ec91"
+    },
+    {
+      "path": "evidence/integration/i01-b4-proof/original-rollback-verification.log",
+      "sha256": "426e55054ae0223ef554a11f40e86c904e6389f6435a7fee7d875bf22da8423f"
+    },
+    {
+      "path": "evidence/integration/i01-b4-proof/original-rollback.log",
+      "sha256": "f2099117e73ddf38b2a85b5e14028d3e23434044e24c8b94b67211a98c56fe5e"
+    },
+    {
+      "path": "evidence/integration/i01-b4-proof/report.json",
+      "sha256": "84ba7ca152d0de8158e5fc1c1f53e7828f8c144036aa6ba2be93db35439f5102"
+    },
+    {
+      "path": "evidence/integration/i01-b4-proof/variant1-inactive-port-queue.ts",
+      "sha256": "2c9d546043809d6b4ebb0262d00fc34ab9f462ab8023654f98efc9406cfd3cf0"
+    },
+    {
+      "path": "evidence/integration/i01-b4-proof/variant2-split-rollback.log",
+      "sha256": "b4582aedbe8563ce20188af8956dcad2ced5bfb5b69b5204153478d96a26fdc5"
+    },
+    {
+      "path": "evidence/integration/i01-b4-proof/variant2-split-transactions.patch",
+      "sha256": "40aab4df5fa24142cdcf5bcdd7a73dd646ce551c46d1de985d37311377d4ccf9"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+ RUN  v5.0.0 /Users/abid/Projects/perabyte-studio/.worktrees/c19-plan-ui
+ ✓ lib/production/plan-ui.test.ts (20 tests) 10ms
+ ✓ lib/production/project-canon.test.ts (28 tests) 33ms
+ ✓ lib/production/storyboard.test.ts (26 tests) 20ms
+ Test Files  3 passed (3)
+      Tests  74 passed (74)
+   Start at  19:37:56
+   Duration  483ms (transform 56%, import 35%, tests 7%, worker 1%)
+targeted:
+ Test Files  3 passed (3)
+      Tests  74 passed (74)

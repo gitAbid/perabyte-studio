@@ -1,0 +1,44 @@
+
+> perabyte-studio@0.1.0 test
+> vitest run lib/production/publishing.test.ts lib/services/production/publishing.test.ts
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.0 /Users/abid/Projects/perabyte-studio/.worktrees/c17-publishing
+
+ ❯ lib/production/publishing.test.ts (0 test)
+ ❯ lib/services/production/publishing.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lib/production/publishing.test.ts [ lib/production/publishing.test.ts ]
+Error: Cannot find module './publishing' imported from /Users/abid/Projects/perabyte-studio/.worktrees/c17-publishing/lib/production/publishing.test.ts
+ ❯ lib/production/publishing.test.ts:4:1
+      2| import { ProductionApplicationError } from "./errors";
+      3| import { hashCanonicalJson } from "./hash";
+      4| import {
+       | ^
+      5|   DEFAULT_PUBLICATION_PROFILE_CATALOG, MANUAL_UPLOAD_DISCLAIMER, PUBLI…
+      6|   PublicationPackageSchema, PublicationProfileSchema, derivePublicatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  lib/services/production/publishing.test.ts [ lib/services/production/publishing.test.ts ]
+Error: Cannot find module '../../production/publishing' imported from /Users/abid/Projects/perabyte-studio/.worktrees/c17-publishing/lib/services/production/publishing.test.ts
+ ❯ lib/services/production/publishing.test.ts:15:1
+     13| import { ProductionApplicationError } from "../../production/errors";
+     14| import { hashCanonicalJson } from "../../production/hash";
+     15| import { derivePublicationPackage, hashPublicationPackage, resolvePubl…
+       | ^
+     16| import { createCanonRevision, createProject, createStoryRevision, getP…
+     17| import { createShotPlan } from "./shot-plan";
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  no tests
+   Start at  13:15:13
+   Duration  425ms (worker 97%, environment 3%)

@@ -1,0 +1,157 @@
+{
+  "packet": "C15-RECOVERY",
+  "generatedAt": "2026-10-06T06:11:19.154Z",
+  "node": "v26.10.0",
+  "source": "/Users/abid/Projects/perabyte-studio/.worktrees/zcode-production-core/.studio",
+  "work": "/tmp/c15-drill-integration2",
+  "workerScript": "/Users/abid/Projects/perabyte-studio/.worktrees/zcode-production-core/scripts/production-worker.mjs",
+  "jobCount": 500,
+  "drills": {
+    "backupRestore": {
+      "archive": "/tmp/c15-drill-integration2/backup/backup-20261006T061119Z",
+      "sourceUntouched": true,
+      "sourceMainDbObserved": {
+        "bytesBefore": 3289088,
+        "bytesAfter": 3289088,
+        "mtimeMsBefore": 1791265802154.8062,
+        "mtimeMsAfter": 1791265802154.8062
+      },
+      "counts": {
+        "liveAtStart": {
+          "schemaMigrations": 4,
+          "records": 513,
+          "projects": 15,
+          "jobs": 44,
+          "jobEvents": 172,
+          "jobLeases": 44,
+          "outbox": 0,
+          "assets": 57,
+          "exports": 2,
+          "budgetReservations": 42,
+          "budgetExecutions": 42,
+          "providerProofArtifacts": 261
+        },
+        "snapshot": {
+          "schemaMigrations": 4,
+          "records": 513,
+          "projects": 15,
+          "jobs": 44,
+          "jobEvents": 172,
+          "jobLeases": 44,
+          "outbox": 0,
+          "assets": 57,
+          "exports": 2,
+          "budgetReservations": 42,
+          "budgetExecutions": 42,
+          "providerProofArtifacts": 261
+        },
+        "restored": {
+          "schemaMigrations": 4,
+          "records": 513,
+          "projects": 15,
+          "jobs": 44,
+          "jobEvents": 172,
+          "jobLeases": 44,
+          "outbox": 0,
+          "assets": 57,
+          "exports": 2,
+          "budgetReservations": 42,
+          "budgetExecutions": 42,
+          "providerProofArtifacts": 261
+        },
+        "match": true
+      },
+      "liveWriteRaceNote": "The live store may be written concurrently by the running worker; liveAtStart is observational. The gate compares the snapshot against the restore, which are fixed artifacts.",
+      "restoredFilesRehashed": 57,
+      "restoredHashesMatch": true,
+      "integrityCheck": {
+        "ok": true,
+        "messages": [
+          "ok"
+        ]
+      },
+      "foreignKeyCheck": {
+        "ok": true,
+        "violations": 0
+      },
+      "pass": true
+    },
+    "orphanMedia": {
+      "totalFiles": 57,
+      "referencedCount": 56,
+      "orphans": [
+        "df51018434749a385a0a826f8360b126d2ddd4216111efebbb4fce90245726dc"
+      ],
+      "missingReferenced": [],
+      "pass": true,
+      "restoredDir": "/tmp/c15-drill-integration2/restore"
+    },
+    "exportHashes": {
+      "exports": [
+        {
+          "id": "export-171f0cb9e8f2a322b93b9ef9ca66b804eac9d361b29affd4836d0c5df0860314",
+          "status": "ready_for_review",
+          "assetId": "export-asset-b94675a509ba4383fe4c4ef06f2c99a53ff05c911511c2dc83172b5ab9485e9e",
+          "sha256": "b94675a509ba4383fe4c4ef06f2c99a53ff05c911511c2dc83172b5ab9485e9e",
+          "verified": true,
+          "detail": "vault sha256 and size match the asset record and the backup manifest"
+        },
+        {
+          "id": "export-4fce7de25d22dedd55966adc18611c68a826f5e46d9d7f75c6135fa662c335e2",
+          "status": "qc_failed",
+          "assetId": "export-asset-315f50d7a5fbd9684e773ba6319fafdaf0b57cc5474b3d331157bb4ea4126ea7",
+          "sha256": "315f50d7a5fbd9684e773ba6319fafdaf0b57cc5474b3d331157bb4ea4126ea7",
+          "verified": true,
+          "detail": "vault sha256 and size match the asset record and the backup manifest"
+        }
+      ],
+      "pass": true
+    },
+    "killRestartSeed": {
+      "preexistingIntentsNeutralized": 0,
+      "preexistingNonTerminalJobs": 1
+    },
+    "killRestart": {
+      "kill": {
+        "worker1Pid": 57938,
+        "worker2Pid": 58074,
+        "killedBySignal": "SIGKILL",
+        "atStop": {
+          "terminal": 5,
+          "inFlight": 1,
+          "queued": 494
+        },
+        "frozenInFlightCommitted": 0,
+        "ownerArtifactAfterCrash": true
+      },
+      "restart": {
+        "worker2Exit": {
+          "code": 0,
+          "signal": null
+        },
+        "ownerAdopted": true,
+        "cleanShutdownRemovedOwner": true
+      },
+      "jobsTotal": 500,
+      "allTerminal": true,
+      "attemptsBounded": true,
+      "attemptsHistogram": {
+        "1": 500
+      },
+      "reclaimedAtAttempt2": 0,
+      "reclaimConsistent": true,
+      "submissionEvents": 0,
+      "outboxRowsRemaining": 0,
+      "reservations": 0,
+      "executions": 0,
+      "eventSequencesGapless": true,
+      "distinctOutboxIntentsPerJobMax": 1,
+      "mirrorConsistent": true,
+      "historyUntouched": true,
+      "worker1Tail": "",
+      "worker2Tail": "",
+      "pass": true
+    }
+  },
+  "allPass": true
+}

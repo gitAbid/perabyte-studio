@@ -6,6 +6,7 @@ const SECTIONS = [
   { id: "general", label: "General", icon: "sliders" },
   { id: "providers", label: "Providers", icon: "chip" },
   { id: "models", label: "Models", icon: "grid" },
+  { id: "budget", label: "Budget", icon: "lock" },
   { id: "advanced", label: "Advanced", icon: "clock" },
 ] as const satisfies readonly { id: string; label: string; icon: IconName }[];
 

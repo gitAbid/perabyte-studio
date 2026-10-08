@@ -1,0 +1,127 @@
+{
+  "task_id": "C06-PRE-R",
+  "reviewed_sha": "a59df0b401b74b0542ff84db74962b1f24b97777",
+  "base_sha": "460bff068e4d18bc452545f7790616e22337559d",
+  "worktree": "/Users/abid/.codex/worktrees/production-media-recipe/perabyte-studio",
+  "verdict": "changes_requested",
+  "normative_contract": {
+    "path": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/docs/production/reports/C06-PRE-root-freeze.json",
+    "sha256": "ccf34a0060b31bcdf684a2d56296b5015efdb5c81d725ed5ba64d218ddff92b5"
+  },
+  "spec_review": {
+    "passed": [
+      "Owned source limited to five assigned paths; thin route exports only POST.",
+      "Strict existing commands; server-derived canonical prompt using canonicalJson and literal version; concrete seed 0.",
+      "Single full recipe projection used for quote and enqueue; semantic hash uses existing helper; exact ordered context/end/start roles retained.",
+      "Trusted explicit billing mode intent required; absent resolver fails closed; unknown quote does not establish B4 admission.",
+      "Exact approved anchor start frame, approval pin, frame count, aspect and muted provider audio preserved.",
+      "Quote expiry sampled at commit; job and outbox inserted together in one synchronous store transaction.",
+      "Historical same-key creator replay precedes billing/selection/media validation, with quote/settings/route conflict checks."
+    ],
+    "deviations": [
+      "Exact async eligibility fingerprint initial/current equality required by current root freeze is not implemented; see R2.",
+      "Factory interface names buildValidatedMediaRecipe(read,command,billingMode), but implementation exposes service prepare plus a private buildRecipe rather than that named pure export; downstream composer wiring remains unverified."
+    ]
+  },
+  "findings": [
+    {
+      "id": "R1",
+      "priority": 2,
+      "file": "lib/services/production/takes.ts",
+      "line": 206,
+      "title": "Validate producer quote timestamps after the async producer returns",
+      "trigger": "quote() samples clockNow(now) at line 267 before quoteFor awaits quoteRecipe. A producer returning a valid quote with createdAt sampled after async work naturally has createdAt greater than that earlier sample.",
+      "actual": "quoteFor rejects it as STALE_REVISION before insertion, even with matching full inputHash and future expiry.",
+      "expected": "Sample the trusted clock after await for future-created/expiry checks, and retain a fresh commit-time check. The locally generated unknown quote can keep its own creation sample.",
+      "required_evidence": "One focused injected async producer quote with creation time after call start succeeds; genuinely future-created and commit-expired quote remains rejected without writes.",
+      "verification": "Source-derived finding; the existing minimal fixture has no injected quoteRecipe producer case."
+    },
+    {
+      "id": "R2",
+      "priority": 2,
+      "file": "lib/services/production/takes.ts",
+      "line": 178,
+      "title": "Retain and compare exact eligibility context across byte verification",
+      "trigger": "buildRecipe checks productionSubmissionEligibilityFingerprint only for nonnull; quote/enqueue compare recipe hashes after await. A same-time valid approved anchor decision set may grow while preserving the requested approval ID.",
+      "actual": "The helper fingerprint changes because anchorApprovalIds changes, but the recipe only stores the requested anchorApprovalId; recipe hash remains equal and append succeeds.",
+      "expected": "Capture initial eligibility fingerprint from the existing helper using the stable ephemeral snapshot/job, then recompute and require exact equality in TX before quote/job append, alongside existing recipe/media hash checks.",
+      "required_evidence": "One bounded async verification drift fixture changes exact relevant approval context without invalidating eligibility; returns STALE_REVISION and persists no quote/job/outbox.",
+      "verification": "Source-derived contract finding. Normal story/plan/animatic successor drift does change current recipe pins and is already compared."
+    }
+  ],
+  "commands": [
+    {
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "lib/services/production/takes.test.ts"
+      ],
+      "cwd": "/Users/abid/.codex/worktrees/production-media-recipe/perabyte-studio",
+      "exit_code": 0,
+      "result": "1 test file; 3 tests passed",
+      "output_file": "/tmp/perabyte-C06-PRE-R-review-a59df0b-focused-20261004-1.log",
+      "output_sha256": "6b10726bb8cf734804bd37c14bff6a94b21ca13c67f8dbbddf763fddeefc6b36"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check",
+        "460bff068e4d18bc452545f7790616e22337559d",
+        "a59df0b401b74b0542ff84db74962b1f24b97777"
+      ],
+      "cwd": "/Users/abid/.codex/worktrees/production-media-recipe/perabyte-studio",
+      "exit_code": 0,
+      "result": "No whitespace errors",
+      "output_file": null
+    }
+  ],
+  "hashes": {
+    "owned_source": {
+      "app/api/production/media-quotes/route.ts": "dcbf19c70bf95d7350a00b9a93c832b9165c843f19e23f4382903f6569e9f01b",
+      "app/api/production/shots/[shotId]/anchors/route.ts": "ae2e558e27500de54fbff187308be8d5b8f92e9fe3d99ba17cdbd982fce58b70",
+      "app/api/production/shots/[shotId]/takes/route.ts": "26f17bd826fbf76208ee33c03db71abb3364c5c4b234001fd4abc490e7e53b35",
+      "lib/services/production/takes.test.ts": "162f490a99abf6860fa38783ee2495317fa79edbc5c461013ab25b79459a475b",
+      "lib/services/production/takes.ts": "8e0bc1bdc280ad274cb3238f77b7723456c0715df9857c5bf2b41b1ddebdfb3b"
+    },
+    "worker_report_sha256": "73f8910ea159fdf440becc550dd2d2b61f47ada4ff64ec8437cd2650fbd099cf",
+    "worker_evidence": [
+      {
+        "path": "/Users/abid/.codex/worktrees/production-media-recipe/perabyte-studio/evidence/C06-PRE-R/takes-test-green-06.txt",
+        "actual_sha256": "4e877079377f3dbac197f5a6a5a5b6e644268b2423fba6ba2daf290c94a59908",
+        "declared_sha256": "4e877079377f3dbac197f5a6a5a5b6e644268b2423fba6ba2daf290c94a59908",
+        "matches": true,
+        "kind": "green"
+      },
+      {
+        "path": "/Users/abid/.codex/worktrees/production-media-recipe/perabyte-studio/evidence/C06-PRE-R/typecheck-green-06.txt",
+        "actual_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+        "declared_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+        "matches": true,
+        "kind": "typecheck"
+      },
+      {
+        "path": "/Users/abid/.codex/worktrees/production-media-recipe/perabyte-studio/evidence/C06-PRE-R/diff-check-staged-final-04.txt",
+        "actual_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "declared_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "matches": true,
+        "kind": "diff-check"
+      }
+    ]
+  },
+  "unrun": [
+    "No full suite, coverage, build, or added fault matrix.",
+    "Reviewer did not rerun typecheck; worker preserved typecheck-green-06.txt hash checked.",
+    "No injected quoteRecipe timestamp scenario or async exact-fingerprint drift test was run.",
+    "No direct take HTTP route check, canon-only successor fixture, concurrency or transactional fault-injection run.",
+    "No provider capability/authentication/network/paid operation or credential access."
+  ],
+  "evidence_limitations": [
+    "Worker explicitly discloses lost early iteration failure logs overwritten before preservation; none reconstructed or claimed as observed RED.",
+    "Fresh focused tests prove current three fixture cases only; they do not prove the source-derived findings absent."
+  ],
+  "source_edits": [],
+  "paid_calls": [],
+  "frozen_after_review": true
+}

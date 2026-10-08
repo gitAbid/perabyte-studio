@@ -1,0 +1,117 @@
+{
+  "review_kind": "independent_read_only_I01_B1_spec_and_code_review",
+  "packet": "I01-B1",
+  "actualSHA": "1052a248fa56e5833420e07e984fb10386296452",
+  "actualBaseSHA": "b48c9ee457a992273c7fcf8767164cd291bc1449",
+  "status": "changes_required",
+  "changed_files": [
+    "lib/production/budget.test.ts",
+    "lib/production/budget.ts",
+    "lib/production/contracts.test.ts",
+    "lib/production/contracts.ts"
+  ],
+  "ownership_check": "pass:exact four B1 files, implementation source inspected via immutable git show; unchanged HEAD reproduced",
+  "findings": [
+    {
+      "id": "I01-B1-001",
+      "priority": 1,
+      "file": "lib/production/budget.ts",
+      "line": 91,
+      "title": "Higher pending actual correction must reopen unsettled liability",
+      "trigger": "upperEstimate100; final cumulative actual50; later distinct pending cumulative actual60.",
+      "actual": "fold retains finalActual=true and returns settled,total60,unresolved0.",
+      "expected": "Persist higher gross60, reopen settled=false,total=max(100,60)=100,unresolved40; final60 subsequently settles60. Equal pending and unknown after final preserve prior finality. Root clarified this approved meaning explicitly.",
+      "verification": "RED fixture final50->pending60->final60 plus pending equal/unknown and refund branches; source branch needs compare amount to prior gross before updating final flag."
+    },
+    {
+      "id": "I01-B1-002",
+      "priority": 2,
+      "file": "lib/production/budget.ts",
+      "line": 224,
+      "title": "Reject future authorization/policy and pre-observation quote binding",
+      "trigger": "now10 with policy or authorization createdAt999; or evidence observedAt3 paired with binding quotedAt2.",
+      "actual": "Eligibility allows all three. Timestamp schemas only constrain representable dates, and quotedAt has no evidence-observation lower bound.",
+      "expected": "Current policy/authorization must have createdAt<=now. Binding quotedAt must fall within pinned evidence observedAt<=quotedAt<expiresAt; matching current credential is still required.",
+      "verification": "Add each clock-skew/causality case as zero-authorization rejection; valid boundary equality and standing null expiry still pass."
+    },
+    {
+      "id": "I01-B1-003",
+      "priority": 2,
+      "file": "lib/production/budget.ts",
+      "line": 151,
+      "title": "Reject understated unsettled summaries inconsistent with reservation estimate",
+      "trigger": "summarizeBudget receives upperEstimate100 with unsettled/no-actual accounting unresolved0,total0.",
+      "actual": "ReservationAccountingSchema parses and summary returns total0.",
+      "expected": "Validate derived accounting invariant against reservation: unsettled total=max(upperEstimate,netKnownActual or0), unresolved=total-known; settled without known actual must be explicitly released. Unknown actual cannot have refunds. Alternatively remove caller-supplied accounting surface and fold events, but narrow validation is sufficient.",
+      "verification": "RED understated summary, unknown gross with refund, settled without final-known/released shape; legitimate fold outputs and mixed-scope filtering unchanged."
+    },
+    {
+      "id": "I01-B1-004",
+      "priority": 2,
+      "file": "lib/production/budget.ts",
+      "line": 47,
+      "title": "Budget timestamp/day contract permits incompatible extended ISO years",
+      "trigger": "utcBudgetDay(Date.UTC(10000,0,1)).",
+      "actual": "Returns +010000-01 via slice, while reservation utcDay requires YYYY-MM-DD; BudgetUtcMillisSchema accepts timestamp.",
+      "suggested_fix": "Bound budget timestamp domain to representable nonnegative four-digit UTC year or support extended years consistently. Prefer shared safe maximum9999-12-31T23:59:59.999Z and helper/schema rejection past it.",
+      "verification": "Year9999 last millisecond accepted; first year10000 rejected consistently.",
+      "expected": "Enforce shared four-digit UTC year timestamp range consistently in helper and BudgetUtcMillisSchema; year9999 boundary valid, year10000 rejected. Root confirmed this is required before B1 acceptance."
+    }
+  ],
+  "verified": [
+    "Text-proposal execution and quote eligibility succeeds without fake media quote.",
+    "Stable policy identity with newer policy revision and historical authorization policy reference accepted; current caps constrain new reservation and old liabilities retained by scope.",
+    "Pending positive actual after nonbilling correctly restores liability/conflict; refund dropping pending net below estimate retains conservative top-up.",
+    "Scoped receipt/event pin validation, exact identical replay and conflicting event rejection; cumulative monotonic gross and bounded refunds.",
+    "Execution model/operation/semantic hash and quote-input hash/current credential binding checks."
+  ],
+  "reproduction": [
+    {
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "lib/production/contracts.test.ts",
+        "lib/production/budget.test.ts"
+      ],
+      "exit_code": 0,
+      "tests_passed": 28,
+      "output_file": "/tmp/perabyte-I01-B1-review-tests.txt",
+      "output_sha256": "0768ab08f58b0765d7a2a134027b6813284f7c055c95f2a52a66bac480e0de37"
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exit_code": 0,
+      "output_file": "/tmp/perabyte-I01-B1-review-typecheck.txt",
+      "output_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    },
+    {
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "/tmp/perabyte-I01-B1-probes.ts"
+      ],
+      "exit_code": 0,
+      "probe_file": "/tmp/perabyte-I01-B1-probes.ts",
+      "output_file": "/tmp/perabyte-I01-B1-probes-output.json",
+      "output_sha256": "73918347a1203305564b04dd7e21d42e51313187737d29be9df202dfecf943b1"
+    }
+  ],
+  "commit_diff_check": {
+    "exit_code": 0,
+    "output": ""
+  },
+  "unverified": [
+    "I01 storage/service/atomic worker boundary deliberately unimplemented in B1.",
+    "Final worker strict report not present yet in evidence/I01-B1; no report hash audit claimed."
+  ],
+  "paid_calls": [],
+  "network_calls": [],
+  "credentials_accessed": false,
+  "decision": "Return B1 for bounded fixes. Do not accept B1 or dispatch B2 until corrected exact SHA independently reviewed. I01 remains incomplete."
+}

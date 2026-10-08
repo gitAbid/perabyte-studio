@@ -5,7 +5,13 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { MediaFrame } from "@/components/Media";
-import { Badge, Button, EmptyState, LinkButton, useToast } from "@/components/ui";
+import { Badge, Button, EmptyState, LinkButton, formatDate, useToast } from "@/components/ui";
+import { VersionStrip } from "@/components/production/primitives/media";
+import { ApprovalBadge } from "@/components/production/primitives/approval";
+import {
+  deriveApprovalState,
+  type ApprovalState,
+} from "@/lib/production/approval-state";
 import {
   DEFAULT_CHARACTER_SPEC,
   sanitizeSpec,
@@ -23,7 +29,7 @@ import {
   type SavedCharacter,
 } from "@/lib/character-store";
 import type { CharacterIdentity } from "@/lib/repositories/character-row";
-import { useAssets } from "@/lib/store";
+import { updateAsset, useAssets } from "@/lib/store";
 
 /**
  * Character detail: the landing page for a saved character — poster, the
@@ -47,6 +53,8 @@ export function CharacterDetail({ characterId }: { characterId: string }) {
 
   const [character, setCharacter] = useState<SavedCharacter | null>(null);
   const [missing, setMissing] = useState(false);
+  /** Which immutable version the sheet-views panel shows; null = newest. */
+  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
   const { assets } = useAssets();
 
   useEffect(() => {
@@ -74,11 +82,40 @@ export function CharacterDetail({ characterId }: { characterId: string }) {
     [assets, characterId],
   );
 
-  // Latest sheet: view order in meta.sheetOrder mirrors `variants`.
+  // Immutable sheet versions (spec 06 §1: history is never overwritten) —
+  // every saved sheet render is one version, newest first.
+  const sheetVersions = useMemo(
+    () => renders.filter((a) => Array.isArray(a.meta?.sheetOrder)),
+    [renders],
+  );
+  // Selecting an older version only changes what this page shows — history
+  // itself stays untouched (spec 02 §1: restore selects, never mutates).
+  const activeVersion =
+    sheetVersions.find((a) => a.id === selectedVersionId) ?? sheetVersions[0] ?? null;
+
+  const activeApproval: ApprovalState | null = useMemo(() => {
+    if (activeVersion) {
+      const meta = activeVersion.meta ?? {};
+      return deriveApprovalState({
+        approval:
+          typeof meta.approvedAt === "number" ? { decision: "approved" as const } : null,
+        recommendedAt: typeof meta.recommendedAt === "number" ? meta.recommendedAt : null,
+      });
+    }
+    // Prompt-only characters (no saved sheet) approve at the character level.
+    const approval = character?.approval;
+    if (!approval) return "draft";
+    return deriveApprovalState({
+      approval:
+        typeof approval.approvedAt === "number" ? { decision: "approved" as const } : null,
+      recommendedAt: typeof approval.recommendedAt === "number" ? approval.recommendedAt : null,
+    });
+  }, [activeVersion, character?.approval]);
+
+  // Selected version's sheet: view order in meta.sheetOrder mirrors `variants`.
   const sheetViews = useMemo(() => {
-    const latestSheet = renders.find((a) => Array.isArray(a.meta?.sheetOrder));
-    if (!latestSheet) return [];
-    const order = latestSheet.meta?.sheetOrder as string[];
+    if (!activeVersion) return [];
+    const order = activeVersion.meta?.sheetOrder as string[];
     const views: {
       id: SheetViewId;
       label: string;
@@ -86,14 +123,14 @@ export function CharacterDetail({ characterId }: { characterId: string }) {
       ref: string | null;
     }[] = [];
     order.forEach((id, index) => {
-      const url = latestSheet.variants[index];
+      const url = activeVersion.variants[index];
       const view = sheetViewById(id);
       if (url && view) {
         views.push({ id: view.id, label: view.label, url, ref: mediaRefFromUrl(url) });
       }
     });
     return views;
-  }, [renders]);
+  }, [activeVersion]);
 
   const posterAsset = renders.find((a) => a.url === character?.thumbnail) ?? renders[0];
   const posterUrl = character?.thumbnail || posterAsset?.url || null;
@@ -169,6 +206,27 @@ export function CharacterDetail({ characterId }: { characterId: string }) {
 
   function handleDownload() {
     if (posterUrl) downloadMedia(posterUrl, `perabyte-${character!.name}-${Date.now()}`);
+  }
+
+  /** Approve the shown version as the character's canon. Explicit user
+   * action only (CONTRACTS-FROZEN C8) — nothing approves automatically, and
+   * other versions keep their own state (immutable history). */
+  function handleApproveVersion() {
+    if (!activeVersion) return;
+    updateAsset(activeVersion.id, {
+      meta: { ...activeVersion.meta, approvedAt: Date.now() },
+    });
+    toast.push("Approved — this version is the character's canon.", "success");
+  }
+
+  /** Character-level canon approval for prompt-only characters (no saved
+   * sheet). Same explicit-only rule as version approval (C8). */
+  function handleApproveCharacter() {
+    if (!character) return;
+    const approval = { ...character.approval, approvedAt: Date.now() };
+    updateCharacter(characterId, { approval });
+    setCharacter({ ...character, approval });
+    toast.push("Approved — this character is approved canon.", "success");
   }
 
   return (
@@ -337,6 +395,57 @@ export function CharacterDetail({ characterId }: { characterId: string }) {
             </div>
           )}
 
+          {sheetVersions.length > 0 && (
+            <div className="border border-border bg-raised p-3.5 sm:p-4">
+              <VersionStrip
+                heading="Version history"
+                testId="character.version"
+                versions={[...sheetVersions].reverse().map((asset, index) => ({
+                  id: asset.id,
+                  label: `Version ${index + 1}`,
+                  caption: formatDate(asset.createdAt),
+                  state: {
+                    phase: "ready" as const,
+                    media: {
+                      kind: "image" as const,
+                      src: asset.posterUrl ?? asset.url,
+                      alt: `Version ${index + 1} of ${character!.name}`,
+                    },
+                  },
+                }))}
+                selectedId={activeVersion?.id ?? null}
+                onSelect={setSelectedVersionId}
+              />
+            </div>
+          )}
+
+          {/* Canon approval — explicit only (C8). With a saved sheet this
+              approves the shown version; prompt-only characters approve at
+              the character level. */}
+          {activeApproval && (
+            <div className="border border-border bg-raised p-3.5 sm:p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <ApprovalBadge state={activeApproval} testId="character.approval" />
+                {activeApproval === "approved" ? (
+                  <p className="text-[11.5px] font-semibold text-success">
+                    {activeVersion
+                      ? "This version is the character's canon."
+                      : "This character is approved canon."}
+                  </p>
+                ) : (
+                  <Button
+                    size="sm"
+                    icon="check"
+                    onClick={activeVersion ? handleApproveVersion : handleApproveCharacter}
+                    data-testid="character.approve"
+                  >
+                    Approve
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
           {renders.length > 0 && (
             <div className="border border-border bg-raised p-3.5 sm:p-4">
               <p className="text-[13.5px] font-bold text-ink">
@@ -361,7 +470,7 @@ export function CharacterDetail({ characterId }: { characterId: string }) {
                 ))}
               </div>
               <p className="mt-2 text-[11.5px] text-muted">
-                Open a render for its full details — prompt, model, seeds and settings.
+                Open a render for its full details and settings.
               </p>
             </div>
           )}

@@ -1,0 +1,142 @@
+{
+  "task_id": "C06-PRE-R-followup-review",
+  "reviewed_source_sha": "877b63e205ea9d721b69a3e7365c6a83450d8ea8",
+  "source_base_sha": "a59df0b401b74b0542ff84db74962b1f24b97777",
+  "observed_worktree_head": "65fecd44eb1f0ee8cd58e97fe4b9da823e1f915e",
+  "worktree": "/Users/abid/.codex/worktrees/production-media-recipe/perabyte-studio",
+  "verdict": "accept",
+  "findings": [],
+  "qualification": {
+    "source_paths": [
+      "lib/services/production/takes.test.ts",
+      "lib/services/production/takes.ts"
+    ],
+    "source_hashes": {
+      "lib/services/production/takes.test.ts": "6d6f422edf34d4dd4e3085a88c4bd16ba0d58f7727f5145a5d380d590cf2716e",
+      "lib/services/production/takes.ts": "961f3ae613d0342bf0e53881fc52401e40364bac0abd29d3f74e1821a3bdb9f2"
+    },
+    "source_bytes_match_frozen_commit": true,
+    "descendant_metadata_paths": [
+      "evidence/C06-PRE-R/context-followup-report.json"
+    ],
+    "source_after_frozen_commit_unchanged": true,
+    "integrate_source_only": [
+      "a59df0b401b74b0542ff84db74962b1f24b97777",
+      "877b63e205ea9d721b69a3e7365c6a83450d8ea8"
+    ],
+    "excluded_metadata_commit": "65fecd44eb1f0ee8cd58e97fe4b9da823e1f915e"
+  },
+  "closed_findings": [
+    {
+      "id": "R1",
+      "status": "closed",
+      "evidence": "takes.ts213-217 samples validationNow after await quoteRecipe; quote TX still samples expiry at takes.ts282. New injected async producer regression accepts a quote created after call start."
+    },
+    {
+      "id": "R2",
+      "status": "closed",
+      "evidence": "Private buildMediaContext returns recipe plus the existing helper fingerprint. quote TX compares initial/current fingerprints at takes.ts281; enqueue TX compares them at takes.ts311 using the same ephemeral IDs. Tied approved-anchor set drift during byte verification yields STALE_REVISION, no persisted-count changes, and explicit fresh quote/enqueue succeeds."
+    }
+  ],
+  "spec_and_quality_review": [
+    "Eligibility context kept outside ValidatedMediaRecipe and toMediaQuoteRequest; transport IDs do not pollute stable quote projection or semantic hash.",
+    "New exported buildValidatedMediaRecipe satisfies the named root factory seam and reuses buildMediaContext; no duplicate semantic formula.",
+    "Only the two owned service/test source paths changed; no new ports, shared setters, auth/network/provider integration or automatic selection.",
+    "Original anchor/continuation/replay, take/current approval rejection and missing trusted billing resolver cases remain; expanded fixture now has four tests."
+  ],
+  "commands": [
+    {
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "lib/services/production/takes.test.ts"
+      ],
+      "cwd": "/Users/abid/.codex/worktrees/production-media-recipe/perabyte-studio",
+      "exit_code": 0,
+      "result": "1 file, 4 tests passed",
+      "output_file": "/tmp/perabyte-C06-PRE-R-followup-877b63e-focused-20261004-1.log",
+      "output_sha256": "0c4894f9f6c928eb70582b6b6115ce4b93fd7c78caaf6be0c044d981a21c97a9"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check",
+        "a59df0b401b74b0542ff84db74962b1f24b97777",
+        "877b63e205ea9d721b69a3e7365c6a83450d8ea8"
+      ],
+      "cwd": "/Users/abid/.codex/worktrees/production-media-recipe/perabyte-studio",
+      "exit_code": 0,
+      "result": "No whitespace errors",
+      "output_file": null
+    }
+  ],
+  "worker_evidence": [
+    {
+      "kind": "worker_preserved_red",
+      "path": "/Users/abid/.codex/worktrees/production-media-recipe/perabyte-studio/evidence/C06-PRE-R/takes-review-red-01.txt",
+      "sha256": "85163c4c9f3359a81c73cd1645a98213d6f4cdc104fffd7103584a8d4b410ef7",
+      "review": "Read preserved output; contains failing named regression cases. Reviewer did not reconstruct or rerun RED."
+    },
+    {
+      "kind": "worker_preserved_red",
+      "path": "/Users/abid/.codex/worktrees/production-media-recipe/perabyte-studio/evidence/C06-PRE-R/takes-review-red-02.txt",
+      "sha256": "1fd275b1e6bbce2cc7dec7305ca2212b1116cfa67be461396a4c21e7b4a6295c",
+      "review": "Read preserved output; contains failing named regression cases. Reviewer did not reconstruct or rerun RED."
+    },
+    {
+      "kind": "worker_verification",
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "lib/services/production/takes.test.ts"
+      ],
+      "path": "/Users/abid/.codex/worktrees/production-media-recipe/perabyte-studio/evidence/C06-PRE-R/takes-review-green-01.txt",
+      "sha256": "6f94d32e6efe5494f17095f7c5016f9ada3def3d0919c3e22b2901b9415d417b",
+      "declared_exit_code": 0
+    },
+    {
+      "kind": "worker_verification",
+      "argv": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "path": "/Users/abid/.codex/worktrees/production-media-recipe/perabyte-studio/evidence/C06-PRE-R/typecheck-review-01.txt",
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "declared_exit_code": 0
+    },
+    {
+      "kind": "worker_verification",
+      "argv": [
+        "git",
+        "diff",
+        "--cached",
+        "--check"
+      ],
+      "path": "/Users/abid/.codex/worktrees/production-media-recipe/perabyte-studio/evidence/C06-PRE-R/diff-check-review-01.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "declared_exit_code": 0
+    }
+  ],
+  "worker_followup_report": {
+    "path": "/Users/abid/.codex/worktrees/production-media-recipe/perabyte-studio/evidence/C06-PRE-R/context-followup-report.json",
+    "sha256": "ea9d0e8095e95e319d18c3bdc685ebd525636a9472787ceb1efe3dac7609acdb"
+  },
+  "original_report": {
+    "path": "/Users/abid/.codex/worktrees/production-media-recipe/perabyte-studio/evidence/C06-PRE-R/report.json",
+    "sha256": "73f8910ea159fdf440becc550dd2d2b61f47ada4ff64ec8437cd2650fbd099cf"
+  },
+  "limitations": [
+    "Bounded follow-up review only; previous review applies to unchanged source.",
+    "Reviewer ran the four-case focused suite once; did not rerun typecheck, full suite, coverage, build or a new fault matrix. Worker typecheck evidence hash verified.",
+    "No added direct quote-path approval-set drift fixture; inspected same exact comparison in quote TX. No dedicated commit-expiry or future-created quote regression rerun.",
+    "Earlier original implementation failure-log loss remains disclosed in original report; follow-up RED logs are separately preserved and were read/hash-verified. No reconstructed RED evidence claimed.",
+    "No downstream B6 proof composer, paid provider, authentication, credential or network operation performed; no parent packet/release acceptance implied."
+  ],
+  "source_edits": [],
+  "paid_calls": [],
+  "frozen_after_review": true
+}

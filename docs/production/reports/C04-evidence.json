@@ -1,0 +1,181 @@
+{
+  "task_id": "C04",
+  "status": "accepted_integrated",
+  "code_sha": "b48c9ee457a992273c7fcf8767164cd291bc1449",
+  "worktree": "/Users/abid/.codex/worktrees/production-core/perabyte-studio",
+  "observed_at": "2026-10-03T20:32:29.377992+00:00",
+  "verification": {
+    "tests": 1060,
+    "test_files": 98,
+    "typecheck_exit_code": 0,
+    "build_exit_code": 0,
+    "built_http_requests": 10,
+    "cli_sigterm_exit_code": 0
+  },
+  "worker_candidates": {
+    "runtime": "b09ddb103abd340bb41c24a0be90ea1dc21033a9",
+    "provider_and_compatibility": "27dc9f742e3771fa5f850188bbec4945f86617cf"
+  },
+  "reviews": [
+    "C04-core-audit.json",
+    "C04-runtime-final-review.json",
+    "C04-shutdown-review.json",
+    "C04-provider-final-review.json",
+    "C04-capabilities-compat-review.json"
+  ],
+  "testcases": [
+    {
+      "id": "T04-01",
+      "result": "pass",
+      "evidence": "Full integrated suite plus strict runtime/provider reports; runtime report contains named behavioral mapping."
+    },
+    {
+      "id": "T04-02",
+      "result": "pass",
+      "evidence": "Full integrated suite plus strict runtime/provider reports; runtime report contains named behavioral mapping."
+    },
+    {
+      "id": "T04-03",
+      "result": "pass",
+      "evidence": "Full integrated suite plus strict runtime/provider reports; runtime report contains named behavioral mapping."
+    },
+    {
+      "id": "T04-04",
+      "result": "pass",
+      "evidence": "Full integrated suite plus strict runtime/provider reports; runtime report contains named behavioral mapping."
+    },
+    {
+      "id": "T04-05",
+      "result": "pass",
+      "evidence": "Full integrated suite plus strict runtime/provider reports; runtime report contains named behavioral mapping."
+    },
+    {
+      "id": "T04-06",
+      "result": "pass",
+      "evidence": "Full integrated suite plus strict runtime/provider reports; runtime report contains named behavioral mapping."
+    },
+    {
+      "id": "T04-07",
+      "result": "pass",
+      "evidence": "Full integrated suite plus strict runtime/provider reports; runtime report contains named behavioral mapping."
+    },
+    {
+      "id": "T04-08",
+      "result": "pass",
+      "evidence": "Full integrated suite plus strict runtime/provider reports; runtime report contains named behavioral mapping."
+    },
+    {
+      "id": "T04-09",
+      "result": "pass",
+      "evidence": "Full integrated suite plus strict runtime/provider reports; runtime report contains named behavioral mapping."
+    },
+    {
+      "id": "T04-10",
+      "result": "pass",
+      "evidence": "Full integrated suite plus strict runtime/provider reports; runtime report contains named behavioral mapping."
+    }
+  ],
+  "evidence": [
+    {
+      "kind": "full-tests",
+      "command": [
+        "npm",
+        "test"
+      ],
+      "exit_code": 0,
+      "output_file": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/c04-final-full-tests.txt",
+      "output_sha256": "3590f662c2d9499440e82a1e1557256625531b5ee1f26213d7402e15a8631e02"
+    },
+    {
+      "kind": "typecheck",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exit_code": 0,
+      "output_file": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/c04-final-typecheck.txt",
+      "output_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    },
+    {
+      "kind": "build",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit_code": 0,
+      "output_file": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/c04-final-build.txt",
+      "output_sha256": "84b714db35a5cb2bde21da4c81def44a0cdb1a07f50cf5025eca123b42727018"
+    },
+    {
+      "kind": "built-http",
+      "command": [
+        "node",
+        "evidence/integration/c04-http-smoke.mjs"
+      ],
+      "exit_code": 0,
+      "output_file": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/c04-final-api-smoke.txt",
+      "output_sha256": "ce64729051d37fbbdb6f421edb44c7f86651cc30d6cbb815e8d212ef5a56733d"
+    },
+    {
+      "kind": "cli-http",
+      "command": [
+        "node",
+        "evidence/integration/c04-cli-smoke.mjs"
+      ],
+      "exit_code": 0,
+      "output_file": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/c04-final-cli-smoke.txt",
+      "output_sha256": "af33f142ac5df92d77392232752de4ef59e19785aa9b675da315586d28235bdd"
+    },
+    {
+      "kind": "doctor",
+      "command": [
+        "npm",
+        "run",
+        "studio:doctor"
+      ],
+      "exit_code": 0,
+      "output_file": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/c04-final-doctor.txt",
+      "output_sha256": "dbb72846affbfa36a9a8f13eab002387391ac02ce8d5d87ceddfb9ad2dbc4323"
+    }
+  ],
+  "worker_reports": [
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/report-idle-shutdown.json",
+      "sha256": "907fcd43426efcb9aee7543fe94d7c0136c540e41f34708473e2dc2e030e09e7"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/c04-provider-recovery/perabyte-studio/evidence/C04-provider-recovery-followup/report.json",
+      "sha256": "d1ec9d04809c69fe18bdbb24e3a1e4d22ae8563ec2ad911e6722588350328dfb"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/c04-provider-recovery/perabyte-studio/evidence/C04-capabilities-compat/report.json",
+      "sha256": "fdf4527074c22a30d046fec26fafbfc5155785c34dd47894bbe34c0a786879d5"
+    }
+  ],
+  "historical_corrections": [
+    "Initial combined suite1058/1060; two obsolete capability route fixtures corrected without weakening assertions. Final1060/1060.",
+    "Old runtime doctor hash typo retained in historical report; new strict report contains recomputed correct hash.",
+    "First C04 checkpoint carries six historical raw evidence files; retained as historical, not current verification."
+  ],
+  "unverified": [
+    "Node26.10 verified; other Node versions not directly verified.",
+    "Conservative published content-addressed blob retention after database failure; no false Asset/result pointer; orphan inventory belongs to C15.",
+    "I01 authorization/reservation and real provider quote/account bindings not connected; no paid calls authorized.",
+    "C06 approval commands, I02 text proposals, audio/assembly/export and creator-reviewed short+long film release remain."
+  ],
+  "paid_calls": [],
+  "authorization": {
+    "reference": null,
+    "scope": null,
+    "cap": null,
+    "currency": null
+  },
+  "spend": {
+    "actual": null,
+    "currency": null,
+    "status": "none",
+    "receipt_refs": []
+  }
+}

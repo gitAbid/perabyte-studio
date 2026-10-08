@@ -5,6 +5,17 @@ import { Icon } from "@/components/Icon";
 import { MediaFrame } from "@/components/Media";
 import { Button } from "@/components/ui";
 import {
+  CompareModal,
+  VariantGrid,
+  type VariantCandidate,
+} from "@/components/production/primitives/variants";
+import type { MediaPreviewState } from "@/components/production/primitives/media";
+import {
+  CharacterRefinePanel,
+  type CharacterApproval,
+  type RefineAction,
+} from "@/components/character/CharacterRefinePanel";
+import {
   SHEET_VIEWS,
   characterSheetSettings,
   composeCharacterPrompt,
@@ -35,6 +46,45 @@ interface ViewRender {
 }
 
 type ViewState = Record<SheetViewId, ViewRender>;
+
+/* ------------------------------------------------------------------ */
+/* Identity variants (spec 06: generate → compare → select)            */
+/* ------------------------------------------------------------------ */
+
+/** Spec 06 §2: three character variants per batch, compared and selected. */
+const IDENTITY_VARIANT_COUNT = 3;
+
+/** The exact request a variant was produced with — "Try Again" resends these
+ * verbatim (spec 06 acceptance: Try Again reuses exact params). */
+interface ExactRenderInputs {
+  settings: ReturnType<typeof characterSheetSettings>;
+  prompt: string;
+  uncensored: boolean;
+  startImageRef?: string;
+}
+
+type VariantStatus = "pending" | "rendering" | "done" | "failed";
+
+/** One identity candidate. Candidates are only ever added — a refine never
+ * overwrites an earlier one (immutable history, spec 02 §1). */
+interface IdentityVariant {
+  id: string;
+  label: string;
+  status: VariantStatus;
+  url?: string;
+  requestId?: string;
+  seed?: number;
+  error?: string;
+  exact?: ExactRenderInputs;
+}
+
+type BatchStage = "variants" | "views";
+
+interface BatchProgress {
+  stage: BatchStage;
+  index: number;
+  total: number;
+}
 
 function emptyViews(): ViewState {
   return Object.fromEntries(
@@ -88,6 +138,7 @@ export function CharacterSheetPanel({
   onSaveAsCopy,
   onSaveToLibrary,
   onSetPoster,
+  approval,
 }: {
   spec: CharacterSpec;
   /** Global Uncensored Mode gate — shapes every view render's safety. */
@@ -112,6 +163,8 @@ export function CharacterSheetPanel({
   onSaveAsCopy: (posterUrl: string) => void;
   onSaveToLibrary: () => void;
   onSetPoster: (url: string) => void;
+  /** Canon approval state of the saved sheet (C8) — null while unsaved. */
+  approval?: CharacterApproval | null;
 }) {
   // Refs are authoritative so the async batch loop always reads current
   // values; state mirrors them for rendering.
@@ -124,10 +177,24 @@ export function CharacterSheetPanel({
   const uncensoredRef = useRef(uncensored);
   uncensoredRef.current = uncensored;
 
-  const [batch, setBatch] = useState<{ index: number; total: number } | null>(null);
+  const [batch, setBatch] = useState<BatchProgress | null>(null);
   const batchRef = useRef(false);
   const cancelRef = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Identity candidates for the current session. Only ever appended to.
+  const variantsRef = useRef<IdentityVariant[]>([]);
+  const [variants, setVariants] = useState<IdentityVariant[]>([]);
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
+  const [compare, setCompare] = useState<{ leftId: string; rightId: string } | null>(null);
+  const variantCounter = useRef(0);
+  const selectedVariantRef = useRef<string | null>(null);
+  selectedVariantRef.current = selectedVariantId;
+
+  // Universal refine actions (Try Again / More Like This / Change Something).
+  const [refineBusy, setRefineBusy] = useState<RefineAction | null>(null);
+  const refineBusyRef = useRef<RefineAction | null>(null);
+  const [refineError, setRefineError] = useState<string | null>(null);
 
   const [promptOpen, setPromptOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -138,6 +205,131 @@ export function CharacterSheetPanel({
   function patchView(id: SheetViewId, patch: Partial<ViewRender>) {
     viewsRef.current = { ...viewsRef.current, [id]: { ...viewsRef.current[id], ...patch } };
     setViews(viewsRef.current);
+  }
+
+  function patchVariant(id: string, patch: Partial<IdentityVariant>) {
+    variantsRef.current = variantsRef.current.map((variant) =>
+      variant.id === id ? { ...variant, ...patch } : variant,
+    );
+    setVariants(variantsRef.current);
+  }
+
+  /** Append one planned candidate slot (pending) to the immutable list. */
+  function planVariant(): IdentityVariant {
+    variantCounter.current += 1;
+    const variant: IdentityVariant = {
+      id: `variant_${variantCounter.current}_${Date.now().toString(36)}`,
+      label: `Variant ${variantCounter.current}`,
+      status: "pending",
+    };
+    variantsRef.current = [...variantsRef.current, variant];
+    setVariants(variantsRef.current);
+    return variant;
+  }
+
+  /** The exact inputs one front-view identity render uses right now. */
+  function identityInputs(): ExactRenderInputs {
+    const currentSpec = specRef.current;
+    const front = SHEET_VIEWS[0];
+    return {
+      settings: characterSheetSettings(currentSpec, front, paramsRef.current, uncensoredRef.current),
+      prompt: composeSheetPrompt(currentSpec, front, false),
+      uncensored: uncensoredRef.current,
+    };
+  }
+
+  /**
+   * Render one identity candidate with the given inputs. Resolves the finished
+   * candidate on success, null on failure/abort. Failures are per-candidate
+   * (spec 06 §8): successful variants stay selectable.
+   */
+  async function fireIdentityRender(
+    variant: IdentityVariant,
+    inputs: ExactRenderInputs,
+  ): Promise<IdentityVariant | null> {
+    patchVariant(variant.id, { status: "rendering", error: undefined });
+    const controller = new AbortController();
+    abortRef.current = controller;
+    try {
+      const response = await requestGeneration({
+        settings: inputs.settings,
+        prompt: inputs.prompt,
+        uncensored: inputs.uncensored,
+        ...(inputs.startImageRef ? { startImageRef: inputs.startImageRef } : {}),
+        signal: controller.signal,
+      });
+      const media = response.media[0];
+      if (!media?.url) throw new GenerationError("The render came back empty. Try again.");
+      patchVariant(variant.id, {
+        status: "done",
+        url: media.url,
+        requestId: response.requestId,
+        seed: media.seed,
+        error: undefined,
+        exact: inputs,
+      });
+      return variantsRef.current.find((entry) => entry.id === variant.id) ?? null;
+    } catch (error) {
+      if ((error as Error)?.name === "AbortError") {
+        patchVariant(variant.id, { status: "failed", error: "This render was canceled." });
+      } else {
+        patchVariant(variant.id, {
+          status: "failed",
+          error:
+            (error as GenerationError).message || "The render failed. Try again.",
+        });
+      }
+      return null;
+    }
+  }
+
+  /** The selected candidate becomes the character's face: the front tile
+   * adopts its image (poster, identity pin and saving all follow the front). */
+  function adoptVariantAsFront(variant: IdentityVariant) {
+    if (variant.status !== "done" || !variant.url) return;
+    viewsRef.current = {
+      ...viewsRef.current,
+      front: {
+        status: "done",
+        url: variant.url,
+        requestId: variant.requestId,
+        seed: variant.seed,
+      },
+    };
+    setViews(viewsRef.current);
+  }
+
+  function handleSelectVariant(id: string) {
+    if (batchRef.current) return;
+    setSelectedVariantId(id);
+    const variant = variantsRef.current.find((entry) => entry.id === id);
+    if (variant) adoptVariantAsFront(variant);
+  }
+
+  /** Compare the clicked candidate against the selected one (or its neighbor). */
+  function handleCompare(id: string) {
+    const done = variantsRef.current.filter((entry) => entry.status === "done" && entry.url);
+    if (done.length < 2) return;
+    const leftId = selectedVariantRef.current ?? done[0].id;
+    const right =
+      done.find((entry) => entry.id === id && entry.id !== leftId) ??
+      done.find((entry) => entry.id !== leftId);
+    if (!right) return;
+    setCompare({ leftId, rightId: right.id });
+  }
+
+  /** Retry one failed candidate with the same kind of request it started with. */
+  async function retryVariant(id: string) {
+    if (batchRef.current || refineBusyRef.current) return;
+    const variant = variantsRef.current.find((entry) => entry.id === id);
+    if (!variant || variant.status === "rendering") return;
+    const inputs = variant.exact ?? identityInputs();
+    const done = await fireIdentityRender(variant, inputs);
+    if (done && viewsRef.current.front.status !== "done") {
+      // The sheet had no identity base — adopt this one so saving works.
+      setSelectedVariantId(done.id);
+      adoptVariantAsFront(done);
+    }
   }
 
   // Report completed views upward whenever they change (save handlers need
@@ -223,30 +415,54 @@ export function CharacterSheetPanel({
     }
   }
 
-  /** Full sheet: every view in SHEET_VIEWS order, front first. A failed front
-   * view stops the batch (no identity base to chain from); a failed later
-   * view just leaves its tile retryable. */
+  /**
+   * Full sheet in two phases (spec 06 §5): first IDENTITY_VARIANT_COUNT
+   * identity candidates render one by one — compare/select happens on the
+   * grid — then the selected candidate becomes the front view and every other
+   * view chains off it so all views depict the same person. A failed candidate
+   * leaves its card retryable without blocking the others; if every candidate
+   * fails, the sheet keeps its previous views and the batch stops.
+   */
   async function runBatch() {
-    if (batchRef.current || !canRender) return;
+    if (batchRef.current || refineBusyRef.current || !canRender) return;
     cancelRef.current = false;
     batchRef.current = true;
-    setBatch({ index: 0, total: SHEET_VIEWS.length });
-    let frontRef: string | null = null;
     try {
-      for (let index = 0; index < SHEET_VIEWS.length; index++) {
+      const planned = Array.from({ length: IDENTITY_VARIANT_COUNT }, () => planVariant());
+      setSelectedVariantId(null);
+      let chosen: IdentityVariant | null = null;
+      for (let index = 0; index < planned.length; index++) {
         if (cancelRef.current) break;
-        const view = SHEET_VIEWS[index];
-        setBatch({ index: index + 1, total: SHEET_VIEWS.length });
-        const done = await renderOne(view, view.id === "front" ? null : frontRef);
-        if (view.id === "front") {
-          frontRef = done ? mediaRefFromUrl(done.url) : null;
-          if (!done) break;
+        setBatch({ stage: "variants", index: index + 1, total: planned.length });
+        const done = await fireIdentityRender(planned[index], identityInputs());
+        if (done && !chosen) {
+          chosen = done;
+          setSelectedVariantId(done.id);
         }
       }
+      if (!chosen?.url) return;
+      adoptVariantAsFront(chosen);
+      await runChainedViews(mediaRefFromUrl(chosen.url));
     } finally {
       batchRef.current = false;
       setBatch(null);
       abortRef.current = null;
+      // Drop candidates that never started; the in-flight one was marked by
+      // its own abort handler.
+      variantsRef.current = variantsRef.current.filter(
+        (entry) => entry.status !== "pending",
+      );
+      setVariants(variantsRef.current);
+    }
+  }
+
+  /** Chain the five non-front views off the given identity base. */
+  async function runChainedViews(frontRef: string | null) {
+    for (let index = 1; index < SHEET_VIEWS.length; index++) {
+      if (cancelRef.current) return;
+      const view = SHEET_VIEWS[index];
+      setBatch({ stage: "views", index, total: SHEET_VIEWS.length - 1 });
+      await renderOne(view, frontRef);
     }
   }
 
@@ -266,8 +482,134 @@ export function CharacterSheetPanel({
     abortRef.current?.abort();
   }
 
+  /* ---------------------------------------------------------------- */
+  /* Universal refine actions (spec 06 §5; spec 02 §8 retry rules)     */
+  /* ---------------------------------------------------------------- */
+
+  /** The image every refine starts from: the selected candidate, else the
+   * current front view. Null while nothing has been rendered yet. */
+  function refineTarget(): { exact: ExactRenderInputs; leadRef: string } | null {
+    const selected = selectedVariantRef.current
+      ? variantsRef.current.find((entry) => entry.id === selectedVariantRef.current)
+      : null;
+    if (selected?.status === "done" && selected.url && selected.exact) {
+      return { exact: selected.exact, leadRef: mediaRefFromUrl(selected.url) ?? "" };
+    }
+    const front = viewsRef.current.front;
+    if (front.status === "done" && front.url && mediaRefFromUrl(front.url)) {
+      return { exact: identityInputs(), leadRef: mediaRefFromUrl(front.url) as string };
+    }
+    return null;
+  }
+
+  /**
+   * Run one refine: append a NEW candidate (nothing is overwritten) and render
+   * it. "Try Again" resends the exact same request; "More Like This" leads
+   * with the selected image; "Change Something" appends the described delta —
+   * the identity reference keeps the face, the delta text changes the rest.
+   */
+  async function runRefine(action: RefineAction, instruction?: string) {
+    if (refineBusyRef.current || batchRef.current) return;
+    const target = refineTarget();
+    if (!target || !target.leadRef) {
+      setRefineError(
+        "Render the character sheet first — refinements start from an existing image.",
+      );
+      return;
+    }
+    setRefineBusy(action);
+    refineBusyRef.current = action;
+    setRefineError(null);
+    const planned = planVariant();
+    let inputs: ExactRenderInputs;
+    if (action === "try-again") {
+      inputs = target.exact;
+    } else {
+      const front = SHEET_VIEWS[0];
+      const basePrompt = composeSheetPrompt(specRef.current, front, true);
+      const prompt =
+        action === "change" && instruction
+          ? `${basePrompt}, change: ${instruction}. Keep the same person — same face and body.`
+          : basePrompt;
+      inputs = {
+        settings: characterSheetSettings(
+          specRef.current,
+          front,
+          paramsRef.current,
+          uncensoredRef.current,
+        ),
+        prompt,
+        uncensored: uncensoredRef.current,
+        startImageRef: target.leadRef,
+      };
+    }
+    try {
+      const done = await fireIdentityRender(planned, inputs);
+      if (done) {
+        setSelectedVariantId(done.id);
+        adoptVariantAsFront(done);
+      }
+    } finally {
+      refineBusyRef.current = null;
+      setRefineBusy(null);
+    }
+  }
+
   const doneCount = completedFrom(views).length;
   const frontUrl = views.front.status === "done" ? views.front.url : undefined;
+
+  /* ------------------------ Variant grid data ------------------------ */
+  const variantRatio = `${renderParams.aspect.replace(":", " / ")}`;
+  const locked = batch !== null || refineBusy !== null;
+  const variantCandidates: VariantCandidate[] = variants.map((variant) => ({
+    id: variant.id,
+    label: variant.label,
+    disabled: locked,
+    preview:
+      variant.status === "done" && variant.url
+        ? {
+            phase: "ready",
+            media: { kind: "image", src: variant.url, alt: `${variant.label} — character identity` },
+          }
+        : variant.status === "failed"
+          ? { phase: "error", message: variant.error, onRetry: () => void retryVariant(variant.id) }
+          : { phase: "loading" },
+  }));
+  const compareLeft = compare
+    ? variants.find((entry) => entry.id === compare.leftId && entry.url)
+    : null;
+  const compareRight = compare
+    ? variants.find((entry) => entry.id === compare.rightId && entry.url)
+    : null;
+  const compareSides =
+    compareLeft?.url && compareRight?.url
+      ? {
+          left: {
+            label: compareLeft.label,
+            preview: {
+              phase: "ready" as const,
+              media: { kind: "image" as const, src: compareLeft.url, alt: `${compareLeft.label} — character identity` },
+            },
+          },
+          right: {
+            label: compareRight.label,
+            preview: {
+              phase: "ready" as const,
+              media: { kind: "image" as const, src: compareRight.url, alt: `${compareRight.label} — character identity` },
+            },
+          },
+        }
+      : null;
+  /** The image the refine actions start from — shown in the refine panel. */
+  const refinePreview: MediaPreviewState =
+    frontUrl && views.front.status === "done"
+      ? {
+          phase: "ready",
+          media: { kind: "image", src: frontUrl, alt: "Selected character identity" },
+        }
+      : { phase: "loading" };
+  const refineTargetLabel =
+    variants.find((entry) => entry.id === selectedVariantId)?.label ?? "Full Front";
 
   async function handleCopy() {
     try {
@@ -290,7 +632,9 @@ export function CharacterSheetPanel({
             <p className="text-[13.5px] font-bold text-ink">Character sheet</p>
             <p className="text-[11.5px] leading-tight text-muted">
               {batch
-                ? `Rendering view ${batch.index} of ${batch.total}…`
+                ? batch.stage === "variants"
+                  ? `Rendering identity variant ${batch.index} of ${batch.total}…`
+                  : `Rendering view ${batch.index} of ${batch.total}…`
                 : doneCount > 0
                   ? `${doneCount} of ${SHEET_VIEWS.length} views rendered`
                   : "Six views of your character, like a design sheet."}
@@ -305,7 +649,7 @@ export function CharacterSheetPanel({
           <Button
             size="sm"
             icon="sparkle"
-            disabled={!canRender}
+            disabled={!canRender || refineBusy !== null}
             title={canRender ? undefined : renderHint}
             onClick={() => void runBatch()}
           >
@@ -320,19 +664,41 @@ export function CharacterSheetPanel({
         </p>
       )}
 
-      <div className="grid grid-cols-2 gap-2">
+      {/* Identity variants (spec 06: V1 V2 V3) — compare, pick the face. */}
+      {variants.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <VariantGrid
+            candidates={variantCandidates}
+            selectedId={selectedVariantId}
+            onSelect={handleSelectVariant}
+            onCompare={handleCompare}
+            columns={3}
+            ratio={variantRatio}
+            loading={false}
+            ariaLabel="Identity variants"
+            testId="character.variants"
+          />
+          <p className="text-[11px] leading-snug text-muted">
+            Picking a variant sets the character's face. Views rendered from a
+            previous pick keep their look until the sheet is rendered again.
+          </p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-2" data-testid="character.sheet.grid">
         {SHEET_VIEWS.map((view) => (
           <SheetTile
             key={view.id}
             view={view}
             render={views[view.id]}
-            disabled={batch !== null}
-            onRender={() =>
+            disabled={batch !== null || refineBusy !== null}
+            onRender={() => {
+              if (view.id === "front") setSelectedVariantId(null);
               void renderOne(
                 view,
                 view.id === "front" ? null : (frontUrl ? mediaRefFromUrl(frontUrl) : null),
-              )
-            }
+              );
+            }}
             onDownload={() => {
               const url = views[view.id].url;
               if (url) downloadMedia(url, `character-${view.id}-${Date.now()}`);
@@ -427,6 +793,25 @@ export function CharacterSheetPanel({
         </div>
       )}
 
+      {/* Universal refine + approval (spec 06 §5/§6). */}
+      <CharacterRefinePanel
+        target={
+          frontUrl && views.front.status === "done"
+            ? {
+                id: selectedVariantId ?? "front",
+                label: refineTargetLabel,
+                preview: refinePreview,
+              }
+            : null
+        }
+        busy={refineBusy}
+        error={refineError}
+        onTryAgain={() => void runRefine("try-again")}
+        onMoreLikeThis={() => void runRefine("more-like-this")}
+        onChangeSubmit={(instruction) => void runRefine("change", instruction)}
+        approval={approval ?? null}
+      />
+
       {/* Composed prompt — collapsed by default, copyable. */}
       <div className="rounded-[14px] border border-border bg-surface">
         <button
@@ -456,6 +841,17 @@ export function CharacterSheetPanel({
           </div>
         )}
       </div>
+
+      {/* Side-by-side identity comparison (universal CompareModal). */}
+      <CompareModal
+        open={compareSides !== null}
+        left={compareSides?.left ?? null}
+        right={compareSides?.right ?? null}
+        title="Compare identity variants"
+        ratio={variantRatio}
+        onClose={() => setCompare(null)}
+        testId="character.compare"
+      />
     </div>
   );
 }
@@ -482,7 +878,10 @@ function SheetTile({
 }) {
   const ratio = view.kind === "closeup" ? "1/1" : "9/16";
   return (
-    <div className="group relative overflow-hidden rounded-[12px] border border-border bg-surface">
+    <div
+      data-testid={`character.sheet.tile-${view.id}`}
+      className="group relative overflow-hidden rounded-[12px] border border-border bg-surface"
+    >
       <p className="absolute left-1.5 top-1.5 z-10 rounded-full bg-black/55 px-1.5 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
         {view.label}
       </p>

@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "task_id": "I01",
+  "slice": "B3+B4 combined accounting gate",
+  "status": "frozen verification scope; implementation waits for reviewed B3/B4 followups",
+  "owned_file": "lib/jobs/production/worker.test.ts",
+  "prerequisites": [
+    "exact independently accepted B3 service commit",
+    "exact independently accepted B4 queue/worker commit",
+    "accepted shared quote helper"
+  ],
+  "required_composition": {
+    "prepareBudgetContext": "Construct exact media BudgetExecution from immutable job and shared semantic helper; invoke real createProductionBudgetService.prepareBudgetContext(execution, durable companion id). Inject only offline evidence and credential producer ports.",
+    "reserveSubmission": "Invoke real service.reserveInTransaction(tx, execution, sampled admission clock, context) inside queue callback; no replacement cap algorithm.",
+    "database": "Two openProductionStore connections to the same temporary production.sqlite, genuine selected stories/animatics and recorded fixture human approvals.",
+    "provider": "Injected fake ProviderPort; zero real requests."
+  },
+  "cases": [
+    {
+      "id": "I01-COMBINED-01",
+      "assertion": "Two projects sharing daily cap300, each explicit matching quote max200, race through real preparation/worker/queue/reserve: one submitting intent, one execution/reservation and one fake submit."
+    },
+    {
+      "id": "I01-COMBINED-02",
+      "assertion": "Unknown actual leaves original200 liability. A fresh eligible project requesting200 remains blocked under cap300, with zero reservation/submit for that fresh job. No resetting old blocked jobs or accounting keys."
+    },
+    {
+      "id": "I01-COMBINED-03",
+      "assertion": "Trusted injected real service reconciliation final actual50 replaces estimate200; another fresh eligible project requesting200 admits. Account folded liability250, two cumulative fake submits, original immutable reservation upperEstimate200 preserved. An implementation summing estimates would incorrectly block."
+    },
+    {
+      "id": "I01-COMBINED-04",
+      "assertion": "SQLite event trigger failure after real service inserts reservation rolls back execution/reservation/submitting intent together; fake submit0."
+    }
+  ],
+  "evidence": "Exact accepted prerequisite SHAs and followup test-only SHA, commands/exit/raw hashes, independent review. Existing prospective rollback proof remains separately preserved; do not fabricate historical RED.",
+  "not_acceptance": [
+    "live account or quote producer",
+    "paid provider calls",
+    "C06 human command services",
+    "full I01 or real-film release"
+  ],
+  "clarifications": [
+    "Count durable submitting event, not final job status: ACK can advance to running.",
+    "Cases01\u201303 same fixed UTC day/account; fresh unique project/job/key after each denial; never reset blocked jobs.",
+    "Unknown actual uses real reconcile with amount null and nonBilling false, retaining200; subsequent distinct final50 event folds50 before fresh200=>250.",
+    "Case04 isolated targeted SQLite event trigger; inspect execution/reservation/submitting event plus fake submit0 after actual callback."
+  ]
+}

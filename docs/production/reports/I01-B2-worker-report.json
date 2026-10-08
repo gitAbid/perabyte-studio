@@ -1,0 +1,134 @@
+{
+  "task_id": "I01-B2",
+  "status": "implemented",
+  "base_sha": "ffea35b2a7cdc7400b083ea0be7d388cbb0723f0",
+  "head_sha": "4e97c5829fada681fe5ef37764961931956f9e8c",
+  "commit_sha": "4e97c5829fada681fe5ef37764961931956f9e8c",
+  "worktree": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio",
+  "changed_files": [
+    "lib/repositories/production/ports.ts",
+    "lib/repositories/production/sqlite.ts",
+    "lib/repositories/production/sqlite.test.ts",
+    "lib/repositories/production/migrations/002-budget.sql"
+  ],
+  "source_sha256": {
+    "lib/repositories/production/ports.ts": "e35d4d3f61de7ca83ba1562299d6681bd4fe2517b181f196a9b4ec5bed90d006",
+    "lib/repositories/production/sqlite.ts": "a33e6f31bd3ab21b588cfa148f728950b662b8714fead0343a0f554645ea6393",
+    "lib/repositories/production/sqlite.test.ts": "0a5d3c1242691448b50ac1e813cd980a582a614a07391321cb126f8b9e84c000",
+    "lib/repositories/production/migrations/002-budget.sql": "85373e4a8851018fa72150f8b5dfcdf79c19a23dde3f6f292bc9d8b28b725735"
+  },
+  "testcases": [
+    {
+      "id": "B2-RED-ADAPTER",
+      "result": "expected_red",
+      "command": ["npm", "test", "--", "lib/repositories/production/sqlite.test.ts"],
+      "exit_code": 1,
+      "output_file": "evidence/I01-B2/red2.txt",
+      "output_sha256": "10bd1cdcdc9c3e19a3664a1feacb944c6bb5abf6cb9cc0dc6ec5736957ca9363",
+      "assertion": "New ledger and migration behaviors failed before implementation."
+    },
+    {
+      "id": "B2-RED-STANDING-POLICY",
+      "result": "expected_red",
+      "command": ["npm", "test", "--", "lib/repositories/production/sqlite.test.ts"],
+      "exit_code": 1,
+      "output_file": "evidence/I01-B2/red-standing-auth.txt",
+      "output_sha256": "faa7be05fec255a78ef94a7da3d19f4dc05e5efccb7d6fbaca37d2761491e970",
+      "assertion": "Latest policy revision 2 incorrectly rejected standing authorization revision 1 provenance before the fix."
+    },
+    {
+      "id": "B2-LEDGER-GREEN",
+      "result": "pass",
+      "command": ["npm", "test", "--", "lib/repositories/production/sqlite.test.ts"],
+      "exit_code": 0,
+      "output_file": "evidence/I01-B2/focus-accepted.txt",
+      "output_sha256": "0fcebf69c73221a15b4f6f46c7154c776a40d2bc701ec8e808cb15642b21fe95",
+      "assertion": "23 SQLite tests pass, including real v1 upgrade, malformed/future migration rejection and rollback, CAS, quote-binding rollback, actual media job tuple, reservation pins/replay, standing policy, ordered event dedupe/reopen, UTC-day/project scopes, and two-connection policy CAS."
+    },
+    {
+      "id": "B2-LEGACY-IMPORT",
+      "result": "pass",
+      "command": ["npm", "test", "--", "lib/repositories/production/legacy-import.test.ts"],
+      "exit_code": 0,
+      "output_file": "evidence/I01-B2/legacy-accepted.txt",
+      "output_sha256": "979cc713e419b94d08eefb74ff467a8a62f26446d63cc1e1e51bbab376aede57",
+      "assertion": "6 legacy import regression tests pass."
+    },
+    {
+      "id": "B2-TYPECHECK",
+      "result": "pass",
+      "command": ["npm", "run", "typecheck"],
+      "exit_code": 0,
+      "output_file": "evidence/I01-B2/typecheck-accepted.txt",
+      "output_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "assertion": "TypeScript check passes."
+    },
+    {
+      "id": "B2-DIFF-CHECK",
+      "result": "pass",
+      "command": ["git", "diff", "--check"],
+      "exit_code": 0,
+      "output_file": "evidence/I01-B2/diff-check.txt",
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "assertion": "Working diff has no whitespace errors."
+    }
+  ],
+  "evidence": [
+    {
+      "kind": "red",
+      "command": ["npm", "test", "--", "lib/repositories/production/sqlite.test.ts"],
+      "exit_code": 1,
+      "output_file": "evidence/I01-B2/red2.txt",
+      "output_sha256": "10bd1cdcdc9c3e19a3664a1feacb944c6bb5abf6cb9cc0dc6ec5736957ca9363"
+    },
+    {
+      "kind": "red",
+      "command": ["npm", "test", "--", "lib/repositories/production/sqlite.test.ts"],
+      "exit_code": 1,
+      "output_file": "evidence/I01-B2/red-standing-auth.txt",
+      "output_sha256": "faa7be05fec255a78ef94a7da3d19f4dc05e5efccb7d6fbaca37d2761491e970"
+    },
+    {
+      "kind": "green",
+      "command": ["npm", "test", "--", "lib/repositories/production/sqlite.test.ts"],
+      "exit_code": 0,
+      "output_file": "evidence/I01-B2/focus-accepted.txt",
+      "output_sha256": "0fcebf69c73221a15b4f6f46c7154c776a40d2bc701ec8e808cb15642b21fe95"
+    },
+    {
+      "kind": "green",
+      "command": ["npm", "test", "--", "lib/repositories/production/legacy-import.test.ts"],
+      "exit_code": 0,
+      "output_file": "evidence/I01-B2/legacy-accepted.txt",
+      "output_sha256": "979cc713e419b94d08eefb74ff467a8a62f26446d63cc1e1e51bbab376aede57"
+    },
+    {
+      "kind": "typecheck",
+      "command": ["npm", "run", "typecheck"],
+      "exit_code": 0,
+      "output_file": "evidence/I01-B2/typecheck-accepted.txt",
+      "output_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    },
+    {
+      "kind": "diff-check",
+      "command": ["git", "diff", "--check"],
+      "exit_code": 0,
+      "output_file": "evidence/I01-B2/diff-check.txt",
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "review": {
+    "findings": [],
+    "ownership_check": "pass",
+    "diff_check": "pass",
+    "independent_review": "Sol reproduced the 29-test suite; final report hash audit pending."
+  },
+  "unverified": [
+    "Simultaneous fresh-process startup/migration race was not run.",
+    "Full build was not run; the assigned worktree uses a shared node_modules symlink.",
+    "Full I01 remains incomplete pending B3 services, B4 atomic queue/worker reservation, trusted provider evidence wiring, and integration/review."
+  ],
+  "paid_calls": [],
+  "authorization": {"reference": null, "scope": null, "cap": null, "currency": null},
+  "spend": {"actual": null, "currency": null, "status": "none", "receipt_refs": []}
+}

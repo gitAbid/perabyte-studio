@@ -1,0 +1,221 @@
+{
+  "schemaVersion": 1,
+  "task_id": "C06-PRE-S",
+  "actualSHA": "c6c143063ebfc6f4adc13f020dd7ca667971a5bb",
+  "baseSHA": "17bb500da659f41c94f4c01ae47525eb2798d212",
+  "parentSHA": "17bb500da659f41c94f4c01ae47525eb2798d212",
+  "worktree": "/Users/abid/.codex/worktrees/production-approval-storage/perabyte-studio",
+  "decision": "accepted_for_integration",
+  "findings": [],
+  "metadataFindings": [],
+  "changedFiles": [
+    "lib/production/contracts.test.ts",
+    "lib/production/contracts.ts",
+    "lib/repositories/production/migrations/003-approval-commands.sql",
+    "lib/repositories/production/sqlite.test.ts",
+    "lib/repositories/production/sqlite.ts"
+  ],
+  "normativeFreeze": {
+    "path": "/Users/abid/.codex/worktrees/production-approval-storage/perabyte-studio/docs/production/reports/C06-PRE-root-freeze.json",
+    "SHA256": "a40eebbaf1ad5e552e5250bed13b682c276acd43201b30a9b2d5896ff2d66074",
+    "sections": [
+      "storage_packet",
+      "decisions.migration"
+    ]
+  },
+  "necessarySharedAmendment": {
+    "path": "/Users/abid/.codex/worktrees/production-approval-storage/perabyte-studio/docs/production/reports/C06-PRE-boundary-proposal.json",
+    "section": "necessary_shared_amendment"
+  },
+  "specReview": [
+    "Migration003 rebuilds approvals with identical columns, default, primary key and two FK constraints, removing only UNIQUE(target_kind,target_id,target_hash,decision). INSERT SELECT copies every approval row.",
+    "Generic records, historical natural keys, record_refs and takes are not updated or deleted. Approval references in take/record_refs point to generic records rather than the rebuilt approvals table.",
+    "Future appendApproval uses r.id for natural_key, preserving existing getApproval replay port and identity constraints while enabling distinct approve/reject/approve command IDs for the same target/hash.",
+    "Migration registry adds exact version3/name. SupportedStorageSchemaVersion adds literal3 and keeps future4 rejected; financial records and project-read versions unchanged."
+  ],
+  "codeQualityAndMaterialRisk": [
+    "Rebuild executes inside the existing immediate migration transaction with foreign keys enabled and schema_migrations recorded atomically; startup rollback/error handling remains unchanged.",
+    "New real-v2 fixture observes migration and reopen, historical approval/take rows and refs, historical natural key retention, three ascending decision times, command-ID natural keys, integrity_check and foreign_key_check.",
+    "Existing migration/concurrent-startup tests only update expected schema3 and future4 history; no skips, deleted assertions, relaxed bounds or startup algorithm change.",
+    "No blocking material risk identified in the five-file owned storage slice. Existing2000ms lock timing test once failed at2001ms and subsequently passed; its threshold and algorithm were not changed by this candidate."
+  ],
+  "migrationByteAudit": [
+    {
+      "path": "lib/repositories/production/migrations/001.sql",
+      "baseSHA256": "51e3c06b8bd91833a2fe7dd22ca3a18d0f3b9ce778fe459ab7f397e244ad4b44",
+      "currentSHA256": "51e3c06b8bd91833a2fe7dd22ca3a18d0f3b9ce778fe459ab7f397e244ad4b44",
+      "byteIdentical": true
+    },
+    {
+      "path": "lib/repositories/production/migrations/002-budget.sql",
+      "baseSHA256": "85373e4a8851018fa72150f8b5dfcdf79c19a23dde3f6f292bc9d8b28b725735",
+      "currentSHA256": "85373e4a8851018fa72150f8b5dfcdf79c19a23dde3f6f292bc9d8b28b725735",
+      "byteIdentical": true
+    }
+  ],
+  "workerReportSHA256": "d3da772f8218870bc234b68b9bfa4ff7933085b9c591694b74f3a49d83650a03",
+  "expectedWorkerReportSHA256": "d3da772f8218870bc234b68b9bfa4ff7933085b9c591694b74f3a49d83650a03",
+  "workerEvidenceAudit": [
+    {
+      "path": "/Users/abid/.codex/worktrees/production-approval-storage/perabyte-studio/evidence/C06-PRE-S/T-contracts-green.txt",
+      "expectedSHA256": "79fec523d7e6bc4248f6212d145d55b6895a9047c83607df2b0291d697bfe899",
+      "actualSHA256": "79fec523d7e6bc4248f6212d145d55b6895a9047c83607df2b0291d697bfe899",
+      "match": true,
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "--run",
+        "lib/production/contracts.test.ts"
+      ],
+      "reportedExitCode": 0
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-approval-storage/perabyte-studio/evidence/C06-PRE-S/T-sqlite-green.txt",
+      "expectedSHA256": "3d4f48687d28cbfbb3634c8c23559eddc46b97d6d712c79facec2582fb16b099",
+      "actualSHA256": "3d4f48687d28cbfbb3634c8c23559eddc46b97d6d712c79facec2582fb16b099",
+      "match": true,
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "--run",
+        "lib/repositories/production/sqlite.test.ts"
+      ],
+      "reportedExitCode": 0
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-approval-storage/perabyte-studio/evidence/C06-PRE-S/T-contracts-green.txt",
+      "expectedSHA256": "79fec523d7e6bc4248f6212d145d55b6895a9047c83607df2b0291d697bfe899",
+      "actualSHA256": "79fec523d7e6bc4248f6212d145d55b6895a9047c83607df2b0291d697bfe899",
+      "match": true,
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "--run",
+        "lib/production/contracts.test.ts"
+      ],
+      "reportedExitCode": 0
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-approval-storage/perabyte-studio/evidence/C06-PRE-S/T-sqlite-green.txt",
+      "expectedSHA256": "3d4f48687d28cbfbb3634c8c23559eddc46b97d6d712c79facec2582fb16b099",
+      "actualSHA256": "3d4f48687d28cbfbb3634c8c23559eddc46b97d6d712c79facec2582fb16b099",
+      "match": true,
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "--run",
+        "lib/repositories/production/sqlite.test.ts"
+      ],
+      "reportedExitCode": 0
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-approval-storage/perabyte-studio/evidence/C06-PRE-S/typecheck.txt",
+      "expectedSHA256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "actualSHA256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "match": true,
+      "argv": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "reportedExitCode": 0
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-approval-storage/perabyte-studio/evidence/C06-PRE-S/diff-check.txt",
+      "expectedSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actualSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true,
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "reportedExitCode": 0
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-approval-storage/perabyte-studio/evidence/C06-PRE-S/T-sqlite-assertion-failure.txt",
+      "expectedSHA256": "39956a161f8edc1cb1242779aa3ff8b7a3392d057ebb677b587716ca7be429dd",
+      "actualSHA256": "39956a161f8edc1cb1242779aa3ff8b7a3392d057ebb677b587716ca7be429dd",
+      "match": true,
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "--run",
+        "lib/repositories/production/sqlite.test.ts"
+      ],
+      "reportedExitCode": 1
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-approval-storage/perabyte-studio/evidence/C06-PRE-S/T-sqlite-timing-failure.txt",
+      "expectedSHA256": "33d93cdc78e63c3961abcfba5f8443c177914d0f7325bd10911d8e1639808674",
+      "actualSHA256": "33d93cdc78e63c3961abcfba5f8443c177914d0f7325bd10911d8e1639808674",
+      "match": true,
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "--run",
+        "lib/repositories/production/sqlite.test.ts"
+      ],
+      "reportedExitCode": 1
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-approval-storage/perabyte-studio/evidence/C06-PRE-S/typecheck-fixture-failure.txt",
+      "expectedSHA256": "e010b28a6a5a7990eda6a5af1e35c422dd165c91a11186984ed110da1d1b0115",
+      "actualSHA256": "e010b28a6a5a7990eda6a5af1e35c422dd165c91a11186984ed110da1d1b0115",
+      "match": true,
+      "argv": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "reportedExitCode": 2
+    }
+  ],
+  "allWorkerEvidenceHashesMatch": true,
+  "evidenceInterpretation": {
+    "green": "Read saved raw logs: 27SQLite tests passed, 23contract tests passed and tsc --noEmit output contains no diagnostics; argv match report.",
+    "failureCaptures": "Hash-verified saved failure captures are explicitly disclosed tool-output excerpts copied after earlier files were overwritten. They are not original redirected raw RED. They show fixture expected-row ordering mismatch, preexisting WAL2001ms timing miss, and fixture type widening; no historical behavioral RED inferred.",
+    "unresolvedFailures": false
+  },
+  "independentVerification": {
+    "argv": [
+      "npm",
+      "test",
+      "--",
+      "lib/repositories/production/sqlite.test.ts",
+      "-t",
+      "migrates a real v2 approval history and appends repeated same-hash decisions"
+    ],
+    "exitCode": 0,
+    "testsPassed": 1,
+    "testsSkipped": 26,
+    "log": "/tmp/perabyte-C06-PRE-S-review-test.txt",
+    "logSHA256": "e90ba520723983768b0103c77e9c9e58f063ba3486cff0f45fde6e8765f657bb",
+    "diffCheck": {
+      "argv": [
+        "git",
+        "diff",
+        "--check",
+        "17bb500da659f41c94f4c01ae47525eb2798d212",
+        "c6c143063ebfc6f4adc13f020dd7ca667971a5bb"
+      ],
+      "exitCode": 0
+    }
+  },
+  "sourceEdits": false,
+  "paidNetworkCalls": 0,
+  "fullC06Accepted": false,
+  "frozenAfterReview": true,
+  "unrun": [
+    "Independent contract suite and typecheck not repeated; worker raw logs and hashes verified.",
+    "Root integration/reopen/health3 check remains an integrator responsibility per necessary_shared_amendment.",
+    "No broad suite, build, expanded coverage, paid or authenticated calls.",
+    "Creator approval service, recipe preparation/enqueue, actual media and fullC06 release remain outside this storage slice."
+  ]
+}

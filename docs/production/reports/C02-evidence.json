@@ -1,0 +1,116 @@
+{
+  "task_id": "C02",
+  "status": "accepted",
+  "worker_head_sha": "845a7e8c6ba14862bfe1b90609326463be8a10a6",
+  "integration_head_sha": "a2c571cc9bbf603b5bb30d1d7b25bffc46659fa0",
+  "testcases": [
+    {
+      "id": "T02-01",
+      "result": "pass",
+      "evidence": "root integration tests and actual HTTP smoke; worker per-case assertions in review-fix-report.json"
+    },
+    {
+      "id": "T02-02",
+      "result": "pass",
+      "evidence": "root integration tests and actual HTTP smoke; worker per-case assertions in review-fix-report.json"
+    },
+    {
+      "id": "T02-03",
+      "result": "pass",
+      "evidence": "root integration tests and actual HTTP smoke; worker per-case assertions in review-fix-report.json"
+    },
+    {
+      "id": "T02-04",
+      "result": "pass",
+      "evidence": "root integration tests and actual HTTP smoke; worker per-case assertions in review-fix-report.json"
+    },
+    {
+      "id": "T02-05",
+      "result": "pass",
+      "evidence": "root integration tests and actual HTTP smoke; worker per-case assertions in review-fix-report.json"
+    },
+    {
+      "id": "T02-06",
+      "result": "pass",
+      "evidence": "root integration tests and actual HTTP smoke; worker per-case assertions in review-fix-report.json"
+    },
+    {
+      "id": "T02-07",
+      "result": "pass",
+      "evidence": "root integration tests and actual HTTP smoke; worker per-case assertions in review-fix-report.json"
+    },
+    {
+      "id": "T02-08",
+      "result": "pass",
+      "evidence": "root integration tests and actual HTTP smoke; worker per-case assertions in review-fix-report.json"
+    },
+    {
+      "id": "T02-09",
+      "result": "pass",
+      "evidence": "root integration tests and actual HTTP smoke; worker per-case assertions in review-fix-report.json"
+    },
+    {
+      "id": "T02-10",
+      "result": "pass",
+      "evidence": "root integration tests and actual HTTP smoke; worker per-case assertions in review-fix-report.json"
+    }
+  ],
+  "integration_verification": {
+    "tests": 986,
+    "test_files": 93,
+    "test_exit_code": 0,
+    "typecheck_exit_code": 0,
+    "build_exit_code": 0,
+    "built_http_requests": 12,
+    "http_exit_code": 0
+  },
+  "independent_review": {
+    "agent": "/root/core_review",
+    "model": "gpt-6.1-sol",
+    "accepted_shas": [
+      "e221442673fce823215b370c3048451165c8a360",
+      "715920b356278c1c6d516a1fc3f7f52adff29878",
+      "79b0336986d7fdbffcd408cf80e735994d9d4271",
+      "845a7e8c6ba14862bfe1b90609326463be8a10a6"
+    ],
+    "findings": "All material findings corrected; root reproduced acceptance."
+  },
+  "evidence": [
+    {
+      "path": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/c02-final-tests.txt",
+      "sha256": "195cfe9e88648aa30e7697cfde9035e9527344b1eefb5f51f81e7feb2c5fc902"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/c02-final-typecheck.txt",
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/c02-final-build.txt",
+      "sha256": "6adcf1996b3ad9f040aa5bef594d44c6c212dacc7d3d6d5c465b2b465481d7ab"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/c02-api-smoke.txt",
+      "sha256": "ce341bd055b1fc83c1da88497fcd71c8541fa60a91ba24c67feac57bb340723c"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/c02-monotonic-tests.txt",
+      "sha256": "f1cc102107a678f0c4136a4b75cd0d35c415a691a6f24fd99756d34a048a60d3"
+    }
+  ],
+  "worker_reports": [
+    "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/review-fix-report.json",
+    "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/shot-exact-report.json",
+    "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/store-seams-report.json",
+    "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/heartbeat-report.json",
+    "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/SHARED-CONTRACT-HTTP/report.json",
+    "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/SHARED-CONTRACT-HTTP/compat-report.json"
+  ],
+  "evidence_limits": [
+    "Original implementation RED was not retained; not fabricated. New critical regression RED/GREEN and independent exact-SHA tests reproduced.",
+    "Old completion-report.json superseded; its focused-green filename was overwritten and hash mismatch is recorded, not accepted as current evidence."
+  ],
+  "unverified": [
+    "C04 worker/vault result integration remains incomplete; actual user legacy data unchanged; real-film/pilot/paid generations not run."
+  ],
+  "paid_calls": []
+}

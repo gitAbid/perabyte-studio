@@ -1,0 +1,149 @@
+> perabyte-studio@0.1.0 build
+> next build
+▲ Next.js 16.3.5 (Turbopack)
+✓ Running next.config.ts took 17ms
+  Creating an optimized production build ...
+✓ Compiled successfully in 658ms
+  Running TypeScript ...
+  Finished TypeScript in 1605ms ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/38) ...
+  Generating static pages using 7 workers (9/38)
+  Generating static pages using 7 workers (18/38)
+  Generating static pages using 7 workers (28/38)
+✓ Generating static pages using 7 workers (38/38) in 246ms
+Turbopack build encountered 2 warnings:
+./lib/media/frame-server.ts:79:7
+Warning: Dynamic filesystem access causes tracing of the whole project
+  [90m77 |[0m     [36mawait[0m writeFile(input, stored.bytes);
+  [90m78 |[0m     [36mawait[0m [36mnew[0m [33mPromise[0m<[36mvoid[0m>((resolve, reject) => {
+[33m[1m>[0m [90m79 |[0m       execFile(
+  [90m   |[0m       [33m[1m^^^^^^^^[0m
+[33m[1m>[0m [90m80 |[0m         ffmpegPath,
+  [90m   |[0m [33m[1m^^^^^^^^^^^^^^^^^^^[0m
+[33m[1m>[0m [90m81 |[0m         [[32m"-sseof"[0m, [32m"-0.1"[0m, [32m"-i"[0m, input, [32m"-frames:v"[0m, [32m"1"[0m, [32m"-q:v"[0m, [32m"2"[0m, [32m"-y"[0m, output],
+  [90m   |[0m [33m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[33m[1m>[0m [90m82 |[0m         { timeout: [35m30[0m_000 },
+  [90m   |[0m [33m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[33m[1m>[0m [90m83 |[0m         (error) => (error ? reject(error) : resolve()),
+  [90m   |[0m [33m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[33m[1m>[0m [90m84 |[0m       );
+  [90m   |[0m [33m[1m^^^^^^^[0m
+  [90m85 |[0m     });
+  [90m86 |[0m     [36mconst[0m bytes = [36mawait[0m readFile(output);
+  [90m87 |[0m     [36mconst[0m storedFrame = [36mawait[0m getMediaRepository().put(bytes, [32m"jpg"[0m);
+Static analysis determined that this filesystem access causes the whole project to be traced and included in the output.
+This is usually unintentional and leads to all source files (including the public folder) to be deployed as part of the server code.
+This can slow down deployments or lead to failures when size limits are exceeded.
+To resolve this, you can
+- make sure the path is statically scoped to some subfolder, for example path.join(process.cwd(), 'data', bar), or
+- only use them in development, or
+- opt out by adding an ignore comment to the highlighted call: child_process.execFile(/*turbopackIgnore: true*/ ...), or
+- remove them.
+Import traces:
+  #1 [App Route]:
+    ./lib/media/frame-server.ts
+    ./app/api/production/projects/[projectId]/exports/route.ts
+  #2 [App Route]:
+    ./lib/media/frame-server.ts
+    ./lib/jobs/executor.ts
+    ./lib/story/server-runner.ts
+    ./app/api/stories/[id]/route.ts
+./lib/repositories/production/sqlite.ts:72:18
+Warning: Dynamic filesystem access causes tracing of the whole project
+  [90m70 |[0m ...
+  [90m71 |[0m ...[36mon[0m openProductionStore(options: [33mSqliteStoreOptions[0m = {}): [33mSqliteProductionStore[0m {
+[33m[1m>[0m [90m72 |[0m ...h = resolve(options.dbPath ?? [32m`[0m${options.dataDir ?? [32m".studio"[0m[32m}/production.sqlite`[0m);
+  [90m   |[0m        [33m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m73 |[0m ...irname(dbPath), { recursive: [36mtrue[0m, mode: [35m0o700[0m });
+  [90m74 |[0m ...[36mnew[0m [33mDatabase[0m(dbPath, { timeout: [33mSTARTUP_BUSY_TIMEOUT_MS[0m });
+  [90m75 |[0m ...Now = options.now ?? [33mDate[0m.now;
+Static analysis determined that this filesystem access causes the whole project to be traced and included in the output.
+This is usually unintentional and leads to all source files (including the public folder) to be deployed as part of the server code.
+This can slow down deployments or lead to failures when size limits are exceeded.
+To resolve this, you can
+- make sure the path is statically scoped to some subfolder, for example path.join(process.cwd(), 'data', bar), or
+- only use them in development, or
+- opt out by adding an ignore comment to the highlighted call: path.resolve(/*turbopackIgnore: true*/ ...), or
+- remove them.
+Import traces:
+  #1 [App Route]:
+    ./lib/repositories/production/sqlite.ts
+    ./lib/production/composition.ts
+    ./app/api/production/shots/[shotId]/anchors/route.ts
+  #2 [App Route]:
+    ./lib/repositories/production/sqlite.ts
+    ./lib/repositories/production/sqlite.ts
+    ./lib/production/composition.ts
+    ./app/api/production/projects/[projectId]/budget/route.ts
+  Finalizing page optimization ...
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/assets
+├ ƒ /api/assets/import
+├ ƒ /api/characters
+├ ƒ /api/enhance
+├ ƒ /api/generate
+├ ƒ /api/jobs
+├ ƒ /api/jobs/[id]
+├ ƒ /api/locations
+├ ƒ /api/media
+├ ƒ /api/models
+├ ƒ /api/moderate
+├ ƒ /api/production/approvals
+├ ƒ /api/production/assets/import
+├ ƒ /api/production/capabilities
+├ ƒ /api/production/exports/[id]
+├ ƒ /api/production/exports/[id]/download
+├ ƒ /api/production/exports/[id]/draft
+├ ƒ /api/production/health
+├ ƒ /api/production/jobs/[id]
+├ ƒ /api/production/media-quotes
+├ ƒ /api/production/projects
+├ ƒ /api/production/projects/[projectId]
+├ ƒ /api/production/projects/[projectId]/audio
+├ ƒ /api/production/projects/[projectId]/budget
+├ ƒ /api/production/projects/[projectId]/canon
+├ ƒ /api/production/projects/[projectId]/canon/selection
+├ ƒ /api/production/projects/[projectId]/exports
+├ ƒ /api/production/projects/[projectId]/manifests
+├ ƒ /api/production/projects/[projectId]/proposals
+├ ƒ /api/production/projects/[projectId]/shot-plans
+├ ƒ /api/production/projects/[projectId]/stories
+├ ƒ /api/production/quotes
+├ ƒ /api/production/shots/[shotId]/anchors
+├ ƒ /api/production/shots/[shotId]/selection
+├ ƒ /api/production/shots/[shotId]/takes
+├ ƒ /api/providers/discover
+├ ƒ /api/settings
+├ ƒ /api/stories
+├ ƒ /api/stories/[id]
+├ ƒ /api/writer
+├ ○ /character
+├ ƒ /character/[id]
+├ ƒ /character/[id]/edit
+├ ƒ /character/new
+├ ○ /generate/image
+├ ○ /generate/video
+├ ○ /images
+├ ○ /locations
+├ ○ /production
+├ ƒ /production/[projectId]
+├ ƒ /production/[projectId]/anchors
+├ ƒ /production/[projectId]/audio
+├ ƒ /production/[projectId]/canon
+├ ƒ /production/[projectId]/export
+├ ƒ /production/[projectId]/plan
+├ ƒ /production/[projectId]/script
+├ ƒ /production/[projectId]/shots
+├ ƒ /production/[projectId]/takes
+├ ○ /production/new
+├ ○ /results
+├ ○ /settings
+├ ○ /stories
+├ ○ /story
+├ ○ /styleguide
+└ ○ /writer
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand

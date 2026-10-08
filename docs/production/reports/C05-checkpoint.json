@@ -1,0 +1,56 @@
+{
+  "task_id": "C05",
+  "status": "incomplete",
+  "base_sha": "e439865c30873911ad26f4ad8bbb770a86be3f5f",
+  "head_sha": "e439865c30873911ad26f4ad8bbb770a86be3f5f",
+  "commit_sha": null,
+  "worktree": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio",
+  "changed_files": [
+    "evidence/C05/checkpoint-domain-tests.txt",
+    "evidence/C05/red.txt",
+    "lib/production/animatic.test.ts",
+    "lib/production/animatic.ts",
+    "lib/production/shot-plan.test.ts",
+    "lib/production/shot-plan.ts",
+    "lib/services/production/shot-plan.test.ts"
+  ],
+  "verification": {
+    "command": [
+      "npm",
+      "test",
+      "--",
+      "lib/production/shot-plan.test.ts",
+      "lib/production/animatic.test.ts"
+    ],
+    "exit_code": 1,
+    "passed_tests": 16,
+    "failed_tests": 1,
+    "output_file": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/checkpoint-domain-tests.txt"
+  },
+  "unverified": [
+    "C05 service implementation missing",
+    "Full C05 suite/typecheck/review not completed",
+    "Initial bootstrap RED executed zero tests",
+    "Shortened-plan service fixture needs unique shot IDs covering both beats",
+    "Domain verification:16pass/1failure (8-frame error wording vs test regex)"
+  ],
+  "evidence": [
+    {
+      "path": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/checkpoint-domain-tests.txt",
+      "sha256": "768fbcce88af53e3008f7ce4d7491f8c4c4d71acfc81ca7ec7ceebdae82d7046"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/red.txt",
+      "sha256": "61f3f1817cca61be60ef331128d3a0508900f77e41588d2712d7cb64891be207"
+    }
+  ],
+  "paid_calls": [],
+  "next_command": [
+    "npm",
+    "test",
+    "--",
+    "lib/production/shot-plan.test.ts",
+    "lib/production/animatic.test.ts",
+    "lib/services/production/shot-plan.test.ts"
+  ]
+}

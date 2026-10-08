@@ -1,0 +1,87 @@
+{
+  "task_id": "I01-B2-startup-contention-followup",
+  "status": "implemented_pending_independent_review",
+  "full_I01_status": "incomplete",
+  "base_sha": "4e97c5829fada681fe5ef37764961931956f9e8c",
+  "head_sha": "9e726f07745390d10dd60174a90bb84ace6aad11",
+  "commit_sha": "9e726f07745390d10dd60174a90bb84ace6aad11",
+  "worktree": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio",
+  "changed_files": [
+    "lib/repositories/production/sqlite.ts",
+    "lib/repositories/production/sqlite.test.ts"
+  ],
+  "source_sha256": {
+    "lib/repositories/production/sqlite.ts": "d42e1af4a060daa0ccfca4366ec5e258736c06649f767954d69689fea03505c0",
+    "lib/repositories/production/sqlite.test.ts": "11ed9bc621ba8187e1da7c5bef69ff4408d6c737f2489ec7faf5265e2eda954d"
+  },
+  "change": "SQLite startup applies a finite SQLITE_BUSY-only retry policy to WAL setup and IMMEDIATE migration startup using a monotonic deadline, bounded backoff, the configured SQLite busy timeout, and connection close on failure. Migration history is still read and validated inside each IMMEDIATE transaction attempt.",
+  "evidence": [
+    {
+      "kind": "red",
+      "command": ["python3", "/tmp/perabyte-b2-startup.py"],
+      "exit_code": 1,
+      "output_file": "evidence/I01-B2/startup-red.txt",
+      "output_sha256": "50909fac6f62876257ece3186a8d3044fcbc3d52e7127943f605ef65af68ebe4",
+      "assertion": "Before the fix, two barrier-synchronized processes opening a fresh database produced one SQLITE_BUSY failure at WAL setup; concurrent true-v1 upgrade succeeded."
+    },
+    {
+      "kind": "red",
+      "command": ["npm", "test", "--", "lib/repositories/production/sqlite.test.ts"],
+      "exit_code": 1,
+      "output_file": "evidence/I01-B2/startup-test-red.txt",
+      "output_sha256": "82f0bc0de128fcb7ebd9887a7e3960aa18f1779c08c8521e8cef18eed14b453f",
+      "assertion": "Before the fix, the synchronized fresh startup regression failed; the concurrent v1 upgrade and bounded sustained-lock case passed."
+    },
+    {
+      "kind": "green",
+      "command": ["python3", "/tmp/perabyte-b2-startup.py"],
+      "exit_code": 0,
+      "output_file": "evidence/I01-B2/startup-actual-green.txt",
+      "output_sha256": "0b07c7ef5b907b5f2d26fe0106ed2169daef5ec41e75c6214affa9cece164928",
+      "assertion": "Both synchronized processes succeeded for fresh and true-v1 databases; schema history contains exactly 001.sql and 002-budget.sql, integrity_check is ok, and foreign_key_check is empty."
+    },
+    {
+      "kind": "green",
+      "command": ["npm", "test", "--", "lib/repositories/production/sqlite.test.ts"],
+      "exit_code": 0,
+      "output_file": "evidence/I01-B2/startup-test-green.txt",
+      "output_sha256": "54a57882447ae2197b926e3085ebad80caffb42ea0b005358ae2baec29fe56c3",
+      "assertion": "26 SQLite tests pass, including synchronized fresh/v1 process startup and failure within the retry bound under a held DELETE-mode exclusive lock followed by successful reopen."
+    },
+    {
+      "kind": "green",
+      "command": ["npm", "test", "--", "lib/repositories/production/legacy-import.test.ts"],
+      "exit_code": 0,
+      "output_file": "evidence/I01-B2/startup-legacy.txt",
+      "output_sha256": "d6e5a20f02de738231de4a14f4654eddaaaba23c354f1d193d426e77cd02d69f",
+      "assertion": "6 legacy import regression tests pass."
+    },
+    {
+      "kind": "green",
+      "command": ["npm", "run", "typecheck"],
+      "exit_code": 0,
+      "output_file": "evidence/I01-B2/startup-typecheck.txt",
+      "output_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "assertion": "TypeScript check passes."
+    },
+    {
+      "kind": "green",
+      "command": ["git", "diff", "--check"],
+      "exit_code": 0,
+      "output_file": "evidence/I01-B2/startup-diffcheck.txt",
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "assertion": "Whitespace check passes."
+    }
+  ],
+  "review": {
+    "independent_review": "Pending parent-assigned review.",
+    "ownership": "Commit changes only the two assigned SQLite files."
+  },
+  "unverified": [
+    "Full build not run because this worktree uses a shared node_modules symlink.",
+    "Full I01 remains incomplete pending B3 services, B4 atomic queue/worker reservation, trusted provider evidence wiring, and integration/review."
+  ],
+  "paid_calls": [],
+  "authorization": {"reference": null, "scope": null, "cap": null, "currency": null},
+  "spend": {"actual": null, "currency": null, "status": "none", "receipt_refs": []}
+}

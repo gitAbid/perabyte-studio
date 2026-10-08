@@ -1,0 +1,17 @@
+
+> perabyte-studio@0.1.0 test
+> vitest run lib/production/publishing.test.ts lib/services/production/publishing.test.ts
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.0 /Users/abid/Projects/perabyte-studio/.worktrees/c17-publishing
+
+ ✓ lib/production/publishing.test.ts (20 tests) 17ms
+ ✓ lib/services/production/publishing.test.ts (5 tests) 134ms
+
+ Test Files  2 passed (2)
+      Tests  25 passed (25)
+   Start at  13:23:28
+   Duration  550ms (transform 40%, import 31%, tests 28%, worker 1%)

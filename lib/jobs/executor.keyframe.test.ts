@@ -54,22 +54,11 @@ vi.mock("@/lib/services/keyframe-gate.service", () => gate);
 const advance = vi.hoisted(() => ({
   advanceStoryChain: vi.fn(async () => undefined),
   advanceSceneAfterKeyframe: vi.fn(async () => undefined),
-  storyCast: (story: { meta?: { characterIds?: unknown } }) => {
-    const ids = Array.isArray(story.meta?.characterIds) ? (story.meta!.characterIds as string[]) : [];
-    const rows = (ids.includes("ch_1")
-      ? [{
-          id: "ch_1",
-          name: "Mara",
-          spec: { ...DEFAULT_CHARACTER_SPEC, age: 30 },
-          identity: { front: `${"b".repeat(60)}aaaa.png` },
-          createdAt: 1,
-          updatedAt: 1,
-        }]
-      : []);
-    return rows;
-  },
 }));
-vi.mock("@/lib/story/server-runner", () => advance);
+vi.mock("@/lib/story/server-runner", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/story/server-runner")>()),
+  ...advance,
+}));
 
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]);
 const MEDIA = [
@@ -210,6 +199,52 @@ describe("keyframe absorb (k_ tags)", () => {
     const expectations = gate.scoreKeyframeRef.mock.calls[0]?.[1] as { identity: string };
     expect(expectations.identity).toContain("30-year-old");
     expect(advance.advanceSceneAfterKeyframe).toHaveBeenCalledWith("s_kf", "sc1");
+  });
+
+  it("uses explicit scene-local cast for QC when the legacy story has no declared cast", async () => {
+    putStoryRepository({
+      ...getStoriesRepository("s_kf")!,
+      meta: { continuity: true, running: true },
+    });
+    const h = executor();
+    h.enqueue(makeJob());
+    await settled("job_kf");
+    const expectations = gate.scoreKeyframeRef.mock.calls[0]?.[1] as { identity: string };
+    expect(expectations.identity).toContain("30-year-old");
+  });
+
+  it("does not infer a character QC expectation from unrelated library entries", async () => {
+    putStoryRepository({
+      ...getStoriesRepository("s_kf")!,
+      scenes: [{
+        ...getStoriesRepository("s_kf")!.scenes![0],
+        state: { locationId: "loc_1" },
+      }],
+      meta: { continuity: true, running: true },
+    });
+    const h = executor();
+    h.enqueue(makeJob());
+    await settled("job_kf");
+    const expectations = gate.scoreKeyframeRef.mock.calls[0]?.[1] as { identity: string; location?: string };
+    expect(expectations.identity).toBe("the scene's described character(s)");
+    expect(expectations.location).toContain("Rooftop bar");
+  });
+
+  it("does not score a world location when the scene supplies different free text", async () => {
+    putStoryRepository({
+      ...getStoriesRepository("s_kf")!,
+      scenes: [{
+        ...getStoriesRepository("s_kf")!.scenes![0],
+        state: { locationText: "a forest clearing", characters: [{ id: "ch_1" }] },
+      }],
+      meta: { continuity: true, running: true, characterIds: ["ch_1"] },
+    });
+    const h = executor();
+    h.enqueue(makeJob());
+    await settled("job_kf");
+    const expectations = gate.scoreKeyframeRef.mock.calls[0]?.[1] as { identity: string; location?: string };
+    expect(expectations.identity).toContain("30-year-old");
+    expect(expectations.location).toBeUndefined();
   });
 
   it("re-rolls on a failing gate: clears the ref, bumps attempts, re-advances", async () => {

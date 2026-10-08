@@ -1,0 +1,57 @@
+{
+  "task_id": "I01-B6-S",
+  "status": "incomplete",
+  "base_sha": "2ded8389b71788001dc25b28b46d671f9ef4731e",
+  "head_sha": "2ded8389b71788001dc25b28b46d671f9ef4731e",
+  "commit_sha": null,
+  "worktree": "/Users/abid/.codex/worktrees/production-provider-proof/perabyte-studio",
+  "branch": "codex/production-provider-proof",
+  "root_freeze_sha256": "235e08351f3b9ca89b1acabe5c62173aaa685084c9eedb520674fb1064460379",
+  "changed_files": [
+    "lib/production/contracts.test.ts",
+    "lib/production/contracts.ts",
+    "lib/production/provider-proof.ts",
+    "lib/repositories/production/migrations/004-provider-proof.sql",
+    "lib/repositories/production/ports.ts",
+    "lib/repositories/production/sqlite.ts"
+  ],
+  "completed_subset": [
+    "Actual finance DTO, table, foreign-key and migration seams preflighted against the frozen proposal; no prerequisite mismatch found.",
+    "Provider proof payload/artifact/link schemas drafted.",
+    "Storage schema version 4 added while preserving versions 1 through 3.",
+    "Eight provider proof port methods drafted.",
+    "Migration 004 tables and immutability/CAS/link triggers drafted.",
+    "SQLite migration registration and proof storage/link methods drafted but unverified."
+  ],
+  "unresolved": [
+    "The sqlite implementation has not been typechecked or run; association logic requires review and correction if needed.",
+    "Exactly two focused real SQLite acceptance fixtures in lib/repositories/production/sqlite.test.ts are not implemented.",
+    "Migration from real schema version 3, reopen, foreign-key integrity, replay/CAS, proof-link failure atomicity, and payload integrity are unverified.",
+    "No independent review, commit, or integration has occurred."
+  ],
+  "commands": {
+    "preflight": {
+      "command": ["rg", "-n", "BudgetQuote|BudgetExecution|AccountEvidence|QuoteAccountBinding|CapabilityReceipt|SupportedStorageSchemaVersionSchema|budget_quotes|budget_executions|budget_reservations", "lib/production/contracts.ts", "lib/repositories/production/ports.ts", "lib/repositories/production/sqlite.ts", "lib/repositories/production/migrations"],
+      "exit_code": 0,
+      "result": "Actual DTO and SQLite relation names recorded to parent; no mismatch found."
+    },
+    "required_tests": [
+      {"command": ["npm", "test", "--", "lib/repositories/production/sqlite.test.ts", "-t", "I01-B6-S"], "status": "not_run"},
+      {"command": ["npm", "run", "typecheck"], "status": "not_run"},
+      {"command": ["git", "diff", "--check"], "status": "not_run"}
+    ]
+  },
+  "next_commands": [
+    "Continue only if live remaining usage is above the 2% hard stop.",
+    "Review and correct provider-proof.ts and sqlite.ts against I01-B6-S-root-freeze.json; validate current worker account generation/session and execution/reservation associations.",
+    "Implement exactly two real SQLite fixtures in lib/repositories/production/sqlite.test.ts covering v3 migration/reopen/CAS and atomic quote/execution links.",
+    "Run exactly: npm test -- lib/repositories/production/sqlite.test.ts -t I01-B6-S",
+    "After source is final, run npm run typecheck and git diff --check once each; save each raw output to a unique noclobber evidence file and hash the actual bytes.",
+    "Update this report with actual outcomes, hashes, changed paths, and source commit only if all frozen acceptance is complete; otherwise preserve incomplete status."
+  ],
+  "paid_calls": [],
+  "authenticated_calls": [],
+  "network_calls": [],
+  "unverified": ["All provider proof storage behavior", "All requested test and typecheck commands", "Diff cleanliness", "Source compile correctness"],
+  "usage_checkpoint": "Parent observed 3% short-window remaining / 7% weekly and instructed checkpoint; no test/build commands started."
+}

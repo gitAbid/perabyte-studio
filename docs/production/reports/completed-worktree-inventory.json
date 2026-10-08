@@ -1,0 +1,903 @@
+{
+  "integration_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio",
+  "integration_head": "a1d5d1ca4b93b697e775e7df850439d1770b4a06",
+  "integration_branch": "codex/production-core",
+  "records": [
+    {
+      "path": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio",
+      "directory_exists": true,
+      "registered_worktree": true,
+      "state_refs": [
+        {
+          "id": "C00",
+          "status": "integrated",
+          "head_sha": "a16b95295f31d4ef07cf239a146fc1709414620e",
+          "base_sha": "4d4b6584109d1f09bb9bac8e52d6e88359c9c42f",
+          "integration_sha": null,
+          "owner_stopped": null,
+          "evidence_paths": [
+            "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00"
+          ]
+        }
+      ],
+      "head_sha": "a16b95295f31d4ef07cf239a146fc1709414620e",
+      "branch": "codex/production-contracts",
+      "status_short": "?? evidence/",
+      "status_porcelain_v1": "?? evidence/",
+      "evidence_dir_bytes": 20725,
+      "studio_exists": false,
+      "studio_ignored": true,
+      "studio_runtime_media": {},
+      "gitmodules_exists": false,
+      "embedded_git_paths": [],
+      "commits_ahead_of_root": "a16b952 C00: harden approval and audio boundaries\n5cdd8a4 C00: define project CAS and recovery ports\n595ef8d C00: add strict production contracts",
+      "root_contains_head": false,
+      "source_files_base_to_head": "A\tdocs/production/fixtures/project.json\nA\tdocs/production/fixtures/shot-plan.json\nA\tdocs/production/fixtures/story.json\nA\tlib/production/contracts.test.ts\nA\tlib/production/contracts.ts\nA\tlib/production/errors.ts\nA\tlib/production/hash.test.ts\nA\tlib/production/hash.ts\nA\tlib/repositories/production/ports.ts",
+      "changed_vs_root": "A\tdocs/production/fixtures/project.json\nA\tdocs/production/fixtures/shot-plan.json\nA\tdocs/production/fixtures/story.json\nA\tlib/production/contracts.test.ts\nA\tlib/production/contracts.ts\nA\tlib/production/errors.ts\nA\tlib/production/hash.test.ts\nA\tlib/production/hash.ts\nA\tlib/repositories/production/ports.ts",
+      "source_file_diff_vs_root": "M\tlib/production/contracts.test.ts\nM\tlib/production/contracts.ts\nM\tlib/production/errors.ts\nM\tlib/repositories/production/ports.ts",
+      "source_commit_patch_mapping": [
+        {
+          "sha": "595ef8ddc9d0cf6ab35a48f5a38218859c2d54d2",
+          "patch_in_root": [
+            "0cec826d8b"
+          ]
+        },
+        {
+          "sha": "5cdd8a45f21caf4a0e8f06e2b881de3bb6a9d5b4",
+          "patch_in_root": [
+            "06ab9ffec1"
+          ]
+        },
+        {
+          "sha": "a16b95295f31d4ef07cf239a146fc1709414620e",
+          "patch_in_root": [
+            "eb866f5494"
+          ]
+        }
+      ],
+      "recommendation": "archive_candidate",
+      "recommendation_reason": "C00 completed/integrated; evidence is untracked (~20.7 KB); 4 source files differ from current root content, while all three packet commits have patch-id matches in root history.",
+      "branch_ref_exists": null
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio",
+      "directory_exists": true,
+      "registered_worktree": true,
+      "state_refs": [
+        {
+          "id": "U00",
+          "status": "integrated",
+          "head_sha": "9c1305c68cf952c49176d5ffc222301f1781483c",
+          "base_sha": "4d4b6584109d1f09bb9bac8e52d6e88359c9c42f",
+          "integration_sha": null,
+          "owner_stopped": null,
+          "evidence_paths": [
+            "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00"
+          ]
+        }
+      ],
+      "head_sha": "9c1305c68cf952c49176d5ffc222301f1781483c",
+      "branch": "codex/production-handover-guard",
+      "status_short": "?? evidence/",
+      "status_porcelain_v1": "?? evidence/",
+      "evidence_dir_bytes": 10820,
+      "studio_exists": false,
+      "studio_ignored": true,
+      "studio_runtime_media": {},
+      "gitmodules_exists": false,
+      "embedded_git_paths": [],
+      "commits_ahead_of_root": "9c1305c U00: close usage and takeover validation gaps\n7611f7d U00: add development usage and handover guards",
+      "root_contains_head": false,
+      "source_files_base_to_head": "A\tlib/production/development-guard.test.ts\nA\tlib/production/development-guard.ts\nA\tscripts/verify-production-handover.mjs",
+      "changed_vs_root": "A\tlib/production/development-guard.test.ts\nA\tlib/production/development-guard.ts\nA\tscripts/verify-production-handover.mjs",
+      "source_file_diff_vs_root": "",
+      "source_commit_patch_mapping": [
+        {
+          "sha": "7611f7dc400bc806669b6f3e2d75721e9c2aedf2",
+          "patch_in_root": [
+            "dfc34232dd"
+          ]
+        },
+        {
+          "sha": "9c1305c68cf952c49176d5ffc222301f1781483c",
+          "patch_in_root": [
+            "025ebcee46"
+          ]
+        }
+      ],
+      "recommendation": "archive_candidate",
+      "recommendation_reason": "U00 completed/integrated; evidence untracked (~10.8 KB); source files exactly match current root.",
+      "branch_ref_exists": null
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio",
+      "directory_exists": true,
+      "registered_worktree": true,
+      "state_refs": [
+        {
+          "id": "C05",
+          "status": "integrated",
+          "head_sha": "d416302d78204d7243538348d9ef7d9306bf7a2c",
+          "base_sha": "9a5454471a9b4a4d84728813a20f9823105832c1",
+          "integration_sha": null,
+          "owner_stopped": null,
+          "evidence_paths": [
+            "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05"
+          ]
+        }
+      ],
+      "head_sha": "d416302d78204d7243538348d9ef7d9306bf7a2c",
+      "branch": "codex/production-shot-plan",
+      "status_short": "?? evidence/",
+      "status_porcelain_v1": "?? evidence/",
+      "evidence_dir_bytes": 28855,
+      "studio_exists": false,
+      "studio_ignored": true,
+      "studio_runtime_media": {},
+      "gitmodules_exists": false,
+      "embedded_git_paths": [],
+      "commits_ahead_of_root": "d416302 C05: honor latest story approval decision\n02707ad C05: implement stable shot plans and animatic timing",
+      "root_contains_head": false,
+      "source_files_base_to_head": "A\tlib/production/animatic.test.ts\nA\tlib/production/animatic.ts\nA\tlib/production/shot-plan.test.ts\nA\tlib/production/shot-plan.ts\nA\tlib/services/production/shot-plan.test.ts\nA\tlib/services/production/shot-plan.ts",
+      "changed_vs_root": "A\tlib/production/animatic.test.ts\nA\tlib/production/animatic.ts\nA\tlib/production/shot-plan.test.ts\nA\tlib/production/shot-plan.ts\nA\tlib/services/production/shot-plan.test.ts\nA\tlib/services/production/shot-plan.ts",
+      "source_file_diff_vs_root": "M\tlib/services/production/shot-plan.test.ts\nM\tlib/services/production/shot-plan.ts",
+      "source_commit_patch_mapping": [
+        {
+          "sha": "02707ad7700f02c04026ee6e7e0218766eac46fa",
+          "patch_in_root": [
+            "5d03bc7549"
+          ]
+        },
+        {
+          "sha": "d416302d78204d7243538348d9ef7d9306bf7a2c",
+          "patch_in_root": [
+            "95f0570296"
+          ]
+        }
+      ],
+      "recommendation": "archive_candidate",
+      "recommendation_reason": "C05 completed/integrated; evidence untracked (~28.9 KB); service shot-plan files differ from current root content; both packet commits have patch-id matches.",
+      "branch_ref_exists": null
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-store/perabyte-studio",
+      "directory_exists": true,
+      "registered_worktree": true,
+      "state_refs": [
+        {
+          "id": "C01",
+          "status": "integrated",
+          "head_sha": "9b0a3abc748cfed75103a799d80d7deb8c7e9e06",
+          "base_sha": "9a5454471a9b4a4d84728813a20f9823105832c1",
+          "integration_sha": null,
+          "owner_stopped": null,
+          "evidence_paths": [
+            "/Users/abid/.codex/worktrees/production-store/perabyte-studio/evidence/C01"
+          ]
+        }
+      ],
+      "head_sha": "9b0a3abc748cfed75103a799d80d7deb8c7e9e06",
+      "branch": "codex/production-store",
+      "status_short": "?? evidence/",
+      "status_porcelain_v1": "?? evidence/",
+      "evidence_dir_bytes": 11212,
+      "studio_exists": false,
+      "studio_ignored": true,
+      "studio_runtime_media": {},
+      "gitmodules_exists": false,
+      "embedded_git_paths": [],
+      "commits_ahead_of_root": "9b0a3ab C01: scope SQLite writes to synchronous transaction callbacks\n39a6ff0 C01: harden backup import and audio CAS refs\n8aae9d8 C01: add durable SQLite production store and legacy import",
+      "root_contains_head": false,
+      "source_files_base_to_head": "A\tlib/repositories/production/legacy-import.test.ts\nA\tlib/repositories/production/legacy-import.ts\nA\tlib/repositories/production/migrations/001.sql\nA\tlib/repositories/production/sqlite.test.ts\nA\tlib/repositories/production/sqlite.ts\nA\tscripts/import-legacy-studio.mjs",
+      "changed_vs_root": "A\tlib/repositories/production/legacy-import.test.ts\nA\tlib/repositories/production/legacy-import.ts\nA\tlib/repositories/production/migrations/001.sql\nA\tlib/repositories/production/sqlite.test.ts\nA\tlib/repositories/production/sqlite.ts\nA\tscripts/import-legacy-studio.mjs",
+      "source_file_diff_vs_root": "M\tlib/repositories/production/sqlite.test.ts\nM\tlib/repositories/production/sqlite.ts",
+      "source_commit_patch_mapping": [
+        {
+          "sha": "8aae9d8b5a286b55b031025a393d326ec535d885",
+          "patch_in_root": [
+            "21c9cae15a"
+          ]
+        },
+        {
+          "sha": "39a6ff042f293f9c0311966b020ccf6a9f006fb5",
+          "patch_in_root": [
+            "188869f227"
+          ]
+        },
+        {
+          "sha": "9b0a3abc748cfed75103a799d80d7deb8c7e9e06",
+          "patch_in_root": [
+            "65ff9c15fd"
+          ]
+        }
+      ],
+      "recommendation": "archive_candidate",
+      "recommendation_reason": "C01 completed/integrated; evidence untracked (~11.2 KB); SQLite source and tests differ from current root; all packet commits have patch-id matches.",
+      "branch_ref_exists": null
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio",
+      "directory_exists": true,
+      "registered_worktree": true,
+      "state_refs": [
+        {
+          "id": "C03",
+          "status": "integrated",
+          "head_sha": "fada33a857dc1c63f8ef58012346bfd2146fc746",
+          "base_sha": "9a5454471a9b4a4d84728813a20f9823105832c1",
+          "integration_sha": null,
+          "owner_stopped": null,
+          "evidence_paths": [
+            "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03"
+          ]
+        }
+      ],
+      "head_sha": "fada33a857dc1c63f8ef58012346bfd2146fc746",
+      "branch": "codex/production-capabilities",
+      "status_short": "?? evidence/",
+      "status_porcelain_v1": "?? evidence/",
+      "evidence_dir_bytes": 13087,
+      "studio_exists": false,
+      "studio_ignored": true,
+      "studio_runtime_media": {},
+      "gitmodules_exists": false,
+      "embedded_git_paths": [],
+      "commits_ahead_of_root": "fada33a C03: Preserve H3 endpoint capability semantics\n4e655fb C03: Correct H3 endpoint and Ref2VA mapping\n0c22783 C03: Add evidence-based production capabilities",
+      "root_contains_head": false,
+      "source_files_base_to_head": "A\tapp/api/production/capabilities/route.ts\nA\tapp/api/production/quotes/route.ts\nA\tlib/providers/production/capabilities.test.ts\nA\tlib/providers/production/capabilities.ts\nA\tlib/providers/production/sogni-h3.test.ts\nA\tlib/providers/production/sogni-h3.ts\nA\tscripts/probe-production-capabilities.mjs",
+      "changed_vs_root": "A\tapp/api/production/capabilities/route.ts\nA\tapp/api/production/quotes/route.ts\nA\tlib/providers/production/capabilities.test.ts\nA\tlib/providers/production/capabilities.ts\nA\tlib/providers/production/sogni-h3.test.ts\nA\tlib/providers/production/sogni-h3.ts\nA\tscripts/probe-production-capabilities.mjs",
+      "source_file_diff_vs_root": "M\tapp/api/production/capabilities/route.ts\nM\tapp/api/production/quotes/route.ts\nM\tlib/providers/production/capabilities.test.ts",
+      "source_commit_patch_mapping": [
+        {
+          "sha": "0c22783f1b061316ca6e130a66cd3ca1e6062912",
+          "patch_in_root": [
+            "970cd8e14b"
+          ]
+        },
+        {
+          "sha": "4e655fb1e73a9f2953d14310649074b553aaa26a",
+          "patch_in_root": [
+            "f8d25dae12"
+          ]
+        },
+        {
+          "sha": "fada33a857dc1c63f8ef58012346bfd2146fc746",
+          "patch_in_root": [
+            "5260be9d25"
+          ]
+        }
+      ],
+      "recommendation": "archive_candidate",
+      "recommendation_reason": "C03 completed/integrated; evidence untracked (~13.1 KB); three capability source files differ from current root; all packet commits have patch-id matches.",
+      "branch_ref_exists": null
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-runtime/perabyte-studio",
+      "directory_exists": true,
+      "registered_worktree": true,
+      "state_refs": [],
+      "head_sha": "ae3a22e7cb9b5ae565e82f0ddf46b51827b45093",
+      "branch": "codex/production-runtime",
+      "status_short": "?? evidence/",
+      "status_porcelain_v1": "?? evidence/",
+      "evidence_dir_bytes": 10286,
+      "studio_exists": false,
+      "studio_ignored": true,
+      "studio_runtime_media": {},
+      "gitmodules_exists": false,
+      "embedded_git_paths": [],
+      "commits_ahead_of_root": "ae3a22e I00: preserve actionable errors and map internal failures\n67fad3e fix: freeze derived dependency response and canon successor compatibility rules\nd00862d I00: add shared runtime profiles and HTTP boundary",
+      "root_contains_head": false,
+      "changed_vs_root": "M\tdocs/production/ARCHITECTURE.md\nM\tdocs/production/TASK_PACKETS.md\nM\tdocs/production/task-registry.json\nM\tlib/production/contracts.test.ts\nM\tlib/production/contracts.ts\nM\tlib/production/errors.ts\nA\tlib/production/http.test.ts\nA\tlib/production/http.ts\nA\tlib/production/profiles.test.ts\nA\tlib/production/profiles.ts\nA\tlib/production/runtime.test.ts\nA\tlib/production/runtime.ts",
+      "source_file_diff_vs_root": "",
+      "source_commit_patch_mapping": [],
+      "recommendation": "archive_candidate",
+      "recommendation_reason": "I00 prior foundation integrated; evidence untracked (~10.3 KB); all three I00 commits map by patch-id to root history and source files match current root.",
+      "branch_ref_exists": null
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio",
+      "directory_exists": true,
+      "registered_worktree": true,
+      "state_refs": [
+        {
+          "id": "C04",
+          "status": "integrated",
+          "head_sha": "b09ddb103abd340bb41c24a0be90ea1dc21033a9",
+          "base_sha": "9c0397a66922a37ae99eb79460f421f2c96fa10d",
+          "integration_sha": null,
+          "owner_stopped": true,
+          "evidence_paths": [
+            "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/C04-checkpoint-resume.json",
+            "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/C04-integrity-resume.json",
+            "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/C04-continuation-integrity-report.json",
+            "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/root-continuation-reproduction.txt",
+            "docs/production/reports/C04-continuation-review.json"
+          ]
+        },
+        {
+          "id": null,
+          "status": "integrated",
+          "head_sha": "b09ddb103abd340bb41c24a0be90ea1dc21033a9",
+          "base_sha": "ff6d3df93425e7f876d58162b96152eab2cf7ef9",
+          "integration_sha": null,
+          "owner_stopped": true,
+          "evidence_paths": []
+        }
+      ],
+      "head_sha": "b09ddb103abd340bb41c24a0be90ea1dc21033a9",
+      "branch": "codex/production-worker",
+      "status_short": "?? evidence/C04/C04-checkpoint-resume.json\n?? evidence/C04/C04-continuation-integrity-report.json\n?? evidence/C04/C04-integrity-resume.json\n?? evidence/C04/asset-import-green-resume1.txt\n?? evidence/C04/asset-import-red-resume.txt\n?? evidence/C04/asset-import-red2-resume.txt\n?? evidence/C04/asset-import-red3-resume.txt\n?? evidence/C04/c04-focused-resume-final.txt\n?? evidence/C04/cancel-deadletter-green-resume1.txt\n?? evidence/C04/continuation-integrity-diff-check.txt\n?? evidence/C04/continuation-integrity-green.txt\n?? evidence/C04/continuation-integrity-typecheck.txt\n?? evidence/C04/core-green.txt\n?? evidence/C04/diff-check-checkpoint-resume.txt\n?? evidence/C04/doctor-resume-final.txt\n?? evidence/C04/duplicate-end-frame-red.txt\n?? evidence/C04/focused-after-review.txt\n?? evidence/C04/focused-checkpoint-resume.txt\n?? evidence/C04/focused-current.txt\n?? evidence/C04/focused-current2.txt\n?? evidence/C04/focused-current3.txt\n?? evidence/C04/focused-current4.txt\n?? evidence/C04/focused-final.txt\n?? evidence/C04/focused-green.txt\n?? evidence/C04/focused-green2.txt\n?? evidence/C04/focused-green3.txt\n?? evidence/C04/focused-green4.txt\n?? evidence/C04/focused-resume-check.txt\n?? evidence/C04/focused-resume-check2.txt\n?? evidence/C04/queue-cas-green-resume1.txt\n?? evidence/C04/queue-cas-green-resume2.txt\n?? evidence/C04/queue-cas-red-resume.txt\n?? evidence/C04/queue-progress.txt\n?? evidence/C04/red.txt\n?? evidence/C04/red2.txt\n?? evidence/C04/red3.txt\n?? evidence/C04/required-integrity-diff-check.txt\n?? evidence/C04/required-integrity-final.txt\n?? evidence/C04/required-integrity-green.txt\n?? evidence/C04/required-integrity-typecheck-final.txt\n?? evidence/C04/required-integrity-typecheck.txt\n?? evidence/C04/root-checkpoint-tests.txt\n?? evidence/C04/root-continuation-reproduction.txt\n?? evidence/C04/root-continuation-typecheck.txt\n?? evidence/C04/root-integrity-reproduction.txt\n?? evidence/C04/root-integrity-typecheck.txt\n?? evidence/C04/root-runtime-8cf556b-tests.txt\n?? evidence/C04/root-runtime-8cf556b-typecheck.txt\n?? evidence/C04/root-runtime-b09ddb1-tests.txt\n?? evidence/C04/root-runtime-c7eb4d2-tests.txt\n?? evidence/C04/runtime-takeover/\n?? evidence/C04/sogni-live-discovery-green-resume.txt\n?? evidence/C04/sogni-live-discovery-red-resume.txt\n?? evidence/C04/sogni-role-green-resume.txt\n?? evidence/C04/sogni-role-red-resume.txt\n?? evidence/C04/successor-adjacency-red.txt\n?? evidence/C04/typecheck-asset-import-resume.txt\n?? evidence/C04/typecheck-checkpoint-resume.txt\n?? evidence/C04/typecheck-current3.txt\n?? evidence/C04/typecheck-current4.txt\n?? evidence/C04/typecheck-final.txt\n?? evidence/C04/typecheck-last.txt\n?? evidence/C04/typecheck-progress.txt\n?? evidence/C04/typecheck-progress2.txt\n?? evidence/C04/typecheck-progress3.txt\n?? evidence/C04/typecheck-progress4.txt\n?? evidence/C04/typecheck-progress5.txt\n?? evidence/C04/typecheck-resume-check.txt\n?? evidence/C04/typecheck-resume-check2.txt\n?? evidence/C04/typecheck-resume-final.txt\n?? evidence/C04/typecheck-vault-provider-resume.txt\n?? evidence/C04/typecheck-vault-provider-resume2.txt\n?? evidence/C04/typecheck-vault-provider-resume3.txt\n?? evidence/C04/typecheck-vault-provider-resume4.txt\n?? evidence/C04/typecheck-vault-provider-resume5.txt\n?? evidence/C04/typecheck-worker-lock-resume.txt\n?? evidence/C04/typecheck-worker-queue-resume.txt\n?? evidence/C04/typecheck-worker-queue-resume2.txt\n?? evidence/C04/typecheck.txt\n?? evidence/C04/typecheck2.txt\n?? evidence/C04/typecheck3.txt\n?? evidence/C04/typecheck4.txt\n?? evidence/C04/typecheck5.txt\n?? evidence/C04/typecheck6.txt\n?? evidence/C04/typecheck7.txt\n?? evidence/C04/vault-decode-green-resume1.txt\n?? evidence/C04/vault-decode-green-resume2.txt\n?? evidence/C04/vault-decode-green-resume3.txt\n?? evidence/C04/vault-decode-green-resume4.txt\n?? evidence/C04/vault-decode-green-resume5.txt\n?? evidence/C04/vault-decode-red-resume.txt\n?? evidence/C04/worker-lock-green-resume.txt\n?? evidence/C04/worker-lock-red-resume.txt\n?? evidence/C04/worker-route-final.txt",
+      "status_porcelain_v1": "?? evidence/C04/C04-checkpoint-resume.json\n?? evidence/C04/C04-continuation-integrity-report.json\n?? evidence/C04/C04-integrity-resume.json\n?? evidence/C04/asset-import-green-resume1.txt\n?? evidence/C04/asset-import-red-resume.txt\n?? evidence/C04/asset-import-red2-resume.txt\n?? evidence/C04/asset-import-red3-resume.txt\n?? evidence/C04/c04-focused-resume-final.txt\n?? evidence/C04/cancel-deadletter-green-resume1.txt\n?? evidence/C04/continuation-integrity-diff-check.txt\n?? evidence/C04/continuation-integrity-green.txt\n?? evidence/C04/continuation-integrity-typecheck.txt\n?? evidence/C04/core-green.txt\n?? evidence/C04/diff-check-checkpoint-resume.txt\n?? evidence/C04/doctor-resume-final.txt\n?? evidence/C04/duplicate-end-frame-red.txt\n?? evidence/C04/focused-after-review.txt\n?? evidence/C04/focused-checkpoint-resume.txt\n?? evidence/C04/focused-current.txt\n?? evidence/C04/focused-current2.txt\n?? evidence/C04/focused-current3.txt\n?? evidence/C04/focused-current4.txt\n?? evidence/C04/focused-final.txt\n?? evidence/C04/focused-green.txt\n?? evidence/C04/focused-green2.txt\n?? evidence/C04/focused-green3.txt\n?? evidence/C04/focused-green4.txt\n?? evidence/C04/focused-resume-check.txt\n?? evidence/C04/focused-resume-check2.txt\n?? evidence/C04/queue-cas-green-resume1.txt\n?? evidence/C04/queue-cas-green-resume2.txt\n?? evidence/C04/queue-cas-red-resume.txt\n?? evidence/C04/queue-progress.txt\n?? evidence/C04/red.txt\n?? evidence/C04/red2.txt\n?? evidence/C04/red3.txt\n?? evidence/C04/required-integrity-diff-check.txt\n?? evidence/C04/required-integrity-final.txt\n?? evidence/C04/required-integrity-green.txt\n?? evidence/C04/required-integrity-typecheck-final.txt\n?? evidence/C04/required-integrity-typecheck.txt\n?? evidence/C04/root-checkpoint-tests.txt\n?? evidence/C04/root-continuation-reproduction.txt\n?? evidence/C04/root-continuation-typecheck.txt\n?? evidence/C04/root-integrity-reproduction.txt\n?? evidence/C04/root-integrity-typecheck.txt\n?? evidence/C04/root-runtime-8cf556b-tests.txt\n?? evidence/C04/root-runtime-8cf556b-typecheck.txt\n?? evidence/C04/root-runtime-b09ddb1-tests.txt\n?? evidence/C04/root-runtime-c7eb4d2-tests.txt\n?? evidence/C04/runtime-takeover/\n?? evidence/C04/sogni-live-discovery-green-resume.txt\n?? evidence/C04/sogni-live-discovery-red-resume.txt\n?? evidence/C04/sogni-role-green-resume.txt\n?? evidence/C04/sogni-role-red-resume.txt\n?? evidence/C04/successor-adjacency-red.txt\n?? evidence/C04/typecheck-asset-import-resume.txt\n?? evidence/C04/typecheck-checkpoint-resume.txt\n?? evidence/C04/typecheck-current3.txt\n?? evidence/C04/typecheck-current4.txt\n?? evidence/C04/typecheck-final.txt\n?? evidence/C04/typecheck-last.txt\n?? evidence/C04/typecheck-progress.txt\n?? evidence/C04/typecheck-progress2.txt\n?? evidence/C04/typecheck-progress3.txt\n?? evidence/C04/typecheck-progress4.txt\n?? evidence/C04/typecheck-progress5.txt\n?? evidence/C04/typecheck-resume-check.txt\n?? evidence/C04/typecheck-resume-check2.txt\n?? evidence/C04/typecheck-resume-final.txt\n?? evidence/C04/typecheck-vault-provider-resume.txt\n?? evidence/C04/typecheck-vault-provider-resume2.txt\n?? evidence/C04/typecheck-vault-provider-resume3.txt\n?? evidence/C04/typecheck-vault-provider-resume4.txt\n?? evidence/C04/typecheck-vault-provider-resume5.txt\n?? evidence/C04/typecheck-worker-lock-resume.txt\n?? evidence/C04/typecheck-worker-queue-resume.txt\n?? evidence/C04/typecheck-worker-queue-resume2.txt\n?? evidence/C04/typecheck.txt\n?? evidence/C04/typecheck2.txt\n?? evidence/C04/typecheck3.txt\n?? evidence/C04/typecheck4.txt\n?? evidence/C04/typecheck5.txt\n?? evidence/C04/typecheck6.txt\n?? evidence/C04/typecheck7.txt\n?? evidence/C04/vault-decode-green-resume1.txt\n?? evidence/C04/vault-decode-green-resume2.txt\n?? evidence/C04/vault-decode-green-resume3.txt\n?? evidence/C04/vault-decode-green-resume4.txt\n?? evidence/C04/vault-decode-green-resume5.txt\n?? evidence/C04/vault-decode-red-resume.txt\n?? evidence/C04/worker-lock-green-resume.txt\n?? evidence/C04/worker-lock-red-resume.txt\n?? evidence/C04/worker-route-final.txt",
+      "evidence_dir_bytes": 189907,
+      "studio_exists": true,
+      "studio_ignored": true,
+      "studio_runtime_media": {},
+      "gitmodules_exists": false,
+      "embedded_git_paths": [],
+      "commits_ahead_of_root": "b09ddb1 C04: exit cleanly on idle worker shutdown\nc7eb4d2 fix production worker submit recovery timing\n8cf556b C04: harden worker ownership, recovery, and media staging\nff6d3df C04: validate continuation transport pins\n477665e C04: enforce approved production input integrity\nb19c0c4 C04: harden durable worker and media handling\n8914c01 C02: require exact shot input equality for reuse\n76fcc8e C02: address successor compatibility review findings\n6c54d31 C02: implement canonical revision services and read model\n25226bb C04: restore outbox intent for reconciled submissions\n124a404 C02: bound provider request snapshot fields\nafa4104 C02: add provider targets and Host-aware origin check\na66df5e C02: prevent stale outbox heartbeat shortening\n45da31f C02: add optional asset import provenance contract\n0d8b9b6 C02: add cancellation and outbox heartbeat seams\n036afc8 C04: checkpoint durable worker and provider composition\n21ab993 C02: expire outbox acknowledgement at lease boundary\nb5be504 C02: add safe outbox acknowledgement port\n9c0397a docs: accept shared runtime and freeze shared canon selection allocation",
+      "root_contains_head": false,
+      "source_files_base_to_head": "A\tapp/api/production/assets/import/route.ts\nM\tapp/api/production/capabilities/route.ts\nA\tapp/api/production/health/route.ts\nA\tapp/api/production/jobs/[id]/route.ts\nA\tapp/api/production/projects/[projectId]/canon/route.ts\nA\tapp/api/production/projects/[projectId]/canon/selection/route.ts\nA\tapp/api/production/projects/[projectId]/route.ts\nA\tapp/api/production/projects/[projectId]/shot-plans/route.ts\nA\tapp/api/production/projects/[projectId]/stories/route.ts\nA\tapp/api/production/projects/route.ts\nM\tapp/api/production/quotes/route.ts\nA\tevidence/C04/diff-check.txt\nA\tevidence/C04/doctor-check.txt\nA\tevidence/C04/focused-green-final.txt\nA\tevidence/C04/queue-check.txt\nA\tevidence/C04/typecheck-final2.txt\nA\tevidence/C04/vault-root-red.txt\nA\tlib/jobs/production/queue.test.ts\nA\tlib/jobs/production/queue.ts\nA\tlib/jobs/production/worker.test.ts\nA\tlib/jobs/production/worker.ts\nA\tlib/media/production/vault.test.ts\nA\tlib/media/production/vault.ts\nA\tlib/production/approval-policy.test.ts\nA\tlib/production/approval-policy.ts\nM\tlib/production/contracts.test.ts\nM\tlib/production/contracts.ts\nM\tlib/production/http.test.ts\nM\tlib/production/http.ts\nA\tlib/production/revisions.test.ts\nA\tlib/production/revisions.ts\nA\tlib/providers/production/http-routes.ts\nA\tlib/providers/production/sogni-provider.test.ts\nA\tlib/providers/production/sogni-provider.ts\nA\tlib/repositories/production/jobs.sqlite.ts\nM\tlib/repositories/production/ports.ts\nM\tlib/repositories/production/sqlite.test.ts\nM\tlib/repositories/production/sqlite.ts\nA\tlib/services/production/revisions.test.ts\nA\tlib/services/production/revisions.ts\nM\tlib/services/production/shot-plan.test.ts\nM\tlib/services/production/shot-plan.ts\nA\tscripts/production-doctor.mjs\nA\tscripts/production-worker.mjs",
+      "changed_vs_root": "M\tTASKS.md\nA\tapp/api/production/assets/import/route.ts\nM\tapp/api/production/capabilities/route.ts\nA\tapp/api/production/health/route.ts\nA\tapp/api/production/jobs/[id]/route.ts\nA\tapp/api/production/projects/[projectId]/canon/route.ts\nA\tapp/api/production/projects/[projectId]/canon/selection/route.ts\nA\tapp/api/production/projects/[projectId]/route.ts\nA\tapp/api/production/projects/[projectId]/shot-plans/route.ts\nA\tapp/api/production/projects/[projectId]/stories/route.ts\nA\tapp/api/production/projects/route.ts\nM\tapp/api/production/quotes/route.ts\nM\tdocs/production/HANDOVER.md\nM\tdocs/production/SESSION_STATE.json\nM\tdocs/production/TASK_PACKETS.md\nA\tdocs/production/reports/I00-evidence.json\nM\tdocs/production/task-registry.json\nA\tevidence/C04/diff-check.txt\nA\tevidence/C04/doctor-check.txt\nA\tevidence/C04/focused-green-final.txt\nA\tevidence/C04/queue-check.txt\nA\tevidence/C04/typecheck-final2.txt\nA\tevidence/C04/vault-root-red.txt\nA\tlib/jobs/production/queue.test.ts\nA\tlib/jobs/production/queue.ts\nA\tlib/jobs/production/worker.test.ts\nA\tlib/jobs/production/worker.ts\nA\tlib/media/production/vault.test.ts\nA\tlib/media/production/vault.ts\nA\tlib/production/approval-policy.test.ts\nA\tlib/production/approval-policy.ts\nM\tlib/production/contracts.test.ts\nM\tlib/production/contracts.ts\nM\tlib/production/http.test.ts\nM\tlib/production/http.ts\nA\tlib/production/revisions.test.ts\nA\tlib/production/revisions.ts\nA\tlib/providers/production/http-routes.ts\nA\tlib/providers/production/sogni-provider.test.ts\nA\tlib/providers/production/sogni-provider.ts\nA\tlib/repositories/production/jobs.sqlite.ts\nM\tlib/repositories/production/ports.ts\nM\tlib/repositories/production/sqlite.test.ts\nM\tlib/repositories/production/sqlite.ts\nA\tlib/services/production/revisions.test.ts\nA\tlib/services/production/revisions.ts\nM\tlib/services/production/shot-plan.test.ts\nM\tlib/services/production/shot-plan.ts\nA\tscripts/production-doctor.mjs\nA\tscripts/production-worker.mjs",
+      "source_file_diff_vs_root": "M\tlib/production/contracts.test.ts\nM\tlib/production/contracts.ts\nM\tlib/providers/production/sogni-provider.test.ts\nM\tlib/providers/production/sogni-provider.ts\nM\tlib/repositories/production/ports.ts\nM\tlib/repositories/production/sqlite.test.ts\nM\tlib/repositories/production/sqlite.ts",
+      "source_commit_patch_mapping": [
+        {
+          "sha": "b5be504d44853f331e91e11e0b60f38521e9cd06",
+          "patch_in_root": [
+            "d3b714cf6a"
+          ]
+        },
+        {
+          "sha": "21ab993a1e0da774f6ab4ce99368709eb0e68066",
+          "patch_in_root": [
+            "e9824cfda6"
+          ]
+        },
+        {
+          "sha": "036afc841fa446b29ffc5393aee1b46d0fd052f1",
+          "patch_in_root": [
+            "2ea82e29b1"
+          ]
+        },
+        {
+          "sha": "0d8b9b65e8b522e5f3e53f3d3c3569f913d70d29",
+          "patch_in_root": [
+            "2be798b13f"
+          ]
+        },
+        {
+          "sha": "45da31f74029a28358fe6d9fdaf817e465f766b0",
+          "patch_in_root": [
+            "5c584367a2"
+          ]
+        },
+        {
+          "sha": "a66df5e2d2d8d69e7d2628ac999686c404049316",
+          "patch_in_root": [
+            "65d4c61887"
+          ]
+        },
+        {
+          "sha": "afa4104340e5e57079221872dab33b662586ef8a",
+          "patch_in_root": [
+            "4065b328fe"
+          ]
+        },
+        {
+          "sha": "124a40424ef78a498219277b98a098c3df46a1cc",
+          "patch_in_root": [
+            "a2c571cc9b"
+          ]
+        },
+        {
+          "sha": "25226bb77b3a3e19a6cf54ecc44751be631ba8a6",
+          "patch_in_root": []
+        },
+        {
+          "sha": "6c54d310e3c8b18f3b19f746027b39fc1fbe466b",
+          "patch_in_root": [
+            "1814cc28be"
+          ]
+        },
+        {
+          "sha": "76fcc8e76490c4f4f5a39ec727739ba989c13faa",
+          "patch_in_root": [
+            "7df818e181"
+          ]
+        },
+        {
+          "sha": "8914c01bc1a8421d50cf1451c0b92a1339f6f221",
+          "patch_in_root": []
+        },
+        {
+          "sha": "b19c0c4894c227521c077c8399019cbe97b3dfb7",
+          "patch_in_root": [
+            "0f37032baf"
+          ]
+        },
+        {
+          "sha": "477665ee3f75541516123e57889d93f7302f007e",
+          "patch_in_root": [
+            "126c2f9def"
+          ]
+        },
+        {
+          "sha": "ff6d3df93425e7f876d58162b96152eab2cf7ef9",
+          "patch_in_root": [
+            "c7045557c8"
+          ]
+        },
+        {
+          "sha": "8cf556bc3a2d14d9b1dae7cddba9b6bc9bf1971b",
+          "patch_in_root": [
+            "62c304eeca"
+          ]
+        },
+        {
+          "sha": "c7eb4d2e2664453b597abc8376cb276f6af3c0a3",
+          "patch_in_root": [
+            "962e128c46"
+          ]
+        },
+        {
+          "sha": "b09ddb103abd340bb41c24a0be90ea1dc21033a9",
+          "patch_in_root": [
+            "b48c9ee457"
+          ]
+        }
+      ],
+      "recommendation": "archive_candidate_with_divergence_note",
+      "recommendation_reason": "C04 integrated and owner stopped; evidence untracked (~189.9 KB); 7 source paths differ from current root. Most packet commits patch-map to root; C04 commits 25226bb and 8914c01 do not exact-map, so inspect integration equivalence before any nonrecoverable branch deletion. No ignored .studio data found.",
+      "branch_ref_exists": null
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio",
+      "directory_exists": true,
+      "registered_worktree": true,
+      "state_refs": [
+        {
+          "id": "C02",
+          "status": "integrated",
+          "head_sha": "845a7e8c6ba14862bfe1b90609326463be8a10a6",
+          "base_sha": "3d53a083407574934fc055e246279bb9c485326b",
+          "integration_sha": null,
+          "owner_stopped": true,
+          "evidence_paths": [
+            "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/completion-report.json",
+            "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/diff-check.txt",
+            "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/focused-green.txt",
+            "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/readmodel-compat-green.txt",
+            "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/readmodel-compat-red.txt",
+            "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/review-fixes-green.txt",
+            "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/review-fixes-typecheck.txt",
+            "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/typecheck.txt"
+          ]
+        }
+      ],
+      "head_sha": "e65f57168ae61dfe612a44bb2fdb5cc26fd68f84",
+      "branch": "codex/production-revisions",
+      "status_short": "?? evidence/",
+      "status_porcelain_v1": "?? evidence/",
+      "evidence_dir_bytes": 82349,
+      "studio_exists": false,
+      "studio_ignored": true,
+      "studio_runtime_media": {},
+      "gitmodules_exists": false,
+      "embedded_git_paths": [],
+      "commits_ahead_of_root": "e65f571 C04: restore outbox intent for reconciled submissions\n845a7e8 C02: bound provider request snapshot fields\n79b0336 C02: add provider targets and Host-aware origin check\n715920b C02: prevent stale outbox heartbeat shortening\ne221442 C02: require exact shot input equality for reuse\nf1c7ca2 C02: add cancellation and outbox heartbeat seams\nfd4eec6 C02: address successor compatibility review findings\n568f128 C02: implement canonical revision services and read model\n83fe2db C02: add optional asset import provenance contract\n5f71773 C02: expire outbox acknowledgement at lease boundary\n85ee734 C02: add safe outbox acknowledgement port",
+      "root_contains_head": false,
+      "source_files_base_to_head": "A\tapp/api/production/projects/[projectId]/canon/route.ts\nA\tapp/api/production/projects/[projectId]/canon/selection/route.ts\nA\tapp/api/production/projects/[projectId]/route.ts\nA\tapp/api/production/projects/[projectId]/shot-plans/route.ts\nA\tapp/api/production/projects/[projectId]/stories/route.ts\nA\tapp/api/production/projects/route.ts\nM\tlib/production/contracts.test.ts\nM\tlib/production/contracts.ts\nM\tlib/production/http.test.ts\nM\tlib/production/http.ts\nA\tlib/production/revisions.test.ts\nA\tlib/production/revisions.ts\nM\tlib/repositories/production/ports.ts\nM\tlib/repositories/production/sqlite.test.ts\nM\tlib/repositories/production/sqlite.ts\nA\tlib/services/production/revisions.test.ts\nA\tlib/services/production/revisions.ts\nM\tlib/services/production/shot-plan.test.ts\nM\tlib/services/production/shot-plan.ts",
+      "changed_vs_root": "A\tapp/api/production/projects/[projectId]/canon/route.ts\nA\tapp/api/production/projects/[projectId]/canon/selection/route.ts\nA\tapp/api/production/projects/[projectId]/route.ts\nA\tapp/api/production/projects/[projectId]/shot-plans/route.ts\nA\tapp/api/production/projects/[projectId]/stories/route.ts\nA\tapp/api/production/projects/route.ts\nM\tlib/production/contracts.test.ts\nM\tlib/production/contracts.ts\nM\tlib/production/http.test.ts\nM\tlib/production/http.ts\nA\tlib/production/revisions.test.ts\nA\tlib/production/revisions.ts\nM\tlib/repositories/production/ports.ts\nM\tlib/repositories/production/sqlite.test.ts\nM\tlib/repositories/production/sqlite.ts\nA\tlib/services/production/revisions.test.ts\nA\tlib/services/production/revisions.ts\nM\tlib/services/production/shot-plan.test.ts\nM\tlib/services/production/shot-plan.ts",
+      "source_file_diff_vs_root": "M\tlib/production/contracts.test.ts\nM\tlib/production/contracts.ts\nM\tlib/repositories/production/ports.ts\nM\tlib/repositories/production/sqlite.test.ts\nM\tlib/repositories/production/sqlite.ts",
+      "source_commit_patch_mapping": [
+        {
+          "sha": "85ee734c110c35246bb362e5cccdb1ab66cefb46",
+          "patch_in_root": [
+            "d3b714cf6a"
+          ]
+        },
+        {
+          "sha": "5f71773fc2da3f3311cbe9cc1810092615ea7bb9",
+          "patch_in_root": [
+            "e9824cfda6"
+          ]
+        },
+        {
+          "sha": "83fe2db4a0791dc16d728cfde38f8f527530f236",
+          "patch_in_root": [
+            "5c584367a2"
+          ]
+        },
+        {
+          "sha": "568f128859dbdbd87bd57a376f644b90768d4818",
+          "patch_in_root": [
+            "1814cc28be"
+          ]
+        },
+        {
+          "sha": "fd4eec6909211c24b280d1e42a6099b98cbc4589",
+          "patch_in_root": [
+            "7df818e181"
+          ]
+        },
+        {
+          "sha": "f1c7ca20ad6307056c9f27301313d215c0af044a",
+          "patch_in_root": [
+            "2be798b13f"
+          ]
+        },
+        {
+          "sha": "e221442673fce823215b370c3048451165c8a360",
+          "patch_in_root": [
+            "db55badeaf"
+          ]
+        },
+        {
+          "sha": "715920b356278c1c6d516a1fc3f7f52adff29878",
+          "patch_in_root": [
+            "65d4c61887"
+          ]
+        },
+        {
+          "sha": "79b0336986d7fdbffcd408cf80e735994d9d4271",
+          "patch_in_root": [
+            "4065b328fe"
+          ]
+        },
+        {
+          "sha": "845a7e8c6ba14862bfe1b90609326463be8a10a6",
+          "patch_in_root": [
+            "a2c571cc9b"
+          ]
+        },
+        {
+          "sha": "e65f57168ae61dfe612a44bb2fdb5cc26fd68f84",
+          "patch_in_root": [
+            "893e98787c"
+          ]
+        }
+      ],
+      "recommendation": "archive_candidate",
+      "recommendation_reason": "C02 integrated and owner stopped; actual head e65f571 includes an additional C04 outbox commit beyond recorded accepted head 845a7e8; evidence untracked (~82.3 KB); all listed branch commits patch-map to root; source paths differ due later integration changes.",
+      "branch_ref_exists": null
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio",
+      "directory_exists": true,
+      "registered_worktree": true,
+      "state_refs": [
+        {
+          "id": "I01-B1-quote-compatibility",
+          "status": "accepted_integrated_helper_slice",
+          "head_sha": "b38712c569d2beb6901f9f057c86aa909b98189b",
+          "base_sha": "8c7babbaa630fe86d9e0a2aba603c4772530f0a2",
+          "integration_sha": "8b8abf5a791bc99f4424c3664c8880b185d85a33",
+          "owner_stopped": true,
+          "evidence_paths": [
+            "docs/production/reports/I01-B3-review.json"
+          ]
+        },
+        {
+          "id": "I01-B1",
+          "status": null,
+          "head_sha": "ff8d24277edef612ae366edf3319b0e41d75ff3b",
+          "base_sha": null,
+          "integration_sha": null,
+          "owner_stopped": true,
+          "evidence_paths": []
+        }
+      ],
+      "head_sha": "b38712c569d2beb6901f9f057c86aa909b98189b",
+      "branch": "codex/production-budget",
+      "status_short": "?? evidence/I01-B1/",
+      "status_porcelain_v1": "?? evidence/I01-B1/",
+      "evidence_dir_bytes": 53107,
+      "studio_exists": false,
+      "studio_ignored": true,
+      "studio_runtime_media": {},
+      "gitmodules_exists": false,
+      "embedded_git_paths": [],
+      "commits_ahead_of_root": "b38712c Allow explicit currency facts across entitlement modes\na7f0366 I01-B1: Validate media and budget quote compatibility\n8c7babb I01-B1: Accept current storage schema in health\nff8d242 I01-B1: Correct reviewed budget accounting boundaries\n1052a24 Add production budget domain contracts",
+      "root_contains_head": false,
+      "source_files_base_to_head": "M\tlib/production/budget.test.ts\nM\tlib/production/budget.ts",
+      "changed_vs_root": "A\tlib/production/budget.test.ts\nA\tlib/production/budget.ts\nM\tlib/production/contracts.test.ts\nM\tlib/production/contracts.ts",
+      "source_file_diff_vs_root": "",
+      "source_commit_patch_mapping": [
+        {
+          "sha": "a7f03666b9ebe78ba3174746edb845baafa142df",
+          "patch_in_root": [
+            "309852a0c1"
+          ]
+        },
+        {
+          "sha": "b38712c569d2beb6901f9f057c86aa909b98189b",
+          "patch_in_root": [
+            "8b8abf5a79"
+          ]
+        }
+      ],
+      "recommendation": "archive_candidate",
+      "recommendation_reason": "I01-B1 helper accepted/integrated and owner stopped; evidence untracked (~53.1 KB); source files match current root; accepted integration SHA recorded.",
+      "branch_ref_exists": null
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio",
+      "directory_exists": true,
+      "registered_worktree": true,
+      "state_refs": [
+        {
+          "id": "I01",
+          "status": "accepted_integrated_storage_slice",
+          "head_sha": "9e726f07745390d10dd60174a90bb84ace6aad11",
+          "base_sha": "ffea35b2a7cdc7400b083ea0be7d388cbb0723f0",
+          "integration_sha": null,
+          "owner_stopped": true,
+          "evidence_paths": [
+            "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/",
+            "docs/production/reports/I01-B2-review.json",
+            "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/report.json"
+          ]
+        }
+      ],
+      "head_sha": "631b45262087ab9287b370df36e396ac73410276",
+      "branch": "codex/production-ledger",
+      "status_short": "?? evidence/I01-B2/",
+      "status_porcelain_v1": "?? evidence/I01-B2/",
+      "evidence_dir_bytes": 42863,
+      "studio_exists": false,
+      "studio_ignored": true,
+      "studio_runtime_media": {},
+      "gitmodules_exists": false,
+      "embedded_git_paths": [],
+      "commits_ahead_of_root": "631b452 I01-B2: stabilize held-lock startup test\n9e726f0 I01-B2: bound SQLite startup contention retries\n4e97c58 I01-B2: add durable budget ledger storage",
+      "root_contains_head": false,
+      "source_files_base_to_head": "A\tlib/repositories/production/migrations/002-budget.sql\nM\tlib/repositories/production/ports.ts\nM\tlib/repositories/production/sqlite.test.ts\nM\tlib/repositories/production/sqlite.ts",
+      "changed_vs_root": "A\tlib/repositories/production/migrations/002-budget.sql\nM\tlib/repositories/production/ports.ts\nM\tlib/repositories/production/sqlite.test.ts\nM\tlib/repositories/production/sqlite.ts",
+      "source_file_diff_vs_root": "",
+      "source_commit_patch_mapping": [
+        {
+          "sha": "4e97c5829fada681fe5ef37764961931956f9e8c",
+          "patch_in_root": [
+            "ee3f6df633"
+          ]
+        },
+        {
+          "sha": "9e726f07745390d10dd60174a90bb84ace6aad11",
+          "patch_in_root": [
+            "834e80687b"
+          ]
+        },
+        {
+          "sha": "631b45262087ab9287b370df36e396ac73410276",
+          "patch_in_root": [
+            "67f956b2de"
+          ]
+        }
+      ],
+      "recommendation": "archive_candidate",
+      "recommendation_reason": "I01-B2 accepted storage slice and owner stopped; evidence untracked (~42.9 KB); source files match current root.",
+      "branch_ref_exists": null
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-budget-service/perabyte-studio",
+      "directory_exists": true,
+      "registered_worktree": true,
+      "state_refs": [
+        {
+          "id": "I01-B3",
+          "status": "accepted_integrated_slice",
+          "head_sha": "1c664c3f46bf993d59b1791ba2ac4961ca40ed9d",
+          "base_sha": "c7c1e73716c28233b6628b49f85eccac3dfc9b06",
+          "integration_sha": "4997ecc322b24389c6cb84bb13c6ca967ddfbf4e",
+          "owner_stopped": true,
+          "evidence_paths": [
+            "docs/production/reports/I01-B3-B4-frozen-boundary.json"
+          ]
+        }
+      ],
+      "head_sha": "1c664c3f46bf993d59b1791ba2ac4961ca40ed9d",
+      "branch": "codex/production-budget-service",
+      "status_short": "?? evidence/I01-B3/",
+      "status_porcelain_v1": "?? evidence/I01-B3/",
+      "evidence_dir_bytes": 63615,
+      "studio_exists": false,
+      "studio_ignored": true,
+      "studio_runtime_media": {},
+      "gitmodules_exists": false,
+      "embedded_git_paths": [],
+      "commits_ahead_of_root": "1c664c3 I01-B3: enforce quote compatibility and admission guards\n4ff5dc8 Allow explicit currency facts across entitlement modes\n12065dd I01-B1: Validate media and budget quote compatibility\n435449a I01-B3: add production budget service and API",
+      "root_contains_head": false,
+      "source_files_base_to_head": "A\tapp/api/production/projects/[projectId]/budget/route.test.ts\nA\tapp/api/production/projects/[projectId]/budget/route.ts\nM\tlib/production/budget.test.ts\nM\tlib/production/budget.ts\nA\tlib/services/production/budget.test.ts\nA\tlib/services/production/budget.ts",
+      "changed_vs_root": "A\tapp/api/production/projects/[projectId]/budget/route.test.ts\nA\tapp/api/production/projects/[projectId]/budget/route.ts\nM\tlib/production/budget.test.ts\nM\tlib/production/budget.ts\nA\tlib/services/production/budget.test.ts\nA\tlib/services/production/budget.ts",
+      "source_file_diff_vs_root": "",
+      "source_commit_patch_mapping": [
+        {
+          "sha": "435449ae33210c087ad07d32b6faebdb0dd4464a",
+          "patch_in_root": [
+            "b7299ddea7"
+          ]
+        },
+        {
+          "sha": "12065dd7b6e244b18e7bf766435e7c4fee248c63",
+          "patch_in_root": [
+            "309852a0c1"
+          ]
+        },
+        {
+          "sha": "4ff5dc8debc4bdb33fe82e230f9fb3a54ef34277",
+          "patch_in_root": [
+            "8b8abf5a79"
+          ]
+        },
+        {
+          "sha": "1c664c3f46bf993d59b1791ba2ac4961ca40ed9d",
+          "patch_in_root": [
+            "4997ecc322"
+          ]
+        }
+      ],
+      "recommendation": "archive_candidate",
+      "recommendation_reason": "I01-B3 accepted/integrated and owner stopped; evidence untracked (~63.6 KB); source files match current root; recorded integration SHA 4997ecc.",
+      "branch_ref_exists": null
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-render-policy/perabyte-studio",
+      "directory_exists": true,
+      "registered_worktree": true,
+      "state_refs": [],
+      "head_sha": "7cd60586b4383d1ad703b656c63bf9c2a0c5f512",
+      "branch": "codex/production-render-policy",
+      "status_short": "",
+      "status_porcelain_v1": "",
+      "evidence_dir_bytes": 0,
+      "studio_exists": false,
+      "studio_ignored": true,
+      "studio_runtime_media": {},
+      "gitmodules_exists": false,
+      "embedded_git_paths": [],
+      "commits_ahead_of_root": "7cd6058 Add strict generation reference policy",
+      "root_contains_head": false,
+      "changed_vs_root": "A\tlib/domain/reference-policy.test.ts\nA\tlib/domain/reference-policy.ts\nM\tlib/jobs/executor.test.ts\nM\tlib/jobs/executor.ts\nM\tlib/services/generation.service.frames.test.ts\nM\tlib/services/generation.service.ts",
+      "source_file_diff_vs_root": "",
+      "source_commit_patch_mapping": [],
+      "recommendation": "retain_pending_acceptance_mapping",
+      "recommendation_reason": "Older foundation branch not referenced by completed_packets/accepted_slices; source files match root but acceptance evidence mapping absent.",
+      "branch_ref_exists": null
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-story-continuity/perabyte-studio",
+      "directory_exists": true,
+      "registered_worktree": true,
+      "state_refs": [],
+      "head_sha": "e080542781f7276cd4d5b9666bfd2d352effe99e",
+      "branch": "codex/production-story-continuity",
+      "status_short": "",
+      "status_porcelain_v1": "",
+      "evidence_dir_bytes": 0,
+      "studio_exists": false,
+      "studio_ignored": true,
+      "studio_runtime_media": {},
+      "gitmodules_exists": false,
+      "embedded_git_paths": [],
+      "commits_ahead_of_root": "e080542 Keep canonical story cast and keyframe anchors\n5c9ca6d Validate canonical story references before generation",
+      "root_contains_head": false,
+      "changed_vs_root": "A\tlib/story/canon.test.ts\nA\tlib/story/canon.ts\nM\tlib/story/compose-shot.test.ts\nM\tlib/story/compose-shot.ts\nM\tlib/story/keyframe.test.ts\nM\tlib/story/keyframe.ts\nM\tlib/story/server-runner.test.ts\nM\tlib/story/server-runner.ts",
+      "source_file_diff_vs_root": "",
+      "source_commit_patch_mapping": [],
+      "recommendation": "retain_pending_acceptance_mapping",
+      "recommendation_reason": "Older foundation branch not referenced by completed_packets/accepted_slices; source files match root but acceptance evidence mapping absent.",
+      "branch_ref_exists": null
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-admission/perabyte-studio",
+      "directory_exists": true,
+      "registered_worktree": true,
+      "state_refs": [
+        {
+          "id": "I01-B4",
+          "status": "building_real_service_combined_gate_test_only",
+          "head_sha": "f0856bbebf2a54572c44fd4d24d1f3bb5455b8c1",
+          "base_sha": "c7c1e73716c28233b6628b49f85eccac3dfc9b06",
+          "integration_sha": null,
+          "owner_stopped": false,
+          "evidence_paths": [
+            "docs/production/reports/I01-B3-B4-frozen-boundary.json",
+            "docs/production/reports/I01-B4-rereview.json",
+            "docs/production/reports/I01-combined-verification-scope.json",
+            "evidence/integration/i01-b4-corrected/evidence-correction.json"
+          ]
+        }
+      ],
+      "head_sha": "00c1991a4abc94935099c89c126309e2546b445f",
+      "branch": "codex/production-admission",
+      "status_short": "M lib/jobs/production/worker.test.ts\n?? evidence/I01-B4/",
+      "status_porcelain_v1": "M lib/jobs/production/worker.test.ts\n?? evidence/I01-B4/",
+      "evidence_dir_bytes": 32974,
+      "studio_exists": false,
+      "studio_ignored": true,
+      "studio_runtime_media": {},
+      "gitmodules_exists": false,
+      "embedded_git_paths": [],
+      "commits_ahead_of_root": "00c1991 I01-B3: enforce quote compatibility and admission guards\n73e9b7a I01-B3: add production budget service and API\nf0856bb I01-B4: validate media budget quote compatibility\n872c326 Allow explicit currency facts across entitlement modes\naa90350 I01-B1: Validate media and budget quote compatibility\n5a838a1 Cover policy revocation after admission boundary\n0b4667e Add atomic budget admission to production worker",
+      "root_contains_head": false,
+      "source_files_base_to_head": "A\tapp/api/production/projects/[projectId]/budget/route.test.ts\nA\tapp/api/production/projects/[projectId]/budget/route.ts\nM\tlib/jobs/production/queue.test.ts\nM\tlib/jobs/production/queue.ts\nM\tlib/jobs/production/worker.test.ts\nM\tlib/jobs/production/worker.ts\nM\tlib/production/budget.test.ts\nM\tlib/production/budget.ts\nA\tlib/services/production/budget.test.ts\nA\tlib/services/production/budget.ts",
+      "changed_vs_root": "A\tapp/api/production/projects/[projectId]/budget/route.test.ts\nA\tapp/api/production/projects/[projectId]/budget/route.ts\nM\tlib/jobs/production/queue.test.ts\nM\tlib/jobs/production/queue.ts\nM\tlib/jobs/production/worker.test.ts\nM\tlib/jobs/production/worker.ts\nM\tlib/production/budget.test.ts\nM\tlib/production/budget.ts\nA\tlib/services/production/budget.test.ts\nA\tlib/services/production/budget.ts",
+      "source_file_diff_vs_root": "M\tlib/jobs/production/queue.test.ts\nM\tlib/jobs/production/queue.ts\nM\tlib/jobs/production/worker.test.ts\nM\tlib/jobs/production/worker.ts",
+      "source_commit_patch_mapping": [
+        {
+          "sha": "0b4667ebfbf2568ac197efda86d22cad7eceec64",
+          "patch_in_root": []
+        },
+        {
+          "sha": "5a838a1b4d8b676f4a700c8bf9ce474a83e0ed1e",
+          "patch_in_root": []
+        },
+        {
+          "sha": "aa903506a34e8561a50e9b12363f1ba1e207132a",
+          "patch_in_root": [
+            "309852a0c1"
+          ]
+        },
+        {
+          "sha": "872c326b056dd0fa7502efab8a15245b2c3231fb",
+          "patch_in_root": [
+            "8b8abf5a79"
+          ]
+        },
+        {
+          "sha": "f0856bbebf2a54572c44fd4d24d1f3bb5455b8c1",
+          "patch_in_root": []
+        },
+        {
+          "sha": "73e9b7a931257b8ef3a462627d581feb9bcf2220",
+          "patch_in_root": [
+            "b7299ddea7"
+          ]
+        },
+        {
+          "sha": "00c1991a4abc94935099c89c126309e2546b445f",
+          "patch_in_root": [
+            "4997ecc322"
+          ]
+        }
+      ],
+      "recommendation": "retain_active_writer",
+      "recommendation_reason": "I01-B4 active packet, owner_stopped=false; modified worker.test.ts and untracked evidence; preserve live writer.",
+      "branch_ref_exists": null
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-admission-proof/perabyte-studio",
+      "directory_exists": false,
+      "registered_worktree": false,
+      "state_refs": [
+        {
+          "id": null,
+          "status": null,
+          "head_sha": "5a838a1b4d8b676f4a700c8bf9ce474a83e0ed1e",
+          "base_sha": null,
+          "integration_sha": null,
+          "owner_stopped": true,
+          "evidence_paths": []
+        }
+      ],
+      "recommendation": "stale_missing_worktree",
+      "recommendation_reason": "State has auxiliary artifact at SHA 5a838a1, but directory absent and worktree unregistered; verify branch/artifact separately; do not archive via worktree.",
+      "branch_ref_exists": true
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-c04-provider-recovery/perabyte-studio",
+      "directory_exists": false,
+      "registered_worktree": false,
+      "state_refs": [],
+      "recommendation": "stale_missing_worktree",
+      "recommendation_reason": "C04 state records this worktree at SHA 27dc9f7, owner stopped and integrated, but directory absent and worktree unregistered; do not archive via worktree.",
+      "branch_ref_exists": true
+    }
+  ],
+  "studio_inspection_clarification": {
+    "observed": ".studio existence was checked for each existing candidate worktree; the records include studio_exists. .studio/runtime and .studio/media existence were checked, with byte sizes calculated only if either existed.",
+    "not_observed": "The .studio root children were not enumerated and .studio root size was not calculated. Therefore emptiness or presence/size of other .studio contents is unknown.",
+    "secrets": "No .env or secret contents were read.",
+    "mutations": "No copy or modification was performed."
+  }
+}

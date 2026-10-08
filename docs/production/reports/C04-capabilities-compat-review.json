@@ -1,0 +1,78 @@
+{
+  "review_kind": "independent_read_only_test_compatibility_review",
+  "packet": "C04",
+  "actualSHA": "27dc9f742e3771fa5f850188bbec4945f86617cf",
+  "actualParentSHA": "99f7a3d137f629785fc34d7902affbdf09622df6",
+  "status": "accepted_test_compatibility_slice_only",
+  "changed_files": [
+    "lib/providers/production/capabilities.test.ts"
+  ],
+  "ownership_check": "pass; only assigned capabilities.test.ts; no production source changes",
+  "findings": [],
+  "behavior_preservation": [
+    "Existing project SQLite fixture makes 200 unknown quote expectation valid under project-reference validation; missing project still explicitly404 before provider construction.",
+    "Cross-origin request remains rejected through accepted I00 INVALID_INPUT/400 contract, with error-code and zero factory-call assertions.",
+    "Explicit injected offline provider factories replace obsolete process-global setter/direct composition fixture; no real credentials/catalog/submit.",
+    "Pure capability rules unchanged; unknown entitlement, estimates, currency and cap assertions retained; extra zero-discovery/zero-submit checks added."
+  ],
+  "test_weakening_check": "pass: obsolete preconditions/error-status expectation corrected; meaningful fail-closed assertions preserved or expanded.",
+  "worker_evidence_hash_checks": [
+    {
+      "file": "/Users/abid/.codex/worktrees/c04-provider-recovery/perabyte-studio/evidence/C04-capabilities-compat/red-before-edit.txt",
+      "actual_sha256": "7907a95f1d58ee0cd435860689e9fad3cbf5bd1787bb016e48afa0aeb50367c9",
+      "reported_sha256": "7907a95f1d58ee0cd435860689e9fad3cbf5bd1787bb016e48afa0aeb50367c9",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/c04-provider-recovery/perabyte-studio/evidence/C04-capabilities-compat/green.txt",
+      "actual_sha256": "15217b6ef24874a21335141ba3fd55912afa892eaeed2955ef995b82327f3f33",
+      "reported_sha256": "15217b6ef24874a21335141ba3fd55912afa892eaeed2955ef995b82327f3f33",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/c04-provider-recovery/perabyte-studio/evidence/C04-capabilities-compat/typecheck.txt",
+      "actual_sha256": "84a3ab4d745e1e696bd173d482b3f1cb87f3c34f28bfabc896bb32f986c60c44",
+      "reported_sha256": "84a3ab4d745e1e696bd173d482b3f1cb87f3c34f28bfabc896bb32f986c60c44",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/c04-provider-recovery/perabyte-studio/evidence/C04-capabilities-compat/diff-check.txt",
+      "actual_sha256": "620be5739e840cf55cf884ddf34d19936c1f1cf9bd91afcc40555ecbbfec3805",
+      "reported_sha256": "620be5739e840cf55cf884ddf34d19936c1f1cf9bd91afcc40555ecbbfec3805",
+      "match": true
+    }
+  ],
+  "red_evidence": "Inspected saved RED output identifies missing-project404 versus200 and cross-origin400 versus403 as two failures; actual pre-edit RED was not rerun by reviewer.",
+  "reproduction": {
+    "command": [
+      "npm",
+      "test",
+      "--",
+      "lib/providers/production/capabilities.test.ts"
+    ],
+    "exit_code": 0,
+    "tests_passed": 11,
+    "output_file": "/tmp/perabyte-C04-capabilities-compat-review-tests.txt",
+    "output_sha256": "91ddbd33249abd19562fbeab8f030971e0f77a1efa8b1b4bd0de77949f42d812"
+  },
+  "commit_diff_check": {
+    "command": [
+      "git",
+      "diff",
+      "--check",
+      "99f7a3d137f629785fc34d7902affbdf09622df6",
+      "27dc9f742e3771fa5f850188bbec4945f86617cf"
+    ],
+    "exit_code": 0,
+    "output": ""
+  },
+  "report_sha256": "fdf4527074c22a30d046fec26fafbfc5155785c34dd47894bbe34c0a786879d5",
+  "unverified": [
+    "Full combined suite/build/built HTTP and pending runtime graceful-idle shutdown followup.",
+    "Reviewer typecheck not rerun; worker typecheck evidence hash confirmed."
+  ],
+  "paid_calls": [],
+  "network_calls": [],
+  "credentials_accessed": false,
+  "decision": "Accept test-only compatibility amendment27dc9f7; full C04 acceptance remains pending integration gates."
+}

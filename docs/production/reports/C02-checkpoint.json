@@ -1,0 +1,67 @@
+{
+  "task_id": "C02",
+  "status": "incomplete_usage_paused",
+  "head_sha": "568f128859dbdbd87bd57a376f644b90768d4818",
+  "base_sha": "3d53a083407574934fc055e246279bb9c485326b",
+  "dirty_files": [
+    " M lib/production/revisions.ts",
+    " M lib/services/production/revisions.test.ts",
+    " M lib/services/production/revisions.ts",
+    " M lib/services/production/shot-plan.test.ts",
+    "?? evidence/C02/completion-report.json",
+    "?? evidence/C02/diff-check.txt",
+    "?? evidence/C02/focused-green.txt",
+    "?? evidence/C02/readmodel-compat-green.txt",
+    "?? evidence/C02/readmodel-compat-red.txt",
+    "?? evidence/C02/review-fixes-green.txt",
+    "?? evidence/C02/review-fixes-typecheck.txt",
+    "?? evidence/C02/typecheck.txt"
+  ],
+  "integrated": false,
+  "independent_review": "P2 fixes require re-review; latest typecheck failing",
+  "reported_review_fix_tests": 56,
+  "evidence": [
+    {
+      "path": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/completion-report.json",
+      "sha256": "6fe582575dfb0b987387cab80cebf5968d3487f45a1c30601ac2eb363ca21846"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/diff-check.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/focused-green.txt",
+      "sha256": "36ae6a699aad46ea3b5ca3dfb802cc1dff2fbe91251b95a80a63e44f8c5c6659"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/readmodel-compat-green.txt",
+      "sha256": "021813a1240d8e6c003ee45f84c33859ab97a232a18a4860e17e358fb32f5beb"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/readmodel-compat-red.txt",
+      "sha256": "babadf77e70aee2b643dd5a17ccf35a1e0f702599716cad2215cdfd946694bd4"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/review-fixes-green.txt",
+      "sha256": "4f8798e10a8823858885bb1a57fcc6d57ce9e60d61984d987eb090566d7b0766"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/review-fixes-typecheck.txt",
+      "sha256": "ca3803c385935e06c27357511b2bef35ca0ead01628b663542ee8d77efa0a177"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/typecheck.txt",
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    }
+  ],
+  "unverified": [
+    "Dirty P2 review fixes pass56focusedtests but latest typecheck fails: new regression framing inferred string at lib/services/production/revisions.test.ts lines125/132/143/150; make literal typing correction after reset. Diff-check not rerun after fixes.",
+    "Full C02 candidate568f128 is not approved: read-model candidate metadata/origin ID causes false STORY_CHANGED; predicate requires every covering shot to contain speaker despite plan-level coverage contract. Dirty fixes may be present; inspect actual diff.",
+    "Re-review all followup fixes; add SQLite-backed exact anchor/take/selection retention after reused shot.",
+    "Original behavioral RED raw output was not retained; do not fabricate or claim it.",
+    "Candidate contract checkpoint83fe2db includes approved optional importProvenance plus read-model changes not yet accepted/integrated.",
+    "Next integration tests/build/API smoke pending full acceptance.",
+    "evidence/C02/completion-report.json predates dirty review fixes and is stale; use actual Git status and review-fix logs."
+  ],
+  "paid_calls": []
+}

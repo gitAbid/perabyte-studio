@@ -1,0 +1,235 @@
+{
+  "review_kind": "independent_read_only_corrected_B1_review",
+  "packet": "I01-B1",
+  "actualSHA": "ff8d24277edef612ae366edf3319b0e41d75ff3b",
+  "actualParentSHA": "1052a248fa56e5833420e07e984fb10386296452",
+  "actualBaseSHA": "b48c9ee457a992273c7fcf8767164cd291bc1449",
+  "status": "accepted_DTO_domain_slice_only",
+  "changed_files": [
+    "lib/production/budget.test.ts",
+    "lib/production/budget.ts",
+    "lib/production/contracts.test.ts",
+    "lib/production/contracts.ts"
+  ],
+  "ownership_check": "pass:four frozen B1 source/test files only",
+  "findings": [],
+  "prior_findings": [
+    {
+      "id": "I01-B1-001",
+      "status": "closed",
+      "evidence": "Higher pending cumulative correction reopens finality and retains max estimate/net actual; final50->pending60 gives unsettled100/unresolved40. Equal and unknown reports preserve finality; final60 settles60."
+    },
+    {
+      "id": "I01-B1-002",
+      "status": "closed",
+      "evidence": "Future policy/auth createdAt rejected; binding quotedAt required within evidence observation-expiry interval. Independent original adversarial cases now blocked."
+    },
+    {
+      "id": "I01-B1-003",
+      "status": "closed",
+      "evidence": "Shared summary requires reservation-consistent settled/unsettled total/topup; schema rejects unknown-gross refunds and unknown settlement without explicit release. Original unsettled0/estimate100 now throws."
+    },
+    {
+      "id": "I01-B1-004",
+      "status": "closed",
+      "evidence": "Shared MAX_BUDGET_UTC_MILLIS bounds helper/schema to final millisecond year9999. Independent probe returns9999-12-31 and rejects year10000."
+    }
+  ],
+  "reproduction": [
+    {
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "lib/production/contracts.test.ts",
+        "lib/production/budget.test.ts"
+      ],
+      "exit_code": 0,
+      "tests_passed": 36,
+      "output_file": "/tmp/perabyte-I01-B1-corrected-review-tests.txt",
+      "output_sha256": "cc46b257e196aef1fa50f9796c250ff220585c30b61b8220f5eb84f7db8d0d3b"
+    },
+    {
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "/tmp/perabyte-I01-B1-corrected-probes.ts"
+      ],
+      "exit_code": 0,
+      "output_file": "/tmp/perabyte-I01-B1-corrected-probes-output.json",
+      "output_sha256": "b9722390f8c838a6f45c90db62998336e779327d030d9d2c0cb643888518e246",
+      "probe_file": "/tmp/perabyte-I01-B1-corrected-probes.ts"
+    }
+  ],
+  "worker_reports": [
+    {
+      "file": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/report.json",
+      "sha256": "11e4654b805a1ec0e6640ae4158b0254607d5b0790eb795410d43c0e6a3cd62e"
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/report-followup.json",
+      "sha256": "183744f1197949b97fb2533310de1d7cf334feccbd54f5b1ca7b37ccd0057ddf"
+    }
+  ],
+  "evidence_hash_checks": [
+    {
+      "file": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/focused-green.txt",
+      "reported_sha256": "8f1c71920e54821931c22f9c0a8d7f8a91db6a59e0851fe9177213bcee12f41f",
+      "actual_sha256": "8f1c71920e54821931c22f9c0a8d7f8a91db6a59e0851fe9177213bcee12f41f",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/typecheck-green.txt",
+      "reported_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "actual_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/committed-diff-check.txt",
+      "reported_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actual_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/focused-green.txt",
+      "reported_sha256": "8f1c71920e54821931c22f9c0a8d7f8a91db6a59e0851fe9177213bcee12f41f",
+      "actual_sha256": "8f1c71920e54821931c22f9c0a8d7f8a91db6a59e0851fe9177213bcee12f41f",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/typecheck-green.txt",
+      "reported_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "actual_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/committed-diff-check.txt",
+      "reported_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actual_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "file": "lib/production/contracts.ts",
+      "commit_sha": "1052a248fa56e5833420e07e984fb10386296452",
+      "reported_sha256": "e5fa4139660b6485c378fcec8291cd3072c0ab98dac3fe1c3aa2f69cbfe0d025",
+      "actual_sha256": "e5fa4139660b6485c378fcec8291cd3072c0ab98dac3fe1c3aa2f69cbfe0d025",
+      "match": true
+    },
+    {
+      "file": "lib/production/contracts.test.ts",
+      "commit_sha": "1052a248fa56e5833420e07e984fb10386296452",
+      "reported_sha256": "8106605d386e23610f2e4edb3e110ed529aeb28b3a58b9ebfda7358b52505ab4",
+      "actual_sha256": "8106605d386e23610f2e4edb3e110ed529aeb28b3a58b9ebfda7358b52505ab4",
+      "match": true
+    },
+    {
+      "file": "lib/production/budget.ts",
+      "commit_sha": "1052a248fa56e5833420e07e984fb10386296452",
+      "reported_sha256": "aa0c5fcf63b7656526aecf01a4672c2fa4265007a30b4a66b949d536586ce81e",
+      "actual_sha256": "aa0c5fcf63b7656526aecf01a4672c2fa4265007a30b4a66b949d536586ce81e",
+      "match": true
+    },
+    {
+      "file": "lib/production/budget.test.ts",
+      "commit_sha": "1052a248fa56e5833420e07e984fb10386296452",
+      "reported_sha256": "633304e0a5eea1d17e6675f7c47b7e63c0fc392b74981ca2c2929211e4141bcf",
+      "actual_sha256": "633304e0a5eea1d17e6675f7c47b7e63c0fc392b74981ca2c2929211e4141bcf",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/green-review.txt",
+      "reported_sha256": "6cf155fb33ce8a0e1835137697a9ff28052b07b2b2d8d410af44b7f23e845d49",
+      "actual_sha256": "6cf155fb33ce8a0e1835137697a9ff28052b07b2b2d8d410af44b7f23e845d49",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/green-review.txt",
+      "reported_sha256": "6cf155fb33ce8a0e1835137697a9ff28052b07b2b2d8d410af44b7f23e845d49",
+      "actual_sha256": "6cf155fb33ce8a0e1835137697a9ff28052b07b2b2d8d410af44b7f23e845d49",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/green-review.txt",
+      "reported_sha256": "6cf155fb33ce8a0e1835137697a9ff28052b07b2b2d8d410af44b7f23e845d49",
+      "actual_sha256": "6cf155fb33ce8a0e1835137697a9ff28052b07b2b2d8d410af44b7f23e845d49",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/green-review.txt",
+      "reported_sha256": "6cf155fb33ce8a0e1835137697a9ff28052b07b2b2d8d410af44b7f23e845d49",
+      "actual_sha256": "6cf155fb33ce8a0e1835137697a9ff28052b07b2b2d8d410af44b7f23e845d49",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/red-review.txt",
+      "reported_sha256": "392ac10c24cda87c615e2afe5936785adbed87eb50f3b9ad5d52dfd881d0d779",
+      "actual_sha256": "392ac10c24cda87c615e2afe5936785adbed87eb50f3b9ad5d52dfd881d0d779",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/green-review.txt",
+      "reported_sha256": "6cf155fb33ce8a0e1835137697a9ff28052b07b2b2d8d410af44b7f23e845d49",
+      "actual_sha256": "6cf155fb33ce8a0e1835137697a9ff28052b07b2b2d8d410af44b7f23e845d49",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/typecheck-review.txt",
+      "reported_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "actual_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/diff-check-followup.txt",
+      "reported_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actual_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "file": "lib/production/contracts.ts",
+      "commit_sha": "ff8d24277edef612ae366edf3319b0e41d75ff3b",
+      "reported_sha256": "1162aa4842c78d466d89a3d2625fe877206aa1ae7dfa102fe2d5ba985f56afaa",
+      "actual_sha256": "1162aa4842c78d466d89a3d2625fe877206aa1ae7dfa102fe2d5ba985f56afaa",
+      "match": true
+    },
+    {
+      "file": "lib/production/contracts.test.ts",
+      "commit_sha": "ff8d24277edef612ae366edf3319b0e41d75ff3b",
+      "reported_sha256": "c2cfceda74f71f4dc1fdeba7ae238eb666e84ba5851f31e78f28a2bca44b86c3",
+      "actual_sha256": "c2cfceda74f71f4dc1fdeba7ae238eb666e84ba5851f31e78f28a2bca44b86c3",
+      "match": true
+    },
+    {
+      "file": "lib/production/budget.ts",
+      "commit_sha": "ff8d24277edef612ae366edf3319b0e41d75ff3b",
+      "reported_sha256": "a9fb16985263adb726bbaefe070faedcdb936ebe584b36c3db9bd96af4bafaf2",
+      "actual_sha256": "a9fb16985263adb726bbaefe070faedcdb936ebe584b36c3db9bd96af4bafaf2",
+      "match": true
+    },
+    {
+      "file": "lib/production/budget.test.ts",
+      "commit_sha": "ff8d24277edef612ae366edf3319b0e41d75ff3b",
+      "reported_sha256": "ebb066aa93daaf154bf87432ddc9af7a95c6f33b6d302164b89c67de8d3dbbc7",
+      "actual_sha256": "ebb066aa93daaf154bf87432ddc9af7a95c6f33b6d302164b89c67de8d3dbbc7",
+      "match": true
+    }
+  ],
+  "commit_diff_check": {
+    "exit_code": 0,
+    "output": ""
+  },
+  "code_quality": "Narrow validation/finality changes reuse shared fold, no duplicated finance engine. DTO scopes, unknown evidence and media/text distinction preserve approved boundary; legacy ProductionQuote remains unchanged.",
+  "remaining_prerequisites": [
+    "B2 must retrieve immutable reservation/events and call accepted shared fold, never trust SQL-derived projection; enforce append ordering/unique keys/CAS and original-day scopes.",
+    "B3/B4 must implement trusted account/quote producers and one synchronous reserve+submitting transaction; B1 alone never authorizes provider I/O."
+  ],
+  "unverified": [
+    "B2 storage/migration; B3 services/API; B4 atomic worker transaction/races/reopen; provider composer and live billing evidence.",
+    "Reviewer typecheck not repeated after this bounded correction; worker typecheck logs/hash inspected.",
+    "Full integrated suite/build remains integrator gate."
+  ],
+  "paid_calls": [],
+  "network_calls": [],
+  "credentials_accessed": false,
+  "decision": "Accept corrected B1 DTO/domain slice ff8d242; all four material review findings closed. I01 remains incomplete."
+}

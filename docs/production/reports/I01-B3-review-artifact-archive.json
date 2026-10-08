@@ -1,0 +1,60 @@
+{
+  "entries": [
+    {
+      "source": "/tmp/perabyte-I01-B3/evidence/I01-B3-policy-replay-red.txt",
+      "archive": "evidence/integration/i01-b3-initial-review-artifacts/I01-B3-policy-replay-red.txt",
+      "sha256": "69de2499fd34ad82f5795c60aa1579c8729b1b4dd1affaf6f13e59b7c24c1d37"
+    },
+    {
+      "source": "/tmp/perabyte-I01-B3/evidence/I01-B3-route-validation-red.txt",
+      "archive": "evidence/integration/i01-b3-initial-review-artifacts/I01-B3-route-validation-red.txt",
+      "sha256": "afe86a0e472206ea5bdcd958ccdb3059d7038c6922d5053c7b588357c2686e5e"
+    },
+    {
+      "source": "/tmp/perabyte-I01-B3/evidence/I01-B3-service-scaffold-red.txt",
+      "archive": "evidence/integration/i01-b3-initial-review-artifacts/I01-B3-service-scaffold-red.txt",
+      "sha256": "3c9a27fbb96ebc6111ad51d86d02b4fabafbe5ddc0e55bfcaa7158ae3aa44411"
+    },
+    {
+      "source": "/tmp/perabyte-I01-B3/evidence/focus-green.txt",
+      "archive": "evidence/integration/i01-b3-initial-review-artifacts/focus-green.txt",
+      "sha256": "c59666980341067783172e10f9bd051cc1b7b9ed008fc5395a807cf64083f95a"
+    },
+    {
+      "source": "/tmp/perabyte-I01-B3/evidence/typecheck-green.txt",
+      "archive": "evidence/integration/i01-b3-initial-review-artifacts/typecheck-green.txt",
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    },
+    {
+      "source": "/tmp/perabyte-I01-B3-review-exact-focused.txt",
+      "archive": "evidence/integration/i01-b3-initial-review-artifacts/perabyte-I01-B3-review-exact-focused.txt",
+      "sha256": "01193864eacd5c505a7634e4f9b14c05f790981a3b8a6020577c7e551ee4651a"
+    },
+    {
+      "source": "/tmp/perabyte-I01-B3-review-final-focused.txt",
+      "archive": "evidence/integration/i01-b3-initial-review-artifacts/perabyte-I01-B3-review-final-focused.txt",
+      "sha256": "fb43515eccb603676d32f7a368d87a51b6396df8b6ea6c022e2b2dfa16393d42"
+    },
+    {
+      "source": "/tmp/perabyte-I01-B3-review-final-typecheck.txt",
+      "archive": "evidence/integration/i01-b3-initial-review-artifacts/perabyte-I01-B3-review-final-typecheck.txt",
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    },
+    {
+      "source": "/tmp/perabyte-I01-B3-review-final-diffcheck.txt",
+      "archive": "evidence/integration/i01-b3-initial-review-artifacts/perabyte-I01-B3-review-final-diffcheck.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "/tmp/perabyte-I01-B3-review-companion-probe.txt",
+      "archive": "evidence/integration/i01-b3-initial-review-artifacts/perabyte-I01-B3-review-companion-probe.txt",
+      "sha256": "159b4fcfe2e6e00136556b4e618f389be5d6bde8d3f6e31bb7c9d83291e2e4b0"
+    },
+    {
+      "source": "/tmp/perabyte-I01-B3-frozen-review/lib/services/production/budget.review-probe.test.ts",
+      "archive": "evidence/integration/i01-b3-initial-review-artifacts/budget.review-probe.test.ts",
+      "sha256": "5f538a152aaa673277a492b667402321aaffef04ab4e09fcc7d46929728b40dd"
+    }
+  ],
+  "claim": "Actual independent outputs; originals unchanged"
+}

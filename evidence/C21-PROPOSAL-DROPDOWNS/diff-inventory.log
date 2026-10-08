@@ -1,0 +1,17 @@
+Diff inventory (git diff --stat, working tree before staging):
+ components/production/project-canon.tsx            |  141 ++-
+ evidence/C21-PROPOSAL-DROPDOWNS/build.log          |  166 ++++
+ evidence/C21-PROPOSAL-DROPDOWNS/full-tests.log     | 1046 ++++++++++++++++++++
+ evidence/C21-PROPOSAL-DROPDOWNS/git-diff-check.log |    7 +
+ evidence/C21-PROPOSAL-DROPDOWNS/green-tests.log    |   11 +
+ evidence/C21-PROPOSAL-DROPDOWNS/red-tests.log      |   69 ++
+ lib/services/text-engine-chain.ts                  |   67 ++
+ 7 files changed, 1499 insertions(+), 8 deletions(-)
+
+Untracked new files:
+
+Scope: app/api/production/text-engines/route.ts (new GET route: strict zod engines listing, no-store, GET-only), lib/services/text-engine-chain.ts (additive exports only: TextEngineOption + listTextEngineOptions(config?) — existing resolveTextEngines untouched), components/production/project-canon.tsx (5 hunks: runtime zod import; pure dropdown view-model helpers after deriveProposalOutcome; text-engines fetch cache + hook after responsePayload; proposal-form state/effect block in ScriptEditorPanel; the proposal Provider/Model inputs replaced by SELECTs — submission logic, hint copy and button note untouched), lib/services/text-engine-chain.test.ts + lib/production/proposal-dropdowns.test.ts (new tests), evidence/C21-PROPOSAL-DROPDOWNS/ (this evidence set incl. smoke driver + screenshots). Nothing else was touched.
+
+node_modules note: the worktree node_modules is a symlink to the integration worktree; Turbopack refuses to build across it ("Symlink [project]/node_modules is invalid, it points out of the filesystem root"). Documented C19/C20 pattern applied: symlink temporarily replaced by an APFS clone (cp -cR) for each build, restored to the byte-identical symlink (readlink-verified) after; never committed.
+
+red-tests.log note: regenerated via an authentic RED rerun — the three implementation paths were git-stash-pushed (path-scoped, untracked included), the two test files rerun to capture the failure, then the stash popped byte-identical (sha256-verified before/after).

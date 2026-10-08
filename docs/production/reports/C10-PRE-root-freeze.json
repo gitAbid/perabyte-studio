@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "packet": "C10-PRE",
+  "status": "BOUNDARY_FROZEN implementation authorized (UI slice of C10 against the accepted+integrated C09 service/route API; parent C09 acceptance remains a Wave-3 integrator act and adds no new C10 obligation)",
+  "frozenBy": "software-architect 2026-10-05; accepted by zcode orchestrator; base 94d0004",
+  "scope": "Audio cue UI only: offline browser workflow (import local audio, in-session preview/seek, place/trim/gain narration/music/SFX cues, align narration to script beats, save an immutable AudioMixRevision server-side) over EXISTING accepted routes, consumed read-only. Fixture/localhost-only verification; NO provider generation, NO network beyond 127.0.0.1, NO schema edits, NO new API routes.",
+  "owns": [
+    "app/production/[projectId]/audio/page.tsx",
+    "components/production/audio.tsx",
+    "scripts/verify-production-audio.mjs",
+    "lib/production/audio-ui.test.ts"
+  ],
+  "dependency": {
+    "base": "94d0004 on zcode/production-core",
+    "consumeReadOnly": [
+      "GET+POST /api/production/projects/[projectId] (read model v2)",
+      "POST /api/production/projects/[projectId]/audio (SaveAudioMixCommand -> {revision,created,active}; 201/200; lib/services/production/audio.ts:151-169)",
+      "POST /api/production/assets/import (multipart file+source+rightsAttestation+rightsStatus -> 201 {asset})",
+      "GET /api/production/health (verify-script fail-fast only)",
+      "lib/production/audio.ts pure exports: buildAudioCue, validateCueOverlaps, serializeAudioTimeline, narrationAlignmentIssues, DEFAULT_AUDIO_OVERLAP_POLICY, MAX_IMPORT_AUDIO_BYTES",
+      "lib/production/project-canon.ts: deriveStaleDependencyNotices (targetKind 'audio' rows)",
+      "lib/production/contracts.ts zod schemas/types; lib/production/http.ts error envelope",
+      "NEVER import in UI/verify code: lib/production/composition.ts, lib/services/production/*, lib/repositories/production/*, lib/media/production/vault.ts (server-only; the UI speaks HTTP only)"
+    ],
+    "forbiddenEdits": [
+      "C09 files (audio.ts/audio.test.ts/services/audio.ts/services audio.test/audio route/production-audio-import.mjs)",
+      "composition.ts, manifest.ts + services/manifest.ts, proposals files, budget-composer.ts, contracts.ts, http.ts, runtime.ts, project-canon.ts, repositories/*, media/production/*, app/api/production/* (every route), package.json, package-lock.json, docs/production/* owned by others, components/ui/*, app/story/* and legacy pages"
+    ]
+  },
+  "imports": {
+    "components/production/audio.tsx": "'use client' once at top. From ../../lib/production/audio: buildAudioCue, validateCueOverlaps, serializeAudioTimeline, narrationAlignmentIssues, DEFAULT_AUDIO_OVERLAP_POLICY. From ../../lib/production/contracts: types Asset/AudioCue/AudioMixRevision/StoryRevision/SaveAudioMixCommand, AudioCue['role']. From ../../lib/production/project-canon: deriveStaleDependencyNotices. React/next imports for the component only. Pure view-model functions reference no React hook, no window/document, no fetch \u2014 plain functions importable by lib/production/audio-ui.test.ts in vitest node env (vitest include lib/**/*.test.ts matches; tsconfig jsx react-jsx transforms .tsx).",
+    "app/production/[projectId]/audio/page.tsx": "Thin Next server page: await params, render <AudioCueWorkspace projectId={params.projectId} /> from components/production/audio. No data fetching, no metadata API, no route handlers, no other exports.",
+    "scripts/verify-production-audio.mjs": "playwright chromium (devDependency ^1.63.0; precedent scripts/verify-writer-scenes.mjs), node:fs, node:path, node:child_process (ffmpeg/ffprobe probe only), global fetch. NO tsx/lib imports \u2014 seeds exclusively through the running server's HTTP routes.",
+    "lib/production/audio-ui.test.ts": "Imports ONLY pure exports from ../../components/production/audio \u2014 never react-dom, never renders, never fetches."
+  },
+  "uiModel": {
+    "dataSources": "Client component fetches GET /api/production/projects/{projectId} once per mount (+ explicit Reload). Uses: activeStoryRevisionId, activeAudioMixRevisionId, audioMixVersion, dependencyIssues, storyRevision.beats (id/narration/dialogue[].text), audioMixRevision (nullable), animaticRevision.totalFrames (nullable). activeStoryRevisionId null -> fail-closed empty state 'Save a script revision before placing audio cues' + link to project page; no editor.",
+    "assetCatalog": "deriveMixCatalog(readModel, sessionAssets): union of (a) in-session upload responses (full Asset) and (b) assets referenced by the active mix cues (assetId + per-cue sourceRights ONLY \u2014 read model exposes no asset records). Recovered (b) entries render provenance 'unavailable until re-imported', support NO new-cue creation and NO trim beyond the cue's known sourceEndSample. Frozen read-model limitation, not a UI choice (proposal filed in decisions).",
+    "uploadStateMachine": "phase 'idle'|'uploading'|'failed'|'ready'. idle: file input, source (required nonempty), rightsAttestation (required nonempty), rightsStatus select restricted to creator_attested|licensed|public_domain (route's only legal values). uploading: submit disabled + busy text. ready: ONLY on 2xx WITH parsed asset (deriveUploadOutcome never returns ready without an asset \u2014 blank-success guard). failed: any non-2xx, network error, or unparseable body -> role=alert with envelope error.code + error.message + requestId (or 'network error'), form values and file retained, Retry enabled. deriveUploadOutcome maps INVALID_INPUT(400)/MEDIA_UNAVAILABLE(422)/413 to actionable text.",
+    "previewSeek": "In-session uploaded files only: HTMLAudioElement + URL.createObjectURL(file); durationSamples = asset.audioSamples; play/pause + seek range input (min 0 max durationSamples step 1) wired to currentTime; samplesToDisplayTime(samples) = integer math `${Math.trunc(samples/48000)}.${String(samples%48000).padStart(3,'0')}s` (no floating-point seconds in stored values). Recovered assets: explicit 'Preview unavailable \u2014 re-import the file in this session' state.",
+    "cueEditorModel": "CueDraft = {key (client row id); assetId; role 'narration'|'dialogue'|'music'|'sfx'; timelineStartSample int>=0; sourceStartSample int>=0; sourceEndSample int>start; gainDb clamped [-60,12]; scriptSegmentId string|null; sourceText string|null; sourceRights}. New cues default music/sfx; narration/dialogue require picking a script beat. Editing = sample-number inputs with per-field clamps + keyboard-focusable cue rows; selecting a beat auto-fills sourceText from beat.narration (narration) or a chosen beat.dialogue[].text line (dialogue) \u2014 the exact equality narrationAlignmentIssues enforces.",
+    "saveReadiness": "deriveCueSaveReadiness(drafts, catalog, context {projectId, activeStoryRevisionId, audioMixVersion, storyRevision, animaticTotalSamples number|null}): {ok:true; command:SaveAudioMixCommand} | {ok:false; issues:CueIssue[]}. CueIssue = {cueKey; kind 'MISSING_ASSET'|'SOURCE_RANGE'|'GAIN'|'OVERLAP'|'ALIGNMENT'|'OVERFLOW'|'STALE_STORY'; message}. Pipeline reuses accepted domain code verbatim: per-draft buildAudioCue (throw -> caught -> issue with exact message), validateCueOverlaps(cues,'layered'), narrationAlignmentIssues \u2014 zero reimplementation of server rules; nonempty issues disables Save and renders every message (fail-closed preflight). mixSettings UI defaults {sampleRate:48000, channels:2, loudnessTargetLufs:-14, truePeakLimitDbtp:-1, muteNativeAudio:true}. Save POSTs SaveAudioMixCommand {projectId, expectedAudioVersion, expectedStoryRevisionId, cues, mixSettings} JSON same-origin. Success 201/200: banner names revision.id + created flag, refetch read model. STALE_REVISION 409: alert 'The audio mix or script changed; reload to continue' \u2014 drafts retained. Other errors rendered like upload failures; NEVER a success state without the parsed revision.",
+    "overflowRule": "Two tiers: (1) hard always: sourceEndSample > asset.audioSamples (or known max for recovered cues) blocks Save naming the cue row, offending count, and asset bound in samples AND seconds; (2) when animaticRevision exists: cue timeline end (timelineStartSample + (sourceEndSample-sourceStartSample)) > totalFrames*2000 (C11-PRE frozen) blocks Save with actionable trim/move message. No animatic -> tier 2 not evaluated (matches server behavior).",
+    "staleNarrationRendering": "deriveStaleNarrationNotices(readModel): ordered rows from (a) mix pinned to previous story revision -> MIX_STORY_PINNED naming both ids; (b) deriveStaleDependencyNotices(dependencyIssues) filtered targetKind==='audio' (reused verbatim); (c) narrationAlignmentIssues(activeMix, storyRevision.beats) per-cue STALE_STORY/UNKNOWN_SEGMENT/TEXT_DRIFT. Rendered in a distinct 'Stale narration' region role=status above the editor whenever nonempty; never hidden, never auto-repaired.",
+    "timelineView": "Read-only active-mix rendering via serializeAudioTimeline(audioMixRevision) for ordered rows {id, role, timelineStartSample, timelineEndSample, gainDb, scriptSegmentId, sourceRights} + totalEndSample; per-row rights/source metadata (session provenance when asset in session catalog; recovered rows show cue-level sourceRights + 'provenance unavailable until re-imported').",
+    "visualAndA11yConventions": "Existing tailwind + components/ui primitives (Button/Badge patterns as in app/story/page.tsx); no new design system, no global CSS changes. Every interactive control keyboard-reachable with visible text or aria-label; upload alert / stale region / save issues use role=alert|status; file input has a proper <label>; focus order follows DOM order."
+  },
+  "minimalTests": [
+    {
+      "name": "C10-PRE upload outcome is fail-closed (never blank-success)",
+      "file": "lib/production/audio-ui.test.ts",
+      "checks": "deriveUploadOutcome: 201/200 valid Asset -> ready; every error shape (400 INVALID_INPUT envelope, 413, 422 MEDIA_UNAVAILABLE, network failure sentinel, 200 unparseable body) -> failed with nonempty message containing envelope code + requestId, asset null; nothing yields ready without an asset; rightsStatus option helper offers exactly creator_attested|licensed|public_domain."
+    },
+    {
+      "name": "C10-PRE cue placement, trim and gain derive a valid save command",
+      "file": "lib/production/audio-ui.test.ts",
+      "checks": "deriveCueSaveReadiness (narration bound to a real beat with byte-exact beat.narration, music from session asset): command cues pass buildAudioCue; gain boundaries -60/12 accepted, 12.5 rejected; trim keeps sourceStart<sourceEnd clamped to audioSamples; derivation deterministic; recovered-asset draft cannot extend past known max."
+    },
+    {
+      "name": "C10-PRE duration overflow is actionable",
+      "file": "lib/production/audio-ui.test.ts",
+      "checks": "sourceEndSample beyond asset samples -> SOURCE_RANGE naming cue key + both counts; timeline end one sample past animaticTotalSamples (=totalFrames*2000) -> OVERFLOW naming cue id, both sample counts, both seconds renderings; exactly-at-bound passes; no animatic -> no OVERFLOW; samplesToDisplayTime(0/48000/48001) = '0.000s'/'1.000s'/'1.001s'."
+    },
+    {
+      "name": "C10-PRE stale narration is visible and alignment reuses the accepted validator",
+      "file": "lib/production/audio-ui.test.ts",
+      "checks": "MIX_STORY_PINNED row naming both ids; audio dependencyIssues -> deduplicated ordered rows via deriveStaleDependencyNotices; UNKNOWN_SEGMENT (null/unknown scriptSegmentId) and TEXT_DRIFT surfaced per cue; fully aligned current mix -> empty; deriveCueSaveReadiness returns ALIGNMENT issues for drifting drafts."
+    },
+    {
+      "name": "C10-PRE catalog, provenance display and timeline view degrade honestly",
+      "file": "lib/production/audio-ui.test.ts",
+      "checks": "deriveMixCatalog unions session assets and active-mix cue assetIds with recovery provenance null; serializeAudioTimeline rows preserve server order + totalEndSample; recovered asset rejects new-cue creation."
+    }
+  ],
+  "browserGreenProtocol": {
+    "script": "scripts/verify-production-audio.mjs (playwright chromium, precedent verify-writer-scenes.mjs)",
+    "preconditions": [
+      "Fixtures in fresh os tmpdir: valid WAV = 48000Hz stereo 16-bit PCM RIFF fmt+data ~1s tone, written by pure Buffer code; invalid fixture = ASCII bytes named .wav; no MP3 needed.",
+      "Probe ffmpeg/ffprobe via child_process (honor FFMPEG_PATH/FFPROBE_PATH). Missing -> print 'BLOCKED: ffmpeg/ffprobe are required...' and exit 1 WITHOUT running scenarios or writing a pass line (fail-closed, no fake GREEN).",
+      "Script does NOT start the dev server. Fail fast: GET {base}/api/production/health; non-2xx -> actionable 'start: PERABYTE_STUDIO_DATA_DIR=<tmpdir> npx next dev -p 3100' and exit 1."
+    ],
+    "seeding": "Over HTTP (fetch with explicit Origin: base for mutations): POST /api/production/projects {name:'Audio UI verification', profileId:'storybook-short-v1'}; POST /api/production/projects/{id}/stories with >=2 beats per StoryBeatSchema (read the schema; invent nothing); record projectId. Same-origin JSON only.",
+    "scenarios": [
+      "T10-01 offline upload-ready: open /production/{id}/audio, upload valid WAV through the real form -> asset card with rights status, source, attestation, sha256, sample count/duration; page functional with no network beyond 127.0.0.1 (assert via page route blocking non-local requests).",
+      "T10-02 preview/seek: transport visible; play reaches playing state; seek slider -> currentTime advances within bounds; time label via samplesToDisplayTime format.",
+      "T10-03 cue placement/trim/gain save server-side: one narration cue bound to a beat (auto-filled text) + one music cue; trim/gain edit; Save -> success banner with revision id; reload -> cues + totalEndSample restored from read model; idempotent re-Save of identical cues returns created:false with no duplicate rows.",
+      "T10-04 narration alignment: text matches beat.narration exactly -> no ALIGNMENT issues, save succeeds; one-character edit -> ALIGNMENT issue visible, Save disabled.",
+      "T10-05 visible stale narration: seed a SECOND story revision via POST stories; reload audio page -> stale region visible naming pinned vs active revision ids and/or alignment issues.",
+      "T10-06 actionable overflow: cue timeline end exceeding animatic bound (seed animatic-bearing plan via accepted routes if the read model requires, else assert SOURCE_RANGE tier with sourceEndSample > audioSamples) -> blocking issue names cue, sample counts, seconds; Save disabled.",
+      "T10-noBlankSuccess: upload INVALID fixture -> role=alert with envelope code/message/requestId, no success state, form values retained; forced network failure (page.route abort on import POST once) renders an error, never success."
+    ],
+    "evidence": "Every scenario logs PASS/FAIL (check() pattern); any FAIL or BLOCKED -> exit 1. Screenshots per scenario into tmpdir run folder, absolute paths printed and referenced in the packet report \u2014 no PNGs committed."
+  },
+  "verification": {
+    "red": "npm test -- lib/production/audio-ui.test.ts (absent at base \u2014 record 'no test files found' baseline then failing cases)",
+    "green": [
+      "npm test -- lib/production/audio-ui.test.ts",
+      "npm run typecheck",
+      "git diff --check",
+      "fixture seed + PERABYTE_STUDIO_DATA_DIR=<tmpdir> npx next dev -p 3100, then node scripts/verify-production-audio.mjs http://127.0.0.1:3100"
+    ],
+    "bounds": "Offline/localhost only; no full-suite, no build, no provider calls, no edits outside the 4 owned files."
+  },
+  "decisions": [
+    "Owns exactly the 4 contract files; pure view-model derivations live as plain exported functions inside components/production/audio.tsx (no hooks/browser APIs); audio-ui.test.ts imports only those.",
+    "Upload via EXISTING C04 multipart route /api/production/assets/import; audioSamples come from the vault's ffmpeg decode; uploads fail closed (MEDIA_UNAVAILABLE) without ffmpeg \u2014 verify script probes first, reports BLOCKED rather than faking a pass.",
+    "FROZEN READ-MODEL LIMITATIONS (integrator proposals, no action here): (1) no asset-list/asset-read endpoint \u2014 catalog is session uploads UNION active-mix cue assets, recovered provenance shown honestly; (2) no media byte-serving route \u2014 preview/seek in-session only. Proposal: future GET /api/production/projects/[projectId]/audio (asset list + scoped media reference) in its own packet.",
+    "Alignment truth is story beats (scriptSegmentId = beat id); lib/production/proposals.ts intentionally NOT imported (draft-stage I02 DTOs are not the accepted story).",
+    "Server validation never reimplemented: buildAudioCue/validateCueOverlaps/narrationAlignmentIssues/serializeAudioTimeline/deriveStaleDependencyNotices reused read-only as client preflight \u2014 UI-disabled saves and server 4xx/409 cannot disagree by construction.",
+    "Animatic-bound overflow uses C11-PRE's frozen 2000 samples/frame, blocks Save early; source-range overflow always hard-blocking.",
+    "mixSettings defaults are display-only; literals live in contracts.ts.",
+    "Visual conventions inherited from app/story/page.tsx + components/ui; no redesign, no new dependencies, page.tsx thin server wrapper.",
+    "All other packets' files remain untouched (read-only)."
+  ],
+  "collisionCheck": "All 4 owned files NEW at base 94d0004 (no app/production/*, no components/production/*, no verify-production-audio.mjs, no audio-ui.test.ts). Disjoint from every accepted/in-flight packet (B6-C-FIX2 budget-composer, C11-PRE manifest, W-WIRE composition/routes/scripts, C09 audio, C07-DOMAIN project-canon). No in-flight packet owns app/production/[projectId]/audio/** or components/production/audio.tsx."
+}

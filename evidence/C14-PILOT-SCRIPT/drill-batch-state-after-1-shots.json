@@ -1,0 +1,67 @@
+{
+  "kind": "pilot-long-landscape-batch",
+  "runId": "c14resumefix1",
+  "mode": "batch",
+  "base": "http://127.0.0.1:3100",
+  "profileId": "profile_long_16_9",
+  "projectId": "05d70b64-9701-412d-a7b7-c6d70988cfdf",
+  "storyRevisionId": "1acccd17-0de4-415e-84c4-a861dd014d30",
+  "shotPlanRevisionId": "cfe720a9-a360-49df-862e-94807ab9900c",
+  "animaticRevisionId": "1e20161d-c6c3-44e2-814f-b57df79001d6",
+  "completedShots": [
+    {
+      "shotId": "shot_01",
+      "shotRevisionId": "d1b3cad7-8296-4440-aa8e-0b2f384f5996",
+      "targetFrames": 226,
+      "anchorId": "drill-placeholder-anchor-not-rendered",
+      "anchorApprovalId": "drill-placeholder-approval",
+      "anchorJobId": "drill-placeholder-job",
+      "takeId": "drill-placeholder-take-not-rendered",
+      "takeApprovalId": "drill-placeholder-approval",
+      "takeJobId": "drill-placeholder-job",
+      "selected": true
+    }
+  ],
+  "nextShotIndex": 1,
+  "audio": {
+    "narrations": [
+      "/tmp/c14-fix-drill/audio/narr-01.wav",
+      "/tmp/c14-fix-drill/audio/narr-02.wav",
+      "/tmp/c14-fix-drill/audio/narr-03.wav",
+      "/tmp/c14-fix-drill/audio/narr-04.wav",
+      "/tmp/c14-fix-drill/audio/narr-05.wav",
+      "/tmp/c14-fix-drill/audio/narr-06.wav",
+      "/tmp/c14-fix-drill/audio/narr-07.wav",
+      "/tmp/c14-fix-drill/audio/narr-08.wav",
+      "/tmp/c14-fix-drill/audio/narr-09.wav",
+      "/tmp/c14-fix-drill/audio/narr-10.wav",
+      "/tmp/c14-fix-drill/audio/narr-11.wav",
+      "/tmp/c14-fix-drill/audio/narr-12.wav",
+      "/tmp/c14-fix-drill/audio/narr-13.wav",
+      "/tmp/c14-fix-drill/audio/narr-14.wav",
+      "/tmp/c14-fix-drill/audio/narr-15.wav",
+      "/tmp/c14-fix-drill/audio/narr-16.wav",
+      "/tmp/c14-fix-drill/audio/narr-17.wav",
+      "/tmp/c14-fix-drill/audio/narr-18.wav",
+      "/tmp/c14-fix-drill/audio/narr-19.wav",
+      "/tmp/c14-fix-drill/audio/narr-20.wav",
+      "/tmp/c14-fix-drill/audio/narr-21.wav",
+      "/tmp/c14-fix-drill/audio/narr-22.wav",
+      "/tmp/c14-fix-drill/audio/narr-23.wav",
+      "/tmp/c14-fix-drill/audio/narr-24.wav"
+    ],
+    "music": "/tmp/c14-fix-drill/audio/music.wav",
+    "sfx": [
+      "/tmp/c14-fix-drill/audio/sfx-01.wav"
+    ]
+  },
+  "models": {
+    "anchor": "drill-anchor-model",
+    "take": "drill-take-model"
+  },
+  "seedBase": 11,
+  "restartedAfterShot": 1,
+  "paidLogPath": "/tmp/c14-fix-drill/out-batch1/paid-steps.jsonl",
+  "outDir": "/tmp/c14-fix-drill/out-batch1",
+  "savedAt": "2026-10-06T05:47:54.081Z"
+}

@@ -1,0 +1,54 @@
+
+> perabyte-studio@0.1.0 test
+> vitest run lib/repositories/production/sqlite.test.ts -t I01-B6-S
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.0 /Users/abid/.codex/worktrees/production-provider-proof/perabyte-studio
+
+ ❯ lib/repositories/production/sqlite.test.ts (29 tests | 1 failed | 27 skipped) 77ms
+   ❯ SQLite production store (29)
+     × I01-B6-S atomically validates and replays bound quote and execution proof links 14ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lib/repositories/production/sqlite.test.ts > SQLite production store > I01-B6-S atomically validates and replays bound quote and execution proof links
+AssertionError: expected [ { code: 'custom', …(2) } ] to be null
+
+- Expected:
+null
+
++ Received:
+[
+  {
+    "code": "custom",
+    "message": "Provider quote snapshots are inconsistent",
+    "path": [
+      "budgetQuote",
+    ],
+  },
+]
+
+ ❯ putQuotePrerequisites lib/repositories/production/sqlite.test.ts:60:147
+     58| }
+     59| const putQuotePrerequisites=(tx:ProductionWritePort,f:ReturnType<typeo…
+     60|   const parsed=ProviderProofPayloadSchema.safeParse(JSON.parse(f.quote…
+       |                                                                                                                                                   ^
+     61|   tx.insertProject(project());tx.insertQuote(f.mediaQuote);tx.insertAc…
+     62|   tx.insertProofArtifact(f.accountArtifact);tx.insertProofArtifact(f.p…
+ ❯ lib/repositories/production/sqlite.test.ts:583:28
+ ❯ sqliteTransaction.<anonymous> lib/repositories/production/sqlite.ts:620:22
+ ❯ sqliteTransaction ../../production-core/perabyte-studio/node_modules/.pnpm/better-sqlite3@13.0.3/node_modules/better-sqlite3/lib/methods/transaction.js:65:24
+ ❯ Object.transaction lib/repositories/production/sqlite.ts:632:81
+ ❯ lib/repositories/production/sqlite.test.ts:583:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 27 skipped (29)
+   Start at  20:06:51
+   Duration  431ms (transform 40%, import 30%, tests 29%, worker 1%)
+

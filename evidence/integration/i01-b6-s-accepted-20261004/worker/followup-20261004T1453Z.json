@@ -1,0 +1,54 @@
+{
+  "task_id": "I01-B6-S",
+  "status": "implemented_pending_independent_review_and_integration",
+  "worktree": "/Users/abid/.codex/worktrees/production-provider-proof/perabyte-studio",
+  "branch": "codex/production-provider-proof",
+  "parent_base_sha": "e72aa3cbe0e2088a936c37a70457d48182ca3b3d",
+  "source_commit": "1490e94040105664957e5fc228a1d3f5a3f6cf5b",
+  "source_commit_subject": "I01-B6-S: bind proof freshness and worker provenance",
+  "source_commit_paths": [
+    "lib/repositories/production/sqlite.ts",
+    "lib/repositories/production/sqlite.test.ts"
+  ],
+  "source_sha256": {
+    "lib/repositories/production/sqlite.ts": "5e487bc52f6067210c8cfa1527ac6364ff257f1d3f214d1851420e4d734ab91d",
+    "lib/repositories/production/sqlite.test.ts": "407d7a2ada2ca12d4b414bb7137e57603906d645837e7453770415d142f0fd32"
+  },
+  "changes": [
+    "Quote proof validation now requires account-session observedAt and expiresAt to exactly match the linked AccountEvidence timestamps.",
+    "Execution proof validation now caps proof expiry at the worker account-session expiry.",
+    "Execution proof validation now requires worker SDK version, SDK source hash, and adapter version to match the quote-pinned session while allowing worker role and session ID to differ.",
+    "The existing v3-to-v4 SQLite acceptance fixture now starts from populated approval, take, asset, job, and record-reference rows and verifies that graph survives migration.",
+    "The existing atomic proof-link fixture exercises both AccountEvidence timestamp mismatches, worker expiry mismatch, each of the three SDK provenance mismatches, rollback, successful link insertion, replay, and reopen."
+  ],
+  "commands": [
+    {
+      "argv": ["npm", "test", "--", "lib/repositories/production/sqlite.test.ts", "-t", "I01-B6-S"],
+      "exit_code": 0,
+      "log": "evidence/I01-B6-S/followup-20261004-145218-69730-focused-final.log",
+      "log_sha256": "955e19d1f803bd28d8a6a65f2868d020f761e8c3e3d916b0c14a1b5faf26b48c",
+      "result": "1 test file passed; 2 I01-B6-S tests passed; 27 tests skipped by the exact selector."
+    },
+    {
+      "argv": ["npm", "run", "typecheck"],
+      "exit_code": 0,
+      "log": "evidence/I01-B6-S/followup-20261004-145225-69969-typecheck-final.log",
+      "log_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "result": "tsc --noEmit passed."
+    },
+    {
+      "argv": ["git", "diff", "--check"],
+      "exit_code": 0,
+      "log": "evidence/I01-B6-S/followup-20261004-145232-70061-diffcheck-final.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "result": "No whitespace errors."
+    }
+  ],
+  "limitations": [
+    "No full test suite, build, or broader matrix was run, per the bounded acceptance packet.",
+    "No independent review or integration has occurred; root owns both.",
+    "No provider, account, credential, network, or paid calls were made."
+  ],
+  "prior_evidence": "The earlier incomplete evidence/I01-B6-S/report.json and all earlier raw attempt logs remain unchanged.",
+  "working_tree_after_commit": "Source paths are committed; only the evidence/I01-B6-S directory is untracked."
+}

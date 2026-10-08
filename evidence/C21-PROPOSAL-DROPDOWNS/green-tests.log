@@ -1,0 +1,13 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.0 /Users/abid/Projects/perabyte-studio/.worktrees/c21-proposal-dropdowns
+
+ ✓ lib/production/proposal-dropdowns.test.ts (3 tests) 5ms
+ ✓ lib/services/text-engine-chain.test.ts (12 tests) 24ms
+
+ Test Files  2 passed (2)
+      Tests  15 passed (15)
+   Start at  21:15:27
+   Duration  384ms (transform 55%, import 37%, tests 7%, worker 1%)

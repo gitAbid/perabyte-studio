@@ -58,7 +58,10 @@ function locationTextKey(state: SceneState, locations: readonly ShotLocation[]):
   const match = state.locationId
     ? locations.find((location) => location.id === state.locationId)
     : undefined;
-  return (match?.name ?? state.locationText ?? "").trim().toLowerCase();
+  const canonical = match
+    ? [match.name, match.description, match.lighting].filter(Boolean).join(" — ")
+    : state.locationText ?? "";
+  return canonical.trim().toLowerCase();
 }
 
 /**

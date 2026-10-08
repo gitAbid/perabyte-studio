@@ -31,6 +31,8 @@ export interface KeyframeInput {
   location?: LocationRow;
   /** The chain predecessor's derived last frame (soft continuity ref). */
   predecessorEndRef?: string;
+  /** When true, character fronts and the location plate are mandatory anchors. */
+  strictReferences?: boolean;
   /** Image-kind model descriptors to pick from (any provider). */
   imageModels: ModelDescriptor[];
 }
@@ -61,6 +63,38 @@ export function resolveKeyframeStrategy(input: KeyframeInput): KeyframeStrategy 
 
   const refs = keyframeRefs(cast, location, predecessorEndRef);
   if (!refs.length) return { rung: "none", reason: "no identity or location references" };
+
+  if (input.strictReferences) {
+    const requiredRefs = [
+      ...cast.map((character) => character.identity?.front).filter((ref): ref is string => Boolean(ref)),
+      ...(location?.ref ? [location.ref] : []),
+    ];
+    const required = [...new Set(requiredRefs)];
+    const contextCapable = imageModels
+      .filter((model) => model.contextImages && model.contextImages.max >= required.length)
+      .sort((a, b) => (b.contextImages?.max ?? 0) - (a.contextImages?.max ?? 0));
+    if (contextCapable.length) {
+      const model = contextCapable[0];
+      const capacity = model.contextImages?.max ?? required.length;
+      const optional = predecessorEndRef && !required.includes(predecessorEndRef)
+        ? [predecessorEndRef]
+        : [];
+      return {
+        rung: "multi",
+        modelId: model.id,
+        refs: [...required, ...optional.slice(0, Math.max(0, capacity - required.length))],
+      };
+    }
+    if (required.length === 1) {
+      const startCapable = imageModels.find((model) => model.frameInput?.start);
+      if (startCapable) {
+        return { rung: "single", modelId: startCapable.id, startRef: required[0] };
+      }
+    }
+    if (required.length > 0) {
+      return { rung: "none", reason: "required keyframe references exceed available model capacity" };
+    }
+  }
 
   const contextCapable = imageModels
     .filter((m) => m.contextImages && m.contextImages.max >= 1)

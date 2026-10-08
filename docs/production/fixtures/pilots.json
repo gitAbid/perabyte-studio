@@ -1,0 +1,786 @@
+{
+  "schema_version": 1,
+  "purpose": "planning fixtures only; not production media or measured model performance",
+  "canon": {
+    "characters": [
+      {
+        "id": "pip",
+        "identity": "small orange fox, white muzzle, dark ear tips",
+        "wardrobe": "teal scarf"
+      },
+      {
+        "id": "moss",
+        "identity": "small cream rabbit, long upright ears",
+        "wardrobe": "ochre vest"
+      }
+    ],
+    "locations": [
+      {
+        "id": "cedar-clearing",
+        "layout": "cedar at left, lantern stand at right, marked path exiting rear"
+      },
+      {
+        "id": "forest-path",
+        "layout": "marked path, root before little wooden bridge, cedar visible at return"
+      }
+    ],
+    "prop": {
+      "id": "star-lantern",
+      "description": "one brass star-shaped lantern; ownership and count remain fixed"
+    }
+  },
+  "profiles": [
+    {
+      "id": "short",
+      "fps": 24,
+      "sample_rate": 48000,
+      "width": 1080,
+      "height": 1920,
+      "expected_frames": 1152,
+      "beats": [
+        {
+          "id": "opening",
+          "action": "Pip the fox finds a fallen star-shaped lantern beside the cedar.",
+          "narration": "Pip the fox finds a fallen star-shaped lantern beside the cedar."
+        },
+        {
+          "id": "discovery",
+          "action": "Pip sees that its light dims when carried too quickly.",
+          "narration": "Pip sees that its light dims when carried too quickly."
+        },
+        {
+          "id": "wonder",
+          "action": "Moss the rabbit explains that gentle steps keep the light steady.",
+          "narration": "Moss the rabbit explains that gentle steps keep the light steady."
+        },
+        {
+          "id": "journey",
+          "action": "They walk together along the marked forest path.",
+          "narration": "They walk together along the marked forest path."
+        },
+        {
+          "id": "return",
+          "action": "They return the lantern to its stand beside the cedar.",
+          "narration": "They return the lantern to its stand beside the cedar."
+        },
+        {
+          "id": "ending",
+          "action": "The lantern glows and both friends celebrate helping their forest.",
+          "narration": "The lantern glows and both friends celebrate helping their forest."
+        }
+      ],
+      "shots": [
+        {
+          "id": "short-shot-01",
+          "beat_ids": [
+            "opening"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip"
+          ],
+          "location_id": "cedar-clearing",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "short-shot-02",
+          "beat_ids": [
+            "discovery"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip"
+          ],
+          "location_id": "cedar-clearing",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "short-shot-03",
+          "beat_ids": [
+            "wonder"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "cedar-clearing",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "short-shot-04",
+          "beat_ids": [
+            "journey"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "forest-path",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "short-shot-05",
+          "beat_ids": [
+            "return"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "cedar-clearing",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "short-shot-06",
+          "beat_ids": [
+            "ending"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "cedar-clearing",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        }
+      ],
+      "required_audio_roles": [
+        "narration",
+        "music",
+        "sfx"
+      ],
+      "media_status": "not_generated"
+    },
+    {
+      "id": "long",
+      "fps": 24,
+      "sample_rate": 48000,
+      "width": 1920,
+      "height": 1080,
+      "expected_frames": 5760,
+      "beats": [
+        {
+          "id": "long-beat-01",
+          "action": "Pip notices the dim lantern",
+          "narration": "Pip notices the dim lantern."
+        },
+        {
+          "id": "long-beat-02",
+          "action": "Pip approaches the cedar",
+          "narration": "Pip approaches the cedar."
+        },
+        {
+          "id": "long-beat-03",
+          "action": "Pip asks Moss for help",
+          "narration": "Pip asks Moss for help."
+        },
+        {
+          "id": "long-beat-04",
+          "action": "Moss observes the loose handle",
+          "narration": "Moss observes the loose handle."
+        },
+        {
+          "id": "long-beat-05",
+          "action": "They agree to carry it gently",
+          "narration": "They agree to carry it gently."
+        },
+        {
+          "id": "long-beat-06",
+          "action": "Pip lifts the lantern",
+          "narration": "Pip lifts the lantern."
+        },
+        {
+          "id": "long-beat-07",
+          "action": "Moss steadies the handle",
+          "narration": "Moss steadies the handle."
+        },
+        {
+          "id": "long-beat-08",
+          "action": "They find the marked path",
+          "narration": "They find the marked path."
+        },
+        {
+          "id": "long-beat-09",
+          "action": "Pip slows beside a root",
+          "narration": "Pip slows beside a root."
+        },
+        {
+          "id": "long-beat-10",
+          "action": "The light steadies",
+          "narration": "The light steadies."
+        },
+        {
+          "id": "long-beat-11",
+          "action": "They reach the little bridge",
+          "narration": "They reach the little bridge."
+        },
+        {
+          "id": "long-beat-12",
+          "action": "Moss checks the stepping boards",
+          "narration": "Moss checks the stepping boards."
+        },
+        {
+          "id": "long-beat-13",
+          "action": "Pip crosses with gentle steps",
+          "narration": "Pip crosses with gentle steps."
+        },
+        {
+          "id": "long-beat-14",
+          "action": "Moss follows close behind",
+          "narration": "Moss follows close behind."
+        },
+        {
+          "id": "long-beat-15",
+          "action": "They rest at the trail marker",
+          "narration": "They rest at the trail marker."
+        },
+        {
+          "id": "long-beat-16",
+          "action": "They notice the lantern stand sign",
+          "narration": "They notice the lantern stand sign."
+        },
+        {
+          "id": "long-beat-17",
+          "action": "Moss points toward the cedar",
+          "narration": "Moss points toward the cedar."
+        },
+        {
+          "id": "long-beat-18",
+          "action": "Pip follows the familiar path",
+          "narration": "Pip follows the familiar path."
+        },
+        {
+          "id": "long-beat-19",
+          "action": "A breeze shakes the leaves",
+          "narration": "A breeze shakes the leaves."
+        },
+        {
+          "id": "long-beat-20",
+          "action": "They shelter the lantern together",
+          "narration": "They shelter the lantern together."
+        },
+        {
+          "id": "long-beat-21",
+          "action": "The breeze passes",
+          "narration": "The breeze passes."
+        },
+        {
+          "id": "long-beat-22",
+          "action": "They reach the cedar clearing",
+          "narration": "They reach the cedar clearing."
+        },
+        {
+          "id": "long-beat-23",
+          "action": "Moss checks the empty stand",
+          "narration": "Moss checks the empty stand."
+        },
+        {
+          "id": "long-beat-24",
+          "action": "Pip sets the lantern down",
+          "narration": "Pip sets the lantern down."
+        },
+        {
+          "id": "long-beat-25",
+          "action": "They secure the handle",
+          "narration": "They secure the handle."
+        },
+        {
+          "id": "long-beat-26",
+          "action": "The lantern begins glowing",
+          "narration": "The lantern begins glowing."
+        },
+        {
+          "id": "long-beat-27",
+          "action": "They step back to admire it",
+          "narration": "They step back to admire it."
+        },
+        {
+          "id": "long-beat-28",
+          "action": "Pip thanks Moss",
+          "narration": "Pip thanks Moss."
+        },
+        {
+          "id": "long-beat-29",
+          "action": "Moss thanks Pip for careful steps",
+          "narration": "Moss thanks Pip for careful steps."
+        },
+        {
+          "id": "long-beat-30",
+          "action": "They celebrate a bright forest home",
+          "narration": "They celebrate a bright forest home."
+        }
+      ],
+      "shots": [
+        {
+          "id": "long-shot-01",
+          "beat_ids": [
+            "long-beat-01"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip"
+          ],
+          "location_id": "cedar-clearing",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-02",
+          "beat_ids": [
+            "long-beat-02"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip"
+          ],
+          "location_id": "cedar-clearing",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-03",
+          "beat_ids": [
+            "long-beat-03"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "cedar-clearing",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-04",
+          "beat_ids": [
+            "long-beat-04"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "cedar-clearing",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-05",
+          "beat_ids": [
+            "long-beat-05"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "cedar-clearing",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-06",
+          "beat_ids": [
+            "long-beat-06"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "cedar-clearing",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-07",
+          "beat_ids": [
+            "long-beat-07"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "cedar-clearing",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-08",
+          "beat_ids": [
+            "long-beat-08"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "forest-path",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-09",
+          "beat_ids": [
+            "long-beat-09"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "forest-path",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-10",
+          "beat_ids": [
+            "long-beat-10"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "forest-path",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-11",
+          "beat_ids": [
+            "long-beat-11"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "forest-path",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-12",
+          "beat_ids": [
+            "long-beat-12"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "forest-path",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-13",
+          "beat_ids": [
+            "long-beat-13"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "forest-path",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-14",
+          "beat_ids": [
+            "long-beat-14"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "forest-path",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-15",
+          "beat_ids": [
+            "long-beat-15"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "forest-path",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-16",
+          "beat_ids": [
+            "long-beat-16"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "forest-path",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-17",
+          "beat_ids": [
+            "long-beat-17"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "forest-path",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-18",
+          "beat_ids": [
+            "long-beat-18"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "forest-path",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-19",
+          "beat_ids": [
+            "long-beat-19"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "forest-path",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-20",
+          "beat_ids": [
+            "long-beat-20"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "forest-path",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-21",
+          "beat_ids": [
+            "long-beat-21"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "forest-path",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-22",
+          "beat_ids": [
+            "long-beat-22"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "cedar-clearing",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-23",
+          "beat_ids": [
+            "long-beat-23"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "cedar-clearing",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-24",
+          "beat_ids": [
+            "long-beat-24"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "cedar-clearing",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-25",
+          "beat_ids": [
+            "long-beat-25"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "cedar-clearing",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-26",
+          "beat_ids": [
+            "long-beat-26"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "cedar-clearing",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-27",
+          "beat_ids": [
+            "long-beat-27"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "cedar-clearing",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-28",
+          "beat_ids": [
+            "long-beat-28"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "cedar-clearing",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-29",
+          "beat_ids": [
+            "long-beat-29"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "cedar-clearing",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        },
+        {
+          "id": "long-shot-30",
+          "beat_ids": [
+            "long-beat-30"
+          ],
+          "frames": 192,
+          "character_ids": [
+            "pip",
+            "moss"
+          ],
+          "location_id": "cedar-clearing",
+          "prop_ids": [
+            "star-lantern"
+          ]
+        }
+      ],
+      "required_audio_roles": [
+        "narration",
+        "music",
+        "sfx"
+      ],
+      "media_status": "not_generated"
+    }
+  ]
+}

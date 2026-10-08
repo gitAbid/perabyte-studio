@@ -1,0 +1,32 @@
+ app/production/[projectId]/plan/page.tsx           |   16 +
+ components/SiteChrome.tsx                          |    1 +
+ components/production/plan-builder.tsx             | 1117 ++++++++++++++++++++
+ components/production/project-canon.tsx            |  296 +++++-
+ evidence/C19-PLAN-UI/adjacent-suites.log           |   14 +
+ evidence/C19-PLAN-UI/build.log                     |  149 +++
+ evidence/C19-PLAN-UI/green-tests.log               |  782 ++++++++++++++
+ evidence/C19-PLAN-UI/red-tests.log                 |   20 +
+ .../screenshots/01-sidebar-production.png          |  Bin 0 -> 164512 bytes
+ .../C19-PLAN-UI/screenshots/02-wizard-script.png   |  Bin 0 -> 93825 bytes
+ .../screenshots/03-overview-after-create.png       |  Bin 0 -> 219744 bytes
+ .../screenshots/04-plan-failclosed-unapproved.png  |  Bin 0 -> 86497 bytes
+ .../screenshots/05-story-approval-ticked.png       |  Bin 0 -> 232275 bytes
+ .../C19-PLAN-UI/screenshots/06-story-approved.png  |  Bin 0 -> 197811 bytes
+ .../screenshots/07-plan-drafts-edited.png          |  Bin 0 -> 252530 bytes
+ .../C19-PLAN-UI/screenshots/08-plan-created.png    |  Bin 0 -> 435543 bytes
+ .../screenshots/09-shotplan-approved.png           |  Bin 0 -> 399129 bytes
+ .../screenshots/10-animatic-approved.png           |  Bin 0 -> 363415 bytes
+ .../screenshots/11-storyboard-green.png            |  Bin 0 -> 263626 bytes
+ .../C19-PLAN-UI/screenshots/12-overview-green.png  |  Bin 0 -> 289968 bytes
+ evidence/C19-PLAN-UI/smoke-driver.mjs              |  218 ++++
+ evidence/C19-PLAN-UI/smoke.log                     |   50 +
+ evidence/C19-PLAN-UI/typecheck.log                 |    0
+ lib/production/plan-ui.test.ts                     |  327 ++++++
+ 24 files changed, 2989 insertions(+), 1 deletion(-)
+
+Scope: components/SiteChrome.tsx (Production sidebar link), components/production/project-canon.tsx
+(story-approval pure helpers + section, Plan overview button, approval-states section),
+components/production/plan-builder.tsx (new plan builder UI), app/production/[projectId]/plan/page.tsx
+(new route), lib/production/plan-ui.test.ts (new pure-derivation tests), evidence/C19-PLAN-UI/ (this
+evidence set incl. the smoke driver + screenshots). Nothing in lib/ (non-test), app/api/, scripts/,
+docs/ or next.config.ts was touched.

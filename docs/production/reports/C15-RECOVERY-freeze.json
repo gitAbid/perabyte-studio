@@ -1,0 +1,32 @@
+{
+  "packet": "C15-RECOVERY",
+  "created": "2026-10-06",
+  "status": "frozen",
+  "orchestrator": "zcode orchestration (GLM-5.3)",
+  "context": {
+    "root_branch": "zcode/production-core",
+    "base_contains": ["768ec28 (C13-LIVE-FIX-4)"],
+    "context": "TASK_PACKETS C15: prove a solo creator can recover local production records, jobs and media after process or host restart. The store is `.studio/production.sqlite` (better-sqlite3, WAL) with a media vault under `<dataDir>/media`; jobs have lease/heartbeat ownership + boot recovery (Phase B); exports are ExportRecords with lease JSON + output assets. A real store with live history exists at the root worktree `.studio` — drills may run against a COPY of it, never the live one. The release gate (G10) formally needs C14's film too — the checklist must mark it honestly (C13 produced-awaiting-G09 = user-gated; C14 pending) and must NOT declare release-ready."
+  },
+  "owns": {
+    "recovery-tooling": {
+      "files": ["scripts/production-backup.mjs", "scripts/production-restore.mjs", "scripts/verify-production-recovery.mjs", "lib/production/recovery.test.ts", "docs/production/RELEASE_CHECKLIST.md"],
+      "change": "1) production-backup.mjs: consistent snapshot = better-sqlite3 `.backup()` (WAL-safe) of production.sqlite into the archive + the media vault directory (recursive copy) + a manifest.json listing every file with byte size and sha256 (node builtins only). CLI: `node scripts/production-backup.mjs --data-dir <dir> --out <archive-dir>`; archive = a directory (not compressed tar) `<out>/backup-<ts>/{production.sqlite.snapshot,media/,manifest.json}`. 2) production-restore.mjs: `--archive <dir> --into <fresh-data-dir>`; refuses (exit 1, actionable message) missing/extra manifest entries, checksum mismatch, path traversal in archived media paths (reject absolute paths, `..` segments, symlink entries), and partial/corrupt archives; restores DB + media, then PRAGMA integrity_check + foreign_key_check must pass in the restored DB; writes restore-report.json with every count and hash restored. 3) verify-production-recovery.mjs: end-to-end drills on a COPY: (a) full clean backup -> restore into isolated temp dir -> compare counts/hashes; (b) kill -9 the worker mid-job (spawn a real worker against the copy's data dir with a queued job), restart it, verify the expired lease recovers WITHOUT duplicate provider submit (assert via job events: exactly one submission for the job's idempotency key; if the fixture cannot safely use a real provider, use a job whose submission is gated off and assert lease/ownership recovery + no second outbox claim); (c) orphan media report (media files not referenced by any asset row); (d) export output hash verification against the manifest. Exits 0 only when every drill passes, printing a structured report. 4) lib/production/recovery.test.ts: unit-level RED cases first — restore refuses mismatched checksum; restore refuses path traversal (`../evil` media path); backup manifest is complete (every file listed); interrupted-lease recovery logic. Use temp dirs + in-test stores (pattern: budget-composer.test.ts fixtures). 5) docs/production/RELEASE_CHECKLIST.md: every gate G01-G10 + operational items as a table with pass/fail/UNKNOWN + evidence pointer; C13 = 'produced, awaiting creator G09 (user-gated)' (export id + checksum + QC numbers recorded); C14 = pending; an explicit rule: never release-ready while any required item is unknown; document the backup/restore + recovery-drill commands.",
+      "tests": [
+        "RED first: recovery.test.ts written against the intended API fails before the scripts implement the behavior (record).",
+        "GREEN: `npm test -- lib/production/recovery.test.ts`; `npm run typecheck`; `git diff --check`; and one real end-to-end drill: backup the live root `.studio` (read-only copy semantics — the backup tool must not write into the source data dir), restore into a temp dir, verify integrity + hashes + orphan report. Record all as noclobber evidence."
+      ]
+    }
+  },
+  "constraints": [
+    "One commit on branch zcode/c15-recovery from base 768ec28; only the five owned files.",
+    "Node builtins only for scripts (node:sqlite permitted, Node >= 22.12 documented). NEVER touch the live `.studio` store from scripts (open read-only / copy first). Never print SOGNI_API_KEY.",
+    "Do not modify lib/repositories, lib/jobs, worker, or composer files.",
+    "The drills may START/STOP a worker they spawn themselves against the COPY's data dir — never the live worker on the root data dir."
+  ],
+  "acceptance": [
+    "RED->GREEN unit pair present; live end-to-end drill evidence (backup -> restore -> verify on a copy) recorded.",
+    "RELEASE_CHECKLIST marks C13/C14 honestly and refuses release-readiness while unknowns remain.",
+    "Integrator: root checks + review + live spot-check of the drills."
+  ]
+}

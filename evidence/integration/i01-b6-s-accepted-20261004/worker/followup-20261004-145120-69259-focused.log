@@ -1,0 +1,16 @@
+
+> perabyte-studio@0.1.0 test
+> vitest run lib/repositories/production/sqlite.test.ts -t I01-B6-S
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.0 /Users/abid/.codex/worktrees/production-provider-proof/perabyte-studio
+
+
+ Test Files  1 passed (1)
+      Tests  2 passed | 27 skipped (29)
+   Start at  20:51:21
+   Duration  510ms (tests 38%, transform 34%, import 27%, worker 1%)
+

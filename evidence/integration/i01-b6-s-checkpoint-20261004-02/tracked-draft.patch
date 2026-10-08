@@ -1,0 +1,399 @@
+diff --git a/lib/production/contracts.test.ts b/lib/production/contracts.test.ts
+index 0bdcfcb..4bb630a 100644
+--- a/lib/production/contracts.test.ts
++++ b/lib/production/contracts.test.ts
+@@ -331,6 +331,7 @@ describe("strict budget contract records", () => {
+     expect(C.HealthResponseSchema.safeParse({ ...base, schemaVersion: 1 }).success).toBe(true);
+     expect(C.HealthResponseSchema.safeParse({ ...base, schemaVersion: 2 }).success).toBe(true);
+     expect(C.HealthResponseSchema.safeParse({ ...base, schemaVersion: 3 }).success).toBe(true);
+-    expect(C.HealthResponseSchema.safeParse({ ...base, schemaVersion: 4 }).success).toBe(false);
++    expect(C.HealthResponseSchema.safeParse({ ...base, schemaVersion: 4 }).success).toBe(true);
++    expect(C.HealthResponseSchema.safeParse({ ...base, schemaVersion: 5 }).success).toBe(false);
+   });
+ });
+diff --git a/lib/production/contracts.ts b/lib/production/contracts.ts
+index 5b8288e..6880b8a 100644
+--- a/lib/production/contracts.ts
++++ b/lib/production/contracts.ts
+@@ -592,7 +592,7 @@ export type HonoredInputsReceipt = z.infer<typeof HonoredInputsReceiptSchema>;
+ 
+ /* API DTOs: every request is strict and contains no server-authored result fields. */
+ const CursorSchema = z.string().max(1000).nullable();
+-export const SupportedStorageSchemaVersionSchema = z.union([z.literal(1), z.literal(2), z.literal(3)]);
++export const SupportedStorageSchemaVersionSchema = z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]);
+ export const HealthResponseSchema = z.strictObject({
+   schemaVersion: SupportedStorageSchemaVersionSchema,
+   storage: z.enum(["ready", "degraded", "unavailable"]),
+diff --git a/lib/repositories/production/ports.ts b/lib/repositories/production/ports.ts
+index 5da1872..e2b55f5 100644
+--- a/lib/repositories/production/ports.ts
++++ b/lib/repositories/production/ports.ts
+@@ -31,6 +31,7 @@ import type {
+ } from "../../production/contracts";
+ export type { ProviderRequestSnapshot } from "../../production/contracts";
+ import type { ProductionErrorCode } from "../../production/errors";
++import type { ExecutionProofLink, ProofArtifact, ProviderCredentialGeneration, QuoteProofLink } from "../../production/provider-proof";
+ 
+ export type ProviderInputReference = ProviderRequestSnapshot["inputs"][number];
+ 
+@@ -72,7 +73,14 @@ export interface BudgetReadPort {
+   listBudgetLedger(scope: LedgerScope): BudgetLedgerEntry[];
+ }
+ 
+-export interface ProductionReadPort extends BudgetReadPort {
++export interface ProviderProofReadPort {
++  getProofArtifact(hash: string): ProofArtifact | null;
++  getProviderCredentialGeneration(providerId: string): ProviderCredentialGeneration | null;
++  getQuoteProof(budgetQuoteId: string): QuoteProofLink | null;
++  getExecutionProof(executionId: string): ExecutionProofLink | null;
++}
++
++export interface ProductionReadPort extends BudgetReadPort, ProviderProofReadPort {
+   getProject(projectId: string): Project | null;
+   listProjects(cursor: string | null, limit: number): ProjectListPage;
+   getCanonRevision(revisionId: string): CanonRevision | null;
+@@ -152,7 +160,14 @@ export interface BudgetWritePort extends BudgetReadPort {
+   appendReconciliationEvidence(evidence: ReconciliationEvidence): InsertOutcome<StoredEvidence>;
+ }
+ 
+-export interface ProductionWritePort extends ProductionReadPort, BudgetWritePort {
++export interface ProviderProofWritePort extends ProviderProofReadPort {
++  insertProofArtifact(record: ProofArtifact): InsertOutcome<ProofArtifact>;
++  compareAndSetProviderCredentialGeneration(record: ProviderCredentialGeneration, expectedRevision: number | null): boolean;
++  insertQuoteProof(record: QuoteProofLink): InsertOutcome<QuoteProofLink>;
++  insertExecutionProof(record: ExecutionProofLink): InsertOutcome<ExecutionProofLink>;
++}
++
++export interface ProductionWritePort extends ProductionReadPort, BudgetWritePort, ProviderProofWritePort {
+   insertProject(project: Project): void;
+   compareAndSetProject(project: Project, expectedSaveVersion: number): boolean;
+   insertCanonRevision(revision: CanonRevision): void;
+diff --git a/lib/repositories/production/sqlite.test.ts b/lib/repositories/production/sqlite.test.ts
+index cd41efb..293caa3 100644
+--- a/lib/repositories/production/sqlite.test.ts
++++ b/lib/repositories/production/sqlite.test.ts
+@@ -3,12 +3,14 @@ import { spawn } from "node:child_process";
+ import { tmpdir } from "node:os";
+ import { join } from "node:path";
+ import { pathToFileURL } from "node:url";
++import { createHash } from "node:crypto";
+ import Database from "better-sqlite3";
+ import { afterEach, describe, expect, it } from "vitest";
+ import { openProductionStore } from "./sqlite";
+ import type { OutboxIntent, ProductionWritePort } from "./ports";
+ import type { Approval, Project } from "../../production/contracts";
+-import { hashCanonicalJson } from "../../production/hash";
++import { canonicalJson, hashCanonicalJson } from "../../production/hash";
++import { ProviderProofPayloadSchema } from "../../production/provider-proof";
+ 
+ type FutureBudgetReadPort = {
+   getLatestAccountPolicy(scope: {providerId:string;accountId:string;currency:string|null;unit:"minor_currency"|"spark_token"}): unknown;
+@@ -36,6 +38,30 @@ const reservation=()=>({schemaVersion:1 as const,id:"reservation-1",execution:ex
+ const actualEvent=(eventKey="event-1",cumulativeActual:number|null=100,final=false)=>({schemaVersion:1 as const,eventKey,reservationId:"reservation-1",providerId:moneyScope.providerId,accountId:moneyScope.accountId,currency:moneyScope.currency,unit:"minor_currency" as const,observedAt:300,source:"trusted-reconcile",reference:"provider-reference",provenance:{kind:"provider" as const,producerId:"provider-producer"},fact:{kind:"actual" as const,cumulativeActual,final}});
+ const budgetWrite=<T>(store:ReturnType<typeof openProductionStore>,work:(port:FutureBudgetWritePort)=>T):T=>store.transaction(tx=>work(tx as unknown as FutureBudgetWritePort) as never) as T;
+ 
++const proofGeneration=(revision=1,generationId="credential-binding-1",accountId="account-1",credentialFingerprint="a".repeat(64),changedAt=40)=>({schemaVersion:1 as const,providerId:"provider-1",revision,generationId,accountId,credentialFingerprint,changedAt});
++const proofSession=(role:"web"|"worker"|"probe"="probe",sessionId="session-probe")=>({sessionId,role,sdkVersion:"5.49.0",sdkSourceHash:"b".repeat(64),adapterVersion:"adapter-v1"});
++const proofProducer={producerId:"local-test",producerVersion:"1.0",sourceHash:"c".repeat(64)};
++const proofArtifact=(payload:Record<string,unknown>,createdAt:number)=>({schemaVersion:1 as const,hash:hashCanonicalJson(payload),canonicalPayload:canonicalJson(payload),createdAt});
++function quoteProofFixture(){
++  const generation=proofGeneration(),session=proofSession(),accountPayload={schemaVersion:1 as const,kind:"account_session" as const,producer:proofProducer,generation,session,subscription:{active:true,status:"active",tier:"creator",currentPeriodEnd:null,providerVersion:null},observedAt:100,expiresAt:1000};
++  const accountArtifact=proofArtifact(accountPayload,100),sourceCapture="Reviewed public pricing and account policy capture.";
++  const reviewedConfig={policyVersion:"review-v1"},policyPayload={schemaVersion:1 as const,kind:"reviewed_policy" as const,producer:proofProducer,providerId:"provider-1",reviewVersion:"review-v1",sourceUrl:"https://example.test/policy",sourceCapture,sourceCaptureSha256:createHash("sha256").update(sourceCapture,"utf8").digest("hex"),reviewedConfigCanonicalJson:canonicalJson(reviewedConfig),reviewedConfigHash:hashCanonicalJson(reviewedConfig),capturedAt:50,expiresAt:950};
++  const policyArtifact=proofArtifact(policyPayload,50),projection={operation:"take",modelId:"model-1",projectId:"project-1"},inputHash=hashCanonicalJson(projection),recipe={operation:"take",modelId:"model-1",projectId:"project-1",inputHash},semanticHash="d".repeat(64);
++  const mediaQuote={version:1 as const,id:"media-quote-1",projectId:"project-1",providerId:"provider-1",modelId:"model-1",operation:"take" as const,inputHash,entitlement:"subscription" as const,estimateMinMinor:100,estimateMaxMinor:200,currency:"USD",expiresAt:900,withinAuthorizedCap:"unknown" as const,createdAt:200};
++  const budget={schemaVersion:1 as const,id:"budget-quote-1",projectId:"project-1",providerId:"provider-1",modelId:"model-1",operation:"take" as const,inputHash,estimateMin:100,estimateMax:200,currency:"USD",unit:"minor_currency" as const,entitlement:"subscription" as const,createdAt:200,expiresAt:900,mediaQuoteId:mediaQuote.id};
++  const accountEvidence={...evidence(),reference:`sha256:${accountArtifact.hash}`,credentialBindingId:generation.generationId,expiresAt:1000};
++  const quoteBinding={...binding(),accountEvidenceId:accountEvidence.id,credentialBindingId:generation.generationId,executionSemanticHash:semanticHash,quotedAt:250};
++  const capability={version:1 as const,providerId:"provider-1",modelId:"model-1",provenance:"live_catalog" as const,observedAt:50,expiresAt:900,supportedOperations:["video" as const],aspectRatios:["9:16" as const],maxReferenceImages:4,supportsStartFrame:true,supportsEndFrame:false,supportsContextImages:false,supportsTimedKeyframes:false,minFrames:1,maxFrames:1000,frameStep:1,supportsNativeAudio:false};
++  const payload={schemaVersion:1 as const,kind:"media_quote" as const,producer:proofProducer,mediaQuote,budgetQuote:budget,binding:quoteBinding,accountEvidence,accountProofHash:accountArtifact.hash,policyProofHash:policyArtifact.hash,canonicalRecipeJson:canonicalJson(recipe),recipeHash:hashCanonicalJson(recipe),canonicalQuoteProjectionJson:canonicalJson(projection),quoteProjectionHash:inputHash,executionSemanticHash:semanticHash,capability,session,createdAt:300,expiresAt:700};
++  const quoteArtifact=proofArtifact(payload,300),quoteLink={schemaVersion:1 as const,mediaQuoteId:mediaQuote.id,budgetQuoteId:budget.id,artifactHash:quoteArtifact.hash};
++  return {generation,session,accountPayload,accountArtifact,policyPayload,policyArtifact,mediaQuote,budget,accountEvidence,quoteBinding,capability,payload,quoteArtifact,quoteLink,semanticHash};
++}
++const putQuotePrerequisites=(tx:ProductionWritePort,f:ReturnType<typeof quoteProofFixture>)=>{
++  const parsed=ProviderProofPayloadSchema.safeParse(JSON.parse(f.quoteArtifact.canonicalPayload));expect(parsed.success?null:parsed.error.issues).toBeNull();
++  tx.insertProject(project());tx.insertQuote(f.mediaQuote);tx.insertAccountEvidence(f.accountEvidence);tx.insertBudgetQuote(f.budget,f.quoteBinding);
++  tx.insertProofArtifact(f.accountArtifact);tx.insertProofArtifact(f.policyArtifact);tx.insertProofArtifact(f.quoteArtifact);
++};
++
+ function spawnStoreOpen(dbPath:string,barrierPath:string):Promise<{code:number|null;stdout:string;stderr:string;elapsedMs:number}>{
+   const moduleUrl=pathToFileURL(join(process.cwd(),"lib/repositories/production/sqlite.ts")).href;
+   const source=`import fs from 'node:fs';const {openProductionStore}=await import(${JSON.stringify(moduleUrl)});while(!fs.existsSync(process.argv[2]))await new Promise(r=>setTimeout(r,2));const started=Date.now();try{const store=openProductionStore({dbPath:process.argv[1]});console.log(JSON.stringify({schemaVersion:store.schemaVersion(),pragmas:store.pragmas(),integrity:store.integrityCheck()}));store.close()}catch(error){console.error(error);console.log('elapsed-ms='+String(Date.now()-started));process.exitCode=1}`;
+@@ -59,8 +85,8 @@ describe("SQLite production store",()=>{
+     const children=[spawnStoreOpen(dbPath,barrier),spawnStoreOpen(dbPath,barrier)];writeFileSync(barrier,"start");
+     const results=await Promise.all(children);
+     expect(results.map(result=>result.code)).toEqual([0,0]);
+-    for(const result of results){const observed=JSON.parse(result.stdout) as {schemaVersion:number;pragmas:{journalMode:string;foreignKeys:number;synchronous:number};integrity:{ok:boolean}};expect(observed).toMatchObject({schemaVersion:3,pragmas:{journalMode:"wal",foreignKeys:1,synchronous:2},integrity:{ok:true}});}
+-    const db=new Database(dbPath);expect(db.prepare("SELECT version,name FROM schema_migrations ORDER BY version").all()).toEqual([{version:1,name:"001.sql"},{version:2,name:"002-budget.sql"},{version:3,name:"003-approval-commands.sql"}]);expect(db.pragma("foreign_key_check")).toEqual([]);db.close();
++    for(const result of results){const observed=JSON.parse(result.stdout) as {schemaVersion:number;pragmas:{journalMode:string;foreignKeys:number;synchronous:number};integrity:{ok:boolean}};expect(observed).toMatchObject({schemaVersion:4,pragmas:{journalMode:"wal",foreignKeys:1,synchronous:2},integrity:{ok:true}});}
++    const db=new Database(dbPath);expect(db.prepare("SELECT version,name FROM schema_migrations ORDER BY version").all()).toEqual([{version:1,name:"001.sql"},{version:2,name:"002-budget.sql"},{version:3,name:"003-approval-commands.sql"},{version:4,name:"004-provider-proof.sql"}]);expect(db.pragma("foreign_key_check")).toEqual([]);db.close();
+   });
+ 
+   it("upgrades one real v1 database from two barrier-synchronized processes",async()=>{
+@@ -69,8 +95,8 @@ describe("SQLite production store",()=>{
+     const children=[spawnStoreOpen(dbPath,barrier),spawnStoreOpen(dbPath,barrier)];writeFileSync(barrier,"start");
+     const results=await Promise.all(children);
+     expect(results.map(result=>result.code)).toEqual([0,0]);
+-    for(const result of results){const observed=JSON.parse(result.stdout) as {schemaVersion:number;pragmas:{journalMode:string;foreignKeys:number;synchronous:number};integrity:{ok:boolean}};expect(observed).toMatchObject({schemaVersion:3,pragmas:{journalMode:"wal",foreignKeys:1,synchronous:2},integrity:{ok:true}});}
+-    const db=new Database(dbPath);expect(db.prepare("SELECT version,name FROM schema_migrations ORDER BY version").all()).toEqual([{version:1,name:"001.sql"},{version:2,name:"002-budget.sql"},{version:3,name:"003-approval-commands.sql"}]);expect(db.pragma("foreign_key_check")).toEqual([]);db.close();
++    for(const result of results){const observed=JSON.parse(result.stdout) as {schemaVersion:number;pragmas:{journalMode:string;foreignKeys:number;synchronous:number};integrity:{ok:boolean}};expect(observed).toMatchObject({schemaVersion:4,pragmas:{journalMode:"wal",foreignKeys:1,synchronous:2},integrity:{ok:true}});}
++    const db=new Database(dbPath);expect(db.prepare("SELECT version,name FROM schema_migrations ORDER BY version").all()).toEqual([{version:1,name:"001.sql"},{version:2,name:"002-budget.sql"},{version:3,name:"003-approval-commands.sql"},{version:4,name:"004-provider-proof.sql"}]);expect(db.pragma("foreign_key_check")).toEqual([]);db.close();
+   });
+ 
+   it("fails closed within the WAL retry bound while a database stays exclusively locked",async()=>{
+@@ -83,7 +109,7 @@ describe("SQLite production store",()=>{
+       expect(watchdogExpired).toBe(false);
+       expect(result.code).toBe(1);expect(result.stderr).toMatch(/SQLITE_BUSY|database is locked/i);expect(result.elapsedMs).toBeGreaterThan(0);expect(result.elapsedMs).toBeLessThan(2000);
+       releaseLock();
+-      const recovered=openProductionStore({dbPath});expect(recovered.schemaVersion()).toBe(3);recovered.close();
++      const recovered=openProductionStore({dbPath});expect(recovered.schemaVersion()).toBe(4);recovered.close();
+     } finally {
+       clearTimeout(watchdog);releaseLock();
+     }
+@@ -119,8 +145,8 @@ describe("SQLite production store",()=>{
+   it("upgrades a real v1 database and rejects unknown or gapped migration history",()=>{
+     const old=setup(),sql=readFileSync(new URL("./migrations/001.sql",import.meta.url),"utf8"),legacy=new Database(old.dbPath);
+     legacy.exec(sql);legacy.prepare("INSERT INTO schema_migrations(version,name,applied_at) VALUES(1,'001.sql',?)").run(10);legacy.close();
+-    const upgraded=openProductionStore({dbPath:old.dbPath});expect(upgraded.schemaVersion()).toBe(3);upgraded.close();
+-    const reopened=openProductionStore({dbPath:old.dbPath});expect(reopened.schemaVersion()).toBe(3);reopened.close();
++    const upgraded=openProductionStore({dbPath:old.dbPath});expect(upgraded.schemaVersion()).toBe(4);upgraded.close();
++    const reopened=openProductionStore({dbPath:old.dbPath});expect(reopened.schemaVersion()).toBe(4);reopened.close();
+     const malformed=setup(),bad=new Database(malformed.dbPath);bad.exec("CREATE TABLE schema_migrations(version INTEGER PRIMARY KEY,name TEXT NOT NULL,applied_at INTEGER NOT NULL); INSERT INTO schema_migrations VALUES(2,'002-budget.sql',20)");bad.close();
+     expect(()=>openProductionStore({dbPath:malformed.dbPath})).toThrow(/migration/i);
+     const future=setup(),unknown=new Database(future.dbPath);unknown.exec("CREATE TABLE schema_migrations(version INTEGER PRIMARY KEY,name TEXT NOT NULL,applied_at INTEGER NOT NULL); INSERT INTO schema_migrations VALUES(4,'004-future.sql',30)");unknown.close();
+@@ -203,8 +229,8 @@ describe("SQLite production store",()=>{
+ 
+   it("applies the migration once and enables WAL and foreign keys",()=>{
+     const {dbPath}=setup(), store=openProductionStore({dbPath,now:()=>12});
+-    expect(store.schemaVersion()).toBe(3);
+-    const second=openProductionStore({dbPath}); expect(second.schemaVersion()).toBe(3);
++    expect(store.schemaVersion()).toBe(4);
++    const second=openProductionStore({dbPath}); expect(second.schemaVersion()).toBe(4);
+     expect(second.integrityCheck()).toEqual({ok:true,messages:["ok"]});
+     expect(store.pragmas()).toEqual({journalMode:"wal",foreignKeys:1,synchronous:2,busyTimeout:250});
+     second.close(); store.close();
+@@ -244,7 +270,7 @@ describe("SQLite production store",()=>{
+     legacy.close();
+ 
+     const store=openProductionStore({dbPath,now:()=>40});
+-    expect(store.schemaVersion()).toBe(3);
++    expect(store.schemaVersion()).toBe(4);
+     expect(store.integrityCheck()).toEqual({ok:true,messages:["ok"]});
+     const db=new Database(dbPath);
+     expect(db.prepare("SELECT approval_id,target_kind,target_id,target_record_kind,target_record_id,target_hash,decision FROM approvals ORDER BY approval_id").all()).toEqual(oldApprovals);
+@@ -261,7 +287,7 @@ describe("SQLite production store",()=>{
+     store.close();
+ 
+     const reopened=openProductionStore({dbPath});
+-    expect(reopened.schemaVersion()).toBe(3);
++    expect(reopened.schemaVersion()).toBe(4);
+     const finalDb=new Database(dbPath);
+     expect(finalDb.prepare("SELECT json_extract(payload,'$.createdAt') AS created_at FROM records WHERE kind='approval' AND id LIKE 'approval-command-%' ORDER BY created_at").all())
+       .toEqual([{created_at:20},{created_at:30},{created_at:40}]);
+@@ -514,4 +540,65 @@ describe("SQLite production store",()=>{
+     expect(store.read.getProject("project-1")).toBeNull();
+     store.close();
+   });
++
++  it("I01-B6-S preserves real v3 finance rows and immutable proof/CAS history across reopen",()=>{
++    const {dbPath}=setup(),f=quoteProofFixture(),legacy=new Database(dbPath);
++    legacy.exec(readFileSync(new URL("./migrations/001.sql",import.meta.url),"utf8"));legacy.prepare("INSERT INTO schema_migrations(version,name,applied_at) VALUES(1,'001.sql',10)").run();
++    legacy.exec(readFileSync(new URL("./migrations/002-budget.sql",import.meta.url),"utf8"));legacy.prepare("INSERT INTO schema_migrations(version,name,applied_at) VALUES(2,'002-budget.sql',20)").run();
++    legacy.exec(readFileSync(new URL("./migrations/003-approval-commands.sql",import.meta.url),"utf8"));legacy.prepare("INSERT INTO schema_migrations(version,name,applied_at) VALUES(3,'003-approval-commands.sql',30)").run();
++    const p=project();legacy.prepare("INSERT INTO projects(id,name,profile_id,updated_at,save_version,take_selection_version,audio_mix_version,payload) VALUES(?,?,?,?,?,?,?,?)").run(p.id,p.name,p.profileId,p.updatedAt,p.saveVersion,p.takeSelectionVersion,p.audioMixVersion,JSON.stringify(p));
++    legacy.prepare("INSERT INTO records(kind,id,project_id,natural_key,payload) VALUES('quote',?,?,NULL,?)").run(f.mediaQuote.id,p.id,JSON.stringify(f.mediaQuote));
++    legacy.prepare("INSERT INTO budget_account_evidence(id,provider_id,account_id,credential_binding_id,observed_at,expires_at,payload) VALUES(?,?,?,?,?,?,?)").run(f.accountEvidence.id,f.accountEvidence.providerId,f.accountEvidence.accountId,f.accountEvidence.credentialBindingId,f.accountEvidence.observedAt,f.accountEvidence.expiresAt,JSON.stringify(f.accountEvidence));
++    legacy.prepare("INSERT INTO budget_quotes(id,project_id,media_quote_id,payload) VALUES(?,?,?,?)").run(f.budget.id,p.id,f.mediaQuote.id,JSON.stringify(f.budget));
++    legacy.prepare("INSERT INTO budget_quote_bindings(id,budget_quote_id,account_evidence_id,provider_id,account_id,credential_binding_id,currency,currency_key,unit,execution_semantic_hash,quoted_at,payload) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)").run(f.quoteBinding.id,f.budget.id,f.accountEvidence.id,f.quoteBinding.providerId,f.quoteBinding.accountId,f.quoteBinding.credentialBindingId,f.quoteBinding.currency,f.quoteBinding.currency,f.quoteBinding.unit,f.quoteBinding.executionSemanticHash,f.quoteBinding.quotedAt,JSON.stringify(f.quoteBinding));
++    legacy.close();
++
++    const store=openProductionStore({dbPath});
++    expect(store.schemaVersion()).toBe(4);expect(store.read.getQuote(f.mediaQuote.id)).toEqual(f.mediaQuote);expect(store.read.getBudgetQuote(f.budget.id)).toEqual(f.budget);expect(store.read.getQuoteAccountBinding(f.budget.id)).toEqual(f.quoteBinding);expect(store.read.getAccountEvidence(f.accountEvidence.id)).toEqual(f.accountEvidence);
++    expect(store.transaction(tx=>tx.insertProofArtifact(f.accountArtifact))).toEqual({record:f.accountArtifact,created:true});
++    expect(store.transaction(tx=>tx.insertProofArtifact(f.accountArtifact))).toEqual({record:f.accountArtifact,created:false});
++    const generationA=f.generation,generationB=proofGeneration(2,"credential-binding-B","account-2","e".repeat(64),50),generationAReturn=proofGeneration(3,"credential-binding-A-return","account-1","a".repeat(64),60);
++    expect(store.transaction(tx=>tx.compareAndSetProviderCredentialGeneration(generationA,null))).toBe(true);
++    expect(store.transaction(tx=>tx.compareAndSetProviderCredentialGeneration(generationA,null))).toBe(true);
++    expect(store.transaction(tx=>tx.compareAndSetProviderCredentialGeneration(generationB,null))).toBe(false);
++    expect(store.read.getProviderCredentialGeneration("provider-1")).toEqual(generationA);
++    expect(store.transaction(tx=>tx.compareAndSetProviderCredentialGeneration(generationB,1))).toBe(true);
++    expect(store.transaction(tx=>tx.compareAndSetProviderCredentialGeneration(generationAReturn,2))).toBe(true);
++    expect(store.read.getProviderCredentialGeneration("provider-1")).toEqual(generationAReturn);
++    store.close();
++
++    const corrupt=new Database(dbPath);corrupt.prepare("INSERT INTO provider_proof_artifacts(hash,kind,canonical_payload,created_at) VALUES(?,?,?,?)").run("f".repeat(64),"account_session",f.accountArtifact.canonicalPayload,f.accountArtifact.createdAt);
++    expect(()=>corrupt.prepare("UPDATE provider_proof_artifacts SET created_at=created_at WHERE hash=?").run(f.accountArtifact.hash)).toThrow(/immutable/);
++    expect(()=>corrupt.prepare("DELETE FROM provider_credential_generations WHERE provider_id=? AND revision=1").run("provider-1")).toThrow(/immutable/);
++    expect(corrupt.pragma("foreign_key_check")).toEqual([]);corrupt.close();
++    const reopened=openProductionStore({dbPath});
++    expect(reopened.schemaVersion()).toBe(4);expect(reopened.read.getProviderCredentialGeneration("provider-1")).toEqual(generationAReturn);expect(reopened.read.getProofArtifact(f.accountArtifact.hash)).toEqual(f.accountArtifact);
++    expect(()=>reopened.read.getProofArtifact("f".repeat(64))).toThrow(/integrity validation/);reopened.close();
++  });
++
++  it("I01-B6-S atomically validates and replays bound quote and execution proof links",()=>{
++    const {dbPath}=setup(),store=openProductionStore({dbPath}),f=quoteProofFixture();
++    expect(()=>store.transaction(tx=>{putQuotePrerequisites(tx,f);tx.insertQuoteProof({...f.quoteLink,mediaQuoteId:"quote-mismatch"});})).toThrow();
++    let db=new Database(dbPath);expect(db.prepare("SELECT COUNT(*) AS n FROM records WHERE kind='quote'").get()).toEqual({n:0});expect(db.prepare("SELECT COUNT(*) AS n FROM budget_quotes").get()).toEqual({n:0});expect(db.prepare("SELECT COUNT(*) AS n FROM budget_quote_bindings").get()).toEqual({n:0});expect(db.prepare("SELECT COUNT(*) AS n FROM budget_account_evidence").get()).toEqual({n:0});expect(db.prepare("SELECT COUNT(*) AS n FROM provider_proof_artifacts").get()).toEqual({n:0});expect(db.prepare("SELECT COUNT(*) AS n FROM provider_quote_proofs").get()).toEqual({n:0});db.close();
++    store.transaction(tx=>{putQuotePrerequisites(tx,f);expect(tx.insertQuoteProof(f.quoteLink)).toEqual({record:f.quoteLink,created:true});expect(tx.insertQuoteProof(f.quoteLink)).toEqual({record:f.quoteLink,created:false});});
++
++    const snapshot={resultTarget:{kind:"take",shotRevisionId:"shot-rev-1",anchorId:"anchor-1",anchorApprovalId:"anchor-approval-1",inputsHash:f.semanticHash}},requestHash=hashCanonicalJson(snapshot);
++    const mediaExecution={kind:"media_job" as const,executionId:"job-proof-1",operation:"take" as const,projectId:"project-1",idempotencyKey:"job-proof-idem",requestHash,executionSemanticHash:f.semanticHash,providerId:"provider-1",modelId:"model-1"};
++    const mediaJob={version:1 as const,id:mediaExecution.executionId,projectId:"project-1",operation:"take" as const,status:"queued" as const,idempotencyKey:mediaExecution.idempotencyKey,requestSnapshot:snapshot,requestHash,providerId:"provider-1",modelId:"model-1",providerRef:null,quoteId:f.mediaQuote.id,receiptId:null,resultId:null,resultAssetIds:[],leaseToken:null,leaseUntil:null,heartbeatAt:null,attempt:0,errorCode:null,errorMessage:null,createdAt:210,updatedAt:210};
++    const mediaReservation={...reservation(),id:"reservation-proof-1",execution:mediaExecution,budgetQuoteId:f.budget.id,quoteBindingId:f.quoteBinding.id,accountEvidenceId:f.accountEvidence.id,credentialBindingId:f.generation.generationId,reservedAt:260};
++    const workerSession=proofSession("worker","session-worker"),workerPayload={...f.accountPayload,session:workerSession,observedAt:300,expiresAt:800},workerArtifact=proofArtifact(workerPayload,300);
++    const executionPayload={schemaVersion:1 as const,kind:"execution_session" as const,producer:proofProducer,execution:mediaExecution,mediaQuoteId:f.mediaQuote.id,budgetQuoteId:f.budget.id,quoteBindingId:f.quoteBinding.id,accountEvidenceId:f.accountEvidence.id,quoteProofHash:f.quoteArtifact.hash,accountProofHash:workerArtifact.hash,generation:f.generation,session:workerSession,capability:f.capability,observedAt:300,expiresAt:700};
++    const executionArtifact=proofArtifact(executionPayload,300),executionLink={schemaVersion:1 as const,executionId:mediaExecution.executionId,reservationId:mediaReservation.id,artifactHash:executionArtifact.hash};
++    const addFinanceAndJob=(tx:ProductionWritePort)=>{
++      tx.appendAccountPolicy(policy(1),null);tx.appendBudgetAuthorization(authorization(1,"policy-revision-1"),null);
++      tx.insertJob(mediaJob,{id:"outbox-proof-1",jobId:mediaJob.id,createdAt:210,claimedAt:null,claimToken:null});
++      tx.registerBudgetExecution(mediaExecution);tx.insertBudgetReservation(mediaReservation);
++      tx.insertProofArtifact(workerArtifact);tx.insertProofArtifact(executionArtifact);
++    };
++    expect(()=>store.transaction(tx=>{addFinanceAndJob(tx);tx.insertExecutionProof({...executionLink,reservationId:"reservation-mismatch"});})).toThrow();
++    db=new Database(dbPath);expect(db.prepare("SELECT COUNT(*) AS n FROM records WHERE kind='job'").get()).toEqual({n:0});expect(db.prepare("SELECT COUNT(*) AS n FROM budget_executions").get()).toEqual({n:0});expect(db.prepare("SELECT COUNT(*) AS n FROM budget_reservations").get()).toEqual({n:0});expect(db.prepare("SELECT COUNT(*) AS n FROM provider_execution_proofs").get()).toEqual({n:0});expect(db.prepare("SELECT COUNT(*) AS n FROM provider_proof_artifacts").get()).toEqual({n:3});db.close();
++    store.transaction(tx=>{addFinanceAndJob(tx);expect(tx.insertExecutionProof(executionLink)).toEqual({record:executionLink,created:true});expect(tx.insertExecutionProof(executionLink)).toEqual({record:executionLink,created:false});});
++    expect(store.read.getQuoteProof(f.budget.id)).toEqual(f.quoteLink);expect(store.read.getExecutionProof(mediaExecution.executionId)).toEqual(executionLink);store.close();
++    const reopened=openProductionStore({dbPath});expect(reopened.read.getQuoteProof(f.budget.id)).toEqual(f.quoteLink);expect(reopened.read.getExecutionProof(mediaExecution.executionId)).toEqual(executionLink);expect(reopened.integrityCheck().ok).toBe(true);reopened.close();
++  });
+ });
+diff --git a/lib/repositories/production/sqlite.ts b/lib/repositories/production/sqlite.ts
+index d38ccdb..afab5bf 100644
+--- a/lib/repositories/production/sqlite.ts
++++ b/lib/repositories/production/sqlite.ts
+@@ -4,7 +4,7 @@ import { dirname, resolve } from "node:path";
+ import {
+   AccountBudgetPolicySchema, AccountEvidenceSchema, BudgetAuthorizationSchema,
+   BudgetExecutionSchema, BudgetQuoteSchema, BudgetReservationSchema, JobSchema,
+-  MoneyScopeSchema, QuoteAccountBindingSchema, ReconciliationEvidenceSchema,
++  MoneyScopeSchema, QuoteAccountBindingSchema, QuoteSchema, ReconciliationEvidenceSchema,
+ } from "../../production/contracts";
+ import type {
+   AccountBudgetPolicy, AccountEvidence, AnchorCandidate, Approval, Asset, AnimaticRevision,
+@@ -14,6 +14,11 @@ import type {
+   ShotPlanRevision, ShotRevision, StoryRevision, Take,
+ } from "../../production/contracts";
+ import { canonicalJson, hashCanonicalJson } from "../../production/hash";
++import {
++  ExecutionProofLinkSchema, ProofArtifactSchema, ProviderCredentialGenerationSchema,
++  QuoteProofLinkSchema, proofPayload,
++} from "../../production/provider-proof";
++import type { ExecutionProofLink, ProofArtifact, ProviderCredentialGeneration, QuoteProofLink } from "../../production/provider-proof";
+ import { foldReservation, utcBudgetDay } from "../../production/budget";
+ import { IdSchema } from "../../production/contracts";
+ import type {
+@@ -29,6 +34,7 @@ const migrations = [
+   { version: 1, name: "001.sql", sql: readFileSync(new URL("./migrations/001.sql", import.meta.url), "utf8") },
+   { version: 2, name: "002-budget.sql", sql: readFileSync(new URL("./migrations/002-budget.sql", import.meta.url), "utf8") },
+   { version: 3, name: "003-approval-commands.sql", sql: readFileSync(new URL("./migrations/003-approval-commands.sql", import.meta.url), "utf8") },
++  { version: 4, name: "004-provider-proof.sql", sql: readFileSync(new URL("./migrations/004-provider-proof.sql", import.meta.url), "utf8") },
+ ];
+ const json = <T>(value: string | null | undefined): T | null => value == null ? null : JSON.parse(value) as T;
+ const toJson = (value: unknown) => JSON.stringify(value);
+@@ -107,6 +113,58 @@ export function openProductionStore(options: SqliteStoreOptions = {}): SqlitePro
+   const readEvidence = (id: string): AccountEvidence | null => decodeBudget((db.prepare("SELECT payload FROM budget_account_evidence WHERE id=?").get(id) as {payload:string}|undefined)?.payload, AccountEvidenceSchema);
+   const readExecution = (id: string): BudgetExecution | null => decodeBudget((db.prepare("SELECT payload FROM budget_executions WHERE execution_id=?").get(id) as {payload:string}|undefined)?.payload, BudgetExecutionSchema);
+   const readReservation = (id: string): BudgetReservation | null => decodeBudget((db.prepare("SELECT payload FROM budget_reservations WHERE id=?").get(id) as {payload:string}|undefined)?.payload, BudgetReservationSchema);
++  const readProofArtifact = (hash: string): ProofArtifact | null => {
++    const row=db.prepare("SELECT hash,kind,canonical_payload AS canonicalPayload,created_at AS createdAt FROM provider_proof_artifacts WHERE hash=?").get(hash) as {hash:string;kind:string;canonicalPayload:string;createdAt:number}|undefined;
++    if (!row) return null;
++    try { const artifact=ProofArtifactSchema.parse({schemaVersion:1,hash:row.hash,canonicalPayload:row.canonicalPayload,createdAt:row.createdAt});if(proofPayload(artifact).kind!==row.kind) throw new Error();return artifact; }
++    catch { throw new Error("Stored provider proof failed integrity validation"); }
++  };
++  const readCredentialGeneration = (providerId: string): ProviderCredentialGeneration | null => {
++    const row=db.prepare("SELECT g.provider_id AS providerId,g.revision,g.generation_id AS generationId,g.account_id AS accountId,g.credential_fingerprint AS credentialFingerprint,g.changed_at AS changedAt FROM provider_credential_heads h JOIN provider_credential_generations g ON g.provider_id=h.provider_id AND g.revision=h.revision AND g.generation_id=h.generation_id WHERE h.provider_id=?").get(providerId) as Record<string,unknown>|undefined;
++    if (!row) return null;
++    try { return ProviderCredentialGenerationSchema.parse({schemaVersion:1,...row}); } catch { throw new Error("Stored provider credential generation failed integrity validation"); }
++  };
++  const validateQuoteProof = (candidate: QuoteProofLink): QuoteProofLink => {
++    let link:QuoteProofLink;try{link=QuoteProofLinkSchema.parse(candidate);}catch{throw new Error("Provider quote proof link is invalid");}
++    const artifact=readProofArtifact(link.artifactHash);
++    if (!artifact) throw new Error("Provider quote proof artifact is missing");
++    const payload=proofPayload(artifact);
++    if (payload.kind!=="media_quote") throw new Error("Provider quote proof artifact has the wrong kind");
++    const budgetQuote=readBudgetQuote(link.budgetQuoteId),binding=readBinding(link.budgetQuoteId),evidence=readEvidence(payload.accountEvidence.id);
++    const mediaQuote=decodeBudget((db.prepare("SELECT payload FROM records WHERE kind='quote' AND id=?").get(link.mediaQuoteId) as {payload:string}|undefined)?.payload,QuoteSchema);
++    const accountArtifact=readProofArtifact(payload.accountProofHash),policyArtifact=readProofArtifact(payload.policyProofHash);
++    if (!budgetQuote||!binding||!evidence||!mediaQuote||!accountArtifact||!policyArtifact||accountArtifact.hash!==payload.accountProofHash||policyArtifact.hash!==payload.policyProofHash) throw new Error("Provider quote proof references are incomplete");
++    const accountPayload=proofPayload(accountArtifact),policyPayload=proofPayload(policyArtifact);
++    if (accountPayload.kind!=="account_session"||policyPayload.kind!=="reviewed_policy") throw new Error("Provider quote proof references the wrong artifact kind");
++    if (link.mediaQuoteId!==payload.mediaQuote.id||link.mediaQuoteId!==mediaQuote.id||canonicalJson(mediaQuote)!==canonicalJson(payload.mediaQuote)||canonicalJson(budgetQuote)!==canonicalJson(payload.budgetQuote)||canonicalJson(binding)!==canonicalJson(payload.binding)||canonicalJson(evidence)!==canonicalJson(payload.accountEvidence)||payload.budgetQuote.id!==link.budgetQuoteId||payload.budgetQuote.mediaQuoteId!==link.mediaQuoteId||payload.accountEvidence.reference!==`sha256:${payload.accountProofHash}`||accountPayload.generation.providerId!==payload.mediaQuote.providerId||accountPayload.generation.accountId!==evidence.accountId||accountPayload.generation.generationId!==payload.accountEvidence.credentialBindingId||accountPayload.generation.generationId!==payload.binding.credentialBindingId||canonicalJson(accountPayload.session)!==canonicalJson(payload.session)||accountPayload.observedAt>payload.createdAt||payload.createdAt>=accountPayload.expiresAt||policyPayload.providerId!==payload.mediaQuote.providerId||payload.createdAt<policyPayload.capturedAt||payload.expiresAt>policyPayload.expiresAt||payload.expiresAt>accountPayload.expiresAt) throw new Error("Provider quote proof does not match its immutable finance and account records");
++    return link;
++  };
++  const validateExecutionProof = (candidate: ExecutionProofLink): ExecutionProofLink => {
++    let link:ExecutionProofLink;try{link=ExecutionProofLinkSchema.parse(candidate);}catch{throw new Error("Provider execution proof link is invalid");}
++    const artifact=readProofArtifact(link.artifactHash);
++    if (!artifact) throw new Error("Provider execution proof artifact is missing");
++    const payload=proofPayload(artifact);
++    if (payload.kind!=="execution_session") throw new Error("Provider execution proof artifact has the wrong kind");
++    const execution=readExecution(link.executionId),reservation=readReservation(link.reservationId),job=get<ProductionJob>("job",link.executionId);
++    const quoteLinkRow=db.prepare("SELECT budget_quote_id AS budgetQuoteId FROM provider_quote_proofs WHERE media_quote_id=?").get(payload.mediaQuoteId) as {budgetQuoteId:string}|undefined;
++    if (!execution||!reservation||!job||!quoteLinkRow) throw new Error("Provider execution proof references are incomplete");
++    const quoteLink=readQuoteProofByBudget(quoteLinkRow.budgetQuoteId),quoteArtifact=quoteLink?readProofArtifact(quoteLink.artifactHash):null;
++    const accountArtifact=readProofArtifact(payload.accountProofHash);
++    if (!quoteLink||!quoteArtifact||!accountArtifact||payload.execution.kind!=="media_job"||canonicalJson(execution)!==canonicalJson(payload.execution)||canonicalJson(reservation.execution)!==canonicalJson(execution)||reservation.execution.executionId!==link.executionId||reservation.id!==link.reservationId||reservation.execution.kind!=="media_job"||reservation.budgetQuoteId!==payload.budgetQuoteId||reservation.quoteBindingId!==payload.quoteBindingId||reservation.accountEvidenceId!==payload.accountEvidenceId||payload.quoteProofHash!==quoteLink.artifactHash||payload.accountEvidenceId!==reservation.accountEvidenceId||payload.execution.executionSemanticHash!==reservation.execution.executionSemanticHash||job.requestHash!==payload.execution.requestHash||hashCanonicalJson(job.requestSnapshot)!==job.requestHash) throw new Error("Provider execution proof does not match its immutable execution and reservation");
++    const snapshot=job.requestSnapshot as {resultTarget?:{inputsHash?:unknown}};
++    if (!snapshot.resultTarget||snapshot.resultTarget.inputsHash!==payload.execution.executionSemanticHash) throw new Error("Provider execution semantic binding is invalid");
++    const quotePayload=proofPayload(quoteArtifact),workerPayload=proofPayload(accountArtifact);
++    if (quotePayload.kind!=="media_quote"||workerPayload.kind!=="account_session"||workerPayload.session.role!=="worker"||canonicalJson(workerPayload.generation)!==canonicalJson(payload.generation)||canonicalJson(workerPayload.session)!==canonicalJson(payload.session)||workerPayload.observedAt>payload.observedAt||payload.observedAt>=workerPayload.expiresAt||workerPayload.generation.providerId!==reservation.providerId||workerPayload.generation.accountId!==reservation.accountId||workerPayload.generation.generationId!==reservation.credentialBindingId||quotePayload.mediaQuote.id!==payload.mediaQuoteId||quotePayload.budgetQuote.id!==payload.budgetQuoteId||quotePayload.binding.id!==payload.quoteBindingId||quotePayload.accountEvidence.id!==payload.accountEvidenceId||quotePayload.executionSemanticHash!==payload.execution.executionSemanticHash||canonicalJson(quotePayload.capability)!==canonicalJson(payload.capability)||payload.expiresAt>quotePayload.expiresAt||payload.expiresAt>quotePayload.budgetQuote.expiresAt||payload.expiresAt>quotePayload.capability.expiresAt!) throw new Error("Provider execution proof does not match its quote, worker session, or capability");
++    return link;
++  };
++  const readQuoteProofByBudget = (budgetQuoteId: string): QuoteProofLink | null => {
++    const row=db.prepare("SELECT budget_quote_id AS budgetQuoteId,media_quote_id AS mediaQuoteId,artifact_hash AS artifactHash FROM provider_quote_proofs WHERE budget_quote_id=?").get(budgetQuoteId) as {budgetQuoteId:string;mediaQuoteId:string;artifactHash:string}|undefined;
++    return row?validateQuoteProof({schemaVersion:1,...row}):null;
++  };
++  const readExecutionProofById = (executionId: string): ExecutionProofLink | null => {
++    const row=db.prepare("SELECT execution_id AS executionId,reservation_id AS reservationId,artifact_hash AS artifactHash FROM provider_execution_proofs WHERE execution_id=?").get(executionId) as {executionId:string;reservationId:string;artifactHash:string}|undefined;
++    return row?validateExecutionProof({schemaVersion:1,...row}):null;
++  };
+   const readStoredEvidence = (sequence: number, evidence: ReconciliationEvidence, semanticHash: string): StoredEvidence => ({ sequence, evidence, semanticHash });
+   const eventsForReservation = (reservationId: string): StoredEvidence[] => (db.prepare("SELECT sequence,payload,semantic_hash AS semanticHash FROM budget_reconciliation_events WHERE reservation_id=? ORDER BY sequence").all(reservationId) as {sequence:number;payload:string;semanticHash:string}[]).map(row => readStoredEvidence(row.sequence,ReconciliationEvidenceSchema.parse(JSON.parse(row.payload)),row.semanticHash));
+   const readLedger = (scopeValue: LedgerScope): BudgetLedgerEntry[] => {
+@@ -183,6 +241,10 @@ export function openProductionStore(options: SqliteStoreOptions = {}): SqlitePro
+     },
+     getQuoteAccountBinding: readBinding,
+     getBudgetExecution: readExecution,
++    getProofArtifact: readProofArtifact,
++    getProviderCredentialGeneration: readCredentialGeneration,
++    getQuoteProof: readQuoteProofByBudget,
++    getExecutionProof: readExecutionProofById,
+     getBudgetReservation: readReservation,
+     getReservationByExecution: executionId => {
+       const row=db.prepare("SELECT id FROM budget_reservations WHERE execution_id=?").get(executionId) as {id:string}|undefined;
+@@ -227,6 +289,37 @@ export function openProductionStore(options: SqliteStoreOptions = {}): SqlitePro
+   };
+   const writes: ProductionWritePort = {
+     ...read,
++    insertProofArtifact: value => atomicBudgetWrite(() => {
++      let record:ProofArtifact;try{record=ProofArtifactSchema.parse(value);}catch{throw new Error("Provider proof artifact is invalid");}
++      const payload=proofPayload(record),previous=readProofArtifact(record.hash);
++      if(previous){if(canonicalJson(previous)!==canonicalJson(record))throw new Error("Conflicting immutable provider proof artifact");return {record:previous,created:false};}
++      db.prepare("INSERT INTO provider_proof_artifacts(hash,kind,canonical_payload,created_at) VALUES(?,?,?,?)").run(record.hash,payload.kind,record.canonicalPayload,record.createdAt);
++      return {record,created:true};
++    }),
++    compareAndSetProviderCredentialGeneration: (value, expectedRevision) => atomicBudgetWrite(() => {
++      let record:ProviderCredentialGeneration;try{record=ProviderCredentialGenerationSchema.parse(value);}catch{throw new Error("Provider credential generation is invalid");}
++      const current=readCredentialGeneration(record.providerId);
++      if(current&&record.revision===current.revision&&canonicalJson(current)===canonicalJson(record))return expectedRevision===(current.revision===1?null:current.revision-1);
++      if((current?.revision??null)!==expectedRevision)return false;
++      if(!current){if(expectedRevision!==null||record.revision!==1) return false;}
++      else if(record.revision!==current.revision+1||record.generationId===current.generationId||record.changedAt<current.changedAt||(record.accountId===current.accountId&&record.credentialFingerprint===current.credentialFingerprint))return false;
++      db.prepare("INSERT INTO provider_credential_generations(provider_id,revision,generation_id,account_id,credential_fingerprint,changed_at) VALUES(?,?,?,?,?,?)").run(record.providerId,record.revision,record.generationId,record.accountId,record.credentialFingerprint,record.changedAt);
++      if(current){const changed=db.prepare("UPDATE provider_credential_heads SET revision=?,generation_id=? WHERE provider_id=? AND revision=?").run(record.revision,record.generationId,record.providerId,current.revision).changes;if(changed!==1)throw new Error("Provider credential generation compare-and-set failed");}
++      else db.prepare("INSERT INTO provider_credential_heads(provider_id,revision,generation_id) VALUES(?,?,?)").run(record.providerId,record.revision,record.generationId);
++      return true;
++    }),
++    insertQuoteProof: value => atomicBudgetWrite(() => {
++      const record=validateQuoteProof(value),previous=readQuoteProofByBudget(record.budgetQuoteId);
++      if(previous){if(canonicalJson(previous)!==canonicalJson(record))throw new Error("Conflicting immutable provider quote proof link");return {record:previous,created:false};}
++      db.prepare("INSERT INTO provider_quote_proofs(budget_quote_id,media_quote_kind,media_quote_id,artifact_hash) VALUES(?,?,?,?)").run(record.budgetQuoteId,"quote",record.mediaQuoteId,record.artifactHash);
++      return {record,created:true};
++    }),
++    insertExecutionProof: value => atomicBudgetWrite(() => {
++      const record=validateExecutionProof(value),previous=readExecutionProofById(record.executionId);
++      if(previous){if(canonicalJson(previous)!==canonicalJson(record))throw new Error("Conflicting immutable provider execution proof link");return {record:previous,created:false};}
++      db.prepare("INSERT INTO provider_execution_proofs(execution_id,reservation_id,artifact_hash) VALUES(?,?,?)").run(record.executionId,record.reservationId,record.artifactHash);
++      return {record,created:true};
++    }),
+     appendAccountPolicy: (value, expectedRevision) => atomicBudgetWrite(() => {
+       const record=AccountBudgetPolicySchema.parse(value);
+       if (expectedRevision!==null && (!Number.isSafeInteger(expectedRevision)||expectedRevision<1)) throw new TypeError("Expected policy revision must be a positive safe integer or null");

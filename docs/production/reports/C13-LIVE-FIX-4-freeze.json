@@ -1,0 +1,30 @@
+{
+  "packet": "C13-LIVE-FIX-4",
+  "created": "2026-10-06",
+  "status": "frozen",
+  "orchestrator": "zcode orchestration (GLM-5.3)",
+  "context": {
+    "root_branch": "zcode/production-core",
+    "base_contains": ["ada9a6d (C13-LIVE-FIX-3)"],
+    "live_defect": "The first live H3 take RENDERED successfully on Sogni (job 0afa902c, providerRef 1762C7BB-A7C1-4777-8F86-D7C9C060948D, model.type 'video', completed worker job with imgID CE2F432D-AA6D-4819-B8AB-B8D7CB409ABA and no outputFormat field) but result persistence threw 'Sogni completed result has no supported media format'. Cause: the transport poll's format fallback (lib/providers/production/sogni-provider.ts poll()) only handles image models (`model.media==='image' -> png`); video models get outputFormat '' -> no mime -> throw. The transport's own video requests already set outputFormat 'mp4' in buildSdkParameters."
+  },
+  "owns": {
+    "video-format-fallback": {
+      "files": ["lib/providers/production/sogni-provider.ts", "lib/providers/production/sogni-provider.test.ts"],
+      "change": "In poll(): alongside the existing image fallback, add the video fallback — when the reported output format is absent and the discovered model's media is 'video', use 'mp4'. Mirror the existing code shape (one added guarded branch in the same if-block; reuse the already-fetched models list; keep the final unknown-format throw unchanged).",
+      "tests": [
+        "Extend/derive from the existing fake-client poll test pattern (the file already drives poll via a captured fake client): a completed H3 video project whose worker job has imgID but NO outputFormat and whose discovered model media is 'video' must now resolve to state 'completed' with mime 'video/mp4' (RED first: current code throws the exact 'no supported media format' error).",
+        "Existing sogni-provider tests stay green; typecheck + git diff --check clean."
+      ]
+    }
+  },
+  "constraints": [
+    "One commit on branch zcode/c13-live-fix-4 from base ada9a6d; only the two owned files.",
+    "No changes to worker/composer/store; keep the unknown-format throw for genuinely unknown cases.",
+    "Never print SOGNI_API_KEY; noclobber evidence logs under evidence/C13-LIVE-FIX-4/."
+  ],
+  "acceptance": [
+    "RED->GREEN pair present; existing suite green; typecheck + diff-check clean.",
+    "Integrator live verification: relaunched pilot takes complete and persist as video/mp4 assets."
+  ]
+}

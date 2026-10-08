@@ -1,0 +1,194 @@
+{
+  "schemaVersion": 1,
+  "reviewDate": "2026-10-07",
+  "baselineSha": "7570fd7d44075dc50a0ebefb72886bc341bfd762",
+  "branch": "zcode/production-core",
+  "acceptanceContract": "REMEDIATION.md",
+  "review": "REVIEW.md",
+  "evidence": "EVIDENCE.md",
+  "gates": {
+    "A": "OPEN",
+    "B": "OPEN",
+    "C": "UNVERIFIED_PENDING_CREATOR_AND_RELEASE_EVIDENCE"
+  },
+  "issues": [
+    {
+      "id": "R01",
+      "reviewFinding": "S1",
+      "priority": "P1",
+      "title": "Export lease fencing",
+      "status": "OPEN",
+      "owner": null,
+      "requiredCases": [
+        "R01-01",
+        "R01-02",
+        "R01-03",
+        "R01-04"
+      ],
+      "sourceSha": null,
+      "integratedSha": null,
+      "reviewer": null,
+      "reviewVerdict": null,
+      "evidence": [],
+      "closureDecision": null
+    },
+    {
+      "id": "R02",
+      "reviewFinding": "S2",
+      "priority": "P1",
+      "title": "Restore QC evidence",
+      "status": "OPEN",
+      "owner": null,
+      "requiredCases": [
+        "R02-01",
+        "R02-02",
+        "R02-03",
+        "R02-04"
+      ],
+      "sourceSha": null,
+      "integratedSha": null,
+      "reviewer": null,
+      "reviewVerdict": null,
+      "evidence": [],
+      "closureDecision": null
+    },
+    {
+      "id": "R03",
+      "reviewFinding": "S3",
+      "priority": "P1",
+      "title": "Localhost defaults",
+      "status": "OPEN",
+      "owner": null,
+      "requiredCases": [
+        "R03-01",
+        "R03-02",
+        "R03-03"
+      ],
+      "sourceSha": null,
+      "integratedSha": null,
+      "reviewer": null,
+      "reviewVerdict": null,
+      "evidence": [],
+      "closureDecision": null
+    },
+    {
+      "id": "R04",
+      "reviewFinding": "S4",
+      "priority": "P2",
+      "title": "Durable export restart",
+      "status": "OPEN",
+      "owner": null,
+      "requiredCases": [
+        "R04-01",
+        "R04-02",
+        "R04-03",
+        "R04-04"
+      ],
+      "sourceSha": null,
+      "integratedSha": null,
+      "reviewer": null,
+      "reviewVerdict": null,
+      "evidence": [],
+      "closureDecision": null
+    },
+    {
+      "id": "R05",
+      "reviewFinding": "spec P1",
+      "priority": "P1",
+      "title": "Complete spoken-line coverage",
+      "status": "OPEN",
+      "owner": null,
+      "requiredCases": [
+        "R05-01",
+        "R05-02",
+        "R05-03",
+        "R05-04"
+      ],
+      "sourceSha": null,
+      "integratedSha": null,
+      "reviewer": null,
+      "reviewVerdict": null,
+      "evidence": [],
+      "closureDecision": null
+    },
+    {
+      "id": "R06",
+      "reviewFinding": "spec P2",
+      "priority": "P2",
+      "title": "Per-interval advisory acknowledgment",
+      "status": "OPEN",
+      "owner": null,
+      "requiredCases": [
+        "R06-01",
+        "R06-02",
+        "R06-03",
+        "R06-04"
+      ],
+      "sourceSha": null,
+      "integratedSha": null,
+      "reviewer": null,
+      "reviewVerdict": null,
+      "evidence": [],
+      "closureDecision": null
+    },
+    {
+      "id": "R07",
+      "reviewFinding": "spec P3",
+      "priority": "P2",
+      "title": "Speech ducking and two-pass mastering",
+      "status": "OPEN",
+      "owner": null,
+      "requiredCases": [
+        "R07-01",
+        "R07-02",
+        "R07-03",
+        "R07-04"
+      ],
+      "sourceSha": null,
+      "integratedSha": null,
+      "reviewer": null,
+      "reviewVerdict": null,
+      "evidence": [],
+      "closureDecision": null
+    },
+    {
+      "id": "R08",
+      "reviewFinding": "spec P4",
+      "priority": "P2",
+      "title": "Independent full output profile QC",
+      "status": "OPEN",
+      "owner": null,
+      "requiredCases": [
+        "R08-01",
+        "R08-02",
+        "R08-03",
+        "R08-04"
+      ],
+      "sourceSha": null,
+      "integratedSha": null,
+      "reviewer": null,
+      "reviewVerdict": null,
+      "evidence": [],
+      "closureDecision": null
+    },
+    {
+      "id": "R09",
+      "reviewFinding": "documentation observation",
+      "priority": "P2",
+      "title": "Current records agree with accepted evidence",
+      "status": "OPEN",
+      "owner": null,
+      "requiredCases": [
+        "R09-01",
+        "R09-02",
+        "R09-03"
+      ],
+      "sourceSha": null,
+      "integratedSha": null,
+      "reviewer": null,
+      "reviewVerdict": null,
+      "evidence": [],
+      "closureDecision": null
+    }
+  ]
+}

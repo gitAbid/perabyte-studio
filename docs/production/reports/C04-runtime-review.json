@@ -1,0 +1,100 @@
+{
+  "review_kind": "independent_read_only_runtime_review",
+  "packet": "C04",
+  "actualSHA": "8cf556bc3a2d14d9b1dae7cddba9b6bc9bf1971b",
+  "actualBaseSHA": "ff6d3df93425e7f876d58162b96152eab2cf7ef9",
+  "status": "changes_required_pending_shutdown_ack_fix",
+  "changed_files": [
+    "app/api/production/assets/import/route.ts",
+    "app/api/production/health/route.ts",
+    "lib/jobs/production/queue.test.ts",
+    "lib/jobs/production/queue.ts",
+    "lib/jobs/production/worker.test.ts",
+    "lib/jobs/production/worker.ts",
+    "lib/media/production/vault.test.ts",
+    "lib/media/production/vault.ts",
+    "scripts/production-doctor.mjs",
+    "scripts/production-worker.mjs"
+  ],
+  "ownership_check": "pass:10 assigned runtime files; tracked tree clean at review; evidence untracked only",
+  "prior_findings": [
+    {
+      "id": "C04-CORE-001",
+      "status": "closed",
+      "evidence": "ensureOutbox false is accepted; real SQLite retained expired intent and reopen regression plus worker full-ack zero-submit poll fixture pass."
+    },
+    {
+      "id": "C04-CORE-002",
+      "status": "closed",
+      "evidence": "lease heartbeat failure aborts local controller; exact live token/deadline checks bracket async provider effects. Real two-store lease transfer fixtures stop old poll and cancellation owner."
+    }
+  ],
+  "findings": [
+    {
+      "id": "C04-RUNTIME-ACK-001",
+      "priority": 1,
+      "file": "lib/jobs/production/worker.ts",
+      "line": 80,
+      "title": "Graceful shutdown discards accepted provider acknowledgement despite live owned lease",
+      "trigger": "Provider submit is awaiting; shutdown AbortSignal fires; submit then returns valid full ProviderSubmissionAck while job lease remains live.",
+      "actual_behavior": "Post-submit guard returns on signal.aborted without persisting reference/receipt. Job stays submitting and later becomes submission_unknown requiring unnecessary operator reconciliation.",
+      "expected_behavior": "Persist returned full acknowledgement whenever current owned lease permits it, even on shutdown; skip further provider cancel/poll when aborted. Ownership loss must still reject stale commits.",
+      "required_evidence": "Deferred submit + graceful abort fixture persists exact providerRef/receipt and after SQLite reopen polls same reference with zero new submissions. Root has assigned narrow follow-up."
+    }
+  ],
+  "nonblockers": [
+    "Scheduler TCP slot acquired before store, realpath canonical data directory and ownership metadata; concurrent restarts/SIGKILL and alias test pass.",
+    "Import decodes temporary file before publish, validates provenance/rights before publication, destroys active stream and awaits staged cleanup on parsing failure/request abort.",
+    "Post-publish SQLite failure conservatively retains content-addressed blob without Asset/success pointer. Deleting shared immutable bytes would be unsafe; orphan accounting belongs C15.",
+    "Real SQLite historical Take completion pins originally approved record despite later rejection. Trigger abort after Asset insertion verifies atomic rollback and retained receipt across reopen."
+  ],
+  "test_coverage_note": "Previous unrequested-input receipt rejection test was replaced by real insert-trigger rollback test. Code ordered receipt guard intact; retain both named behaviors when practical, no demonstrated source defect.",
+  "reproduction": {
+    "command": [
+      "npm",
+      "test",
+      "--",
+      "lib/jobs/production/worker.test.ts",
+      "lib/jobs/production/queue.test.ts",
+      "lib/media/production/vault.test.ts"
+    ],
+    "exit_code": 0,
+    "tests_passed": 44,
+    "output_file": "/tmp/perabyte-C04-runtime-final-review-tests.txt",
+    "output_sha256": "b7b20396d09a96b30580d4686b0cd0d495c6ca3f24c5238b7cbdda894f546e01"
+  },
+  "worker_report_available": false,
+  "unverified": [
+    "Follow-up shutdown acknowledgement commit and regression.",
+    "Worker strict final runtime report/hashes not available at this review point.",
+    "Combined provider99f7a3d/runtime integration, complete suite, build and full packet acceptance.",
+    "Reviewer typecheck not repeated; root reproduction separate."
+  ],
+  "network_calls": [],
+  "paid_calls": [],
+  "credentials_accessed": false,
+  "decision": "Do not accept8cf runtime slice until shutdown acknowledgement fix reviewed; full C04 remains incomplete.",
+  "root_reproduction": {
+    "sha": "8cf556bc3a2d14d9b1dae7cddba9b6bc9bf1971b",
+    "tests": 44,
+    "exit_code": 0,
+    "typecheck_exit_code": 0,
+    "output_file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/root-runtime-8cf556b-tests.txt",
+    "output_sha256": "d2971f48883331e0363caff803bfb2a4cbfea63a58f23c5b431cbadb6f6f45a1"
+  },
+  "additional_root_findings": [
+    {
+      "priority": "P1",
+      "file": "lib/jobs/production/worker.ts",
+      "trigger": "Live discovery returns receipt observed after process-start clock; canSatisfy uses stale initial now and rejects it. Quote/capability can also expire during authorization await.",
+      "expected": "Fresh current clock after awaits and immediately before submission; valid late receipt allowed, expired quote/capability zero submit.",
+      "evidence": "Static source finding; clock-advance regressions assigned, not yet reproduced."
+    },
+    {
+      "priority": "P2",
+      "file": "lib/jobs/production/worker.test.ts",
+      "trigger": "Unrequested honored-input test replaced by trigger rollback test.",
+      "expected": "Retain both distinct behavior regressions; restoration assigned."
+    }
+  ]
+}

@@ -1,0 +1,240 @@
+{
+  "schemaVersion": 1,
+  "task_id": "I01-B3",
+  "status": "changes_required",
+  "base_sha": "c7c1e73716c28233b6628b49f85eccac3dfc9b06",
+  "initial_review_sha": "b33d2bffe81cf1877aed4c8756c81d1d5f3ba5ed",
+  "final_review_sha": "435449ae33210c087ad07d32b6faebdb0dd4464a",
+  "worktree": "/Users/abid/.codex/worktrees/production-budget-service/perabyte-studio",
+  "reviewed_owned_paths": [
+    "lib/services/production/budget.ts",
+    "lib/services/production/budget.test.ts",
+    "app/api/production/projects/[projectId]/budget/route.ts",
+    "app/api/production/projects/[projectId]/budget/route.test.ts"
+  ],
+  "ownership_check": {
+    "pass": true,
+    "changed_files": [
+      "app/api/production/projects/[projectId]/budget/route.test.ts",
+      "app/api/production/projects/[projectId]/budget/route.ts",
+      "lib/services/production/budget.test.ts",
+      "lib/services/production/budget.ts"
+    ],
+    "ancestry": "git merge-base --is-ancestor exit0",
+    "clean_at_final_check": true,
+    "followup": "b33d2bf..435449a changes only service test lifecycle assertions; service and route source unchanged."
+  },
+  "source_sha256": [
+    {
+      "path": "lib/services/production/budget.ts",
+      "sha256": "391ce5827a8ad5ad0ee5f1738d83f8c36136af09fe4ac4c1331aaa334c08bdac"
+    },
+    {
+      "path": "lib/services/production/budget.test.ts",
+      "sha256": "34731cfb032bfce9d8a6f458a4868260d8d5605de5e2c560b7469a79cbb5122f"
+    },
+    {
+      "path": "app/api/production/projects/[projectId]/budget/route.ts",
+      "sha256": "fd25f31d377b4d38a8bfaeefed9c6923b6de1b97e1f630056bbdcd73cc1c61e0"
+    },
+    {
+      "path": "app/api/production/projects/[projectId]/budget/route.test.ts",
+      "sha256": "83d7f68d2cd3bb1d288e159fec3e9408258cf54cf26af89a0cb36316912da8ee"
+    }
+  ],
+  "findings": [
+    {
+      "id": "B3-R1",
+      "priority": "P1",
+      "file": "lib/services/production/budget.ts",
+      "lines": [
+        298,
+        308,
+        339,
+        352
+      ],
+      "title": "Conflicting media billing quote can reserve subscription zero for token request",
+      "trigger": "Persist valid media Quote {entitlement:spark,currency:USD,estimateMinMinor:10,estimateMaxMinor:20}, actual snapshot billingMode tokens; immutable companion BudgetQuote {entitlement:subscription,currency:USD,estimateMin:0,estimateMax:0}. Same IDs/model/operation/input hash/semantic pins. Standing auth allows subscription only.",
+      "observed": "Real SQLite accepts both persisted quotes; prepareBudgetContext succeeds; reserveInTransaction creates zero reservation instead of rejecting. Reviewer guard expecting throw fails exit1. This source is identical at both reviewed SHAs.",
+      "impact": "Actual token-mode request can cross budget boundary using zero liability and wrong allowed entitlement. B4 checking the live media quote does not repair a mismatched finance companion.",
+      "required_fix": "Check compatibility in preparation and inside final reserve, including replay pin validation. Root exact rule: minor_currency companion entitlement/currency/estimateMin/estimateMax equal media entitlement/currency/estimateMinMinor/estimateMaxMinor; budget expiry must not exceed media expiry. Snapshot billingMode subscription for subscription entitlement and tokens for spark; unknown blocks. Spark-token scope uses separate amounts and requires legacy media currency/estimateMinMinor/estimateMaxMinor null; no conversion or pretend token pricing proof. Denial before registerBudgetExecution/reservation insert.",
+      "required_evidence": "Behavioral RED/GREEN real SQLite conflicting entitlement/mode, minor currency mismatch and amount mismatch/extended expiry. Assert no execution/reservation/ledger rows; positive matching anchor and take still reserve."
+    },
+    {
+      "id": "B3-R2",
+      "priority": "P2",
+      "file": "lib/services/production/budget.test.ts",
+      "lines": [
+        44,
+        90,
+        114,
+        177
+      ],
+      "title": "Critical admission guards lack behavioral acceptance tests",
+      "trigger": "Frozen 7 service tests/3 route tests pass; final18-line lifecycle addition asserts auth CAS and read-model reasons only.",
+      "observed": "Only anchor positive+wrong input hash media test. No take fixture/anchor-approval rejection. Getter counter>=4 does not prove it is sampled inside transaction or reject rotation after preparation. No final reserve denial/zero-write matrix for null/zero/revoked/expired policy/auth/evidence, stale current revisions, or conflicting replay. Midnight new-request test dailyCap50 causes DAILY_CAP_EXCEEDED before demonstrating project liability enforcement across days.",
+      "required_fix": "Add bounded real-store service tests: take exact target/approval/roles and negative pin; getter transaction instrumentation+change after prepare; stale policy/auth revision and null/zero/expiry/revoke admission denials with no registered execution/reservation; replay contradiction key/execution/context (accounting replay after cap edit still returns same row); midnight outstanding project cap with permissive daily cap so expected PROJECT_CAP_EXCEEDED is observable. Add provider reconciliation wrong scope/manual provenance rejection, duplicate nonbilling/conflict accounting if not covered elsewhere by explicitly cited service evidence.",
+      "required_evidence": "Each frozen acceptance ID maps to concrete assertions and commands, not only a broad test title. Preserve meaningful RED for changed behavior. Pure B1/B2 regression citations may cover invariant internals, but do not replace service composition guard tests."
+    }
+  ],
+  "exact_field_names": {
+    "ProductionQuote": "estimateMinMinor, estimateMaxMinor, currency, entitlement, expiresAt; no unit field",
+    "BudgetQuote": "estimateMin, estimateMax, currency, unit, entitlement, expiresAt, mediaQuoteId",
+    "snapshot": "billingMode subscription|tokens optional in schema; required for paid media compatibility"
+  },
+  "shared_rule_recommendation": "APPROVED root helper in lib/production/budget.ts/tests, called by B3 prepare/reserve AND B4 admission. validateMediaBudgetQuoteCompatibility(media:ProductionQuote,budget:BudgetQuote,snapshot:ProviderRequestSnapshot):BudgetDecision. One shared pure implementation; no caller clock parameter. Each caller separately checks present freshness/current credentials/approval.",
+  "boundary_assessment": {
+    "PreparedBudgetContext": "Required policyId plus all frozen pins present; B3 readonly inherited proof fields structurally compatible with frozen B4 Readonly object. No unfinished-service import required.",
+    "semantic_check": "reserve line329 compares context.executionSemanticHash===execution.executionSemanticHash; line339 compares binding semantic to execution. This suspected omission is not present.",
+    "current_credential": "Code samples injected synchronous getter inside reserve function and prepare transaction. Source complies; meaningful transaction-time rotation tests still missing.",
+    "accounting_replay": "Exact original stored reservation returned after policy cap edit using immutable pinned revisions; no extra estimate/rows. Replay is accounting only. B4 redispatch rejection still requires combined gate.",
+    "query_body": "Strict GET scope and strict discriminated POST schemas; origin/body/malformed/oversize reject before resolver;16KiB. Scoped policyId mismatch404 and revision409.",
+    "privacy": "Policy strips accountId; read model no evidence/account/binding/source/path; errors use sanitized productionErrorResponse. Existing tests verify main success/denial leakage paths.",
+    "reconciliation": "Trusted injected producer outside tx; strict provider provenance/exact scope/reference; append inside tx uses shared B1/B2. Unknown actual, overrun/refund, duplicate/conflicting actual and zero unsettled behavior covered. Zero view uses !settled so unresolved true even liability amount0.",
+    "midnight": "All-day project and original-day account fold implemented/reopen proven; project-cap denial guard not isolated by current test."
+  },
+  "acceptance_id_coverage": {
+    "I01-B3-01": "partial: identity forged/stale/rotation at policy creation, no final reserve rotation",
+    "I01-B3-02": "partial: policies/auth append CAS+views; lacks deny reservation matrix",
+    "I01-B3-03": "FAIL: confirmed billing companion mismatch; take and transaction-sampled getter guard missing",
+    "I01-B3-04": "partial:reopen/current-day/read totals; explicit project-cap midnight denial missing",
+    "I01-B3-05": "partial:exact accounting replay after cap edit; contradictory key/execution/context guard missing",
+    "I01-B3-06": "partial: actual unknown/overrun/refund/nonbilling/dedupe-conflict; service provenance/scope and contradiction release guard missing",
+    "I01-B3-07": "pass:proper pure text DTO/mediaQuoteIdnull; no scheduler",
+    "I01-B3-R01": "pass main GET validation/no resolver/missing project cases",
+    "I01-B3-R02": "pass main strict origin/body/query cases; update-null and authorization success route not directly tested",
+    "I01-B3-R03": "pass main views/status/no-store/unavailable/zero unsettlestate",
+    "I01-B3-R04": "partial:update mismatch404/stale409+sanitized denied response; auth-scoped success/error envelope exact schema not fully exercised"
+  },
+  "evidence": [
+    {
+      "file": "/tmp/perabyte-I01-B3/evidence/I01-B3-policy-replay-red.txt",
+      "sha256": "69de2499fd34ad82f5795c60aa1579c8729b1b4dd1affaf6f13e59b7c24c1d37",
+      "kind": "worker_saved_evidence",
+      "review": "Read policy-replay and route-validation RED logs: observable targeted failures retained; hashes computed. Scaffold RED is import-missing setup evidence only, not sufficient behavioral RED."
+    },
+    {
+      "file": "/tmp/perabyte-I01-B3/evidence/I01-B3-route-validation-red.txt",
+      "sha256": "afe86a0e472206ea5bdcd958ccdb3059d7038c6922d5053c7b588357c2686e5e",
+      "kind": "worker_saved_evidence",
+      "review": "Read policy-replay and route-validation RED logs: observable targeted failures retained; hashes computed. Scaffold RED is import-missing setup evidence only, not sufficient behavioral RED."
+    },
+    {
+      "file": "/tmp/perabyte-I01-B3/evidence/I01-B3-service-scaffold-red.txt",
+      "sha256": "3c9a27fbb96ebc6111ad51d86d02b4fabafbe5ddc0e55bfcaa7158ae3aa44411",
+      "kind": "worker_saved_evidence",
+      "review": "Read policy-replay and route-validation RED logs: observable targeted failures retained; hashes computed. Scaffold RED is import-missing setup evidence only, not sufficient behavioral RED."
+    },
+    {
+      "file": "/tmp/perabyte-I01-B3/evidence/focus-green.txt",
+      "sha256": "c59666980341067783172e10f9bd051cc1b7b9ed008fc5395a807cf64083f95a",
+      "kind": "worker_saved_evidence",
+      "review": "Read policy-replay and route-validation RED logs: observable targeted failures retained; hashes computed. Scaffold RED is import-missing setup evidence only, not sufficient behavioral RED."
+    },
+    {
+      "file": "/tmp/perabyte-I01-B3/evidence/typecheck-green.txt",
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "kind": "worker_saved_evidence",
+      "review": "Read policy-replay and route-validation RED logs: observable targeted failures retained; hashes computed. Scaffold RED is import-missing setup evidence only, not sufficient behavioral RED."
+    },
+    {
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "lib/services/production/budget.test.ts",
+        "app/api/production/projects/[projectId]/budget/route.test.ts"
+      ],
+      "exit_code": 0,
+      "output_file": "/tmp/perabyte-I01-B3-review-exact-focused.txt",
+      "output_sha256": "01193864eacd5c505a7634e4f9b14c05f790981a3b8a6020577c7e551ee4651a",
+      "scope": "exact initial SHA git-archive snapshot; 2 files/10 tests"
+    },
+    {
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "lib/services/production/budget.test.ts",
+        "app/api/production/projects/[projectId]/budget/route.test.ts"
+      ],
+      "exit_code": 0,
+      "output_file": "/tmp/perabyte-I01-B3-review-final-focused.txt",
+      "output_sha256": "fb43515eccb603676d32f7a368d87a51b6396df8b6ea6c022e2b2dfa16393d42",
+      "scope": "clean final435449a;2 files/10tests"
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exit_code": 0,
+      "output_file": "/tmp/perabyte-I01-B3-review-final-typecheck.txt",
+      "output_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "scope": "clean final435449a"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check",
+        "c7c1e73716c28233b6628b49f85eccac3dfc9b06",
+        "435449ae33210c087ad07d32b6faebdb0dd4464a"
+      ],
+      "exit_code": 0,
+      "output_file": "/tmp/perabyte-I01-B3-review-final-diffcheck.txt",
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "scope": "owned patch whitespace check"
+    },
+    {
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "lib/services/production/budget.review-probe.test.ts",
+        "-t",
+        "review guard"
+      ],
+      "exit_code": 1,
+      "output_file": "/tmp/perabyte-I01-B3-review-companion-probe.txt",
+      "output_sha256": "159b4fcfe2e6e00136556b4e618f389be5d6bde8d3f6e31bb7c9d83291e2e4b0",
+      "scope": "temporary git-archive reviewer fixture only; expected reject guard fails because reserve succeeds"
+    },
+    {
+      "file": "/tmp/perabyte-I01-B3-frozen-review/lib/services/production/budget.review-probe.test.ts",
+      "sha256": "5f538a152aaa673277a492b667402321aaffef04ab4e09fcc7d46929728b40dd",
+      "kind": "isolated_adversarial_probe",
+      "scope": "Frozen initial tracked source unchanged. Probe modifies copied test fixture only: media entitlement spark/billing tokens, companion subscription/estimate0, subscription-only authorization, expects reserve rejection."
+    }
+  ],
+  "metadata_audit": "Worker strict completion report was not available in /tmp/perabyte-I01-B3 at audit; root said metadata pending. Saved worker evidence hashes computed independently, targeted behavioral RED logs inspected. Exact commit owner set verified. No worker exit codes inferred from raw logs except recognizable expected RED results; reviewer fresh exitcodes recorded above.",
+  "unverified": [
+    "Corrected source/responses after findings",
+    "Real B3+B4 combined admission/race",
+    "Full I01 acceptance",
+    "Live authenticated durable composer/subscription proof",
+    "C06 request builder",
+    "Audio/text live dispatch",
+    "Root full build/test milestone"
+  ],
+  "paid_calls": [],
+  "network_calls": [],
+  "credentials_accessed": false,
+  "repository_code_changes": [],
+  "root_helper_boundary": {
+    "decision": "approved",
+    "exact_checks": [
+      "budget.mediaQuoteId===media.id===snapshot.quoteId; identical projectId/providerId/modelId across all three; media.operation===budget.operation; media.inputHash===budget.inputHash. Snapshot has no operation/inputHash field; do not invent one.",
+      "Known identical entitlement. subscription requires snapshot.billingMode subscription; spark requires tokens. Unknown or omitted billing mode denies.",
+      "minor_currency requires nonnull identical currency and known identical budget.estimateMin/Max===media.estimateMinMinor/MaxMinor; null media/companion amounts deny. Keep safe integer/min<=max schemas.",
+      "spark_token requires entitlement spark + tokens mode, budget.currency null and media.currency/estimateMinMinor/estimateMaxMinor null; budget token amounts known and separate; no conversion or live pricing proof inferred.",
+      "Unknown unit/entitlement denies. budget.expiresAt<=media.expiresAt and budget.createdAt>=media.createdAt. No current clock inside helper; live callers check current expiry/observation separately."
+    ],
+    "limits": [
+      "Quote inputSnapshot hash stays distinct from snapshot semantic/request hash.",
+      "Helper does not replace credential/evidence/binding/execution/policy pins, creative approvals or capability validation.",
+      "This amendment fixes local compatibility only and does not prove live Spark/subscription pricing."
+    ]
+  }
+}

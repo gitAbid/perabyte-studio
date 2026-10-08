@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "task_id": "I01-B4",
+  "status": "accepted_integrated_finance_kernel",
+  "code_sha": "e2624d7af7130785e1a7f935cbc42777fe690228",
+  "source_commits": [
+    "0b4667ebfbf2568ac197efda86d22cad7eceec64",
+    "5a838a1b4d8b676f4a700c8bf9ce474a83e0ed1e",
+    "f0856bbebf2a54572c44fd4d24d1f3bb5455b8c1",
+    "72ab962cd8bbd5e084eca8740e171f44ce338255",
+    "bb43a01f2a42f1889bc30ecd8da79771a0a2c17d"
+  ],
+  "review": [
+    "docs/production/reports/I01-B4-rereview.json",
+    "docs/production/reports/I01-combined-review.json",
+    "docs/production/reports/I01-combined-followup-review.json"
+  ],
+  "evidence": [
+    {
+      "path": "evidence/integration/i01-b4-combined/root-focused-followup.txt",
+      "sha256": "c12400d9e355c9cd31da8f16e58b2c29315c9d2ce70d74c20ae6c5541a5ac780",
+      "exit_code": 0
+    },
+    {
+      "path": "evidence/integration/i01-b4-combined/root-typecheck-followup.txt",
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "exit_code": 0
+    },
+    {
+      "path": "evidence/integration/i01-b4-combined/root-focused-fixture-order-failure.txt",
+      "sha256": "a646e839678bb919c6c8c20e4b15a0b1da0cfbaad56246e8f4a32b0eb182bf81",
+      "exit_code": 1
+    }
+  ],
+  "focused_tests": 80,
+  "typecheck_exit_code": 0,
+  "unverified": [
+    "Full I01/live provider account and quote proof composition remains open.",
+    "No broad suite/build repeated per user feature-first instruction.",
+    "C06 human command/recipe, audio/assembly/export and real films unfinished."
+  ],
+  "paid_calls": []
+}

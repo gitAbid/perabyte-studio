@@ -61,14 +61,16 @@ function request(): NormalizedGenerationRequest {
 }
 
 /** The prepared pipeline result the executor would get from the real service. */
-function prepared(provider: unknown): PreparedGeneration {
+function prepared(provider: unknown, strict = false): PreparedGeneration {
   return {
     normalized: request(),
     provider: provider as ImageProvider,
     model: { id: "sogni:krea2_turbo_fp8_scaled", label: "Krea" } as ModelDescriptor,
     swapped: false,
     framesActive: false,
-    hadStartImage: false,
+    hadStartImage: strict,
+    hadEndImage: false,
+    referencePolicy: strict ? "strict" : undefined,
     log: logger,
   };
 }
@@ -93,6 +95,7 @@ interface Harness {
   inline: { images: number };
   clock: { value: number; advance: (ms: number) => void };
   media: typeof MEDIA;
+  persisted: { calls: number };
 }
 
 function harness(opts: {
@@ -108,6 +111,7 @@ function harness(opts: {
   };
   const providerEvents = { cancels: 0, submits: 0 };
   const inline = { images: 0 };
+  const persisted = { calls: 0 };
   const clock = {
     value: 1_000_000,
     advance: (ms: number) => {
@@ -149,10 +153,16 @@ function harness(opts: {
     sleepImpl: () => Promise.resolve(),
     now: () => clock.value,
     autoRecover: false,
-    prepareImpl: async () => prepared(fakeProvider),
-    persistImpl: async () => MEDIA,
+    prepareImpl: async (request) => prepared(
+      fakeProvider,
+      (request as unknown as { referencePolicy?: string }).referencePolicy === "strict",
+    ),
+    persistImpl: async () => {
+      persisted.calls += 1;
+      return MEDIA;
+    },
   });
-  return { executor, polls, providerEvents, inline, clock, media: MEDIA };
+  return { executor, polls, providerEvents, inline, clock, media: MEDIA, persisted };
 }
 
 let dir: string;
@@ -190,6 +200,27 @@ async function settled(jobId: string, statuses: string[]): Promise<void> {
 }
 
 describe("job executor", () => {
+  it("fails strict jobs when the provider reports the requested frame was dropped", async () => {
+    const h = harness({
+      pollShifts: [{
+        status: "completed",
+        artifacts: [{ ...artifact(), frameDropped: true }],
+      }],
+    });
+    h.executor.enqueue(makeJob("strict_dropped", {
+      request: { kind: "image", prompt: "a fox", aspect: "16:9", resolution: "1080p", referencePolicy: "strict" },
+    }));
+
+    await settled("strict_dropped", ["failed", "completed"]);
+
+    expect(getJobsRepository("strict_dropped")).toMatchObject({
+      status: "failed",
+      retryable: false,
+      error: expect.stringContaining("could not apply the requested start frame"),
+    });
+    expect(h.persisted.calls).toBe(0);
+  });
+
   it("serialized lanes run one job at a time, FIFO", async () => {
     // Each job's poll chain: one running tick, then completion. Because the
     // lane is busy until job A finishes, job B's submit can only happen after.

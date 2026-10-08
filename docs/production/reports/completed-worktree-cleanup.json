@@ -1,0 +1,1960 @@
+{
+  "policy": "User2026-10-04 continuous delivery: preserve evidence/recoverable snapshots, archive completed idle worktrees, remove unused completed local branches. Exact branch audit local-branch-cleanup-20261004.json supersedes historical retained-branch descriptions.",
+  "candidates": [
+    {
+      "root": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio",
+      "head_sha": "a16b95295f31d4ef07cf239a146fc1709414620e",
+      "branch": "codex/production-contracts",
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-contracts",
+      "files": [
+        {
+          "original": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00/green-typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-contracts/evidence/C00/green-typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00/red-contracts.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-contracts/evidence/C00/red-contracts.txt",
+          "sha256": "2c69552c399a773ae3394dac8cf7e2dd519e2b4fc512ec94285e93c0b0b2d26f"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00/green-seams-typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-contracts/evidence/C00/green-seams-typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00/red-quality-fixes.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-contracts/evidence/C00/red-quality-fixes.txt",
+          "sha256": "36b4e4a82ec1f3281a67e74e1d6188506ff4f42f35d3a40945fa7c3c06701812"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00/red-bootstrap.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-contracts/evidence/C00/red-bootstrap.txt",
+          "sha256": "ce0b66c6e000155eca427db52fd377f8cc3303153f75557d50cc901427c8d221"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00/green-quality-typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-contracts/evidence/C00/green-quality-typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00/green-tests.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-contracts/evidence/C00/green-tests.txt",
+          "sha256": "637d66d1d0d5a87003f679e2dbf62c21b56ec4f3689dfac03859e58c6dab3629"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00/red-seams-typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-contracts/evidence/C00/red-seams-typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00/red-hash.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-contracts/evidence/C00/red-hash.txt",
+          "sha256": "2dd7f9aa2e00987b86df2cbb28fdf945e48039bb552d5b7078bd5eb1270e8e3b"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00/red-seams-tests.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-contracts/evidence/C00/red-seams-tests.txt",
+          "sha256": "749026b3e92d6258eb3ed009e80891c2ab08a4128ca8f2b74a8e3d41cc4ff064"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00/green-quality-fixes.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-contracts/evidence/C00/green-quality-fixes.txt",
+          "sha256": "a9ba8c35926835cdebac505fca5103ceec8d7a0608362c68a3c5e5f58e165a8c"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00/green-seams-tests.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-contracts/evidence/C00/green-seams-tests.txt",
+          "sha256": "b1ae10b8ee1d7bd444bcc4d895f3f9c324c63bb271cf8c0638e79a8806a7d068"
+        }
+      ],
+      "private_ignored_configs_preserved": 0,
+      "archive_status": "archived_confirmed_checkout_removed"
+    },
+    {
+      "root": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio",
+      "head_sha": "9c1305c68cf952c49176d5ffc222301f1781483c",
+      "branch": "codex/production-handover-guard",
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-handover-guard",
+      "files": [
+        {
+          "original": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/cli-bad-state.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-handover-guard/evidence/U00/cli-bad-state.txt",
+          "sha256": "678991d4c1e813228ac78a0ad38c26b3917a982a2213d2529d42d622b25607c9"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/cli-unknown.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-handover-guard/evidence/U00/cli-unknown.txt",
+          "sha256": "6d21bd129e0a453f50332ab28c640822762e67825890c9e3ffdc717b2cf9eed0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/green-focused.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-handover-guard/evidence/U00/green-focused.txt",
+          "sha256": "9cbd48183b598744508fdad77a963543472df168b3cb2296f322164d1a63cbe9"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/cli-stop.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-handover-guard/evidence/U00/cli-stop.txt",
+          "sha256": "54d9a59e29d16b5b1a99518a820422c6551c134cf4cab7f5563e01f1d19e2da5"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/red-focused.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-handover-guard/evidence/U00/red-focused.txt",
+          "sha256": "2031630ec4a3b096a17782ab41ed9800e04431a521658423fe9b859a85de0017"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/cli-checkpoint.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-handover-guard/evidence/U00/cli-checkpoint.txt",
+          "sha256": "27ee1f828f044fd6a239d7962cbff4b0b804ea9c14b60c8ed0e5bc0b24c437fa"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/cli-continue.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-handover-guard/evidence/U00/cli-continue.txt",
+          "sha256": "7ff1ff67aa8fac75d9dc3e61bc1bcc878d782c206a7af0ea6c7d41f2bf35fb10"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-handover-guard/evidence/U00/typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/cli-integration-state.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-handover-guard/evidence/U00/cli-integration-state.txt",
+          "sha256": "2898d64ac49d2fa0cfbde1d83b4814c25ad6f0fce3944585e84f59aa9e3d90fc"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-handover-guard/evidence/U00/diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/red-controls.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-handover-guard/evidence/U00/red-controls.txt",
+          "sha256": "b29e6aa472b946ed72fd404d1fc0bc09a7239d0a92eb0c11c51d2bc9326c6936"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/correction/red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-handover-guard/evidence/U00/correction/red.txt",
+          "sha256": "3128e3df202daf713f4ab376578e481253e5a8e1518970e00300ee95cd27c42d"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/correction/green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-handover-guard/evidence/U00/correction/green.txt",
+          "sha256": "1085f9c31f3bc32578961dd870e4eac0855629b4d0ea1bb6a287f369a546f52f"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/correction/typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-handover-guard/evidence/U00/correction/typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/correction/diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-handover-guard/evidence/U00/correction/diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/fixtures/bad-state.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-handover-guard/evidence/U00/fixtures/bad-state.json",
+          "sha256": "486f2dc4948499c62068daf7dd706472de2fb4fe57e781daea4ec0f1373c5479"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/fixtures/checkpoint.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-handover-guard/evidence/U00/fixtures/checkpoint.json",
+          "sha256": "18d608530331217ffa5a83d0cd882909f727020dfafc0b880eafa8157250b424"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/fixtures/unknown.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-handover-guard/evidence/U00/fixtures/unknown.json",
+          "sha256": "0e65fd1b405dddc23a8c7cc310e1e9ad8417a04db196694699274bb93aa47e87"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/fixtures/stop.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-handover-guard/evidence/U00/fixtures/stop.json",
+          "sha256": "0f7449cfa494915be6c189a58a0eca5263510dabc47fd52892736e8699480f40"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/fixtures/continue.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-handover-guard/evidence/U00/fixtures/continue.json",
+          "sha256": "f1d6113cf888df93db171fea777527399caad7c9469dcacca884b44d50848851"
+        }
+      ],
+      "private_ignored_configs_preserved": 0,
+      "archive_status": "archived_confirmed_checkout_removed"
+    },
+    {
+      "root": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio",
+      "head_sha": "d416302d78204d7243538348d9ef7d9306bf7a2c",
+      "branch": "codex/production-shot-plan",
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-shot-plan",
+      "files": [
+        {
+          "original": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/diff-check-review-fixes.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-shot-plan/evidence/C05/diff-check-review-fixes.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/red-transition-note.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-shot-plan/evidence/C05/red-transition-note.txt",
+          "sha256": "db4b81ca6b7def11742cb5b474a825e1648fb30bbb7f49e99ea3486bef8d9b2a"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/red-continuation.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-shot-plan/evidence/C05/red-continuation.txt",
+          "sha256": "b31f68e6627f55c017dd5edc13e189c560ab6cad14467d55c135a470d40a3296"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/red-duplicate-beat.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-shot-plan/evidence/C05/red-duplicate-beat.txt",
+          "sha256": "23f9bee85b2ded0be33cb05c9732905594de76a3e26c2763ed22f66fa7bffa5e"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/checkpoint-domain-tests.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-shot-plan/evidence/C05/checkpoint-domain-tests.txt",
+          "sha256": "768fbcce88af53e3008f7ce4d7491f8c4c4d71acfc81ca7ec7ceebdae82d7046"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/typecheck-review-fixes.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-shot-plan/evidence/C05/typecheck-review-fixes.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/green-focused.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-shot-plan/evidence/C05/green-focused.txt",
+          "sha256": "b4e85da644d7315b78ff2f17722f8797736ef7a56b2118b32f6a232d34ff79af"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/red-service.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-shot-plan/evidence/C05/red-service.txt",
+          "sha256": "ecc202d01d0600b1ab7399764d8ec522fa1e263b4bf341dbb82f5e05ac5e23c2"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/red-id-boundaries.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-shot-plan/evidence/C05/red-id-boundaries.txt",
+          "sha256": "99bb9e1234b8b08d54239e2c46972662e25cb4ce7c004dfce4fba9c94649e1d6"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/red-error-dependencies.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-shot-plan/evidence/C05/red-error-dependencies.txt",
+          "sha256": "55b32f8f6a1b87f5020d5181bf401d5401876dcc27660fe9f9d3a5e3371cc078"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/red-review-findings.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-shot-plan/evidence/C05/red-review-findings.txt",
+          "sha256": "16f9ff242602ff1410fb7cc9b63f66039bed0d665f09c90cdf6478e04559b21d"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/red-id-format.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-shot-plan/evidence/C05/red-id-format.txt",
+          "sha256": "0c232085532110ec82ac9d32b2cfd162a83430a84d6d2ff0878ae0215ab9ef36"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-shot-plan/evidence/C05/red.txt",
+          "sha256": "61f3f1817cca61be60ef331128d3a0508900f77e41588d2712d7cb64891be207"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/red-h3-narration.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-shot-plan/evidence/C05/red-h3-narration.txt",
+          "sha256": "9e445c6e8fec3b6742ebade950a082400f7dae61e5066d31608c7a3a32efb6c3"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-shot-plan/evidence/C05/typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-shot-plan/evidence/C05/diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/green-review-fixes.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-shot-plan/evidence/C05/green-review-fixes.txt",
+          "sha256": "8c83e777c1e48121e44993fb773b7a1cda87eac0c90d2d89ca14c9ece78f5279"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/cached-diff-check-review-fixes.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-shot-plan/evidence/C05/cached-diff-check-review-fixes.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/cached-diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-shot-plan/evidence/C05/cached-diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "private_ignored_configs_preserved": 0,
+      "archive_status": "archived_confirmed_checkout_removed"
+    },
+    {
+      "root": "/Users/abid/.codex/worktrees/production-store/perabyte-studio",
+      "head_sha": "9b0a3abc748cfed75103a799d80d7deb8c7e9e06",
+      "branch": "codex/production-store",
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-store",
+      "files": [
+        {
+          "original": "/Users/abid/.codex/worktrees/production-store/perabyte-studio/evidence/C01/red-followup.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-store/evidence/C01/red-followup.txt",
+          "sha256": "fca3e4b589c8eeaf8d3820921127b4e8cc7c4470ce739729a26e75d36fb92e05"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-store/perabyte-studio/evidence/C01/diff-check-followup.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-store/evidence/C01/diff-check-followup.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-store/perabyte-studio/evidence/C01/diff-check-async-write-scope.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-store/evidence/C01/diff-check-async-write-scope.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-store/perabyte-studio/evidence/C01/cli-import-rerun.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-store/evidence/C01/cli-import-rerun.txt",
+          "sha256": "058000651de6a6d1f5484f3201952079287a238dce535f1f8795789392f9a143"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-store/perabyte-studio/evidence/C01/green-followup.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-store/evidence/C01/green-followup.txt",
+          "sha256": "6639de76672c4d2d1785ce07977a343db33108ab80def6084f47c80b863bcdd4"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-store/perabyte-studio/evidence/C01/typecheck-followup.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-store/evidence/C01/typecheck-followup.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-store/perabyte-studio/evidence/C01/cli-followup.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-store/evidence/C01/cli-followup.txt",
+          "sha256": "770e4328b8fbe91d5844db20355b7ffda8935c55d3eccd44a9dc19d827e8b3f0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-store/perabyte-studio/evidence/C01/red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-store/evidence/C01/red.txt",
+          "sha256": "0a33ca8ed684b258714afde9b9645effe84cb6a6bf605c8ff5911adb35420480"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-store/perabyte-studio/evidence/C01/green-tests.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-store/evidence/C01/green-tests.txt",
+          "sha256": "2683b9d8d1e1847b69b5c13844936e93a041f190c162ab6aced0af60614fcf2e"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-store/perabyte-studio/evidence/C01/red-async-write-scope.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-store/evidence/C01/red-async-write-scope.txt",
+          "sha256": "df8298b015b9b011e89bceeb932ac2200c0884567e5dabd6ee35c059af5711f1"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-store/perabyte-studio/evidence/C01/typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-store/evidence/C01/typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-store/perabyte-studio/evidence/C01/typecheck-async-write-scope.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-store/evidence/C01/typecheck-async-write-scope.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-store/perabyte-studio/evidence/C01/diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-store/evidence/C01/diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-store/perabyte-studio/evidence/C01/green-async-write-scope.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-store/evidence/C01/green-async-write-scope.txt",
+          "sha256": "efe39569bcf191b0c1a665726ee3f971f8422116498da11876d2950232b13402"
+        }
+      ],
+      "private_ignored_configs_preserved": 0,
+      "archive_status": "archived_confirmed_checkout_removed"
+    },
+    {
+      "root": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio",
+      "head_sha": "fada33a857dc1c63f8ef58012346bfd2146fc746",
+      "branch": "codex/production-capabilities",
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-capabilities",
+      "files": [
+        {
+          "original": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/probe-missing-credentials.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-capabilities/evidence/C03/probe-missing-credentials.json",
+          "sha256": "ca01c7e7641a42ab6e58fc90676ac7ad97d7bd563f417cc2ab9e246473c66537"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/followup2-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-capabilities/evidence/C03/followup2-green.txt",
+          "sha256": "4b9ae2ca29ba3107c9e0b6e83db99dbcd4d9a7551ade2aa7c6e0f7306a902fdf"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/followup-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-capabilities/evidence/C03/followup-red.txt",
+          "sha256": "e39f3c9379b5ac01522c80ca1dc1bf6342c42500440f06f9cc9c9bb6ed627e0c"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/followup2-typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-capabilities/evidence/C03/followup2-typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/probe-fixture.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-capabilities/evidence/C03/probe-fixture.json",
+          "sha256": "8c2a014bbc60cc4d0d145dbdc73eb611033fe38ec791caacb5ee7a1c7347bc1a"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/committed-diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-capabilities/evidence/C03/committed-diff-check.txt",
+          "sha256": "4e09fff8690c79debbf32a09ce3110d408ad023b274a536d6d1b32bc28be0cc0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/followup-diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-capabilities/evidence/C03/followup-diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/focused-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-capabilities/evidence/C03/focused-green.txt",
+          "sha256": "289c3cf15287ec349f8d2ecc94d66e191f822af9763b89343bbc7ab845af5bdb"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/followup-typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-capabilities/evidence/C03/followup-typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/focused-red-behavior.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-capabilities/evidence/C03/focused-red-behavior.txt",
+          "sha256": "e4c878e5ee79a800fb15e2a3215cd75ca4c858c90e162f0ea799d5550787d88e"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/followup-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-capabilities/evidence/C03/followup-green.txt",
+          "sha256": "c6156252e2cb0bbc93cee344fee31258b7106ac531900e9eed85814dd14d2609"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/followup-committed-diff.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-capabilities/evidence/C03/followup-committed-diff.txt",
+          "sha256": "3723e7ab16fd2d2f52e100220b4847ab555e4d4cdad79546ad0d697b9e3b89c2"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/followup2-committed-diff.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-capabilities/evidence/C03/followup2-committed-diff.txt",
+          "sha256": "d9cd36226224083e6de50c639669231bec250257d14b25048be1126ca6341641"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/followup2-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-capabilities/evidence/C03/followup2-red.txt",
+          "sha256": "4c1f4f163bfdccf432a3f3d8a018c685dff2373261e829526d68dc715b7ec2b7"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/followup-staged-diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-capabilities/evidence/C03/followup-staged-diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/probe-syntax.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-capabilities/evidence/C03/probe-syntax.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/followup2-staged-diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-capabilities/evidence/C03/followup2-staged-diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-capabilities/evidence/C03/typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/followup2-capabilities-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-capabilities/evidence/C03/followup2-capabilities-green.txt",
+          "sha256": "17506734b02bf0c0d7976f9e0d43af2631d49ee14ecffee3b39ad7b307c62cdd"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/followup2-diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-capabilities/evidence/C03/followup2-diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-capabilities/evidence/C03/diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "private_ignored_configs_preserved": 0,
+      "archive_status": "archived_confirmed_checkout_removed"
+    },
+    {
+      "root": "/Users/abid/.codex/worktrees/production-runtime/perabyte-studio",
+      "head_sha": "ae3a22e7cb9b5ae565e82f0ddf46b51827b45093",
+      "branch": "codex/production-runtime",
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-runtime",
+      "files": [
+        {
+          "original": "/Users/abid/.codex/worktrees/production-runtime/perabyte-studio/evidence/I00/initial/red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-runtime/evidence/I00/initial/red.txt",
+          "sha256": "25933b020046b66af228ad8856beb11f57ec57bf090afd012e8084c2afdb2abd"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-runtime/perabyte-studio/evidence/I00/initial/green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-runtime/evidence/I00/initial/green.txt",
+          "sha256": "1136f24ebcd2f90983028bcdbff33190102126bb66a397e578415f8b2469fec2"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-runtime/perabyte-studio/evidence/I00/initial/typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-runtime/evidence/I00/initial/typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-runtime/perabyte-studio/evidence/I00/initial/diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-runtime/evidence/I00/initial/diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-runtime/perabyte-studio/evidence/I00/revision/red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-runtime/evidence/I00/revision/red.txt",
+          "sha256": "d4af9c3fa7af27af644ee9a9cc3c3eebfadacf49d679900ab5dce6eef36da68a"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-runtime/perabyte-studio/evidence/I00/revision/green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-runtime/evidence/I00/revision/green.txt",
+          "sha256": "fe8b66026c8cce8e77cfde55b8ce06922d46c3b4293b5fd042efbef4439eba41"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-runtime/perabyte-studio/evidence/I00/revision/typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-runtime/evidence/I00/revision/typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-runtime/perabyte-studio/evidence/I00/revision/diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-runtime/evidence/I00/revision/diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "private_ignored_configs_preserved": 0,
+      "archive_status": "archived_confirmed_checkout_removed"
+    },
+    {
+      "root": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio",
+      "head_sha": "e65f57168ae61dfe612a44bb2fdb5cc26fd68f84",
+      "branch": "codex/production-revisions",
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions",
+      "files": [
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/readmodel-compat-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/readmodel-compat-green.txt",
+          "sha256": "021813a1240d8e6c003ee45f84c33859ab97a232a18a4860e17e358fb32f5beb"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/store-seams-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/store-seams-red.txt",
+          "sha256": "2ede98538c29545b365b1e08677a82825e9dbbbb4ede87c4ab93a77dcade9554"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/focused-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/focused-green.txt",
+          "sha256": "835fb71266c778c8078121d590c5c691443ff4f17a996b4ecbfc716f4e8d523e"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/shot-exact-report.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/shot-exact-report.json",
+          "sha256": "df2eb9a1e5cf5d0cf249aef86d0e866cf21bfc40665b5627960b3726b00791b8"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/review-fixes-typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/review-fixes-typecheck.txt",
+          "sha256": "ca3803c385935e06c27357511b2bef35ca0ead01628b663542ee8d77efa0a177"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/readmodel-compat-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/readmodel-compat-red.txt",
+          "sha256": "babadf77e70aee2b643dd5a17ccf35a1e0f702599716cad2215cdfd946694bd4"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/sqlite-successor-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/sqlite-successor-red.txt",
+          "sha256": "ae5d37a334e27af23bc82d3aaf4f3ebdf73ffe383c9aa6a2fc5db71c5350d149"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/review-fixes-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/review-fixes-green.txt",
+          "sha256": "4f8798e10a8823858885bb1a57fcc6d57ce9e60d61984d987eb090566d7b0766"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/outbox-no-shortening-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/outbox-no-shortening-red.txt",
+          "sha256": "e31148c3b52934957cbee35e8e9861dfdb6db7f15c6768812caa7950a9f5ddf0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/store-seams-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/store-seams-green.txt",
+          "sha256": "fbeb2014f189b5cd1ee00c5c0f429e22deabb003b919cbf117d01112c178ebed"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/focus-final.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/focus-final.txt",
+          "sha256": "6613362d7599a3a632ad2c488196fb79ade1fc1bebe7dd3ef555e3e3e9a2e07e"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/shot-plan-unicode-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/shot-plan-unicode-red.txt",
+          "sha256": "a17c13e656da8df980882cac8dead1f7f5a1269161d29c8fdcaf43a6535cad13"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/store-seams-report.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/store-seams-report.json",
+          "sha256": "74a8f8820330d8109fa8c41bad4e2e4ba788cd8e37512d78f477b408ea431ba4"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/focus-shotfix-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/focus-shotfix-green.txt",
+          "sha256": "f3c868376256451f453daa64a8868b270ecf49b5954d004da5d9fcc983839e2a"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/heartbeat-report.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/heartbeat-report.json",
+          "sha256": "d1dec9be4e86c8e5f48c37aacaad370f000dbbf11f985332af2160c8e689af02"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/completion-report.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/completion-report.json",
+          "sha256": "6fe582575dfb0b987387cab80cebf5968d3487f45a1c30601ac2eb363ca21846"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/root-store-seams-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/root-store-seams-green.txt",
+          "sha256": "173614d7ff8c2fb7ad135bbdf1d3e5791ae8c4f8ad8486ed5816969720e6dd0b"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/typecheck-repro.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/typecheck-repro.txt",
+          "sha256": "ca3803c385935e06c27357511b2bef35ca0ead01628b663542ee8d77efa0a177"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/shot-bytes-sqlite-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/shot-bytes-sqlite-red.txt",
+          "sha256": "fcb81457f1f4865823bcbca3c8c0cdb9b1884c851b7ac46aed095a889e203bac"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/unicode-story-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/unicode-story-red.txt",
+          "sha256": "ecb11e5cf6c1e9e92b1a784112789416bb70f988c8d13a5a060fbfebedf7e610"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/shot-exact-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/shot-exact-red.txt",
+          "sha256": "19d59dbe2979b8ab3db7f608b809064cdcd14be32e976bc3769c32862f2140eb"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/unicode-story-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/unicode-story-green.txt",
+          "sha256": "2eb14d0822f488e4b04922290f2dfec9aee0d885307334fffecdc93709c498fa"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/ownership.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/ownership.txt",
+          "sha256": "8b1925152e98643db1937c392d3866e043ff0433f5e3eebfe01ac34a75726a29"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/focus-after-seams.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/focus-after-seams.txt",
+          "sha256": "2b7d104fcfc2f832a3b886b546e64aae1340a655789a52bc64a00950d2eea520"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/review-fix-report.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/review-fix-report.json",
+          "sha256": "8969c2bc3639e02bafa28d2aa8666e4c2d78a1fa4d47f52650e951813c6880e9"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/shot-exact-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/C02/shot-exact-green.txt",
+          "sha256": "61930f8342f85795a64482b91ab2feab2508ddd4ef574d50dbf50ba047fb1cb6"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/SHARED-CONTRACT-HTTP/ensure-outbox-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/SHARED-CONTRACT-HTTP/ensure-outbox-red.txt",
+          "sha256": "3d589c77cd843da7f7d5bbeb59a720d68287f145182402996936178cb06042ff"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/SHARED-CONTRACT-HTTP/compat-report.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/SHARED-CONTRACT-HTTP/compat-report.json",
+          "sha256": "542f92746b42e8334508d8263f233bc49e89b56218c0bc4c5ce9b0cfecabdc47"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/SHARED-CONTRACT-HTTP/ensure-outbox-report.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/SHARED-CONTRACT-HTTP/ensure-outbox-report.json",
+          "sha256": "9f507057afc2bea47b2a619c85d3651e3bb5dc2b1a4e6db980f1f218685f8df1"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/SHARED-CONTRACT-HTTP/report.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/SHARED-CONTRACT-HTTP/report.json",
+          "sha256": "a3e47a184b72e9a051697de92b8ef9faed5a9bc28892abce8e3035d194bc7f53"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/SHARED-CONTRACT-HTTP/generate-compat-report.mjs",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/SHARED-CONTRACT-HTTP/generate-compat-report.mjs",
+          "sha256": "b2fa0f02c28748f1dcaa1b3f165c0957528caca9427426318d26103d97d5bfb6"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/SHARED-CONTRACT-HTTP/generate-ensure-outbox-report.mjs",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/SHARED-CONTRACT-HTTP/generate-ensure-outbox-report.mjs",
+          "sha256": "d22c7d04c7f8a74429efdad72ecb4cd8739babc278bdb027781d21721f5b8b37"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/SHARED-CONTRACT-HTTP/compat-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/SHARED-CONTRACT-HTTP/compat-red.txt",
+          "sha256": "7f4d812791f55cc2ed5d5b1772f6e8fa0eab3924a2b8b965fcf1e98ae206aa42"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/SHARED-CONTRACT-HTTP/ensure-outbox-typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/SHARED-CONTRACT-HTTP/ensure-outbox-typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/SHARED-CONTRACT-HTTP/compat-focused.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/SHARED-CONTRACT-HTTP/compat-focused.txt",
+          "sha256": "25ce16127a13620338f9fc844fdca9395c888770a77d0386d639915f2b7a4e9b"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/SHARED-CONTRACT-HTTP/ensure-outbox-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/SHARED-CONTRACT-HTTP/ensure-outbox-green.txt",
+          "sha256": "0f61e0b9dab01a2f02a69eab7e084d1c0de8735531a9099c6209cfa1317e79b8"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/SHARED-CONTRACT-HTTP/focused-tests.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/SHARED-CONTRACT-HTTP/focused-tests.txt",
+          "sha256": "7f94860622b374b29122b57d58ed9d360017c3d869bf28804ea47b743175ec07"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/SHARED-CONTRACT-HTTP/compat-typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/SHARED-CONTRACT-HTTP/compat-typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/SHARED-CONTRACT-HTTP/http-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/SHARED-CONTRACT-HTTP/http-red.txt",
+          "sha256": "efceeaf98231907b6970e3f8cd096fb82a21e5a060634700d1c87d78ff0504fa"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/SHARED-CONTRACT-HTTP/compat-diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/SHARED-CONTRACT-HTTP/compat-diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/SHARED-CONTRACT-HTTP/generate-report.mjs",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/SHARED-CONTRACT-HTTP/generate-report.mjs",
+          "sha256": "c1d68f7ea3ce633502c9d30dc3f5b34647d7617229ea9f793206e34f95a5bbfc"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/SHARED-CONTRACT-HTTP/typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/SHARED-CONTRACT-HTTP/typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/SHARED-CONTRACT-HTTP/diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/SHARED-CONTRACT-HTTP/diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/SHARED-CONTRACT-HTTP/ensure-outbox-diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions/evidence/SHARED-CONTRACT-HTTP/ensure-outbox-diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "private_ignored_configs_preserved": 0,
+      "archive_status": "archived_confirmed_checkout_removed"
+    },
+    {
+      "root": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio",
+      "head_sha": "b38712c569d2beb6901f9f057c86aa909b98189b",
+      "branch": "codex/production-budget",
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget",
+      "files": [
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/diff-check-review.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/diff-check-review.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/report-followup.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/report-followup.json",
+          "sha256": "183744f1197949b97fb2533310de1d7cf334feccbd54f5b1ca7b37ccd0057ddf"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/health-compat-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/health-compat-red.txt",
+          "sha256": "10a6d792bcd40955a36f1d8f336d586f547b816d1ff7ed5f6cdd17869cd7a871"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/report-media-quote.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/report-media-quote.json",
+          "sha256": "06451f518639412e118a08106f66f121bb4935f8276e09791d1aeb95380ba988"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/report.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/report.json",
+          "sha256": "11e4654b805a1ec0e6640ae4158b0254607d5b0790eb795410d43c0e6a3cd62e"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/media-unit-boundary-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/media-unit-boundary-green.txt",
+          "sha256": "7f72c7e980470215c4734ea4dc6dd4b77c8e060e5d4254cc8681593104308df9"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/committed-diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/committed-diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/green-review.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/green-review.txt",
+          "sha256": "6cf155fb33ce8a0e1835137697a9ff28052b07b2b2d8d410af44b7f23e845d49"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/media-quote-committed-diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/media-quote-committed-diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/red-review.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/red-review.txt",
+          "sha256": "392ac10c24cda87c615e2afe5936785adbed87eb50f3b9ad5d52dfd881d0d779"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/typecheck-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/typecheck-green.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/focused-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/focused-green.txt",
+          "sha256": "8f1c71920e54821931c22f9c0a8d7f8a91db6a59e0851fe9177213bcee12f41f"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/diff-check-followup.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/diff-check-followup.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/report-media-helper-consolidated.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/report-media-helper-consolidated.json",
+          "sha256": "b8bc44685962b6c06c63c0831bec73fdaf4f9770088125a7b534599486e575eb"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/health-compat-typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/health-compat-typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/health-compat-diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/health-compat-diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/report-media-unit-followup.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/report-media-unit-followup.json",
+          "sha256": "ae4ed59377f0af6d5762c12af1e030c844666329ff531c60d2a711440766671b"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/media-quote-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/media-quote-green.txt",
+          "sha256": "a970345b7da7fac49160860596ca2ef2cb86058c660b85892bab7d4c0e18cde5"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/media-unit-boundary-typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/media-unit-boundary-typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/media-unit-boundary-diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/media-unit-boundary-diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/media-quote-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/media-quote-red.txt",
+          "sha256": "802ae392e6ba0d7dd57c53e8bfcc833f119c27c0407bb6201093c3ef64d9d7ff"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/report-health-compat.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/report-health-compat.json",
+          "sha256": "f79b719d9e03074220831462caca440e29f92fd3410bbe2e83d5c96445ef92eb"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/health-compat-committed-diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/health-compat-committed-diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/media-quote-diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/media-quote-diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/health-compat-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/health-compat-green.txt",
+          "sha256": "aec0ded3ef546554d96247702ec1b180fd076268a7981a5ca095b953e83359a4"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/media-unit-boundary-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/media-unit-boundary-red.txt",
+          "sha256": "09a87cbfb77e6c136e739e25fee294182b41d77a6abc56ccbd1471a043cb7786"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/typecheck-review.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/typecheck-review.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/media-quote-typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/I01-B1/media-quote-typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/C04/vault-root-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/C04/vault-root-red.txt",
+          "sha256": "a9c601cdf2c335acd1275ae8b6886f21e13c949334317848b1ccccc7dfeda25c"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/C04/queue-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/C04/queue-check.txt",
+          "sha256": "32c5614a9f63c46d64c7a01ec11c6ab2ae7cc8120ed6311a5d79fb032b1c18c4"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/C04/typecheck-final2.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/C04/typecheck-final2.txt",
+          "sha256": "e9d6ec6bb07f39d9cf0c3c8e7f54d865df3ab8b0641b9b009a66a6274defa904"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/C04/focused-green-final.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/C04/focused-green-final.txt",
+          "sha256": "74905e0ac10b0adaa522312921e808fd5640ffc9f299261df9f161c91f63296f"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/C04/diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/C04/diff-check.txt",
+          "sha256": "418a5c17f33c70e99b0cc0a07fce69191489cfedc94164bfa903785777c5bd4b"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/C04/doctor-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget/evidence/C04/doctor-check.txt",
+          "sha256": "a1428e78ceca4b9916b043d54dc7cd22e1c718e27b2abf64d3d374ceaa4c3d3c"
+        }
+      ],
+      "private_ignored_configs_preserved": 0,
+      "archive_status": "archived_confirmed_checkout_removed"
+    },
+    {
+      "root": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio",
+      "head_sha": "631b45262087ab9287b370df36e396ac73410276",
+      "branch": "codex/production-ledger",
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger",
+      "files": [
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/types-1.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/types-1.txt",
+          "sha256": "dcc458525e13064995ceac63254333e961cf2c65bf6ce8b2817b1585196fb3c7"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/diffcheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/diffcheck.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/focus-accepted.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/focus-accepted.txt",
+          "sha256": "0fcebf69c73221a15b4f6f46c7154c776a40d2bc701ec8e808cb15642b21fe95"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/green1.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/green1.txt",
+          "sha256": "8f2736573b4b292e86a378280528ce38d4a9c58637ca264101ddb25469088d6d"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/report.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/report.json",
+          "sha256": "f48bd8f34d8b57c0277c8cf9849f524e98f6bd5a264520e3d2ed471022373052"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/focus-1.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/focus-1.txt",
+          "sha256": "9687d48575bf33fd104461d47550b241f0176e7f55d74d3c3516b80de1ac3cd5"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/startup-diffcheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/startup-diffcheck.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/red4.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/red4.txt",
+          "sha256": "d066dfceff0f5760cd0542d372ba57a9474f8117d4efefd2841f0e1899073169"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/startup-legacy.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/startup-legacy.txt",
+          "sha256": "d6e5a20f02de738231de4a14f4654eddaaaba23c354f1d193d426e77cd02d69f"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/red1.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/red1.txt",
+          "sha256": "af61438ab41ea733b1925ab9d3f597506e89536ffd62137120aa689486ef8af1"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/typecheck-accepted.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/typecheck-accepted.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/red2.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/red2.txt",
+          "sha256": "10bd1cdcdc9c3e19a3664a1feacb944c6bb5abf6cb9cc0dc6ec5736957ca9363"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/red3.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/red3.txt",
+          "sha256": "e3240f3830da70813ef60b24a8139be455378dcb717d4dd51d60b8f18bec45f5"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/startup-lock-followup-typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/startup-lock-followup-typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/focus-final.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/focus-final.txt",
+          "sha256": "2a354959affc12c81d2cd6b3c11f75f3f17ba43e5f01b0ec5f2123354c0a05ed"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/startup-test-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/startup-test-red.txt",
+          "sha256": "82f0bc0de128fcb7ebd9887a7e3960aa18f1779c08c8521e8cef18eed14b453f"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/startup-typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/startup-typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/red-standing-auth.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/red-standing-auth.txt",
+          "sha256": "faa7be05fec255a78ef94a7da3d19f4dc05e5efccb7d6fbaca37d2761491e970"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/report-startup-followup.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/report-startup-followup.json",
+          "sha256": "3b725e09086f3719b46eec2fc764c9dbce454dbd154e5fc38fa49a0a0115432c"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/startup-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/startup-red.txt",
+          "sha256": "50909fac6f62876257ece3186a8d3044fcbc3d52e7127943f605ef65af68ebe4"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/startup-lock-followup-diffcheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/startup-lock-followup-diffcheck.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/typecheck-3.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/typecheck-3.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/startup-lock-followup-test-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/startup-lock-followup-test-green.txt",
+          "sha256": "91dbf049dd39c42fd695e1f97162e9f44b5a0d53b18c24fb74e5e5931baba81f"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/typecheck-2.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/typecheck-2.txt",
+          "sha256": "dee571d0e1fe935f748b768e22af232bf882aed1725e789271b0cd695ecd3ec1"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/startup-actual-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/startup-actual-green.txt",
+          "sha256": "0b07c7ef5b907b5f2d26fe0106ed2169daef5ec41e75c6214affa9cece164928"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/types-final.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/types-final.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/focus-scope.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/focus-scope.txt",
+          "sha256": "f12b44143b40336eaa815f714953165cb541b3098120187eccd1295843484e55"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/legacy-accepted.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/legacy-accepted.txt",
+          "sha256": "979cc713e419b94d08eefb74ff467a8a62f26446d63cc1e1e51bbab376aede57"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/report-lock-followup.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/report-lock-followup.json",
+          "sha256": "7d5314f39227c9fc2be1a50af90d1c944d5788098b121a0c993d6bd658dc6e16"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/legacy-import.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/legacy-import.txt",
+          "sha256": "ef5d05a7e014429f391984fe0ff29965ce46bd190ea75806397aafcbb6e59504"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/startup-test-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/I01-B2/startup-test-green.txt",
+          "sha256": "54a57882447ae2197b926e3085ebad80caffb42ea0b005358ae2baec29fe56c3"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/C04/vault-root-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/C04/vault-root-red.txt",
+          "sha256": "a9c601cdf2c335acd1275ae8b6886f21e13c949334317848b1ccccc7dfeda25c"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/C04/queue-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/C04/queue-check.txt",
+          "sha256": "32c5614a9f63c46d64c7a01ec11c6ab2ae7cc8120ed6311a5d79fb032b1c18c4"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/C04/typecheck-final2.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/C04/typecheck-final2.txt",
+          "sha256": "e9d6ec6bb07f39d9cf0c3c8e7f54d865df3ab8b0641b9b009a66a6274defa904"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/C04/focused-green-final.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/C04/focused-green-final.txt",
+          "sha256": "74905e0ac10b0adaa522312921e808fd5640ffc9f299261df9f161c91f63296f"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/C04/diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/C04/diff-check.txt",
+          "sha256": "418a5c17f33c70e99b0cc0a07fce69191489cfedc94164bfa903785777c5bd4b"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/C04/doctor-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-ledger/evidence/C04/doctor-check.txt",
+          "sha256": "a1428e78ceca4b9916b043d54dc7cd22e1c718e27b2abf64d3d374ceaa4c3d3c"
+        }
+      ],
+      "private_ignored_configs_preserved": 0,
+      "archive_status": "archived_confirmed_checkout_removed"
+    },
+    {
+      "root": "/Users/abid/.codex/worktrees/production-budget-service/perabyte-studio",
+      "head_sha": "1c664c3f46bf993d59b1791ba2ac4961ca40ed9d",
+      "branch": "codex/production-budget-service",
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget-service",
+      "files": [
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget-service/perabyte-studio/evidence/I01-B3/report.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget-service/evidence/I01-B3/report.json",
+          "sha256": "2526944dbe85969b14c9ee68c82c8f4c64c70d2b73863488228213dc3e340344"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget-service/perabyte-studio/evidence/I01-B3/typecheck-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget-service/evidence/I01-B3/typecheck-green.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget-service/perabyte-studio/evidence/I01-B3/policy-replay-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget-service/evidence/I01-B3/policy-replay-red.txt",
+          "sha256": "69de2499fd34ad82f5795c60aa1579c8729b1b4dd1affaf6f13e59b7c24c1d37"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget-service/perabyte-studio/evidence/I01-B3/focused-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget-service/evidence/I01-B3/focused-green.txt",
+          "sha256": "6b80f115ebbe7a2ec6ce7503dd0ae37db7b439834fe4427c00b4a18316aff1eb"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget-service/perabyte-studio/evidence/I01-B3/companion-reserve-probe.test.ts",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget-service/evidence/I01-B3/companion-reserve-probe.test.ts",
+          "sha256": "5f538a152aaa673277a492b667402321aaffef04ab4e09fcc7d46929728b40dd"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget-service/perabyte-studio/evidence/I01-B3/companion-prepare-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget-service/evidence/I01-B3/companion-prepare-red.txt",
+          "sha256": "9fb1083824527b5bd9e0c7036674b178e128758c6e169cc8790c02e644810c47"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget-service/perabyte-studio/evidence/I01-B3/bootstrap-service-scaffold-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget-service/evidence/I01-B3/bootstrap-service-scaffold-red.txt",
+          "sha256": "3c9a27fbb96ebc6111ad51d86d02b4fabafbe5ddc0e55bfcaa7158ae3aa44411"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget-service/perabyte-studio/evidence/I01-B3/companion-reserve-probe-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget-service/evidence/I01-B3/companion-reserve-probe-red.txt",
+          "sha256": "159b4fcfe2e6e00136556b4e618f389be5d6bde8d3f6e31bb7c9d83291e2e4b0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget-service/perabyte-studio/evidence/I01-B3/companion-compatibility-matrix-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget-service/evidence/I01-B3/companion-compatibility-matrix-red.txt",
+          "sha256": "2351321fb1f41ed7ecfff7254df61fce699cfb1705d92473ea93cf3d6a1cd339"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget-service/perabyte-studio/evidence/I01-B3/diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget-service/evidence/I01-B3/diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget-service/perabyte-studio/evidence/I01-B3/route-validation-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget-service/evidence/I01-B3/route-validation-red.txt",
+          "sha256": "afe86a0e472206ea5bdcd958ccdb3059d7038c6922d5053c7b588357c2686e5e"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget-service/perabyte-studio/evidence/C04/vault-root-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget-service/evidence/C04/vault-root-red.txt",
+          "sha256": "a9c601cdf2c335acd1275ae8b6886f21e13c949334317848b1ccccc7dfeda25c"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget-service/perabyte-studio/evidence/C04/queue-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget-service/evidence/C04/queue-check.txt",
+          "sha256": "32c5614a9f63c46d64c7a01ec11c6ab2ae7cc8120ed6311a5d79fb032b1c18c4"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget-service/perabyte-studio/evidence/C04/typecheck-final2.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget-service/evidence/C04/typecheck-final2.txt",
+          "sha256": "e9d6ec6bb07f39d9cf0c3c8e7f54d865df3ab8b0641b9b009a66a6274defa904"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget-service/perabyte-studio/evidence/C04/focused-green-final.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget-service/evidence/C04/focused-green-final.txt",
+          "sha256": "74905e0ac10b0adaa522312921e808fd5640ffc9f299261df9f161c91f63296f"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget-service/perabyte-studio/evidence/C04/diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget-service/evidence/C04/diff-check.txt",
+          "sha256": "418a5c17f33c70e99b0cc0a07fce69191489cfedc94164bfa903785777c5bd4b"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-budget-service/perabyte-studio/evidence/C04/doctor-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget-service/evidence/C04/doctor-check.txt",
+          "sha256": "a1428e78ceca4b9916b043d54dc7cd22e1c718e27b2abf64d3d374ceaa4c3d3c"
+        }
+      ],
+      "private_ignored_configs_preserved": 0,
+      "archive_status": "archived_confirmed_checkout_removed"
+    },
+    {
+      "root": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio",
+      "head_sha": "b09ddb103abd340bb41c24a0be90ea1dc21033a9",
+      "restored_snapshot_sha": "57557be092804160f8939e14c421bdda20f43bbf",
+      "branch": "codex/production-worker",
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker",
+      "files": [
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-resume-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck-resume-check.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-current4.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck-current4.txt",
+          "sha256": "da6dc45fd66cd5d624da0a39928e99bbb625e60c9344157beb348cbc513906db"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/vault-decode-green-resume1.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/vault-decode-green-resume1.txt",
+          "sha256": "1cc7defa001f0524378ca0966839baa7c879a2c3f13586ad4d2cb0da4a8ce401"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/vault-root-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/vault-root-red.txt",
+          "sha256": "a9c601cdf2c335acd1275ae8b6886f21e13c949334317848b1ccccc7dfeda25c"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-resume-final.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck-resume-final.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/vault-decode-green-resume2.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/vault-decode-green-resume2.txt",
+          "sha256": "653637105cc21b6cc4fbe2215a732147c97ca0a9ce14e26ccb6c0c2dccd5b65d"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/asset-import-green-resume1.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/asset-import-green-resume1.txt",
+          "sha256": "6e1e94fc339bb6cafcc796f39e84c7ddd3dc723667d3b4f031ffae79ee41dd53"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-worker-queue-resume.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck-worker-queue-resume.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/vault-decode-green-resume3.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/vault-decode-green-resume3.txt",
+          "sha256": "0a07ab4b91479ff81c242a8adc76faa45732fe13f51f079087a17d0bf5324dd4"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/queue-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/queue-check.txt",
+          "sha256": "32c5614a9f63c46d64c7a01ec11c6ab2ae7cc8120ed6311a5d79fb032b1c18c4"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/continuation-integrity-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/continuation-integrity-green.txt",
+          "sha256": "c9a932cb7f997265bbefe17888086f3e95aaf937436fe481a1173bbc0dafa930"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/asset-import-red2-resume.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/asset-import-red2-resume.txt",
+          "sha256": "54d85ab640a58fdbf9f7727917bc3067b450263bb7b92817e09bc25df86c83cf"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/C04-checkpoint-resume.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/C04-checkpoint-resume.json",
+          "sha256": "7f759b2ca0396c199622d09eaf6acc72246fa8df92077201648ef3346b0d7895"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/vault-decode-red-resume.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/vault-decode-red-resume.txt",
+          "sha256": "05a55d92de429b2c19f9221dc2809aa3133afb2881e0a3c422da572d865aad4f"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-current3.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck-current3.txt",
+          "sha256": "0d265baf2843cbf2b9d71d2a187d4167889010758729a531abdb7811dc22fa49"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/vault-decode-green-resume4.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/vault-decode-green-resume4.txt",
+          "sha256": "e551f8fe164031da6de46dadde1a775803a9146c4af10f909b9a535a6af257da"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-asset-import-resume.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck-asset-import-resume.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/vault-decode-green-resume5.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/vault-decode-green-resume5.txt",
+          "sha256": "587e61919aa76e5e325d1fb83038de925eb1961cd587bd62ef3bc4b0f3f95cc1"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/required-integrity-final.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/required-integrity-final.txt",
+          "sha256": "c0a5a53afd67ab1c8f32b0b90b3e9415761ec9e84ebdb3d68748958836f6e0e7"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/root-runtime-8cf556b-tests.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/root-runtime-8cf556b-tests.txt",
+          "sha256": "d2971f48883331e0363caff803bfb2a4cbfea63a58f23c5b431cbadb6f6f45a1"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/focused-resume-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/focused-resume-check.txt",
+          "sha256": "98fa0df5623285131a73130f368b2e5d19aed370529c45d635426615114566c9"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/focused-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/focused-green.txt",
+          "sha256": "9056cc54903d31ffe1560914d5e36429f5bce40ae621fa4eb44ecd4859722d0f"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-worker-queue-resume2.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck-worker-queue-resume2.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/sogni-role-green-resume.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/sogni-role-green-resume.txt",
+          "sha256": "457ef5b9215b532f78baec534e82360f912c593455fe06805e8fde7ccd482d39"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/focused-current3.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/focused-current3.txt",
+          "sha256": "51cefafae72a16dfd765fdde6593712c0f9469fd89f2e3c317d03cc013e5a052"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/asset-import-red-resume.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/asset-import-red-resume.txt",
+          "sha256": "ae7c5e9e1fe40ad2208ffcbc5ab7ac826bf3ed1c2c4f712c7b8625331ec95c9c"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-vault-provider-resume.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck-vault-provider-resume.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/doctor-resume-final.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/doctor-resume-final.txt",
+          "sha256": "5543b6e6132e54cba9fe47236974931387a795d57efb9263bd73ae606c55ccaa"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/focused-current2.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/focused-current2.txt",
+          "sha256": "bdc38b29aac9d76e0b9a108f5a0b4a6be671dc99c1d2465c2589d4e5df29e72b"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/successor-adjacency-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/successor-adjacency-red.txt",
+          "sha256": "626079c19e391b85b0e76de8ab4e5051522be8e0143cc025a0a655ec6f8e2285"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/c04-focused-resume-final.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/c04-focused-resume-final.txt",
+          "sha256": "623e852ecfd6d3474137fd0167277ce1b5688fc245c5c70e9cc72ade842dd080"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/continuation-integrity-diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/continuation-integrity-diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/root-runtime-b09ddb1-tests.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/root-runtime-b09ddb1-tests.txt",
+          "sha256": "5f78743320bfd43ca169aa7fdd676f1ec1b6af8dfe68bd8819cdf03c9047fb19"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/diff-check-checkpoint-resume.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/diff-check-checkpoint-resume.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/worker-lock-green-resume.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/worker-lock-green-resume.txt",
+          "sha256": "72882c4722bd4fbb9df821cee4f0f89545a75b36948d123ef9c7d8fdb9ba8746"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-final2.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck-final2.txt",
+          "sha256": "e9d6ec6bb07f39d9cf0c3c8e7f54d865df3ab8b0641b9b009a66a6274defa904"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/focused-current.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/focused-current.txt",
+          "sha256": "c730ab300bb3cab1be4be09db2383ef6f9f43d3d01a06cfede37b06a5d03aae7"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/focused-green-final.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/focused-green-final.txt",
+          "sha256": "74905e0ac10b0adaa522312921e808fd5640ffc9f299261df9f161c91f63296f"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/red2.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/red2.txt",
+          "sha256": "dd50b5c14357a70c6e55d8b63b41e46ffc99fe0966cb0810ebb989e8054a32ae"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/red3.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/red3.txt",
+          "sha256": "0d513f2443a8edad99aed4138b0917d7c3f8ac5ead78b5853d241647a3481894"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/worker-route-final.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/worker-route-final.txt",
+          "sha256": "b25857a518e77ec8f018f6c975c72e5a65c4749b41bc47d95873b4dfcf6789e3"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/queue-cas-red-resume.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/queue-cas-red-resume.txt",
+          "sha256": "f10e67e1c80b0bdca02509d91b35670850dd0d3a237886012261d2639dd13e68"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/focused-current4.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/focused-current4.txt",
+          "sha256": "121b150f5a762493ce7657a3cb4b6e60098e45f39c9b526eb1ba18de13abd40e"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/duplicate-end-frame-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/duplicate-end-frame-red.txt",
+          "sha256": "f5025c5babd7beeccb16f21dab63b884863c2804121cde8a6d75da0440a5fb8e"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/asset-import-red3-resume.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/asset-import-red3-resume.txt",
+          "sha256": "397475f95de212668c7677c1742b1c3ac02d035629800d1fce33344aa32fd921"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-worker-lock-resume.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck-worker-lock-resume.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/focused-checkpoint-resume.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/focused-checkpoint-resume.txt",
+          "sha256": "d033922f7a7eb57f97daad57d79012c63dc24b98a303c552565ebf5da6cac71b"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/root-integrity-reproduction.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/root-integrity-reproduction.txt",
+          "sha256": "b8b7469d8e2d3bc57354f34462d712ba19cd2908aadd668670766347d8f0cd21"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/required-integrity-typecheck-final.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/required-integrity-typecheck-final.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck2.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck2.txt",
+          "sha256": "e9d6ec6bb07f39d9cf0c3c8e7f54d865df3ab8b0641b9b009a66a6274defa904"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/focused-green3.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/focused-green3.txt",
+          "sha256": "af12ad34d25fa152c32284f8e8990094997ec3842191db4b6726f2630982f6f9"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/root-runtime-c7eb4d2-tests.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/root-runtime-c7eb4d2-tests.txt",
+          "sha256": "c304474c3700367d9de77e810ec7419a517eb07cbe02181b03eea88781bae91e"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-progress.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck-progress.txt",
+          "sha256": "52930a051c7880a6961411914bd47fd143afbeb1ca0a05a906f8d8e59d151d45"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/core-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/core-green.txt",
+          "sha256": "af9f50e6e3119dac6e46e775b56ec84fc15554c17037d3255351269d7fad9dab"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/focused-green2.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/focused-green2.txt",
+          "sha256": "e146521802c560efeb4ac2c1cfc367b0ed8b76b872607ff34f37fa176326f41b"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck3.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck3.txt",
+          "sha256": "e9d6ec6bb07f39d9cf0c3c8e7f54d865df3ab8b0641b9b009a66a6274defa904"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck7.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck7.txt",
+          "sha256": "e9d6ec6bb07f39d9cf0c3c8e7f54d865df3ab8b0641b9b009a66a6274defa904"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/queue-cas-green-resume1.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/queue-cas-green-resume1.txt",
+          "sha256": "89189d45957ddeb5a9314dda664ac13f4497aa60f5d900bcf64ec0e09034e346"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/required-integrity-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/required-integrity-green.txt",
+          "sha256": "fc8f4bacf1970ef242a76a02e53aa317b876df669af63ae5c2695dabcbdd3208"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-final.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck-final.txt",
+          "sha256": "e9d6ec6bb07f39d9cf0c3c8e7f54d865df3ab8b0641b9b009a66a6274defa904"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/queue-progress.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/queue-progress.txt",
+          "sha256": "6d0d9fe3798b1f25c72f13fdc080526b4311b16c8e34cf9aa7c64f186eb526eb"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck6.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck6.txt",
+          "sha256": "ad5eef5618fc0450d1ff465eb5c1da8f301ae9105b7ae01cba2c154edb9d4eb9"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/red.txt",
+          "sha256": "e5e35f482858296d44577c15e945ee9a34e1e98bd57c82c96d748cba712b51b6"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck4.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck4.txt",
+          "sha256": "e9d6ec6bb07f39d9cf0c3c8e7f54d865df3ab8b0641b9b009a66a6274defa904"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/root-continuation-typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/root-continuation-typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/queue-cas-green-resume2.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/queue-cas-green-resume2.txt",
+          "sha256": "91bd69ca07dcf1389d8f9217f92b37411b9e2a2087c543705e077795d6722808"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/root-integrity-typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/root-integrity-typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/C04-continuation-integrity-report.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/C04-continuation-integrity-report.json",
+          "sha256": "0f2009f00e8f1ce3dd4f1226c8f37ace09af7148987e59b05457af89568e4457"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/worker-lock-red-resume.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/worker-lock-red-resume.txt",
+          "sha256": "e708f70f7d91dd73a5d8e484847a0422dd3e57843e983745533b229023817f4f"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/cancel-deadletter-green-resume1.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/cancel-deadletter-green-resume1.txt",
+          "sha256": "70703b0227db85f6ccc6231424c94e51a0ab82fd38adf0665f6c190c40fbace7"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/focused-after-review.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/focused-after-review.txt",
+          "sha256": "2bbc675b2cf0ab773b4015777739c596e496bbb27f6135f7d4bbf130fbe1844e"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck5.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck5.txt",
+          "sha256": "e9d6ec6bb07f39d9cf0c3c8e7f54d865df3ab8b0641b9b009a66a6274defa904"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/focused-green4.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/focused-green4.txt",
+          "sha256": "ac4c1fbd8f6aec4fb77b466e7428de1204eb8656f0a7277512019806ae5608f7"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/root-checkpoint-tests.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/root-checkpoint-tests.txt",
+          "sha256": "0c7283a22744ed4f00be202b0d17d2367605a834e207b26d5ac2d37b08fa4f5d"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-vault-provider-resume4.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck-vault-provider-resume4.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/root-continuation-reproduction.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/root-continuation-reproduction.txt",
+          "sha256": "e7489045603dec90e1df4d9dfe954346a1be462fa1e225fa3075a09a8c954863"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-checkpoint-resume.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck-checkpoint-resume.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-vault-provider-resume5.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck-vault-provider-resume5.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/root-runtime-8cf556b-typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/root-runtime-8cf556b-typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/focused-resume-check2.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/focused-resume-check2.txt",
+          "sha256": "fb23a753b69950976d36dedfa0d628ed14b5c3dfbe2355d74f6290137c34b46b"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-progress5.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck-progress5.txt",
+          "sha256": "e083b2b42d325c1be092c737460503e3724b7952d4ac2b989e8a2fbb4f86d311"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck.txt",
+          "sha256": "e9d6ec6bb07f39d9cf0c3c8e7f54d865df3ab8b0641b9b009a66a6274defa904"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-resume-check2.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck-resume-check2.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-progress4.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck-progress4.txt",
+          "sha256": "9fffe6e99637d9e772522e96850d5d94507aef8c9def911abbb397b5318497af"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/focused-final.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/focused-final.txt",
+          "sha256": "2959b7e12ddc2a81770ca86c6ef25ec0f16b3ae84035d8939bc5baf7da64a227"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/sogni-live-discovery-red-resume.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/sogni-live-discovery-red-resume.txt",
+          "sha256": "efe4f44c7aa31ef2bb34db12a90a4f3d9e3d52ac1b82289e20a960d0f233fc17"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-vault-provider-resume2.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck-vault-provider-resume2.txt",
+          "sha256": "e05ff7c3b6b19743a7578279a3daa5c771eeecefd93ecabbf54af6849f0770b7"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-vault-provider-resume3.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck-vault-provider-resume3.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/required-integrity-diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/required-integrity-diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/required-integrity-typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/required-integrity-typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/sogni-live-discovery-green-resume.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/sogni-live-discovery-green-resume.txt",
+          "sha256": "2d1db1296991e1d353850c14b224f72fb53b9199b0f5ae72b64b8eaaa11c9a6e"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/diff-check.txt",
+          "sha256": "418a5c17f33c70e99b0cc0a07fce69191489cfedc94164bfa903785777c5bd4b"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/C04-integrity-resume.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/C04-integrity-resume.json",
+          "sha256": "5848b747ea89fe1348c21da84ae6e20b3e2902ffea69fbec228a91d97c45b6f7"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/sogni-role-red-resume.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/sogni-role-red-resume.txt",
+          "sha256": "3d7bc7cf6bd9e34bbd89b6c2d4e9e48665c99b0e3427869be53b8449b69aeb8e"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/continuation-integrity-typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/continuation-integrity-typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-progress3.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck-progress3.txt",
+          "sha256": "b2b49f2e71d8461a6db350fb29c66b25de879d133c47662e5eb8316ba469fd51"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-progress2.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck-progress2.txt",
+          "sha256": "e6480492eabcf9b8c38b750b728740f77718c10f59d13e3aa8dee8a62acbcbfd"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/doctor-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/doctor-check.txt",
+          "sha256": "a1428e78ceca4b9916b043d54dc7cd22e1c718e27b2abf64d3d374ceaa4c3d3c"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-last.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/typecheck-last.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/followup-worker-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/runtime-takeover/followup-worker-green.txt",
+          "sha256": "72425a9574e3ed1cf267b9d39356c45f35f9aff74af186798dea44641897d004"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/followup-focused-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/runtime-takeover/followup-focused-green.txt",
+          "sha256": "6002588205fd067b67008238627ee52c8b3758689c6d4aa55c41128a84dbb07f"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/report.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/runtime-takeover/report.json",
+          "sha256": "c042f311a155d6540422289dbee27368463b969141c5462da6113c9132912d8e"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/followup-diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/runtime-takeover/followup-diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/idle-sigterm-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/runtime-takeover/idle-sigterm-red.txt",
+          "sha256": "80dd1d07dfec31668c3cd5f6182eeac4412ca60fd1f6e51e74b387bf3ecd1be4"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/focused-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/runtime-takeover/focused-green.txt",
+          "sha256": "b65922b14e20dddf2262f60e9d51f49c677265dae441a5b43d59c2725d270acc"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/followup-typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/runtime-takeover/followup-typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/idle-sigterm-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/runtime-takeover/idle-sigterm-green.txt",
+          "sha256": "acff70870c950c39cf5d0f8fab973710291c2bfa3d4dcf0f7457234d53da9c89"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/idle-sigterm-typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/runtime-takeover/idle-sigterm-typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/slow-abort-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/runtime-takeover/slow-abort-red.txt",
+          "sha256": "f8f86b1fa6fc0f0ebbf6caab9ef981b384be305625d8e0482d3f230f6ee28155"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/report-idle-shutdown.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/runtime-takeover/report-idle-shutdown.json",
+          "sha256": "907fcd43426efcb9aee7543fe94d7c0136c540e41f34708473e2dc2e030e09e7"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/followup-runtime-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/runtime-takeover/followup-runtime-red.txt",
+          "sha256": "9049f8f44185b8f90fa09f3417875c9b3f4dcac9114be051166752eec274578a"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/idle-sigterm-focused-green.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/runtime-takeover/idle-sigterm-focused-green.txt",
+          "sha256": "3755153ab025365c42db84793c91f6be34b96e950acd2bde9e71d7c28ea7a959"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/doctor-no-worker.stderr.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/runtime-takeover/doctor-no-worker.stderr.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/idle-sigterm-diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/runtime-takeover/idle-sigterm-diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/outbox-recovery-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/runtime-takeover/outbox-recovery-red.txt",
+          "sha256": "fcc385e2a087c274ecbf0c72a6bb713cd9934e5742eb7942ab5871e086a8e847"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/typecheck.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/runtime-takeover/typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/doctor-no-worker.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/runtime-takeover/doctor-no-worker.json",
+          "sha256": "5543b6e6132e54cba9fe47236974931387a795d57efb9263bd73ae606c55ccaa"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/followup-submit-ack-red.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/runtime-takeover/followup-submit-ack-red.txt",
+          "sha256": "43ad67bbd532e0752c5a89d80a1c9b5397d1163137894d4efedd8010939a3e05"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/diff-check.txt",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/runtime-takeover/diff-check.txt",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/C04-continuation-report.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/runtime-takeover/C04-continuation-report.json",
+          "sha256": "db6250ee4ed347451f8f09bda74437fd1cf0d3ecc86fc6172b45f3247ccf8a3a"
+        },
+        {
+          "original": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/C04-followup-report.json",
+          "retained": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker/evidence/C04/runtime-takeover/C04-followup-report.json",
+          "sha256": "d17ea6ae43e3152c80c3e52a8be72d27efa0254289432e8c427c1c69b3649f66"
+        }
+      ],
+      "archive_status": "archived_confirmed_checkout_removed",
+      "limitation": "Ignored .studio existed before archive; runtime/media subdirectories absent, root contents uninspected. Pre-check failed but archive requests incorrectly continued. Ignored folder not retained; cannot claim empty or recover its contents. Original checkout/root data unaffected. Source and evidence recovered from actual snapshot."
+    },
+    {
+      "task_id": "C06-PRE-S",
+      "root": "/Users/abid/.codex/worktrees/production-approval-storage/perabyte-studio",
+      "source_sha": "c6c143063ebfc6f4adc13f020dd7ca667971a5bb",
+      "integration_sha": "e36f84359ede5895d69ef712807e9884ab003dbe",
+      "status": "archived_confirmed_by_artifacts",
+      "precheck": "Verified .studio and .env.local absent; ignored list only rebuildable node_modules symlink and tsconfig.tsbuildinfo; every evidence file byte-identical in root before archive.",
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/c06-pre-s/worker",
+      "recoverable_snapshot": "App archive preserves source and nonignored evidence; branch ref retained."
+    },
+    {
+      "task_id": "C06-PRE-A",
+      "root": "/Users/abid/.codex/worktrees/production-human-approval/perabyte-studio",
+      "source_sha": "1a369266954850fb694949cae5c569f6df572884",
+      "integration_sha": "1487bfc1f90262affa4730dece7420493c103e7d",
+      "status": "archived_confirmed_by_artifacts",
+      "precheck": "Successful conditional guard, .studio/.env.local absent; ignored dependency/cache only; all evidence byte-identical copied to root.",
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/c06-pre-a/worker",
+      "recoverable_snapshot": "App source/nonignored evidence snapshot and branch ref retained."
+    },
+    {
+      "task_id": "C06-PRE-R",
+      "root": "/Users/abid/.codex/worktrees/production-media-recipe/perabyte-studio",
+      "source_sha": "877b63e205ea9d721b69a3e7365c6a83450d8ea8",
+      "evidence_head_sha": "65fecd44eb1f0ee8cd58e97fe4b9da823e1f915e",
+      "integration_sha": "7e29b314cf37c1ec3f684dcf26e811b72ce5caa0",
+      "status": "archived_confirmed_by_artifacts",
+      "precheck": "Successful conditional guard, .studio/.env.local absent; ignored dependency/cache only; every evidence file byte-identical in root.",
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/c06-pre-r/worker",
+      "recoverable_snapshot": "App snapshot includes evidence-only report commit and other nonignored evidence; source/branch refs retained."
+    },
+    {
+      "task_id": "C06-SEL",
+      "root": "/Users/abid/.codex/worktrees/production-take-selection/perabyte-studio",
+      "source_sha": "ac114aa75a42595f042ebb1180308de1ddc2928b",
+      "integration_sha": "546636eae09089dda1c46e3032a331c2c3d5b4da",
+      "status": "archived_confirmed_by_artifacts",
+      "precheck": "Successful conditional guard: frozen idle accepted source, complete evidence byte-for-byte, .studio/.env.local absent, ignored symlink/cache only.",
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/c06-sel/worker",
+      "recoverable_snapshot": "App source/nonignored evidence snapshot retained; no branch deletion."
+    },
+    {
+      "task_id": "I01-B4",
+      "root": "/Users/abid/.codex/worktrees/production-admission/perabyte-studio",
+      "source_sha": "bb43a01f2a42f1889bc30ecd8da79771a0a2c17d",
+      "integration_sha": "e2624d7af7130785e1a7f935cbc42777fe690228",
+      "status": "archived_confirmed_by_artifacts",
+      "precheck": "Successful conditional guard: frozen idle accepted source, complete evidence byte-for-byte, .studio/.env.local absent, ignored symlink/cache only.",
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-admission",
+      "recoverable_snapshot": "App source/nonignored evidence snapshot retained; no branch deletion."
+    },
+    {
+      "root": "/Users/abid/.codex/worktrees/production-provider-proof/perabyte-studio",
+      "head_sha": "1490e94040105664957e5fc228a1d3f5a3f6cf5b",
+      "integration_sha": "5de5ead",
+      "integration_evidence": "reports/local-branch-cleanup-20261004.json",
+      "retained_evidence_root": "evidence/integration/i01-b6-s-accepted-20261004/worker",
+      "archive_status": "archived_confirmed_by_artifacts",
+      "precheck": "Clean idle source; only ignored symlink dependencies/build cache. Existing evidence byte-for-byte retained for new completed packets; legacy clean branches patch-equivalent to root with no untracked evidence.",
+      "local_branch_deleted": true
+    },
+    {
+      "root": "/Users/abid/.codex/worktrees/production-usage-policy/perabyte-studio",
+      "head_sha": "c5bc6774150ebcad80a003646c3843d163cfbc60",
+      "integration_sha": "78426b7",
+      "integration_evidence": "reports/local-branch-cleanup-20261004.json",
+      "retained_evidence_root": "evidence/integration/u00-policy-accepted-20261004",
+      "archive_status": "archived_confirmed_by_artifacts",
+      "precheck": "Clean idle source; only ignored symlink dependencies/build cache. Existing evidence byte-for-byte retained for new completed packets; legacy clean branches patch-equivalent to root with no untracked evidence.",
+      "local_branch_deleted": true
+    },
+    {
+      "root": "/Users/abid/.codex/worktrees/production-render-policy/perabyte-studio",
+      "head_sha": "7cd60586b4383d1ad703b656c63bf9c2a0c5f512",
+      "integration_sha": null,
+      "integration_evidence": "reports/local-branch-cleanup-20261004.json",
+      "retained_evidence_root": null,
+      "archive_status": "archived_confirmed_by_artifacts",
+      "precheck": "Clean idle source; only ignored symlink dependencies/build cache. Existing evidence byte-for-byte retained for new completed packets; legacy clean branches patch-equivalent to root with no untracked evidence.",
+      "local_branch_deleted": true
+    },
+    {
+      "root": "/Users/abid/.codex/worktrees/production-story-continuity/perabyte-studio",
+      "head_sha": "e080542781f7276cd4d5b9666bfd2d352effe99e",
+      "integration_sha": null,
+      "integration_evidence": "reports/local-branch-cleanup-20261004.json",
+      "retained_evidence_root": null,
+      "archive_status": "archived_confirmed_by_artifacts",
+      "precheck": "Clean idle source; only ignored symlink dependencies/build cache. Existing evidence byte-for-byte retained for new completed packets; legacy clean branches patch-equivalent to root with no untracked evidence.",
+      "local_branch_deleted": true
+    }
+  ],
+  "cleanup_error": "Root mutation loop did not gate failed preservation command; ten candidates pre-copied successfully, C04 worker required recoverable snapshot restore for evidence. Ignored .studio limitation explicitly recorded.",
+  "current_archived_count": 20,
+  "branch_cleanup_report": "docs/production/reports/local-branch-cleanup-20261004.json"
+}

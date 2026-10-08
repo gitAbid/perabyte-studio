@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "status": "proposal_requires_root_interface_freeze",
+  "sourceBase": "4e97c5829fada681fe5ef37764961931956f9e8c; B2 startup correction pending acceptance",
+  "scope": "B3/B4 execution plan; no implementation or full I01 acceptance",
+  "prerequisites": [
+    "Accept B2 corrected exact commit and freeze its ports. Freeze signatures below before parallel writers. No paid calls until I01 accepted and human budget authorization.",
+    "Use actual paths lib/services/production/budget.ts and budget.test.ts; services/production is not an existing root directory. Actual AccountBudgetPolicyCommandSchema.policyId is required IdSchema, not nullable.",
+    "Root must own composition amendments listed below. Default missing producer/callback fails closed."
+  ],
+  "interfaces": {
+    "TrustedAccountEvidenceProducer": "interface TrustedAccountEvidenceProducer { prepare(input: {providerId:string; modelId:string; operation:BudgetExecution[\"operation\"]; budgetQuoteId:string; expectedExecutionSemanticHash:string}): Promise<PreparedBudgetContext>; currentCredentialBindingId(providerId:string): string|null; }",
+    "PreparedBudgetContext": "Readonly<{ accountEvidenceId:string; budgetQuoteId:string; policyId:string; expectedPolicyRevision:number; expectedAuthorizationRevision:number; expectedQuoteInputHash:string; executionSemanticHash:string; credentialBindingId:string }>. Server-produced IDs only. Durable evidence/quote/binding must already exist; preparation alone never reserves. Freeze as structural worker option type, without importing unfinished service.",
+    "ReserveCallback": "type ReserveSubmission = (tx:ProductionWritePort,currentJob:ProductionJob,quote:ProductionQuote,capability:CapabilityReceipt,now:number,context:PreparedBudgetContext) => BudgetReservation; synchronous, throw on denial; never async/boolean. Callback receives current reread job, not stale claimed snapshot.",
+    "Service": "reserveInTransaction(tx:ProductionWritePort, execution:BudgetExecution, now:number, context:PreparedBudgetContext, currentCredentialBindingId:string|null): BudgetReservation. Media callback adapts currentJob to execution and validates exact media quote ID. Same service handles text_proposal execution directly; no fabricated job. Caller must provide its own synchronous execution admission transaction.",
+    "Queue": "beginSubmission(job:ProductionJob,lease:JobLease, admission:{quote:ProductionQuote;capability:CapabilityReceipt;eligibilityFingerprint:string;context:PreparedBudgetContext;reserve:ReserveSubmission}, now?:number): ProductionJob|null. Internally reread quote/current job; transaction revalidates live lease/outbox ownership, expected status, immutable requestHash, current approval fingerprint, capability freshness/operation/input roles and quote freshness. Invoke reserve only after checks; updateLeasedJob+appendJobEvent must succeed or throw to rollback reservation. Clock is sampled immediately inside transaction."
+  },
+  "B3": {
+    "owned": [
+      "lib/services/production/budget.ts",
+      "lib/services/production/budget.test.ts",
+      "app/api/production/projects/[projectId]/budget/route.ts",
+      "route-owned tests"
+    ],
+    "tasks": [
+      "Implement factory with explicit store, producer, current credential getter and clock; async producer runs before any SQLite transaction. Persisted account evidence is reread, never accepted merely because an object came from caller. currentCredentialBindingId sampled synchronously in reserve transaction; rotate generation identity whenever secret/account connection changes. Missing identity rejects.",
+      "Implement policy edit and project authorization services: read latest scoped policy/auth, compare expected revision, append immutable revision with server IDs/timestamp and existing command actorId; null cap stays unauthorized, zero blocks, expiry null means standing, bounded UTC schema applies. Authorization provenance may reference older policy revision but reservation pins current policy and current auth; no cap reset.",
+      "reserveInTransaction reads latest policy/auth and exact quote/binding/evidence; requires expected current revision numbers and identity pins. Fold all events from listBudgetLedger for project all days and account original current UTC day via foldReservation and summarizeBudget; call validateReservationEligibility with expectedQuoteInputHash/current generation and insert execution+reservation together. Check existing identical reservation before adding estimate again, but never let replay dispatch a provider twice. Conflicting execution/key/context rejects. New reserve returns maximum estimate, account scope and exact immutable pin IDs.",
+      "Trusted reconciliation service may call appendReconciliationEvidence on authenticated producer output; never accept browser billing input. Preserve actual above cap, unknown liability and contradictory evidence; shared B1 fold only. Text admission uses registered server execution and same reserve service; I02 owns durable proposal dispatch/recovery, so B3 does not implement a text scheduler.",
+      "GET builds sanitized scoped read model: policy/auth revisions and caps, liability/current day/project totals, unresolved/overrun/conflict and unavailable/unknown reasons; omit account identity, credential binding, evidence reference/path and raw provider errors. No ledger reset. POST strict discriminated route envelope: create_policy {kind,providerId,unit,currency,dailyCap,expiresAt,revoked,actorId}; update_policy {kind,command:AccountBudgetPolicyCommand}; authorize {kind,command:AuthorizeBudgetCommand}. create resolves account solely via producer and sets expectedRevision null; update verifies policy belongs current server-resolved account. Browser supplies no account/evidence/reservation/billing fields. Same-origin bounded JSON/error envelope, no-store."
+    ]
+  },
+  "B4": {
+    "owned": [
+      "lib/jobs/production/queue.ts",
+      "lib/jobs/production/queue.test.ts",
+      "lib/jobs/production/worker.ts",
+      "lib/jobs/production/worker.test.ts"
+    ],
+    "tasks": [
+      "Replace authorizeSubmission boolean callback with async prepareBudgetContext plus synchronous reserveSubmission injection. No default authorization. Discovery/preparation finish outside transaction; final quote/capability/credential/current approvals checked in admission transaction. Structural signatures above permit parallel B3/B4 after freeze.",
+      "One commit reserves and changes job queued/retry_wait to submitting. Failed lease/CAS/event insert throws and rolls back reservation/execution. No fallthrough on false CAS. Keep queue-owned approval validation; service never substitutes budget approval for human creative approval. Postcommit approval edit does not undo an already-crossed boundary.",
+      "On restart submitting without providerRef becomes submission_unknown; existing reservation survives and zero resubmit. Owned ACK during shutdown persists. Media completion/cancel/error do not append billing settlement. Explicit positive nonacceptance producer fact may release once; ambiguous outcomes retain. Poll/recover accepted refs without another reserve or submit.",
+      "Race tests use two SQLite connections or processes and fake provider counters: two projects sharing account jointly exceed cap => exactly one admitted; revoke-versus-commit ordering; stale lease prevents reserve; trigger fault after reservation rolls back submitting and ledger; clock advancement/evidence expiry/generation rotation; resume after boundary never duplicates. Local import/assembly remains independent."
+    ]
+  },
+  "rootCompositionAmendments": [
+    "Canonical quote input proof: current http-routes validates quote.inputHash===hashCanonicalJson(command.inputSnapshot). inputSnapshot ordered revisionIds/assetIds/parameters is neither full job.requestSnapshot nor semantic result inputs hash. Preserve exact server-validated quote recipe in durable neutral immutable artifact referenced by trusted evidence, or introduce explicit validated persisted recipe companion through separately approved root adapter amendment. Generation producer must derive identical inputSnapshot from pinned recipe; never compare quote.inputHash to job.requestHash. anchor/take semantic hash is computeProductionInputsHash(tx,operation,snapshot); audio/text need explicit server recipe before live enablement.",
+    "Quote handler/provider composer must produce AccountEvidence+BudgetQuote+QuoteAccountBinding with stable account/current generation, causal observedAt<=quotedAt, exact model/op/input recipe and executionSemanticHash, known money scope. Insert media quote and companion bundle atomically; genuine unknown quote remains visible with null binding. Worker scripts/runtime factory inject producer+reserve adapter only when configured; no hardcoded USD0 or token-to-money conversion.",
+    "Minimum subscription proof: content-addressed immutable server-only fact bundle with schema version, producer/policy version, source references/hashes, observed/expiry times, authenticated stable account/current generation and active subscription observation, exact catalog modelId and explicit documented coverage mapping, live capabilities and enforced subscription/no-fallback mode. AccountEvidence.source identifies vetted producer policy and reference points to durable bundle hash; verify artifact content/hash/pins before constructing zero quote. Existing source/reference strings alone are not an attestation. No secret persistence. Unknown coverage/account/billing rejects; model family heuristic or active status alone cannot prove zero. Quote0 is estimated liability; trusted completed billing record is required for actual0. Existing B1 DTOs unchanged; root must approve artifact persistence/loader ownership, no new finance engine.",
+    "GET all policies cannot be implemented from existing point lookups alone. Minimal root B2 port amendment: listLatestAccountPolicies(providerId:string,accountId:string):AccountBudgetPolicy[], server-resolved scope only; bounded fixed supported currency/unit count or explicit limit that fails on truncation. Alternatively freeze GET as scope-selective, without claiming all policies. This is a prerequisite outside B3/B4 ownership."
+  ],
+  "verification": [
+    "B3: npm test -- lib/services/production/budget.test.ts plus new budget route test path. Real SQLite reopen, forged fields, stale account/quote/generation, current revision CAS, null/zero/caps, overrun, dedupe/refund, midnight and all-day project liability.",
+    "B4: npm test -- lib/jobs/production/queue.test.ts lib/jobs/production/worker.test.ts. Existing C04 recovery/lease/shutdown tests remain green; real-SQLite atomic failures and fake-provider zero-submit guards.",
+    "Root combined: npm test; npm run typecheck; npm run build; built HTTP same-origin malformed/unknown/reference guards and local offline worker composition. No provider credentials or paid/network calls during verification."
+  ],
+  "nonAcceptance": "Plan only. B2 startup fix, durable quote/account proof composer, service/worker combined gates and explicit I01 acceptance remain prerequisites."
+}

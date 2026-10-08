@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "packet": "I01-B6-S",
+  "status": "frozen_followup_not_dispatched_due_5_percent_reserve",
+  "base_sha": "e72aa3cbe0e2088a936c37a70457d48182ca3b3d",
+  "review": "docs/production/reports/I01-B6-S-review.json",
+  "worktree": "/Users/abid/.codex/worktrees/production-provider-proof/perabyte-studio",
+  "owned_files": [
+    "lib/repositories/production/sqlite.ts",
+    "lib/repositories/production/sqlite.test.ts"
+  ],
+  "required_changes": [
+    {
+      "id": "B6S-R1",
+      "priority": 2,
+      "file": "lib/repositories/production/sqlite.ts",
+      "line": 139,
+      "trigger": "AccountEvidence uses observedAt101/expiresAt1100 while the referenced account_session contains observedAt100/expiresAt1000; all provider/account/generation/session IDs and snapshots otherwise agree.",
+      "expected": "Reject the mismatched evidence before inserting a link and propagate failure to the outer transaction. Preserve exact account observation/expiry pinned by the proof.",
+      "action": "Compare pinned AccountEvidence observedAt/expiresAt to the referenced account_session fields; preserve regression proving mismatched time association rejects and all aggregate writes roll back."
+    },
+    {
+      "id": "B6S-R2",
+      "priority": 2,
+      "file": "lib/repositories/production/sqlite.ts",
+      "line": 157,
+      "trigger": "execution_session observedAt300/expiresAt700 references a worker account_session observedAt300/expiresAt350; quote and capability remain valid through700 or later.",
+      "expected": "Require payload.expiresAt <= workerPayload.expiresAt and reject/roll back a link extending beyond the authenticated worker observation validity.",
+      "action": "Add worker-session expiry bound and preserve a focused regression covering attempted overlong execution proof plus aggregate rollback."
+    },
+    {
+      "id": "B6S-R3",
+      "priority": 2,
+      "file": "lib/repositories/production/sqlite.ts",
+      "line": 157,
+      "trigger": "A worker account_session and execution_session agree with one another but use sdkVersion/sdkSourceHash/adapterVersion different from the quote-time session, while retaining the same model and capability snapshot.",
+      "expected": "Enforce frozen SDK/adapter provenance agreement between quote session and worker execution session, while allowing their local sessionId/role to differ. Reject mismatched links and propagate aggregate rollback.",
+      "action": "Compare sdkVersion, sdkSourceHash and adapterVersion between execution/worker and pinned quote session; preserve one minimal mismatch rejection/rollback regression when authorized."
+    }
+  ],
+  "verification": {
+    "test_count": 2,
+    "rules": [
+      "Extend existing two fixtures with three exact negative associations; rejection leaves no aggregate artifact/link/finance writes.",
+      "Quote AccountEvidence observation+expiry exactly equal archived account session.",
+      "Execution expiry cannot exceed worker account-session expiry.",
+      "Worker vs quote sdkVersion/sdkSourceHash/adapterVersion exactly equal; local sessionId/role may differ.",
+      "Populate existing v3 migration fixture with representative preexisting approval/ref/take records as frozen prerequisite requires; no new test or broad matrix."
+    ],
+    "commands": [
+      [
+        "npm",
+        "test",
+        "--",
+        "lib/repositories/production/sqlite.test.ts",
+        "-t",
+        "I01-B6-S"
+      ],
+      [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      [
+        "git",
+        "diff",
+        "--check"
+      ]
+    ],
+    "evidence": "Unique noclobber failed/green logs, preserve original checkpoints and independent variant logs; new followup report/commit only after final checks."
+  },
+  "integration": "Independent rereview of frozen followup source before root cherry-pick; preserve original review. No source integration has occurred.",
+  "paid_calls": []
+}

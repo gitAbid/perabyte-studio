@@ -1,0 +1,84 @@
+{
+  "task_id": "I01-B6-P",
+  "status": "incomplete_usage_stop",
+  "usage_stop": {
+    "observed_at": "2026-10-04T15:13Z",
+    "weekly_used_percent": 99,
+    "weekly_remaining_percent": 1,
+    "five_hour_used_percent": 31,
+    "five_hour_remaining_percent": 69,
+    "threshold_reached": "weekly remaining <= 1%"
+  },
+  "worktree": "/Users/abid/.codex/worktrees/production-provider-session/perabyte-studio",
+  "branch": "codex/production-provider-session",
+  "base_sha": "78426b7c3a5e825358dbb401b5f4d941bf8e2060",
+  "head_sha": "78426b7c3a5e825358dbb401b5f4d941bf8e2060",
+  "commit_sha": null,
+  "dirty_paths": [
+    "lib/providers/production/proof-port.ts",
+    "lib/providers/production/sogni-provider.ts",
+    "lib/providers/production/sogni-provider.test.ts",
+    "evidence/I01-B6-P/"
+  ],
+  "owned_source_paths": [
+    "lib/providers/production/proof-port.ts",
+    "lib/providers/production/sogni-provider.ts",
+    "lib/providers/production/sogni-provider.test.ts"
+  ],
+  "source_sha256_at_checkpoint": {
+    "lib/providers/production/proof-port.ts": "0d25e827a8e30b45713a82bbea03f181ceb50a0c99b6b72b8b31b4eb08c25279",
+    "lib/providers/production/sogni-provider.ts": "a989175c27eb6fc63f63ecd2681a9ecbf859f81edaff165f1cacb68ef71c77cd",
+    "lib/providers/production/sogni-provider.test.ts": "150835929f2f9559ed10ca27af121c419087a780f770c60db147602677e11a06"
+  },
+  "boundary_preflight": "Root accepted exact three-path scope and seam map before source implementation. S accepted/integrated at root5de5ead; no packet scope expansion.",
+  "completed_subset": [
+    "Added the local proof-port metadata/session/observation DTOs and strict schemas.",
+    "Drafted offline installed-SDK source metadata capture from the frozen fixed file manifest.",
+    "Drafted same-client account identity/subscription observation and role/session metadata capture.",
+    "Drafted a literal-true synchronous submit guard in the SDK transport after factory asset reads, with captured-session comparison and close epoch checks.",
+    "Added the two required I01-B6-P behavioral test cases, including fake SDK/environment fixtures, denied/non-synchronous admission, and deferred-asset close invalidation."
+  ],
+  "test_attempts": [
+    {
+      "command": ["npm", "test", "--", "lib/providers/production/sogni-provider.test.ts", "-t", "I01-B6-P"],
+      "exit_code": null,
+      "output": "Initial shell redirection failed before npm started because evidence/I01-B6-P did not exist; tool output preserved in the session, no raw file was created."
+    },
+    {
+      "command": ["npm", "test", "--", "lib/providers/production/sogni-provider.test.ts", "-t", "I01-B6-P"],
+      "exit_code": 1,
+      "output_file": "evidence/I01-B6-P/focused-attempt-20261004T151300Z-81085.log",
+      "output_sha256": "e28b8acfeef1bb143d0c65751b1b8a5897c398cf74153770648c52cc881e2169",
+      "result": "Both new tests failed because AuthenticatedProviderSessionSchema was not exported; export was added."
+    },
+    {
+      "command": ["npm", "test", "--", "lib/providers/production/sogni-provider.test.ts", "-t", "I01-B6-P"],
+      "exit_code": 1,
+      "output_file": "evidence/I01-B6-P/focused-attempt-20261004T151332Z-81377.log",
+      "output_sha256": "1ddec6e817120add498a41fef51d74d2e6ca3a44b775d475ae0db31c158795b3",
+      "result": "Observation test passed; submit-guard test failed because a denial fixture reached the default missing-asset loader (MEDIA_UNAVAILABLE) before its resolver. The fixture was changed to return offline bytes, but the selector has not been rerun after that change."
+    }
+  ],
+  "unrun_checks": [
+    "Final exact selector after the fixture correction: npm test -- lib/providers/production/sogni-provider.test.ts -t I01-B6-P",
+    "npm run typecheck",
+    "git diff --check",
+    "No source commit, independent review, or integration."
+  ],
+  "known_open_issues": [
+    "The current source draft has not completed the frozen selector or typecheck; additional failures may remain.",
+    "No claims are made that account observation or guarded submission is accepted or complete."
+  ],
+  "next_commands_after_authorized_resume": [
+    "Inspect git status and the exact three-file diff; preserve all current files and raw logs.",
+    "Run npm test -- lib/providers/production/sogni-provider.test.ts -t I01-B6-P with a unique noclobber evidence log; fix only packet-owned files if needed and preserve each failed attempt distinctly.",
+    "After source is final, run npm run typecheck and git diff --check once each with unique noclobber logs.",
+    "If all required checks pass, commit only proof-port.ts, sogni-provider.ts, and sogni-provider.test.ts with an I01-B6-P: prefix; write a dated strict report and hand off for independent review. Do not integrate."
+  ],
+  "external_effects": {
+    "network_calls": [],
+    "authenticated_calls": [],
+    "paid_calls": [],
+    "account_or_credential_calls": []
+  }
+}

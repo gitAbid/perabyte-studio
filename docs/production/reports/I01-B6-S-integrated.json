@@ -1,0 +1,55 @@
+{
+  "packet": "I01-B6-S",
+  "status": "accepted_integrated",
+  "source_shas": [
+    "e72aa3cbe0e2088a936c37a70457d48182ca3b3d",
+    "1490e94040105664957e5fc228a1d3f5a3f6cf5b"
+  ],
+  "integration_shas": [
+    "8fa552f",
+    "5de5ead"
+  ],
+  "combined_head": "78426b7c3a5e825358dbb401b5f4d941bf8e2060",
+  "review": "docs/production/reports/I01-B6-S-followup-review.json",
+  "commands": [
+    {
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "lib/repositories/production/sqlite.test.ts",
+        "lib/production/development-guard.test.ts",
+        "-t",
+        "I01-B6-S|explicit per-duration|explicit policy windows|configured duration-specific"
+      ],
+      "exit_code": 0,
+      "log": "evidence/integration/i01-b6-s-accepted-20261004/root-focused.log",
+      "sha256": "1bf6212612272a96f6c7cda08281e0199f5bc2495e612fb479e4a0fd327d364d"
+    },
+    {
+      "argv": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exit_code": 0,
+      "log": "evidence/integration/i01-b6-s-accepted-20261004/root-typecheck.log",
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "evidence/integration/i01-b6-s-accepted-20261004/root-diffcheck.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "limitations": [
+    "Full I01/C06 and live proof composer/provider/worker integration incomplete.",
+    "No full suite/build or live/paid calls.",
+    "Known unrelated WAL timing failure deferred."
+  ]
+}

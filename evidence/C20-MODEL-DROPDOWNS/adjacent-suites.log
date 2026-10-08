@@ -1,0 +1,27 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.0 /Users/abid/Projects/perabyte-studio/.worktrees/c20-model-dropdowns
+
+ ✓ lib/production/http.test.ts (7 tests) 38ms
+ ✓ lib/providers/production/sogni-audio.test.ts (14 tests) 18ms
+ ✓ lib/production/storyboard.test.ts (26 tests) 21ms
+ ✓ lib/providers/production/text-planner.test.ts (8 tests) 9ms
+ ✓ lib/providers/production/production-models.test.ts (8 tests) 11ms
+ ✓ lib/production/storyboard-models.test.ts (3 tests) 6ms
+ ✓ lib/providers/production/sogni-h3.test.ts (9 tests) 5ms
+ ✓ lib/providers/production/capabilities.test.ts (11 tests) 80ms
+ ✓ lib/providers/production/http-routes.test.ts (2 tests) 81ms
+ ✓ lib/providers/production/submission-errors.test.ts (8 tests) 3ms
+ ✓ lib/providers/production/sogni-provider.test.ts (29 tests) 462ms
+
+ Test Files  11 passed (11)
+      Tests  125 passed (125)
+   Start at  20:36:49
+   Duration  1.40s (transform 54%, import 30%, tests 15%, worker 1%)
+
+  Transform  transforming modules took 2.64s · 54% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+

@@ -1,0 +1,165 @@
+{
+  "task_id": "I01-B6-S",
+  "reviewed_sha": "e72aa3cbe0e2088a936c37a70457d48182ca3b3d",
+  "base_sha": "2ded8389b71788001dc25b28b46d671f9ef4731e",
+  "worktree": "/Users/abid/.codex/worktrees/production-provider-proof/perabyte-studio",
+  "verdict": "changes_requested",
+  "normative_freeze": {
+    "path": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/docs/production/reports/I01-B6-S-root-freeze.json",
+    "sha256": "235e08351f3b9ca89b1acabe5c62173aaa685084c9eedb520674fb1064460379"
+  },
+  "ownership": {
+    "paths": [
+      "lib/production/contracts.test.ts",
+      "lib/production/contracts.ts",
+      "lib/production/provider-proof.ts",
+      "lib/repositories/production/migrations/004-provider-proof.sql",
+      "lib/repositories/production/ports.ts",
+      "lib/repositories/production/sqlite.test.ts",
+      "lib/repositories/production/sqlite.ts"
+    ],
+    "source_hashes": {
+      "lib/production/contracts.test.ts": "52ca32bf72102097c94305cf617b4fbe1db8791da28ee9d39628b06e6d3c5d25",
+      "lib/production/contracts.ts": "cf6cb44a3d41a48f6a4743ab8172e95307eb04a36e283d6e370dd922f5001881",
+      "lib/production/provider-proof.ts": "7708c1ce0db816fd39f5b66651ca8b4366ecb4ef61a72378c7f5e4670410d999",
+      "lib/repositories/production/migrations/004-provider-proof.sql": "56e62c5497ca48cbe614c911a0c44a2e632555b8593f03ff35ad8b270d06ec8c",
+      "lib/repositories/production/ports.ts": "b29f34cf626ea41009bd5a7cf5adbdabf92cc395cdc8133d56cb03889ea71353",
+      "lib/repositories/production/sqlite.test.ts": "877a797321dfde1f42f18d07e330c483ac638d816d83a752af549fbe487438df",
+      "lib/repositories/production/sqlite.ts": "730a8ec66f5ad0e8114d0408a504a6fb6e853cc0d00f8293ba91c83dbd5ee674"
+    },
+    "source_matches_frozen_commit": true,
+    "tracked_worktree_clean": true,
+    "migrations_001_003_unchanged": {
+      "lib/repositories/production/migrations/001.sql": "51e3c06b8bd91833a2fe7dd22ca3a18d0f3b9ce778fe459ab7f397e244ad4b44",
+      "lib/repositories/production/migrations/002-budget.sql": "85373e4a8851018fa72150f8b5dfcdf79c19a23dde3f6f292bc9d8b28b725735",
+      "lib/repositories/production/migrations/003-approval-commands.sql": "f7fb9a9448a7ae6288085a30d8146d6a3feee9df2ad2b624dd5c034be199b6ff"
+    }
+  },
+  "findings": [
+    {
+      "id": "B6S-R1",
+      "priority": 2,
+      "file": "lib/repositories/production/sqlite.ts",
+      "line": 139,
+      "title": "Require exact account-proof observation and expiry when linking quote evidence",
+      "trigger": "AccountEvidence uses observedAt101/expiresAt1100 while the referenced account_session contains observedAt100/expiresAt1000; all provider/account/generation/session IDs and snapshots otherwise agree.",
+      "actual": "insertQuoteProof succeeds. validateQuoteProof only bounds accountPayload.observedAt relative to quote.createdAt and quote expiry relative to account proof; it never requires evidence.observedAt/expiresAt equal the referenced account proof.",
+      "expected": "Reject the mismatched evidence before inserting a link and propagate failure to the outer transaction. Preserve exact account observation/expiry pinned by the proof.",
+      "evidence": "Isolated variation of existing v3 test expects rejection and fails because no error is thrown, sqlite.test.ts559 in preserved variant copy.",
+      "required_followup": "Compare pinned AccountEvidence observedAt/expiresAt to the referenced account_session fields; preserve regression proving mismatched time association rejects and all aggregate writes roll back."
+    },
+    {
+      "id": "B6S-R2",
+      "priority": 2,
+      "file": "lib/repositories/production/sqlite.ts",
+      "line": 157,
+      "title": "Bound execution-proof expiry by the referenced worker account session",
+      "trigger": "execution_session observedAt300/expiresAt700 references a worker account_session observedAt300/expiresAt350; quote and capability remain valid through700 or later.",
+      "actual": "insertExecutionProof succeeds because validation checks only observedAt against workerPayload.expiresAt and bounds execution expiry by quote/capability, omitting worker account expiry.",
+      "expected": "Require payload.expiresAt <= workerPayload.expiresAt and reject/roll back a link extending beyond the authenticated worker observation validity.",
+      "evidence": "Isolated variation of existing execution association test expects rejection and fails because no error is thrown, sqlite.test.ts602 in preserved variant copy.",
+      "required_followup": "Add worker-session expiry bound and preserve a focused regression covering attempted overlong execution proof plus aggregate rollback."
+    },
+    {
+      "id": "B6S-R3",
+      "priority": 2,
+      "file": "lib/repositories/production/sqlite.ts",
+      "line": 157,
+      "title": "Match worker SDK and adapter provenance to the pinned quote session",
+      "trigger": "A worker account_session and execution_session agree with one another but use sdkVersion/sdkSourceHash/adapterVersion different from the quote-time session, while retaining the same model and capability snapshot.",
+      "actual": "validateExecutionProof compares workerPayload.session to payload.session but never compares their SDK/adapter version/hash fields with quotePayload.session. The mismatch is not part of any rejection condition.",
+      "expected": "Enforce frozen SDK/adapter provenance agreement between quote session and worker execution session, while allowing their local sessionId/role to differ. Reject mismatched links and propagate aggregate rollback.",
+      "evidence": "Static inspection of the complete validateExecutionProof comparison at sqlite.ts157; no additional probe at reserve.",
+      "required_followup": "Compare sdkVersion, sdkSourceHash and adapterVersion between execution/worker and pinned quote session; preserve one minimal mismatch rejection/rollback regression when authorized."
+    }
+  ],
+  "acceptance": {
+    "confirmed": [
+      "Strict versioned outer/nested schemas, existing canonicalJson/hashCanonicalJson, UTF8 archival/capture bounds and four-digit UTC bounds inspected.",
+      "Migration004 is additive; immutable artifact/generation/link update/delete triggers and constrained CAS head inspected. Original migrations001-003 byte-identical.",
+      "Original focused real-v3 finance migration/reopen/CAS replay/history and immutable/corrupt artifact checks pass.",
+      "Original focused quote/execution link replay and aggregate rollback cases pass.",
+      "Generation CAS appends immutable history; exact replay requires original expectation; stale expectation false; unique historical IDs prevent ABA reuse.",
+      "Stored proof loads validate schema/hash and proof-specific invalid-schema/integrity errors are static sanitized strings.",
+      "Quote binding currency/unit match is supplied by existing immutable insertBudgetQuote validation; proof linking canonical-compares its pinned snapshots. No additional finding for it."
+    ],
+    "blocked": [
+      "Exact quote-account time association and worker execution-session expiry are not enforced; see reproduced findings.",
+      "Pinned quote SDK/adapter provenance is not compared with worker execution session; static finding B6S-R3."
+    ]
+  },
+  "commands": [
+    {
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "lib/repositories/production/sqlite.test.ts",
+        "-t",
+        "I01-B6-S"
+      ],
+      "cwd": "/Users/abid/.codex/worktrees/production-provider-proof/perabyte-studio",
+      "exit_code": 0,
+      "result": "2 passed, 27 skipped",
+      "output_file": "/tmp/perabyte-I01-B6-S-review-e72aa3c-focused-20261004-1.log",
+      "output_sha256": "302b70c70abc9f0eb13335d9958f2ba5e0664a21e7d766e605176bb90d114438"
+    },
+    {
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "lib/repositories/production/sqlite.test.ts",
+        "-t",
+        "I01-B6-S"
+      ],
+      "cwd": "/var/folders/6b/kpkrtysx23n_0zjbhw_llvqr0000gn/T/perabyte-I01-B6-S-review-variants-3u_fxiyy",
+      "exit_code": 1,
+      "result": "2 failed expected-rejection assertions, 27 skipped; proves both invalid associations accepted",
+      "output_file": "/tmp/perabyte-I01-B6-S-review-e72aa3c-variants-20261004-1.log",
+      "output_sha256": "4a153cce3f0f8c09f9de175126fd72b7c6a4d7a20a65423b30c8d3e0374c010d",
+      "variant_source": "/var/folders/6b/kpkrtysx23n_0zjbhw_llvqr0000gn/T/perabyte-I01-B6-S-review-variants-3u_fxiyy/lib/repositories/production/sqlite.test.ts",
+      "variant_source_sha256": "d7b67236422d004c5a10228ed3025ca422014daa6aed4b5679246365b90aa20d",
+      "variant_scope": "Existing two tests copied to an isolated temporary tree with symlinked frozen source/dependencies; only account observation/expiry mismatch and worker expiry variation injected. Candidate source not edited."
+    }
+  ],
+  "checkpoint": {
+    "path": "/Users/abid/.codex/worktrees/production-provider-proof/perabyte-studio/evidence/I01-B6-S/checkpoint-resume-20261004T141105Z.json",
+    "sha256": "552cdc4dde472e7ec8d3aec2d3efd615beabe1e71afd65adf2bcd8adac93219d",
+    "qualification": "Historical checkpoint says incomplete/uncommitted at base because previous root usage reading caused stop; actual reviewed committed source is exact candidate above. No historical self-acceptance inferred."
+  },
+  "worker_final_evidence": [
+    {
+      "path": "/Users/abid/.codex/worktrees/production-provider-proof/perabyte-studio/evidence/I01-B6-S/focused-final-20261004T142400Z-50d10c.txt",
+      "sha256": "96b5e4f7b78aa06da4fa21c0e6f9ddc190bb0c75f88356f5574b0929ce98521f",
+      "kind": "green",
+      "worker_exit_code": 0
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-provider-proof/perabyte-studio/evidence/I01-B6-S/typecheck-final-20261004T142500Z-995c4e.txt",
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "kind": "typecheck",
+      "worker_exit_code": 0
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-provider-proof/perabyte-studio/evidence/I01-B6-S/diff-check-final-20261004T142600Z-d74467.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "diff-check",
+      "worker_exit_code": 0
+    }
+  ],
+  "limitations": [
+    "No full suite, build, exhaustive schema/fault matrix or additional review cases.",
+    "Reviewer did not rerun typecheck; final worker typecheck evidence read/hash-verified.",
+    "Original v3 preservation fixture covers finance records, not a populated approved-take/ref graph; additive migration reviewed statically but that graph was not independently exercised.",
+    "Opaque canonical recipe/config archive grants no admission; future authoritative composer/policy parsing and actual provider client validation remain outside this slice.",
+    "Capability canonical equality to quote-time receipt is conservative and agrees with frozen snapshot requirements; no finding for fresh receipt behavior alone.",
+    "No new dispatch or review after root reserve notice; only already-underway bounded reproduction and report completed.",
+    "No integration, network, authentication, credential access or paid operation performed.",
+    "SDK/adapter quote-to-worker mismatch finding is source-derived only; no new reproduction was started after reserve notice."
+  ],
+  "source_edits": [],
+  "paid_calls": [],
+  "network_calls": [],
+  "frozen_after_review": true
+}

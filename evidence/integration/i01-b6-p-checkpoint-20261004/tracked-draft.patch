@@ -1,0 +1,273 @@
+diff --git a/lib/providers/production/sogni-provider.test.ts b/lib/providers/production/sogni-provider.test.ts
+index fd461eb..4c95fd1 100644
+--- a/lib/providers/production/sogni-provider.test.ts
++++ b/lib/providers/production/sogni-provider.test.ts
+@@ -1,21 +1,59 @@
+ import { afterEach, describe, expect, it, vi } from "vitest";
++import { createHash, randomUUID } from "node:crypto";
+ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+ import { tmpdir } from "node:os";
+ import { join } from "node:path";
+-import { createSogniProductionProvider, createSogniSdkTransport, resolveSogniAppIdForRole, type SogniFactoryOptions, type SogniProviderTransport } from "./sogni-provider";
++import { createSogniProductionProvider, createSogniSdkTransport, readInstalledSogniProofMetadata, resolveSogniAppIdForRole, type SogniFactoryOptions, type SogniProviderTransport } from "./sogni-provider";
++import type { SubmissionProofResolver } from "./proof-port";
+ import type { ProviderMediaResult } from "../../repositories/production/ports";
+ import { createCapabilitiesHandler, createQuoteHandler } from "./http-routes";
+ import type { Project } from "../../production/contracts";
+ import { withProductionStore } from "../../production/runtime";
+ import { canSatisfy } from "./capabilities";
++import { hashCanonicalJson } from "../../production/hash";
+ 
+ const modelId="minimax-h3-fl2va-fp8_i2v";
+ const tempDirs:string[]=[];const priorDataDir=process.env.PERABYTE_STUDIO_DATA_DIR;afterEach(()=>{for(const dir of tempDirs.splice(0))rmSync(dir,{recursive:true,force:true});if(priorDataDir===undefined)delete process.env.PERABYTE_STUDIO_DATA_DIR;else process.env.PERABYTE_STUDIO_DATA_DIR=priorDataDir;});
+ const model={id:modelId,media:"video",workflowType:"i2v",assets:{referenceImage:"optional",referenceImageEnd:"optional"},maxReferenceImages:2,aspectRatios:["16:9"],minFrames:124,maxFrames:362,frameStep:17};
+ const project=(id="p"):Project=>({version:1,id,name:"Route test",profileId:"storybook-short-v1",profile:{id:"storybook-short-v1",format:"9:16",language:"en",ageIntent:"5-8",targetFrames:1152,projectCapMinor:null,dailyCapMinor:null},activeCanonRevisionIds:[],activeStoryRevisionId:null,activeShotPlanRevisionId:null,activeAnimaticRevisionId:null,activeAudioMixRevisionId:null,takeSelectionVersion:0,audioMixVersion:0,createdAt:1000,updatedAt:1000,saveVersion:1});
+ function transport(overrides:Partial<SogniProviderTransport>={}):SogniProviderTransport{return{sdkVersion:"5.49.0",configured:true,discover:vi.fn(async()=>[model]),submit:vi.fn(async()=>({providerRef:"remote-1"})),poll:vi.fn(async():Promise<ProviderMediaResult>=>({providerRef:"remote-1",state:"running",temporaryUrl:null,mime:null,width:null,height:null,frames:null,errorCode:null,errorMessage:null})),cancel:vi.fn(async()=>{}),close:vi.fn(async()=>{}),...overrides};}
++function proofClient(options:{wallet?:unknown;subscription?:unknown;meFailure?:boolean;statusFailure?:boolean}={}){return{projects:{getAvailableModels:vi.fn(async()=>[model]),getVideoAssetConfig:vi.fn(async()=>({workflowType:"i2v",assets:model.assets})),create:vi.fn(async()=>({id:"proof-job"})),getStatus:vi.fn(async()=>({status:"active"})),get:vi.fn(async()=>({})),cancel:vi.fn(async()=>{})},account:{me:vi.fn(async()=>{if(options.meFailure)throw new Error("private SDK failure");return options.wallet??{walletAddress:"0xAbCdEf0123456789AbCdEf0123456789AbCdEf01",email:"private@example.test",extra:"must-not-escape"};}),getSubscriptionStatus:vi.fn(async()=>{if(options.statusFailure)throw new Error("status unavailable with credential text");return options.subscription??{active:true,status:"future_provider_state",tier:"future_tier",currentPeriodEnd:"2030-01-02T03:04:05.1Z",providerVersion:7,email:"private@example.test",walletAddress:"must-not-escape"};})},dispose:vi.fn()};}
+ 
+ describe("Sogni production provider composition",()=>{
++  it("I01-B6-P observes bounded account facts from the actual cached SDK client",async()=>{
++    const metadata=readInstalledSogniProofMetadata();expect(metadata).toMatchObject({sdkVersion:"5.49.0",sdkSourceHash:"5c8d291a5fa677190e7853c7983d77109e3a86299aa8fcd0d3e4fc55af47b983",adapterVersion:"sogni-production-proof-v1"});
++    const dir=mkdtempSync(join(tmpdir(),"sogni-proof-observation-"));tempDirs.push(dir);const env={SOGNI_API_KEY:"  fixture-key-only  "},address="0xAbCdEf0123456789AbCdEf0123456789AbCdEf01",client=proofClient();
++    const createInstance=vi.fn(async(config:Record<string,unknown>)=>{expect(config.apiKey).toBe("fixture-key-only");return client;});
++    const web=createSogniProductionProvider({env,dataDir:dir,role:"web",proofMetadata:metadata,importSdk:async()=>({SogniClient:{createInstance}})});
++    const webObservation=await web.observeAccount();expect(createInstance).toHaveBeenCalledTimes(1);expect(client.account.me).toHaveBeenCalledTimes(1);expect(client.account.getSubscriptionStatus).toHaveBeenCalledTimes(1);
++    expect(webObservation).toMatchObject({providerId:"sogni",captured:{session:{role:"web",sdkVersion:metadata.sdkVersion,sdkSourceHash:metadata.sdkSourceHash,adapterVersion:metadata.adapterVersion},credentialFingerprint:createHash("sha256").update("fixture-key-only").digest("hex")},subscription:{active:true,status:"future_provider_state",tier:"future_tier",providerVersion:7}});
++    expect(webObservation.captured.accountId).toBe(`sogni-account:${hashCanonicalJson({schemaVersion:1,providerId:"sogni",walletAddress:address.toLowerCase()})}`);
++    expect(webObservation.subscription?.currentPeriodEnd).toBe(Date.parse("2030-01-02T03:04:05.100Z"));expect(Object.isFrozen(webObservation)).toBe(true);expect(Object.isFrozen(webObservation.captured.session)).toBe(true);
++    expect(JSON.stringify(webObservation)).not.toMatch(/private@example\.test|must-not-escape|fixture-key-only|0xAbCdEf/i);
++    const workerClient=proofClient(),worker=createSogniProductionProvider({env,dataDir:dir,role:"worker",proofMetadata:metadata,importSdk:async()=>({SogniClient:{createInstance:async(config:Record<string,unknown>)=>{expect(config.apiKey).toBe("fixture-key-only");return workerClient;}}})});
++    const workerObservation=await worker.observeAccount();expect(workerObservation.captured.accountId).toBe(webObservation.captured.accountId);expect(workerObservation.captured.credentialFingerprint).toBe(webObservation.captured.credentialFingerprint);expect(workerObservation.captured.session.sessionId).not.toBe(webObservation.captured.session.sessionId);expect(workerObservation.captured.session.role).toBe("worker");expect(await resolveSogniAppIdForRole(dir,"web")).not.toBe(await resolveSogniAppIdForRole(dir,"worker"));
++    await web.close();expect(web.currentSession()).toBeNull();const replacement=proofClient(),recreated=createSogniProductionProvider({env,dataDir:dir,role:"web",proofMetadata:metadata,importSdk:async()=>({SogniClient:{createInstance:async()=>replacement}})});
++    const replacementObservation=await recreated.observeAccount();expect(replacementObservation.captured.session.sessionId).not.toBe(webObservation.captured.session.sessionId);
++    const unavailable=proofClient({statusFailure:true}),offline=createSogniProductionProvider({env,dataDir:join(dir,"offline"),proofMetadata:metadata,importSdk:async()=>({SogniClient:{createInstance:async()=>unavailable}})});expect((await offline.observeAccount()).subscription).toBeNull();
++    const malformed=proofClient({subscription:{active:true,status:"",tier:{private:true}}}),malformedProvider=createSogniProductionProvider({env,dataDir:join(dir,"malformed"),proofMetadata:metadata,importSdk:async()=>({SogniClient:{createInstance:async()=>malformed}})});expect((await malformedProvider.observeAccount()).subscription).toBeNull();
++    const missingImport=vi.fn(),missing=createSogniProductionProvider({env,dataDir:join(dir,"missing"),importSdk:missingImport});await expect(missing.observeAccount()).rejects.toMatchObject({code:"BUDGET_BLOCKED"});expect(missingImport).not.toHaveBeenCalled();
++    const badMe=proofClient({wallet:{walletAddress:"not-an-address"}}),badProvider=createSogniProductionProvider({env,dataDir:join(dir,"bad-me"),proofMetadata:metadata,importSdk:async()=>({SogniClient:{createInstance:async()=>badMe}})});await expect(badProvider.observeAccount()).rejects.toMatchObject({code:"BUDGET_BLOCKED"});expect(badProvider.currentSession()).toBeNull();
++    await Promise.all([worker.close(),recreated.close(),offline.close(),malformedProvider.close(),badProvider.close()]);
++  });
++  it("I01-B6-P runs the synchronous proof guard after asset awaits immediately before SDK create",async()=>{
++    const metadata=readInstalledSogniProofMetadata(),dir=mkdtempSync(join(tmpdir(),"sogni-proof-submit-"));tempDirs.push(dir);const env={SOGNI_API_KEY:"fixture-submit-key"};
++    const createGuarded=(options:{resolver?:SubmissionProofResolver;readAsset?:(id:string)=>Promise<Buffer>;createInstance?:(config:Record<string,unknown>)=>Promise<ReturnType<typeof proofClient>>;now?:()=>number}={})=>{
++      const client=options.createInstance?undefined:proofClient();const provider=createSogniProductionProvider({env,dataDir:join(dir,randomUUID()),role:"worker",proofMetadata:metadata,submissionProofResolver:options.resolver,readAsset:options.readAsset??(async()=>Buffer.from("offline-frame")),now:options.now,importSdk:async()=>({SogniClient:{createInstance:options.createInstance??(async()=>client!)}})});return{provider,client};
++    };
++    const makeRequest=()=>({projectId:"p",jobId:"j",idempotencyKey:"i",quoteId:"q",billingMode:"tokens" as const,providerId:"sogni",modelId,prompt:"move",inputs:[{assetId:"start",role:"start_frame" as const,required:true}],parameters:{frameCount:124,aspect:"16:9"}});
++    const events:string[]=[],client=proofClient(),resolver=vi.fn(((snapshot,captured,at)=>{events.push("guard");expect(snapshot.jobId).toBe("j");expect(captured.accountId).toContain("sogni-account:");expect(captured.credentialFingerprint).toBe(createHash("sha256").update(env.SOGNI_API_KEY).digest("hex"));expect(captured.session.sdkVersion).toBe(metadata.sdkVersion);expect(captured.session.sdkSourceHash).toBe(metadata.sdkSourceHash);expect(captured.session.adapterVersion).toBe(metadata.adapterVersion);expect(at).toBe(5_000);return true;}) satisfies SubmissionProofResolver);
++    const guarded=createGuarded({resolver,now:()=>5_000,createInstance:async()=>client,readAsset:async()=>{events.push("asset");return Buffer.from("offline-frame");}}),capability=await guarded.provider.discoverCapabilities(modelId);await guarded.provider.observeAccount();
++    client.projects.create.mockImplementation(async()=>{events.push("create");return{id:"proof-job"};});const ack=await guarded.provider.submit(makeRequest(),capability);expect(ack.providerRef).toBe("proof-job");expect(events).toEqual(["asset","guard","create"]);expect(resolver).toHaveBeenCalledTimes(1);expect(client.projects.create).toHaveBeenCalledTimes(1);await guarded.provider.close();
++    const denyClient=proofClient(),deny=createGuarded({resolver:()=>false,createInstance:async()=>denyClient});const denyCapability=await deny.provider.discoverCapabilities(modelId);await deny.provider.observeAccount();await expect(deny.provider.submit(makeRequest(),denyCapability)).rejects.toMatchObject({code:"BUDGET_BLOCKED"});expect(denyClient.projects.create).not.toHaveBeenCalled();await deny.provider.close();
++    const asyncClient=proofClient(),asyncResolver=((()=>Promise.resolve(true)) as unknown as SubmissionProofResolver),asyncGuard=createGuarded({resolver:asyncResolver,createInstance:async()=>asyncClient});const asyncCapability=await asyncGuard.provider.discoverCapabilities(modelId);await asyncGuard.provider.observeAccount();await expect(asyncGuard.provider.submit(makeRequest(),asyncCapability)).rejects.toMatchObject({code:"BUDGET_BLOCKED"});expect(asyncClient.projects.create).not.toHaveBeenCalled();await asyncGuard.provider.close();
++    const closedClient=proofClient();let releaseAsset!:(bytes:Buffer)=>void;const deferred=new Promise<Buffer>(resolve=>{releaseAsset=resolve;}),closeGuard=createGuarded({resolver:()=>true,createInstance:async()=>closedClient,readAsset:()=>deferred}),closeCapability=await closeGuard.provider.discoverCapabilities(modelId);await closeGuard.provider.observeAccount();const pending=closeGuard.provider.submit(makeRequest(),closeCapability);await Promise.resolve();await closeGuard.provider.close();releaseAsset(Buffer.from("offline-frame"));await expect(pending).rejects.toMatchObject({code:"BUDGET_BLOCKED"});expect(closedClient.projects.create).not.toHaveBeenCalled();
++    const noResolverClient=proofClient(),noResolver=createGuarded({createInstance:async()=>noResolverClient}),noResolverCapability=await noResolver.provider.discoverCapabilities(modelId);await noResolver.provider.observeAccount();await expect(noResolver.provider.submit(makeRequest(),noResolverCapability)).rejects.toMatchObject({code:"BUDGET_BLOCKED"});expect(noResolverClient.projects.create).not.toHaveBeenCalled();await noResolver.provider.close();
++  });
+   it("uses installed SDK transport behind injection, maps required H3 roles, and records one submit",async()=>{const sdk=transport();const provider=createSogniProductionProvider({transport:sdk,readAsset:async()=>Buffer.from("asset")});const capability=await provider.discoverCapabilities(modelId);const ack=await provider.submit({projectId:"p",jobId:"j",idempotencyKey:"i",quoteId:"q",billingMode:"tokens",providerId:"sogni",modelId,prompt:"move",inputs:[{assetId:"start",role:"start_frame",required:true},{assetId:"end",role:"end_frame",required:true}],parameters:{frameCount:124,aspect:"16:9",seed:4}},capability);expect(sdk.submit).toHaveBeenCalledTimes(1);expect(ack.providerRef).toBe("remote-1");expect(ack.honoredInputs.inputs.map(x=>x.state)).toEqual(["acknowledged","acknowledged"]);expect(ack.honoredInputs.inputs.map(x=>x.providerField)).toEqual(["referenceImage","referenceImageEnd"]);});
+   it("keeps distinct endpoint roles when one immutable asset supplies both endpoints",async()=>{const sdk=transport();const provider=createSogniProductionProvider({transport:sdk,readAsset:async()=>Buffer.from("same frame")});const capability=await provider.discoverCapabilities(modelId);await provider.submit({projectId:"p",jobId:"j",idempotencyKey:"i",quoteId:"q",billingMode:"tokens",providerId:"sogni",modelId,prompt:"move",inputs:[{assetId:"same",role:"start_frame",required:true},{assetId:"same",role:"end_frame",required:true}],parameters:{frameCount:124,aspect:"16:9"}},capability);const submission=(sdk.submit as ReturnType<typeof vi.fn>).mock.calls[0]![0];expect(submission.parameters.referenceImage).toEqual(Buffer.from("same frame"));expect(submission.parameters.referenceImageEnd).toEqual(Buffer.from("same frame"));});
+   it("rejects a required role before transport when H3 capabilities do not support it",async()=>{const sdk=transport({discover:vi.fn(async()=>[{...model,assets:{referenceImage:"forbidden",referenceImageEnd:"forbidden"}}])});const provider=createSogniProductionProvider({transport:sdk,readAsset:async()=>Buffer.from("asset")});const capability=await provider.discoverCapabilities(modelId);await expect(provider.submit({projectId:"p",jobId:"j",idempotencyKey:"i",quoteId:"q",billingMode:"tokens",providerId:"sogni",modelId,prompt:"move",inputs:[{assetId:"start",role:"start_frame",required:true}],parameters:{frameCount:124}},capability)).rejects.toThrow(/required|support|reference/i);expect(sdk.submit).not.toHaveBeenCalled();});
+diff --git a/lib/providers/production/sogni-provider.ts b/lib/providers/production/sogni-provider.ts
+index af6851d..b11872a 100644
+--- a/lib/providers/production/sogni-provider.ts
++++ b/lib/providers/production/sogni-provider.ts
+@@ -1,17 +1,22 @@
+ import { createHash, randomUUID } from "node:crypto";
+ import { mkdir, open, readFile, unlink } from "node:fs/promises";
+-import { join, resolve } from "node:path";
++import { readFileSync } from "node:fs";
++import { dirname, join, resolve } from "node:path";
+ import { createRequire } from "node:module";
+ import { createServer, type Server } from "node:net";
+ import { ProductionApplicationError } from "../../production/errors";
+ import { CapabilityReceiptSchema, HonoredInputsReceiptSchema, type CapabilityReceipt, type CreateQuoteCommand, type ProductionQuote } from "../../production/contracts";
+ import { canSatisfy, unknownCapability, normalizeCatalogCapabilities, type CatalogModel, type ProductionCapabilityDiscovery, unknownProductionQuote } from "./capabilities";
+ import { acknowledgeH3Transport, checkH3Request, h3ModeForModel, mapH3InputFields } from "./sogni-h3";
+-import type { ProviderMediaResult, ProviderPort, ProviderQuoteRequest, ProviderRequestSnapshot, ProviderSubmissionAck } from "../../repositories/production/ports";
++import type { ProviderMediaResult, ProviderQuoteRequest, ProviderRequestSnapshot, ProviderSubmissionAck } from "../../repositories/production/ports";
+ import { resolveProductionDataDir } from "../../production/runtime";
++import { BudgetUtcMillisSchema, IdSchema } from "../../production/contracts";
++import type { ProviderSession } from "../../production/provider-proof";
++import { canonicalJson, hashCanonicalJson } from "../../production/hash";
++import { AuthenticatedProviderSessionSchema, CapturedProviderSessionSchema, ProviderAccountObservationSchema, SogniProofMetadataSchema, type AuthenticatedProviderSession, type CapturedProviderSession, type ProductionProofProvider, type ProviderAccountObservation, type SubmissionProofResolver, type SogniProofMetadata, type SubscriptionObservation } from "./proof-port";
+ 
+ export type SogniRole="worker"|"web"|"probe";
+-export interface SogniSdkSubmission { snapshot:ProviderRequestSnapshot; parameters:Record<string,unknown>; inputBytes:Record<string,Buffer> }
++export interface SogniSdkSubmission { snapshot:ProviderRequestSnapshot; parameters:Record<string,unknown>; inputBytes:Record<string,Buffer>; proofSession?:AuthenticatedProviderSession }
+ export interface SogniProviderTransport {
+   readonly sdkVersion:string; readonly configured:boolean;
+   discover(modelIds:string[]):Promise<CatalogModel[]>;
+@@ -19,18 +24,61 @@ export interface SogniProviderTransport {
+   poll(providerRef:string):Promise<ProviderMediaResult>;
+   cancel(providerRef:string):Promise<void>;
+   close():Promise<void>;
++  observeAccount?():Promise<ProviderAccountObservation>;
++  currentSession?():CapturedProviderSession|null;
+ }
+ export interface SogniFactoryOptions {
+   transport?:SogniProviderTransport; readAsset?:(assetId:string)=>Promise<Buffer>;
+   env?:Readonly<Record<string,string|undefined>>; dataDir?:string; cwd?:string; role?:SogniRole;
+-  now?:()=>number; importSdk?:()=>Promise<unknown>;
++  now?:()=>number; importSdk?:()=>Promise<unknown>; proofMetadata?:SogniProofMetadata; submissionProofResolver?:SubmissionProofResolver;
+ }
+ type SogniSdkJob={id:string;imgID?:string;status?:string;outputFormat?:string;result?:{outputFormat?:unknown}|null};
+-type SogniSdkClient={projects:{getAvailableModels:(network:"fast")=>Promise<Array<Record<string,unknown>>>;getVideoAssetConfig?:(modelId:string)=>Promise<{workflowType:string|null;assets?:Record<string,string>|null}>;getModelOptions?:(modelId:string)=>Promise<Record<string,unknown>>;create:(params:Record<string,unknown>)=>Promise<{id?:string}>;getStatus:(id:string)=>Promise<{status:string;workerJobs?:SogniSdkJob[];completedWorkerJobs?:SogniSdkJob[]}>;get:(id:string)=>Promise<{model?:{id?:string};workerJobs?:SogniSdkJob[];completedWorkerJobs?:SogniSdkJob[]}>;downloadUrl?:(params:{jobId:string;imageId:string;type:"complete";contentType?:string})=>Promise<string>;mediaDownloadUrl?:(params:{jobId:string;id:string;type:"complete"})=>Promise<string>;cancel:(id:string)=>Promise<void>};dispose:()=>void};
++type SogniSdkClient={projects:{getAvailableModels:(network:"fast")=>Promise<Array<Record<string,unknown>>>;getVideoAssetConfig?:(modelId:string)=>Promise<{workflowType:string|null;assets?:Record<string,string>|null}>;getModelOptions?:(modelId:string)=>Promise<Record<string,unknown>>;create:(params:Record<string,unknown>)=>Promise<{id?:string}>;getStatus:(id:string)=>Promise<{status:string;workerJobs?:SogniSdkJob[];completedWorkerJobs?:SogniSdkJob[]}>;get:(id:string)=>Promise<{model?:{id?:string};workerJobs?:SogniSdkJob[];completedWorkerJobs?:SogniSdkJob[]}>;downloadUrl?:(params:{jobId:string;imageId:string;type:"complete";contentType?:string})=>Promise<string>;mediaDownloadUrl?:(params:{jobId:string;id:string;type:"complete"})=>Promise<string>;cancel:(id:string)=>Promise<void>};account?:{me:()=>Promise<unknown>;getSubscriptionStatus:()=>Promise<unknown>};dispose:()=>void};
+ 
+-export function createSogniProductionProvider(options:SogniFactoryOptions={}):ProviderPort & {close:()=>Promise<void>} {
++const SOGNI_ADAPTER_VERSION="sogni-production-proof-v1";
++const SOGNI_PACKAGE_FILES=["dist-esm/Account/index.js","dist-esm/Projects/index.js","dist-esm/index.js","dist/Account/index.js","dist/Projects/index.js","dist/index.js","package.json","src/Account/index.ts","src/Account/subscription.types.ts","src/Projects/index.ts","src/Projects/types/index.ts","src/index.ts"] as const;
++const BUDGET_BLOCKED_MESSAGE="Sogni provider proof could not be validated; submission is blocked.";
++const budgetBlocked=()=>new ProductionApplicationError("BUDGET_BLOCKED",BUDGET_BLOCKED_MESSAGE);
++export function readInstalledSogniProofMetadata():SogniProofMetadata {
++  try {
++    const req=createRequire(import.meta.url),packagePath=req.resolve("@sogni-ai/sogni-client/package.json"),packageRoot=dirname(packagePath);
++    const pkg=JSON.parse(readFileSync(packagePath,"utf8")) as {version?:unknown};
++    if(typeof pkg.version!=="string"||!/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(pkg.version))throw new Error("invalid installed package version");
++    const files=SOGNI_PACKAGE_FILES.map(path=>({path,sha256:createHash("sha256").update(readFileSync(join(packageRoot,path))).digest("hex")})).sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0);
++    const metadata=SogniProofMetadataSchema.parse({sdkVersion:pkg.version,sdkSourceHash:hashCanonicalJson({schemaVersion:1,packageName:"@sogni-ai/sogni-client",sdkVersion:pkg.version,files}),adapterVersion:SOGNI_ADAPTER_VERSION});
++    return Object.freeze(metadata);
++  } catch { throw budgetBlocked(); }
++}
++function validateInstalledProofMetadata(value:SogniProofMetadata):SogniProofMetadata {
++  try { const supplied=SogniProofMetadataSchema.parse(value),installed=readInstalledSogniProofMetadata();if(canonicalJson(supplied)!==canonicalJson(installed))throw budgetBlocked();return installed; }
++  catch { throw budgetBlocked(); }
++}
++function parseSubscription(value:unknown):SubscriptionObservation {
++  if(!value||typeof value!=="object"||Array.isArray(value))return null;
++  const raw=value as Record<string,unknown>,boundedText=(v:unknown)=>typeof v==="string"&&v.length>0&&Buffer.byteLength(v,"utf8")<=80;
++  if(typeof raw.active!=="boolean"||!boundedText(raw.status)||!(raw.status as string).trim())return null;
++  let tier:string|null=null;
++  if(raw.tier!==undefined&&raw.tier!==null){if(!boundedText(raw.tier))return null;tier=raw.tier;}
++  let currentPeriodEnd:number|null=null;
++  if(raw.currentPeriodEnd!==undefined&&raw.currentPeriodEnd!==null){
++    if(typeof raw.currentPeriodEnd!=="string"||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(raw.currentPeriodEnd))return null;
++    const date=new Date(raw.currentPeriodEnd);if(!Number.isFinite(date.getTime()))return null;
++    const fraction=raw.currentPeriodEnd.match(/\.(\d{1,3})Z$/)?.[1]??"000",canonical=raw.currentPeriodEnd.replace(/\.\d{1,3}Z$/,"Z").replace(/Z$/,`.${fraction.padEnd(3,"0")}Z`);
++    if(date.toISOString()!==canonical)return null;
++    const parsed=BudgetUtcMillisSchema.safeParse(date.getTime());if(!parsed.success)return null;currentPeriodEnd=parsed.data;
++  }
++  let providerVersion:number|null=null;
++  if(raw.providerVersion!==undefined&&raw.providerVersion!==null){if(typeof raw.providerVersion!=="number"||!Number.isSafeInteger(raw.providerVersion)||raw.providerVersion<0)return null;providerVersion=raw.providerVersion;}
++  return Object.freeze({active:raw.active,status:raw.status,tier,currentPeriodEnd,providerVersion});
++}
++function frozenCaptured(value:CapturedProviderSession):CapturedProviderSession|null {
++  const parsed=CapturedProviderSessionSchema.safeParse(value);if(!parsed.success)return null;
++  return Object.freeze({session:Object.freeze({...parsed.data.session}),credentialFingerprint:parsed.data.credentialFingerprint,accountId:parsed.data.accountId});
++}
++
++export function createSogniProductionProvider(options:SogniFactoryOptions={}):ProductionProofProvider & {close:()=>Promise<void>} {
+   const now=options.now??Date.now;const role=options.role??"web";
+-  const transport=options.transport??createSogniSdkTransport({env:options.env??process.env,dataDir:options.dataDir??resolveProductionDataDir(options.env??process.env,options.cwd??process.cwd()),role,importSdk:options.importSdk});
++  const transport=options.transport??createSogniSdkTransport({env:options.env??process.env,dataDir:options.dataDir??resolveProductionDataDir(options.env??process.env,options.cwd??process.cwd()),role,importSdk:options.importSdk,proofMetadata:options.proofMetadata,submissionProofResolver:options.submissionProofResolver,now});
+   const readAsset=options.readAsset??(async()=>{throw new ProductionApplicationError("MEDIA_UNAVAILABLE","Provider input asset loader is unavailable.");});
+   const discovery:ProductionCapabilityDiscovery={sdkVersion:transport.sdkVersion,discover:async(_providerId,ids)=>transport.discover(ids)};
+   return {
+@@ -51,6 +99,12 @@ export function createSogniProductionProvider(options:SogniFactoryOptions={}):Pr
+       if(current.providerId!=="sogni"||current.modelId!==request.modelId||current.provenance!=="live_catalog"||current.expiresAt===null||current.expiresAt<=now())throw new ProductionApplicationError("CAPABILITY_MISMATCH","Fresh live Sogni capability evidence is required.");
+       if(request.providerId!=="sogni"||request.jobId.length===0||request.quoteId.length===0)throw new ProductionApplicationError("INVALID_INPUT","The provider request snapshot is incomplete.");
+       if(request.billingMode!=="subscription"&&request.billingMode!=="tokens")throw new ProductionApplicationError("BUDGET_BLOCKED","An explicit server-authorized billing mode is required.");
++      const currentSessionSnapshot=transport.currentSession?.();
++      let proofSession:AuthenticatedProviderSession|undefined;
++      if(transport.currentSession){
++        if(!currentSessionSnapshot||!currentSessionSnapshot.accountId)throw budgetBlocked();
++        const parsed=AuthenticatedProviderSessionSchema.safeParse({...currentSessionSnapshot,accountId:currentSessionSnapshot.accountId});if(!parsed.success)throw budgetBlocked();proofSession=Object.freeze({session:Object.freeze({...parsed.data.session}),credentialFingerprint:parsed.data.credentialFingerprint,accountId:parsed.data.accountId});
++      }
+       const mode=h3ModeForModel(request.modelId);const parameters=request.parameters as Record<string,unknown>;
+       const inputs=request.inputs.map(x=>({...x,required:x.required===true}));
+       const frameCount=Number(parameters.frameCount??parameters.durationFrames??0);
+@@ -69,10 +123,15 @@ export function createSogniProductionProvider(options:SogniFactoryOptions={}):Pr
+       const rejected=mapped.find(x=>x.required&&x.state!=="mapped");if(rejected)throw new ProductionApplicationError("CAPABILITY_MISMATCH",`Required ${rejected.role} input has no verified provider mapping.`,{field:"inputs"});
+       const inputBytes:Record<string,Buffer>={};for(const input of inputs){if(!mapped.find(x=>x.assetId===input.assetId&&x.state==="mapped"))continue;const bytes=await readAsset(input.assetId);if(bytes.length>100*1024*1024)throw new ProductionApplicationError("MEDIA_UNAVAILABLE","Provider reference exceeds the bounded SDK upload size.");inputBytes[input.assetId]=bytes;}
+       const sdkParams=buildSdkParameters(request,inputs,mapped,inputBytes,mode);
+-      const ack=await transport.submit({snapshot:request,parameters:sdkParams,inputBytes});
++      const ack=await transport.submit({snapshot:request,parameters:sdkParams,inputBytes,...(proofSession?{proofSession}:{})});
+       const receipt=HonoredInputsReceiptSchema.parse({version:1,id:randomUUID(),jobId:request.jobId,capabilityProvenance:current.provenance,capabilityObservedAt:current.observedAt,inputs:mapped,createdAt:now()});
+       return{providerRef:ack.providerRef,honoredInputs:acknowledgeH3Transport(receipt,true)};
+     },
++    observeAccount:async()=>{
++      if(!transport.observeAccount)throw budgetBlocked();
++      try {const parsed=ProviderAccountObservationSchema.parse(await transport.observeAccount());return Object.freeze({...parsed,captured:Object.freeze({...parsed.captured,session:Object.freeze({...parsed.captured.session})}),subscription:parsed.subscription?Object.freeze({...parsed.subscription}):null});}catch{throw budgetBlocked();}
++    },
++    currentSession:()=>transport.currentSession?frozenCaptured(transport.currentSession()):null,
+     poll:(providerRef:string)=>transport.poll(providerRef),cancel:(providerRef:string)=>transport.cancel(providerRef),close:()=>transport.close(),
+   };
+ }
+@@ -99,24 +158,63 @@ function buildSdkParameters(request:ProviderRequestSnapshot,inputs:ProviderReque
+   return parameters;
+ }
+ 
+-export interface SogniSdkTransportOptions {env?:Readonly<Record<string,string|undefined>>;dataDir:string;role?:SogniRole;importSdk?:()=>Promise<unknown>}
++export interface SogniSdkTransportOptions {env?:Readonly<Record<string,string|undefined>>;dataDir:string;role?:SogniRole;importSdk?:()=>Promise<unknown>;proofMetadata?:SogniProofMetadata;submissionProofResolver?:SubmissionProofResolver;now?:()=>number}
+ export function createSogniSdkTransport(options:SogniSdkTransportOptions):SogniProviderTransport {
+-  const env=options.env??process.env,role=options.role??"web";let clientPromise:Promise<SogniSdkClient>|null=null;let lockHandle:Awaited<ReturnType<typeof open>>|null=null;let lockServer:Server|null=null;
++  const env=options.env??process.env,role=options.role??"web",now=options.now??Date.now;let clientPromise:Promise<SogniSdkClient>|null=null,clientInstance:SogniSdkClient|null=null,capturedSession:CapturedProviderSession|null=null,sessionEpoch=-1,epoch=0,closePromise:Promise<void>|null=null;let lockHandle:Awaited<ReturnType<typeof open>>|null=null;let lockServer:Server|null=null;
+   const importSdk=options.importSdk??(async()=>import("@sogni-ai/sogni-client"));
+   async function releaseOwnership(){if(lockHandle){await lockHandle.close();lockHandle=null;await unlink(join(options.dataDir,"sogni-worker-owner.lock")).catch(()=>undefined);}if(lockServer?.listening){await new Promise<void>(resolveClose=>lockServer!.close(()=>resolveClose()));lockServer=null;}}
+   async function getClient():Promise<SogniSdkClient>{
++    if(closePromise){const closing=closePromise;await closing;if(closePromise===closing)closePromise=null;return getClient();}
+     if(clientPromise)return clientPromise;
+-    clientPromise=(async()=>{try{
+-      const apiKey=env.SOGNI_API_KEY?.trim();if(!apiKey)throw new Error("SOGNI_API_KEY is not configured; Sogni provider is offline.");
++    const attemptEpoch=epoch,apiKey=env.SOGNI_API_KEY?.trim();if(!apiKey)throw new Error("SOGNI_API_KEY is not configured; Sogni provider is offline.");
++    const attempt=(async()=>{let client:SogniSdkClient|null=null;try{
++      const metadata=options.proofMetadata?validateInstalledProofMetadata(options.proofMetadata):null;
+       await mkdir(options.dataDir,{recursive:true,mode:0o700});
+       if(role==="worker"){try{lockServer=await acquireWorkerSocket(options.dataDir);lockHandle=await acquireWorkerPidFile(join(options.dataDir,"sogni-worker-owner.lock"));}catch(error){if(lockServer?.listening)await new Promise<void>(resolveClose=>lockServer!.close(()=>resolveClose()));lockServer=null;throw new Error("Another local worker owns the Sogni worker app ID. Stop that worker before starting this one.",{cause:error});}}
+       const appId=await resolveSogniAppIdForRole(options.dataDir,role);const mod=await importSdk() as {SogniClient:{createInstance:(config:Record<string,unknown>)=>Promise<SogniSdkClient>}};
+-      return await mod.SogniClient.createInstance({appId,apiKey,network:"fast",appSource:`perabyte-studio-production-${role}`,socketEventSubscriptions:{modelAvailability:false},logLevel:"error"});
+-    }catch(error){await releaseOwnership();throw error;}})();
+-    clientPromise.catch(()=>{clientPromise=null;});return clientPromise;
++      client=await mod.SogniClient.createInstance({appId,apiKey,network:"fast",appSource:`perabyte-studio-production-${role}`,socketEventSubscriptions:{modelAvailability:false},logLevel:"error"});
++      if(epoch!==attemptEpoch){client.dispose();throw budgetBlocked();}
++      clientInstance=client;sessionEpoch=attemptEpoch;
++      capturedSession=metadata?frozenCaptured({session:{sessionId:`sogni-session:${randomUUID()}`,role,sdkVersion:metadata.sdkVersion,sdkSourceHash:metadata.sdkSourceHash,adapterVersion:metadata.adapterVersion},credentialFingerprint:createHash("sha256").update(apiKey,"utf8").digest("hex"),accountId:null}):null;
++      if(metadata&&!capturedSession)throw budgetBlocked();
++      return client;
++    }catch(error){if(client&&clientInstance!==client){try{client.dispose();}catch{}}if(epoch===attemptEpoch){clientInstance=null;capturedSession=null;sessionEpoch=-1;await releaseOwnership();}throw error;}})();
++    clientPromise=attempt;
++    try{return await attempt;}catch(error){if(clientPromise===attempt){clientPromise=null;}throw error;}
+   }
+-  const req=createRequire(import.meta.url);let sdkVersion="5.49.0";try{sdkVersion=req("@sogni-ai/sogni-client/package.json").version as string;}catch{}
+-  return{sdkVersion,configured:Boolean(env.SOGNI_API_KEY?.trim()),async discover(ids){const client=await getClient();const models=await client.projects.getAvailableModels("fast");const list:CatalogModel[]=[];for(const model of models){if(ids.length&&!ids.includes(String(model.id)))continue;const item:CatalogModel={id:String(model.id),media:String(model.media)};if(model.media==="video"&&client.projects.getVideoAssetConfig){try{const config=await client.projects.getVideoAssetConfig(item.id);item.workflowType=config.workflowType??undefined;item.assets=config.assets??undefined;}catch{/* Preserve unknown model fields on failed discovery. */}}list.push(item);}return list;},async submit(submission){const client=await getClient();const project=await client.projects.create(submission.parameters);if(!project.id)throw new Error("Sogni SDK returned no durable project ID");return{providerRef:project.id};},async poll(providerRef){
++  const sdkVersion=(()=>{try{return readInstalledSogniProofMetadata().sdkVersion;}catch{return "unknown";}})();
++  const currentSession=():CapturedProviderSession|null=>capturedSession&&sessionEpoch===epoch&&clientInstance?frozenCaptured(capturedSession):null;
++  const isLive=(client:SogniSdkClient,atEpoch:number)=>epoch===atEpoch&&clientInstance===client&&sessionEpoch===atEpoch;
++  const invalidate=(client:SogniSdkClient,atEpoch:number)=>{if(!isLive(client,atEpoch))return;void close();};
++  return{sdkVersion,configured:Boolean(env.SOGNI_API_KEY?.trim()),currentSession,async observeAccount(){
++      if(!options.proofMetadata)throw budgetBlocked();
++      const metadata=validateInstalledProofMetadata(options.proofMetadata),client=await getClient(),atEpoch=epoch,starting=currentSession();
++      if(!starting||!client.account?.me||!client.account.getSubscriptionStatus)throw budgetBlocked();
++      let wallet:unknown;
++      try{wallet=await client.account.me();}catch{if(isLive(client,atEpoch)){capturedSession=null;invalidate(client,atEpoch);}throw budgetBlocked();}
++      if(!isLive(client,atEpoch))throw budgetBlocked();
++      const walletAddress=wallet&&typeof wallet==="object"&&!Array.isArray(wallet)?(wallet as Record<string,unknown>).walletAddress:null;
++      if(typeof walletAddress!=="string"||!/^0x[0-9a-fA-F]{40}$/.test(walletAddress)){capturedSession=null;invalidate(client,atEpoch);throw budgetBlocked();}
++      const accountId=IdSchema.parse(`sogni-account:${hashCanonicalJson({schemaVersion:1,providerId:"sogni",walletAddress:walletAddress.toLowerCase()})}`);
++      if(starting.accountId&&starting.accountId!==accountId){capturedSession=null;invalidate(client,atEpoch);throw budgetBlocked();}
++      const authenticated=AuthenticatedProviderSessionSchema.parse({...starting,accountId});capturedSession=frozenCaptured(authenticated);if(!capturedSession)throw budgetBlocked();
++      let subscription:SubscriptionObservation=null;
++      try{subscription=parseSubscription(await client.account.getSubscriptionStatus());}catch{subscription=null;}
++      if(!isLive(client,atEpoch)||!capturedSession||capturedSession.accountId!==accountId)throw budgetBlocked();
++      const observedAt=BudgetUtcMillisSchema.parse(now()),observation=ProviderAccountObservationSchema.parse({providerId:"sogni",captured:capturedSession,subscription,observedAt});
++      if(canonicalJson(observation.captured.session)!==canonicalJson(metadata?capturedSession.session:null))throw budgetBlocked();
++      return Object.freeze({...observation,captured:Object.freeze({...observation.captured,session:Object.freeze({...observation.captured.session})}),subscription:observation.subscription?Object.freeze({...observation.subscription}):null});
++    },async discover(ids){const client=await getClient();const models=await client.projects.getAvailableModels("fast");const list:CatalogModel[]=[];for(const model of models){if(ids.length&&!ids.includes(String(model.id)))continue;const item:CatalogModel={id:String(model.id),media:String(model.media)};if(model.media==="video"&&client.projects.getVideoAssetConfig){try{const config=await client.projects.getVideoAssetConfig(item.id);item.workflowType=config.workflowType??undefined;item.assets=config.assets??undefined;}catch{/* Preserve unknown model fields on failed discovery. */}}list.push(item);}return list;},async submit(submission){
++      if(!options.proofMetadata||typeof options.submissionProofResolver!=="function")throw budgetBlocked();
++      const metadata=validateInstalledProofMetadata(options.proofMetadata),client=await getClient(),atEpoch=epoch,active=currentSession(),expected=submission.proofSession;
++      if(!active||!active.accountId||!expected||canonicalJson(active)!==canonicalJson(expected)||canonicalJson(active.session)!==canonicalJson(metadata?{...active.session,sdkVersion:metadata.sdkVersion,sdkSourceHash:metadata.sdkSourceHash,adapterVersion:metadata.adapterVersion}:null))throw budgetBlocked();
++      let at:number,allowed:unknown;
++      try{at=BudgetUtcMillisSchema.parse(now());allowed=options.submissionProofResolver(submission.snapshot,AuthenticatedProviderSessionSchema.parse(active),at);}catch{throw budgetBlocked();}
++      const afterResolver=currentSession();
++      if(allowed!==true||!isLive(client,atEpoch)||!afterResolver||canonicalJson(afterResolver)!==canonicalJson(expected)||afterResolver.session.sdkVersion!==metadata.sdkVersion||afterResolver.session.sdkSourceHash!==metadata.sdkSourceHash||afterResolver.session.adapterVersion!==metadata.adapterVersion)throw budgetBlocked();
++      const creation=client.projects.create(submission.parameters);
++      const project=await creation;if(!project.id)throw new Error("Sogni SDK returned no durable project ID");return{providerRef:project.id};
++    },async poll(providerRef){
+       const client=await getClient();
+       const status=await client.projects.getStatus(providerRef);
+       if(["pending","authorized","active","queued","assigned","progress","processing"].includes(status.status))return{providerRef,state:"running",temporaryUrl:null,mime:null,width:null,height:null,frames:null,errorCode:null,errorMessage:null};
+@@ -144,7 +242,7 @@ export function createSogniSdkTransport(options:SogniSdkTransportOptions):SogniP
+       else if(!isVideo&&client.projects.downloadUrl)temporaryUrl=await client.projects.downloadUrl({jobId:providerRef,imageId:resultId,type:"complete",contentType:mime});
+       else throw new Error("Installed Sogni SDK does not expose a compatible result download method");
+       return{providerRef,state:"completed",temporaryUrl,mime,width:null,height:null,frames:null,errorCode:null,errorMessage:null};
+-    },async cancel(providerRef){const client=await getClient();await client.projects.cancel(providerRef);},async close(){if(clientPromise){try{(await clientPromise).dispose();}catch{}}clientPromise=null;await releaseOwnership();}};
++    },async cancel(providerRef){const client=await getClient();await client.projects.cancel(providerRef);},async close(){if(closePromise)return closePromise;epoch++;const oldPromise=clientPromise;clientPromise=null;clientInstance=null;capturedSession=null;sessionEpoch=-1;const cleanup=(async()=>{if(oldPromise){try{const client=await oldPromise;client.dispose();}catch{}}await releaseOwnership();})();closePromise=cleanup;try{await cleanup;}finally{if(closePromise===cleanup)closePromise=null;}}};
+ }
+ 
+ async function acquireWorkerSocket(dataDir:string):Promise<Server>{const digest=createHash("sha256").update(resolve(dataDir)).digest();const port=40_000+(digest.readUInt16BE(0)%20_000);const server=createServer(socket=>socket.destroy());await new Promise<void>((resolveListen,reject)=>{const onError=(error:Error)=>reject(error);server.once("error",onError);server.listen({host:"127.0.0.1",port,exclusive:true},()=>{server.off("error",onError);server.on("error",()=>undefined);resolveListen();});});return server;}

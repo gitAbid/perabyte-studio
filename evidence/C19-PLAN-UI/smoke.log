@@ -1,0 +1,50 @@
+PASS  server health — http://127.0.0.1:3210
+PASS  sidebar has Production link
+PASS  sidebar Production label
+SCREENSHOT 01-sidebar-production.png
+PASS  script wizard beats derived
+SCREENSHOT 02-wizard-script.png
+PASS  project created, redirected to overview — a9c81415-f58b-4ae3-a445-90e283d8ab98
+PASS  overview has Plan button
+PASS  overview approval states section
+PASS  overview chips: story approved missing, no plan/animatic yet
+SCREENSHOT 03-overview-after-create.png
+PASS  plan page fail-closed: story not approved
+PASS  plan page links to script editor
+SCREENSHOT 04-plan-failclosed-unapproved.png
+PASS  script editor prefilled from saved story
+PASS  story approval workspace visible
+PASS  story checklist has 5 items
+PASS  story checklist note inputs present
+PASS  approve disabled until checklist ticked
+SCREENSHOT 05-story-approval-ticked.png
+PASS  story approved via checklist
+SCREENSHOT 06-story-approved.png
+PASS  two draft shots derived from beats
+PASS  visual intent prefilled from beat action — The narrator opens the film on a quiet h…
+PASS  motion intent prefilled
+PASS  framing defaults to medium
+PASS  frames default 192 on H3 grid
+PASS  duration hint shown
+PASS  location/style prefilled from canon options
+PASS  off-grid frames flagged without blocking
+PASS  cast binding carries wardrobe text
+SCREENSHOT 07-plan-drafts-edited.png
+PASS  shot plan + animatic created
+PASS  read-only summary lists 2 shots
+SCREENSHOT 08-plan-created.png
+PASS  shotplan checklist has 5 items
+PASS  shot plan approved
+SCREENSHOT 09-shotplan-approved.png
+PASS  animatic checklist has 5 items
+PASS  animatic approved
+SCREENSHOT 10-animatic-approved.png
+PASS  storyboard shows both shots
+PASS  storyboard shotplan chip green — Revision approval states (story, shot plan, animatic)storyapprovedStory revision
+PASS  storyboard animatic chip green
+SCREENSHOT 11-storyboard-green.png
+PASS  overview chips all approved
+SCREENSHOT 12-overview-green.png
+PASS  zero media-quote/enqueue requests — 20 production API requests, all read/approval/plan
+
+0 failure(s)

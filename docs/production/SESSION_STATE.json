@@ -1,0 +1,1569 @@
+{
+  "schema_version": 1,
+  "state": "active_zcode_orchestration",
+  "threshold_remaining_percent": 2,
+  "handover_reserve_percent": null,
+  "last_usage_observation": {
+    "date": "2026-10-04",
+    "source": "Codex account usage tool",
+    "observed_at": "2026-10-04T15:16:47.761058+00:00",
+    "primary_remaining_percent": 69,
+    "secondary_remaining_percent": 1,
+    "minimum_remaining_percent": 1,
+    "primary_resets_at": 1791140311,
+    "secondary_resets_at": 1791605262,
+    "verified": true,
+    "windows": [
+      {
+        "limitId": "codex",
+        "window": "primary",
+        "remainingPercent": 69,
+        "resetAt": 1791140311,
+        "windowDurationMins": 300
+      },
+      {
+        "limitId": "codex",
+        "window": "secondary",
+        "remainingPercent": 1,
+        "resetAt": 1791605262,
+        "windowDurationMins": 10080
+      }
+    ]
+  },
+  "integration": {
+    "branch": "zcode/production-core",
+    "worktree": "/Users/abid/Projects/perabyte-studio/.worktrees/zcode-production-core",
+    "planning_sha": "a52a8fa",
+    "code_head_sha": "5785177",
+    "created_from": "codex/production-core checkpoint a52a8fa (2026-10-05); codex worktrees preserved untouched",
+    "dirty_files": [
+      "?? evidence/C03/ (pre-existing root evidence)",
+      "?? evidence/branch-cleanup-20261004/",
+      "?? evidence/completed-worktrees/",
+      "?? evidence/integration/ (incl. i01-b6-p-integration-20261005/)"
+    ],
+    "head_semantics": "code_head_sha 21e1e7a = I01-B6-P cherry-pick of codex 74b5b8a; metadata doc commit follows this update",
+    "ignored_data_note": "Preserve any existing .studio directory. Earlier obsolete capability fixture wrote to default integration data dir; new tests use temporary stores."
+  },
+  "active_packets": [],
+  "next_packet": "On C08+C12 acceptance+integration: full-suite/build gate; then C15 (recovery drills, offline-possible) freeze; C13/C14 pilots + C16 + C17 remain USER-GATED.",
+  "paid_calls": [],
+  "unverified": [
+    "Node26.10 verified; other Node versions not directly verified.",
+    "Conservative published content-addressed blob retention after database failure; no false Asset/result pointer; orphan inventory belongs to C15.",
+    "I01 authorization/reservation and real provider quote/account bindings not connected; no paid calls authorized.",
+    "Existing WAL retry wall-clock assertion intermittently fails; timing/process startup hardening deferred, not claimed passing.",
+    "B6 revised proposal retained unapproved; exact schemas/policy loader and TTL/upper-bound decisions require root freeze."
+  ],
+  "resume_steps": [
+    "Read live limits; remaining=100-usedPercent. Explicituseroverride stopsweekly<=1% OR5h<=2%; old5%reserve superseded.",
+    "Read actualGitstate/ownership; preserve allcode/evidence.",
+    "B6-S e72aa3c sourceunaccepted; resumeexactreview-followup-boundary and preserve originalreview.",
+    "Minimal existing2checks/typecheck/diff; newdatedevidence; independentlyrereview beforeintegration.",
+    "Thenfreezeprovider/composer/runtimeports; no liveaccount/credential/paidcalls."
+  ],
+  "completed_packets": [
+    {
+      "id": "C00",
+      "owner": "/root/execution_packets",
+      "branch": "codex/production-contracts",
+      "worktree": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio",
+      "base_sha": "4d4b6584109d1f09bb9bac8e52d6e88359c9c42f",
+      "head_sha": "a16b95295f31d4ef07cf239a146fc1709414620e",
+      "status": "integrated",
+      "dirty_files": [],
+      "evidence_paths": [
+        "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00"
+      ],
+      "next_command": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "unverified": [],
+      "worktree_archived": true,
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-contracts",
+      "owner_stopped": true
+    },
+    {
+      "id": "U00",
+      "owner": "/root/industry_research",
+      "branch": "codex/production-handover-guard",
+      "worktree": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio",
+      "base_sha": "4d4b6584109d1f09bb9bac8e52d6e88359c9c42f",
+      "head_sha": "9c1305c68cf952c49176d5ffc222301f1781483c",
+      "status": "integrated",
+      "dirty_files": [],
+      "evidence_paths": [
+        "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00"
+      ],
+      "next_command": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "unverified": [
+        "Node20 runtime not directly tested; verified Node26.10.0"
+      ],
+      "worktree_archived": true,
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-handover-guard",
+      "owner_stopped": true
+    },
+    {
+      "id": "C05",
+      "owner": "/root/shot_plan_build",
+      "branch": "codex/production-shot-plan",
+      "worktree": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio",
+      "base_sha": "9a5454471a9b4a4d84728813a20f9823105832c1",
+      "head_sha": "d416302d78204d7243538348d9ef7d9306bf7a2c",
+      "status": "integrated",
+      "dirty_files": [
+        "evidence/C05"
+      ],
+      "evidence_paths": [
+        "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05"
+      ],
+      "next_command": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "unverified": [
+        "SQLite service integration awaits C01; historical downloads await C12"
+      ],
+      "last_verification": {
+        "command": [
+          "npm",
+          "test",
+          "--",
+          "lib/production/shot-plan.test.ts",
+          "lib/production/animatic.test.ts"
+        ],
+        "exit_code": 1,
+        "passed_tests": 16,
+        "failed_tests": 1,
+        "output_file": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/checkpoint-domain-tests.txt"
+      },
+      "worktree_archived": true,
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-shot-plan",
+      "owner_stopped": true
+    },
+    {
+      "id": "C03",
+      "owner": "/root/capability_build",
+      "branch": "codex/production-capabilities",
+      "worktree": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio",
+      "base_sha": "9a5454471a9b4a4d84728813a20f9823105832c1",
+      "head_sha": "fada33a857dc1c63f8ef58012346bfd2146fc746",
+      "status": "integrated",
+      "dirty_files": [
+        "evidence/C03"
+      ],
+      "evidence_paths": [
+        "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03"
+      ],
+      "next_command": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "unverified": [
+        "Live catalog191models and read-only active unlimited account discovery completed; model-specific entitlement/pricing still unknown.",
+        "C04 server composition under implementation; no paid transport performed."
+      ],
+      "worktree_archived": true,
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-capabilities",
+      "owner_stopped": true
+    },
+    {
+      "id": "C01",
+      "owner": "/root/store_build",
+      "branch": "codex/production-store",
+      "worktree": "/Users/abid/.codex/worktrees/production-store/perabyte-studio",
+      "base_sha": "9a5454471a9b4a4d84728813a20f9823105832c1",
+      "head_sha": "9b0a3abc748cfed75103a799d80d7deb8c7e9e06",
+      "status": "integrated",
+      "dirty_files": [
+        "evidence/C01"
+      ],
+      "evidence_paths": [
+        "/Users/abid/.codex/worktrees/production-store/perabyte-studio/evidence/C01"
+      ],
+      "next_command": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "unverified": [
+        "Actual user legacy records have not been imported",
+        "Full real-film output/release gates remain unverified"
+      ],
+      "worktree_archived": true,
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-store",
+      "owner_stopped": true
+    },
+    "I00",
+    {
+      "id": "C02",
+      "owner": "/root/revision_resume",
+      "branch": "codex/production-revisions",
+      "worktree": "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio",
+      "base_sha": "3d53a083407574934fc055e246279bb9c485326b",
+      "head_sha": "845a7e8c6ba14862bfe1b90609326463be8a10a6",
+      "status": "integrated",
+      "dirty_files": [
+        "?? evidence/"
+      ],
+      "evidence_paths": [
+        "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/completion-report.json",
+        "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/diff-check.txt",
+        "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/focused-green.txt",
+        "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/readmodel-compat-green.txt",
+        "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/readmodel-compat-red.txt",
+        "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/review-fixes-green.txt",
+        "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/review-fixes-typecheck.txt",
+        "/Users/abid/.codex/worktrees/production-revisions/perabyte-studio/evidence/C02/typecheck.txt"
+      ],
+      "next_command": [
+        "git",
+        "diff",
+        "--",
+        "lib/production/revisions.ts",
+        "lib/services/production/revisions.ts",
+        "lib/services/production/revisions.test.ts"
+      ],
+      "unverified": [
+        "Original implementation RED was not retained; not fabricated. New critical regression RED/GREEN and independent exact-SHA tests reproduced.",
+        "Old completion-report.json superseded; its focused-green filename was overwritten and hash mismatch is recorded, not accepted as current evidence."
+      ],
+      "ownership": "Prior writers absent from live agent list; ownership explicitly transferred on single scheduled resume. Existing files preserved.",
+      "owner_stopped": true,
+      "previous_owner": "/root/revisions_build",
+      "evidence_report": "docs/production/reports/C02-evidence.json",
+      "worktree_archived": true,
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-revisions"
+    },
+    {
+      "id": "C04",
+      "owner": "/root/c04_runtime_finish",
+      "branch": "codex/production-worker",
+      "worktree": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio",
+      "base_sha": "9c0397a66922a37ae99eb79460f421f2c96fa10d",
+      "head_sha": "b09ddb103abd340bb41c24a0be90ea1dc21033a9",
+      "status": "integrated",
+      "dirty_files": [
+        "?? evidence/C04/C04-checkpoint-resume.json",
+        "?? evidence/C04/C04-continuation-integrity-report.json",
+        "?? evidence/C04/C04-integrity-resume.json",
+        "?? evidence/C04/asset-import-green-resume1.txt",
+        "?? evidence/C04/asset-import-red-resume.txt",
+        "?? evidence/C04/asset-import-red2-resume.txt",
+        "?? evidence/C04/asset-import-red3-resume.txt",
+        "?? evidence/C04/c04-focused-resume-final.txt",
+        "?? evidence/C04/cancel-deadletter-green-resume1.txt",
+        "?? evidence/C04/continuation-integrity-diff-check.txt",
+        "?? evidence/C04/continuation-integrity-green.txt",
+        "?? evidence/C04/continuation-integrity-typecheck.txt",
+        "?? evidence/C04/core-green.txt",
+        "?? evidence/C04/diff-check-checkpoint-resume.txt",
+        "?? evidence/C04/doctor-resume-final.txt",
+        "?? evidence/C04/duplicate-end-frame-red.txt",
+        "?? evidence/C04/focused-after-review.txt",
+        "?? evidence/C04/focused-checkpoint-resume.txt",
+        "?? evidence/C04/focused-current.txt",
+        "?? evidence/C04/focused-current2.txt",
+        "?? evidence/C04/focused-current3.txt",
+        "?? evidence/C04/focused-current4.txt",
+        "?? evidence/C04/focused-final.txt",
+        "?? evidence/C04/focused-green.txt",
+        "?? evidence/C04/focused-green2.txt",
+        "?? evidence/C04/focused-green3.txt",
+        "?? evidence/C04/focused-green4.txt",
+        "?? evidence/C04/focused-resume-check.txt",
+        "?? evidence/C04/focused-resume-check2.txt",
+        "?? evidence/C04/queue-cas-green-resume1.txt",
+        "?? evidence/C04/queue-cas-green-resume2.txt",
+        "?? evidence/C04/queue-cas-red-resume.txt",
+        "?? evidence/C04/queue-progress.txt",
+        "?? evidence/C04/red.txt",
+        "?? evidence/C04/red2.txt",
+        "?? evidence/C04/red3.txt",
+        "?? evidence/C04/required-integrity-diff-check.txt",
+        "?? evidence/C04/required-integrity-final.txt",
+        "?? evidence/C04/required-integrity-green.txt",
+        "?? evidence/C04/required-integrity-typecheck-final.txt",
+        "?? evidence/C04/required-integrity-typecheck.txt",
+        "?? evidence/C04/root-checkpoint-tests.txt",
+        "?? evidence/C04/root-continuation-reproduction.txt",
+        "?? evidence/C04/root-continuation-typecheck.txt",
+        "?? evidence/C04/root-integrity-reproduction.txt",
+        "?? evidence/C04/root-integrity-typecheck.txt",
+        "?? evidence/C04/sogni-live-discovery-green-resume.txt",
+        "?? evidence/C04/sogni-live-discovery-red-resume.txt",
+        "?? evidence/C04/sogni-role-green-resume.txt",
+        "?? evidence/C04/sogni-role-red-resume.txt",
+        "?? evidence/C04/successor-adjacency-red.txt",
+        "?? evidence/C04/typecheck-asset-import-resume.txt",
+        "?? evidence/C04/typecheck-checkpoint-resume.txt",
+        "?? evidence/C04/typecheck-current3.txt",
+        "?? evidence/C04/typecheck-current4.txt",
+        "?? evidence/C04/typecheck-final.txt",
+        "?? evidence/C04/typecheck-last.txt",
+        "?? evidence/C04/typecheck-progress.txt",
+        "?? evidence/C04/typecheck-progress2.txt",
+        "?? evidence/C04/typecheck-progress3.txt",
+        "?? evidence/C04/typecheck-progress4.txt",
+        "?? evidence/C04/typecheck-progress5.txt",
+        "?? evidence/C04/typecheck-resume-check.txt",
+        "?? evidence/C04/typecheck-resume-check2.txt",
+        "?? evidence/C04/typecheck-resume-final.txt",
+        "?? evidence/C04/typecheck-vault-provider-resume.txt",
+        "?? evidence/C04/typecheck-vault-provider-resume2.txt",
+        "?? evidence/C04/typecheck-vault-provider-resume3.txt",
+        "?? evidence/C04/typecheck-vault-provider-resume4.txt",
+        "?? evidence/C04/typecheck-vault-provider-resume5.txt",
+        "?? evidence/C04/typecheck-worker-lock-resume.txt",
+        "?? evidence/C04/typecheck-worker-queue-resume.txt",
+        "?? evidence/C04/typecheck-worker-queue-resume2.txt",
+        "?? evidence/C04/typecheck.txt",
+        "?? evidence/C04/typecheck2.txt",
+        "?? evidence/C04/typecheck3.txt",
+        "?? evidence/C04/typecheck4.txt",
+        "?? evidence/C04/typecheck5.txt",
+        "?? evidence/C04/typecheck6.txt",
+        "?? evidence/C04/typecheck7.txt",
+        "?? evidence/C04/vault-decode-green-resume1.txt",
+        "?? evidence/C04/vault-decode-green-resume2.txt",
+        "?? evidence/C04/vault-decode-green-resume3.txt",
+        "?? evidence/C04/vault-decode-green-resume4.txt",
+        "?? evidence/C04/vault-decode-green-resume5.txt",
+        "?? evidence/C04/vault-decode-red-resume.txt",
+        "?? evidence/C04/worker-lock-green-resume.txt",
+        "?? evidence/C04/worker-lock-red-resume.txt",
+        "?? evidence/C04/worker-route-final.txt"
+      ],
+      "evidence_paths": [
+        "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/C04-checkpoint-resume.json",
+        "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/C04-integrity-resume.json",
+        "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/C04-continuation-integrity-report.json",
+        "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/root-continuation-reproduction.txt",
+        "docs/production/reports/C04-continuation-review.json"
+      ],
+      "next_command": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "unverified": [
+        "Node26.10 verified; other Node versions not directly verified.",
+        "Conservative published content-addressed blob retention after database failure; no false Asset/result pointer; orphan inventory belongs to C15.",
+        "I01 authorization/reservation and real provider quote/account bindings not connected; no paid calls authorized.",
+        "C06 approval commands, I02 text proposals, audio/assembly/export and creator-reviewed short+long film release remain."
+      ],
+      "ownership": "Previous writer absent/idle; user explicitly continued. Runtime-only scope transferred; provider-only recovery assigned separate worktree.",
+      "owner_stopped": true,
+      "previous_owner": "/root/worker_resume",
+      "latest_verification": {
+        "tests": 1060,
+        "test_files": 98,
+        "typecheck_exit_code": 0,
+        "build_exit_code": 0,
+        "built_http_requests": 10,
+        "cli_sigterm_exit_code": 0
+      },
+      "latest_review": {
+        "sha": "b09ddb103abd340bb41c24a0be90ea1dc21033a9",
+        "review_file": "docs/production/reports/C04-evidence.json",
+        "decision": "accepted and integrated; all final source findings closed; full1060/type/build/HTTP/CLI pass"
+      },
+      "parallel_lanes": [
+        {
+          "owner": "/root/c04_runtime_finish",
+          "branch": "codex/production-worker",
+          "worktree": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio",
+          "base_sha": "ff6d3df93425e7f876d58162b96152eab2cf7ef9",
+          "owned_files": [
+            "scripts/production-worker.mjs",
+            "scripts/production-doctor.mjs",
+            "app/api/production/health/route.ts",
+            "lib/jobs/production/worker.test.ts",
+            "lib/jobs/production/queue.test.ts",
+            "lib/media/production/vault.ts",
+            "lib/media/production/vault.test.ts",
+            "app/api/production/assets/import/route.ts",
+            "lib/jobs/production/queue.ts",
+            "lib/jobs/production/worker.ts"
+          ],
+          "scope_amendment": "Independent exact-SHA audit: ensureOutbox false means existing intent, not failed recovery; preserve existing claim and prove fullack retained-intent recovery. Also stop stale provider/media side effects after lease loss; two-worker real-store fixtures.",
+          "head_sha": "b09ddb103abd340bb41c24a0be90ea1dc21033a9",
+          "status": "integrated",
+          "owner_stopped": true
+        },
+        {
+          "owner": "/root/c04_provider_recovery",
+          "branch": "codex/c04-provider-recovery",
+          "worktree": "/Users/abid/.codex/worktrees/c04-provider-recovery/perabyte-studio",
+          "base_sha": "ff6d3df93425e7f876d58162b96152eab2cf7ef9",
+          "owned_files": [
+            "lib/providers/production/sogni-provider.ts",
+            "lib/providers/production/sogni-provider.test.ts"
+          ],
+          "head_sha": "27dc9f742e3771fa5f850188bbec4945f86617cf",
+          "status": "integrated",
+          "evidence_report": "/Users/abid/.codex/worktrees/c04-provider-recovery/perabyte-studio/evidence/C04-provider-recovery-followup/report.json",
+          "owner_stopped": true,
+          "independent_review": "docs/production/reports/C04-provider-final-review.json",
+          "root_reproduction": {
+            "tests": 21,
+            "exit_code": 0,
+            "output_file": "/Users/abid/.codex/worktrees/c04-provider-recovery/perabyte-studio/evidence/C04-provider-recovery-followup/root-focused-green.txt",
+            "output_sha256": "32db50f74d15f1e11ec2a29da75a4aa554a858c793815143600c9bebfd6f1bc2"
+          }
+        }
+      ],
+      "evidence_report": "docs/production/reports/C04-evidence.json",
+      "worktree_archived": true,
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-worker"
+    },
+    {
+      "id": "I01-B3",
+      "slice": "I01-B3",
+      "owner": "/root/i01_budget_service",
+      "branch": "codex/production-budget-service",
+      "worktree": "/Users/abid/.codex/worktrees/production-budget-service/perabyte-studio",
+      "base_sha": "c7c1e73716c28233b6628b49f85eccac3dfc9b06",
+      "head_sha": "1c664c3f46bf993d59b1791ba2ac4961ca40ed9d",
+      "status": "accepted_integrated_slice",
+      "owner_stopped": true,
+      "dirty_files": [
+        "?? evidence/I01-B3/"
+      ],
+      "owned_files": [
+        "lib/services/production/budget.ts",
+        "lib/services/production/budget.test.ts",
+        "app/api/production/projects/[projectId]/budget/route.ts",
+        "app/api/production/projects/[projectId]/budget/route.test.ts"
+      ],
+      "evidence_paths": [
+        "docs/production/reports/I01-B3-B4-frozen-boundary.json"
+      ],
+      "next_command": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "unverified": [
+        "No extra executed B3 nonbilling success case; direct nonbilling arithmetic/storage behavior covered accepted B1/B2. Worker B3-06 prose is broader than actual executed service case; independent review records qualification.",
+        "Full I01, real B3+B4 race/reconciliation gate, live proof composition, C06 human commands and real films remain unfinished."
+      ],
+      "parent_id": "I01",
+      "boundary_review": "Root approved actual DTO/port/factory map; exact frozen interfaces",
+      "integration_sha": "4997ecc322b24389c6cb84bb13c6ca967ddfbf4e",
+      "worktree_archived": true,
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget-service"
+    },
+    {
+      "id": "I01-B1-quote-compatibility",
+      "parent_id": "I01",
+      "slice": "shared pure media/budget quote compatibility",
+      "owner": "/root/i01_contracts_domain",
+      "branch": "codex/production-budget",
+      "worktree": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio",
+      "base_sha": "8c7babbaa630fe86d9e0a2aba603c4772530f0a2",
+      "head_sha": "b38712c569d2beb6901f9f057c86aa909b98189b",
+      "status": "accepted_integrated_helper_slice",
+      "owner_stopped": true,
+      "dirty_files": [
+        "?? evidence/I01-B1/"
+      ],
+      "owned_files": [
+        "lib/production/budget.ts",
+        "lib/production/budget.test.ts"
+      ],
+      "evidence_paths": [
+        "docs/production/reports/I01-B3-review.json"
+      ],
+      "next_command": [
+        "npm",
+        "test",
+        "--",
+        "lib/production/budget.test.ts"
+      ],
+      "unverified": [
+        "Consumer service/queue correction and combined accounting tests pending; parent I01 unfinished."
+      ],
+      "integration_sha": "8b8abf5a791bc99f4424c3664c8880b185d85a33",
+      "worktree_archived": true,
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-budget"
+    },
+    {
+      "id": "I01-B4",
+      "slice": "I01-B4",
+      "owner": "/root/i01_combined_gate",
+      "branch": "codex/production-admission",
+      "worktree": "/Users/abid/.codex/worktrees/production-admission/perabyte-studio",
+      "base_sha": "c7c1e73716c28233b6628b49f85eccac3dfc9b06",
+      "head_sha": "bb43a01f2a42f1889bc30ecd8da79771a0a2c17d",
+      "status": "accepted_integrated_finance_kernel",
+      "owner_stopped": true,
+      "dirty_files": [
+        "?? evidence/I01-B4/"
+      ],
+      "owned_files": [
+        "lib/jobs/production/worker.test.ts"
+      ],
+      "evidence_paths": [
+        "docs/production/reports/I01-B3-B4-frozen-boundary.json",
+        "docs/production/reports/I01-B4-rereview.json",
+        "docs/production/reports/I01-combined-verification-scope.json",
+        "evidence/integration/i01-b4-corrected/evidence-correction.json"
+      ],
+      "next_command": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "unverified": [
+        "Full I01 remains incomplete."
+      ],
+      "parent_id": "I01",
+      "boundary_review": "Root approved actual DTO/port/factory map; exact frozen interfaces",
+      "previous_owner": "/root/i01_admission_compatibility",
+      "integration_sha": "e2624d7af7130785e1a7f935cbc42777fe690228",
+      "worktree_archived": true,
+      "worktree_archive_status": "confirmed_by_artifacts",
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/completed-worktrees/production-admission"
+    },
+    {
+      "id": "C06-PRE-S",
+      "parent_id": "C06",
+      "owner": "/root/approval_storage",
+      "owner_stopped": true,
+      "status": "accepted_integrated_feature_with_known_existing_timing_limitation",
+      "branch": "codex/production-approval-storage",
+      "worktree": "/Users/abid/.codex/worktrees/production-approval-storage/perabyte-studio",
+      "base_sha": "17bb500da659f41c94f4c01ae47525eb2798d212",
+      "head_sha": "c6c143063ebfc6f4adc13f020dd7ca667971a5bb",
+      "owned_files": [
+        "lib/production/contracts.ts",
+        "lib/production/contracts.test.ts",
+        "lib/repositories/production/sqlite.ts",
+        "lib/repositories/production/sqlite.test.ts",
+        "lib/repositories/production/migrations/003-approval-commands.sql"
+      ],
+      "dirty_files": [
+        "?? evidence/C06-PRE-S/"
+      ],
+      "unverified": [
+        "Existing WAL retry wall-clock assertion intermittently fails; timing/process startup hardening deferred, not claimed passing.",
+        "Full suite/build deferred per feature-first rule; full C06/I01 and paid flow unfinished."
+      ],
+      "evidence_paths": [
+        "docs/production/reports/C06-PRE-root-freeze.json"
+      ],
+      "next_command": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "integration_sha": "e36f84359ede5895d69ef712807e9884ab003dbe",
+      "worktree_archived": true,
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/c06-pre-s/worker"
+    },
+    {
+      "id": "C06-PRE-A",
+      "parent_id": "C06",
+      "owner": "/root/human_approval",
+      "owner_stopped": true,
+      "status": "accepted_integrated",
+      "branch": "codex/production-human-approval",
+      "worktree": "/Users/abid/.codex/worktrees/production-human-approval/perabyte-studio",
+      "base_sha": "460bff068e4d18bc452545f7790616e22337559d",
+      "head_sha": "1a369266954850fb694949cae5c569f6df572884",
+      "owned_files": [
+        "lib/production/approval.ts",
+        "lib/production/approval.test.ts",
+        "lib/services/production/approval.ts",
+        "lib/services/production/approval.test.ts",
+        "app/api/production/approvals/route.ts"
+      ],
+      "dirty_files": [
+        "?? evidence/C06-PRE-A/"
+      ],
+      "evidence_paths": [
+        "docs/production/reports/C06-PRE-root-freeze.json",
+        "docs/production/reports/C06-PRE-A-review.json"
+      ],
+      "unverified": [
+        "Full C06/I01 and default paid pipeline are unfinished; take selection next.",
+        "Comprehensive coverage/full suite/build deferred per user instruction."
+      ],
+      "next_command": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "integration_sha": "1487bfc1f90262affa4730dece7420493c103e7d",
+      "worktree_archived": true,
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/c06-pre-a/worker"
+    },
+    {
+      "id": "C06-PRE-R",
+      "parent_id": "C06",
+      "owner": "/root/media_recipe",
+      "owner_stopped": true,
+      "status": "accepted_integrated",
+      "branch": "codex/production-media-recipe",
+      "worktree": "/Users/abid/.codex/worktrees/production-media-recipe/perabyte-studio",
+      "base_sha": "460bff068e4d18bc452545f7790616e22337559d",
+      "head_sha": "65fecd44eb1f0ee8cd58e97fe4b9da823e1f915e",
+      "owned_files": [
+        "lib/services/production/takes.ts",
+        "lib/services/production/takes.test.ts",
+        "app/api/production/shots/[shotId]/anchors/route.ts",
+        "app/api/production/shots/[shotId]/takes/route.ts",
+        "app/api/production/media-quotes/route.ts"
+      ],
+      "dirty_files": [
+        "?? evidence/C06-PRE-R/"
+      ],
+      "evidence_paths": [
+        "docs/production/reports/C06-PRE-root-freeze.json",
+        "docs/production/reports/C06-PRE-R-review.json"
+      ],
+      "unverified": [
+        "Manual selection next, no automatic take selection.",
+        "Full I01/B6 live account/quote composition and default trusted billing-mode resolver not implemented; paid pipeline blocked.",
+        "Audio/assembly/export/UI and actual films unfinished.",
+        "Expanded coverage/full suite/build deferred.",
+        "Early recipe fixture failure raw logs overwritten; original report discloses loss; followup regression genuine distinct RED/GREEN retained."
+      ],
+      "next_command": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "candidate_code_sha": "877b63e205ea9d721b69a3e7365c6a83450d8ea8",
+      "integration_sha": "7e29b314cf37c1ec3f684dcf26e811b72ce5caa0",
+      "worktree_archived": true,
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/c06-pre-r/worker"
+    },
+    {
+      "id": "C06-SEL",
+      "parent_id": "C06",
+      "owner": "/root/take_selection",
+      "owner_stopped": true,
+      "branch": "codex/production-take-selection",
+      "worktree": "/Users/abid/.codex/worktrees/production-take-selection/perabyte-studio",
+      "base_sha": "5364ac11442f05a956af870787e6a383133dffe1",
+      "head_sha": "ac114aa75a42595f042ebb1180308de1ddc2928b",
+      "status": "accepted_integrated",
+      "owned_files": [
+        "lib/services/production/takes.ts",
+        "lib/services/production/takes.test.ts",
+        "app/api/production/shots/[shotId]/selection/route.ts"
+      ],
+      "dirty_files": [
+        "?? evidence/"
+      ],
+      "evidence_paths": [
+        "docs/production/reports/C06-SEL-integrated.json"
+      ],
+      "unverified": [
+        "Expanded coverage/build deferred per user; strict malformed/body/origin and historical superseded-clear scenarios inspected, not separately exercised.",
+        "Full C06 depends on incomplete I01 live proof composition; no paid generation/film readiness."
+      ],
+      "next_command": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "integration_sha": "546636eae09089dda1c46e3032a331c2c3d5b4da",
+      "worktree_archive_status": "confirmed_by_artifacts",
+      "retained_evidence_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/c06-sel/worker",
+      "worktree_archived": true
+    },
+    {
+      "id": "I01-B6-S",
+      "parent_id": "I01",
+      "owner": "/root/provider_proof_storage",
+      "owner_stopped": true,
+      "branch": "codex/production-provider-proof",
+      "worktree": "/Users/abid/.codex/worktrees/production-provider-proof/perabyte-studio",
+      "base_sha": "2ded8389b71788001dc25b28b46d671f9ef4731e",
+      "head_sha": "1490e94040105664957e5fc228a1d3f5a3f6cf5b",
+      "status": "accepted_integrated",
+      "owned_files": [
+        "lib/production/provider-proof.ts",
+        "lib/production/contracts.ts",
+        "lib/production/contracts.test.ts",
+        "lib/repositories/production/ports.ts",
+        "lib/repositories/production/sqlite.ts",
+        "lib/repositories/production/sqlite.test.ts",
+        "lib/repositories/production/migrations/004-provider-proof.sql"
+      ],
+      "dirty_files": [
+        "?? evidence/I01-B6-S/"
+      ],
+      "evidence_paths": [
+        "docs/production/reports/I01-B6-S-root-freeze.json",
+        "evidence/I01-B6-S/checkpoint-resume-20261004T141105Z.json",
+        "evidence/integration/i01-b6-s-checkpoint-20261004-02/manifest.json",
+        "docs/production/reports/I01-B6-S-review.json",
+        "docs/production/reports/I01-B6-S-review-followup-boundary.json",
+        "evidence/integration/i01-b6-s-review-e72aa3c",
+        "evidence/I01-B6-S/followup-20261004T1453Z.json"
+      ],
+      "unverified": [],
+      "next_command": [
+        "git",
+        "show",
+        "e72aa3c:lib/repositories/production/sqlite.ts"
+      ],
+      "worker_report_sha256": "552cdc4dde472e7ec8d3aec2d3efd615beabe1e71afd65adf2bcd8adac93219d",
+      "retained_checkpoint_root": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/i01-b6-s-checkpoint-20261004-02",
+      "resumed_at": "2026-10-04T13:58:18Z",
+      "ownership_transfer": "User-authorized one-shot automation fired after reset; prior owner completed/idle, same frozen worktree reused without cleanup.",
+      "review_owner": "/root/media_recipe_review",
+      "review_owner_stopped": true,
+      "worktree_archive_status": "confirmed_by_artifacts",
+      "retained_evidence_root": "evidence/integration/i01-b6-s-accepted-20261004/worker",
+      "integration_sha": "5de5ead",
+      "worktree_archived": true,
+      "local_branch_deleted": true
+    },
+    {
+      "id": "U00-POLICY",
+      "parent_id": "U00",
+      "owner": "/root/usage_policy_update",
+      "owner_stopped": true,
+      "status": "accepted_integrated",
+      "branch": "codex/production-usage-policy",
+      "worktree": "/Users/abid/.codex/worktrees/production-usage-policy/perabyte-studio",
+      "base_sha": "d51a14535b5547d6c09a0b13ed359d6543bb1687",
+      "head_sha": "c5bc6774150ebcad80a003646c3843d163cfbc60",
+      "owned_files": [
+        "lib/production/development-guard.ts",
+        "lib/production/development-guard.test.ts",
+        "scripts/verify-production-handover.mjs"
+      ],
+      "dirty_files": [],
+      "evidence_paths": [],
+      "unverified": [],
+      "next_command": [
+        "git",
+        "status",
+        "--short"
+      ],
+      "review_owner_stopped": true,
+      "worktree_archive_status": "confirmed_by_artifacts",
+      "retained_evidence_root": "evidence/integration/u00-policy-accepted-20261004",
+      "integration_sha": "78426b7c3a5e825358dbb401b5f4d941bf8e2060",
+      "worktree_archived": true,
+      "local_branch_deleted": true
+    },
+    {
+      "id": "I01-B6-P",
+      "parent_id": "I01",
+      "owner": "/root/provider_proof_storage (resumed by ZCode software-engineer)",
+      "owner_stopped": false,
+      "status": "accepted_integrated",
+      "branch": "codex/production-provider-session",
+      "worktree": "/Users/abid/.codex/worktrees/production-provider-session/perabyte-studio",
+      "base_sha": "78426b7c3a5e825358dbb401b5f4d941bf8e2060",
+      "head_sha": "74b5b8adae3b10b818f31b7641d83c42a2f5f728",
+      "integration_branch": "zcode/production-core",
+      "integration_sha": "21e1e7a",
+      "owned_files": [
+        "lib/providers/production/proof-port.ts",
+        "lib/providers/production/sogni-provider.ts",
+        "lib/providers/production/sogni-provider.test.ts"
+      ],
+      "evidence_paths": [
+        "docs/production/reports/I01-B6-P-root-freeze.json",
+        "docs/production/reports/I01-B6-P-integrated.json",
+        "evidence/integration/i01-b6-p-integration-20261005/completion-report-20261005T133000Z.json"
+      ],
+      "unverified": [
+        "No live Sogni account/subscription observation (forbidden for packet)",
+        "No consumer surface beyond sogni-provider.test.ts + capabilities.test.ts + typecheck"
+      ],
+      "review": "Independent ZCode code-reviewer ACCEPT 2026-10-05; defects fixed during resume: 3 type-narrowing errors + post-close submit re-init orphaning worker lock (unhandled ERR_INVALID_STATE)",
+      "mandatory_followup_for_I01_B6_W": "close() racing in-flight getClient() can orphan just-acquired worker lock (sogni-provider.ts attempt catch skips releaseOwnership when epoch!==attemptEpoch); MUST fix before any close-then-reinit path ships",
+      "coverage_nit": "observeAccount me()-rejection branch implemented but untested (malformed-me covered)",
+      "external_effects": {
+        "network_calls": [],
+        "authenticated_calls": [],
+        "paid_calls": []
+      }
+    },
+    {
+      "id": "C07-PRE-DOMAIN",
+      "parent_id": "C07",
+      "owner": "zcode software-engineer (Wave 1)",
+      "owner_stopped": false,
+      "status": "accepted_integrated",
+      "source_branch": "zcode/c07-pre-domain",
+      "source_sha": "9e7d06a2d65fed69ce0b3d410f2be65c9e6cbc94",
+      "integration_branch": "zcode/production-core",
+      "integration_sha": "171ed7d",
+      "owned_files": [
+        "lib/production/project-canon.ts",
+        "lib/production/project-canon.test.ts"
+      ],
+      "evidence_paths": [
+        "docs/production/reports/wave1-freeze-20261005.json",
+        "evidence/integration/c07-pre-domain-20261005/"
+      ],
+      "review": "Independent code-reviewer ACCEPT (minor message-template finding fixed pre-integration by same engineer, amended 9e7d06a); 20/20 + typecheck + diff green at root",
+      "external_effects": {
+        "network_calls": [],
+        "authenticated_calls": [],
+        "paid_calls": []
+      }
+    },
+    {
+      "id": "C09-PRE",
+      "parent_id": "C09",
+      "owner": "zcode software-engineer (Wave 1)",
+      "owner_stopped": false,
+      "status": "accepted_integrated",
+      "source_branch": "zcode/c09-pre",
+      "source_sha": "243cc4a4095373b7f72f51f6519745195a7d6bbe",
+      "integration_branch": "zcode/production-core",
+      "integration_sha": "0c34a7e",
+      "owned_files": [
+        "lib/production/audio.ts",
+        "lib/production/audio.test.ts",
+        "lib/services/production/audio.ts",
+        "lib/services/production/audio.test.ts",
+        "app/api/production/projects/[projectId]/audio/route.ts",
+        "scripts/production-audio-import.mjs"
+      ],
+      "evidence_paths": [
+        "docs/production/reports/wave1-freeze-20261005.json",
+        "evidence/integration/c09-pre-20261005/"
+      ],
+      "review": "Independent code-reviewer ACCEPT, no must-fix; 29/29 + typecheck + diff green at root; CLI evidence incl. real LAME MP3 + corrupt rejection",
+      "external_effects": {
+        "network_calls": [],
+        "authenticated_calls": [],
+        "paid_calls": []
+      },
+      "carry_forward": [
+        "asset sampleRate field gap: C04-route imports at non-48k treated on 48k grid \u2014 persist sampleRate at import or re-probe at bind (C10/C11)",
+        "validateCueOverlaps O(n^2) vs 100k-cue schema bound \u2014 sort-by-start scan or lower command cap (C10/C11)"
+      ],
+      "flagged_preexisting": "intermittent unhandled 'Controller is already closed' in lib/jobs/production/worker.test.ts reproduced at base df64534 (all tests pass, exit 1) \u2014 queued as W2-FLAKE packet"
+    },
+    {
+      "id": "I01-B6-W-LOCK",
+      "parent_id": "I01",
+      "owner": "zcode software-engineer (Wave 1)",
+      "owner_stopped": false,
+      "status": "accepted_integrated",
+      "source_branch": "zcode/i01-b6-w-lock",
+      "source_sha": "d44d893d9a714437688ae092b77f7c95c7855dc4",
+      "integration_branch": "zcode/production-core",
+      "integration_sha": "8d1173a",
+      "owned_files": [
+        "lib/providers/production/sogni-provider.ts",
+        "lib/providers/production/sogni-provider.test.ts"
+      ],
+      "evidence_paths": [
+        "docs/production/reports/I01-B6-W-LOCK-root-freeze.json",
+        "evidence/integration/i01-b6-w-lock-20261005/"
+      ],
+      "review": "Independent code-reviewer ACCEPT; deviation (closeTransport extraction) ruled justified/minimal/correct \u2014 repaired pre-existing latent ReferenceError where DOM-lib global close() masked a missing closure binding, so observeAccount invalidation never closed the transport; 25/25 + consumer 11/11 + typecheck + diff green at root; 5/5 stability",
+      "external_effects": {
+        "network_calls": [],
+        "authenticated_calls": [],
+        "paid_calls": []
+      },
+      "note": "worktree evidence dir lacked a git-diff-check log (reviewer info finding 6); root diff-check log in evidence/integration/i01-b6-w-lock-20261005/ covers it"
+    },
+    {
+      "id": "I02-PRE",
+      "parent_id": "I02",
+      "owner": "zcode software-engineer (Wave 1)",
+      "owner_stopped": false,
+      "status": "accepted_integrated",
+      "source_branch": "zcode/i02-pre",
+      "source_sha": "b6d1181cdd062801225f866ceff82e3c690241ac",
+      "integration_branch": "zcode/production-core",
+      "integration_sha": "907292c",
+      "owned_files": [
+        "lib/production/proposals.ts",
+        "lib/production/proposals.test.ts",
+        "lib/services/production/proposals.ts",
+        "lib/services/production/proposals.test.ts",
+        "lib/providers/production/text-planner.ts",
+        "lib/providers/production/text-planner.test.ts",
+        "app/api/production/projects/[projectId]/proposals/route.ts"
+      ],
+      "evidence_paths": [
+        "docs/production/reports/wave1-freeze-20261005.json",
+        "evidence/integration/i02-pre-20261005/"
+      ],
+      "review": "Independent code-reviewer ACCEPT with 3 conditions, all fixed pre-integration by same engineer (speechMap canon validation + UNKNOWN_CANON_SPEAKER, CRLF fixture, graceful degenerate-bounds INVALID_INPUT); amended b6d1181; 47/47 + typecheck + diff + full suite green at root",
+      "external_effects": {
+        "network_calls": [],
+        "authenticated_calls": [],
+        "paid_calls": []
+      },
+      "carry_forward": [
+        "route 403 envelope has no vitest coverage (repo include list) \u2014 cover at full I02"
+      ]
+    },
+    {
+      "id": "I01-B6-C",
+      "parent_id": "I01",
+      "owner": "zcode software-engineer (Wave 1)",
+      "owner_stopped": false,
+      "status": "accepted_integrated",
+      "source_branch": "zcode/i01-b6-c",
+      "source_sha": "906a8c4740ac56773dea3bf7904bd8b1f0adfc7b",
+      "integration_branch": "zcode/production-core",
+      "integration_sha": "00cd62b",
+      "owned_files": [
+        "lib/production/proof-policy.ts",
+        "lib/production/proof-policy.test.ts",
+        "lib/services/production/budget-composer.ts",
+        "lib/services/production/budget-composer.test.ts",
+        "lib/services/production/takes.ts",
+        "lib/services/production/takes.test.ts"
+      ],
+      "evidence_paths": [
+        "docs/production/reports/I01-B6-C-root-freeze.json",
+        "evidence/integration/i01-b6-c-20261005/"
+      ],
+      "review": "Independent code-reviewer ACCEPT: 14/14 composerProtocol steps verified, all 8 deviations ruled JUSTIFIED; 9/9 focused + typecheck + diff + full suite green at root",
+      "external_effects": {
+        "network_calls": [],
+        "authenticated_calls": [],
+        "paid_calls": []
+      },
+      "carry_forward_must_fix_before_W_WIRE": [
+        "minor: capturedWorkerDraft shared closure cell (budget-composer.ts:311-333) is per-composer state \u2014 two interleaved prepareWorkerBudgetContext calls can cross-wire worker artifacts (fail-closed at sqlite.ts:157 but confusing); make per-call",
+        "minor: unused hashCanonicalJson import in proof-policy.ts:5",
+        "note: doc overclaim at budget-composer.ts:103-108 (own-transaction writes exist per protocol steps 2/10/11)"
+      ]
+    },
+    {
+      "id": "W2-FLAKE",
+      "parent_id": "C04",
+      "owner": "zcode software-engineer (Wave 2)",
+      "owner_stopped": false,
+      "status": "accepted_integrated",
+      "source_branch": "zcode/w2-flake",
+      "source_sha": "1459029c16a3fdae2523de59e7b10d5a94e1db37",
+      "integration_branch": "zcode/production-core",
+      "integration_sha": "0edd55b",
+      "owned_files": [
+        "lib/jobs/production/worker.test.ts"
+      ],
+      "evidence_paths": [
+        "docs/production/reports/wave2-freeze-20261005.json",
+        "evidence/integration/w2-flake-20261005/"
+      ],
+      "review": "Orchestrator protocol-conformance review (diff matches frozen fixProtocol verbatim; 2-line guarded deferred close + cancel flag) + ACCEPTANCE CONDITION: 3/3 clean full-suite runs (1259 tests, zero unhandled signatures) re-verified at root post-integration. Fixes pre-existing intermittent worker.test.ts stream-fixture flake.",
+      "external_effects": {
+        "network_calls": [],
+        "authenticated_calls": [],
+        "paid_calls": []
+      },
+      "note": "worktree evidence logs lost in a botched cleanup chain (cherry-pick flag error); acceptance evidence regenerated at root \u2014 disclosed, not hidden"
+    },
+    {
+      "id": "B6-C-FIX",
+      "parent_id": "I01",
+      "owner": "zcode software-engineer (Wave 2)",
+      "owner_stopped": false,
+      "status": "accepted_integrated",
+      "source_branch": "zcode/b6-c-fix",
+      "source_sha": "984bdb9aeac5b52eb1ed073b91782f20f8f2f3a6",
+      "integration_branch": "zcode/production-core",
+      "integration_sha": "545b378",
+      "owned_files": [
+        "lib/services/production/budget-composer.ts",
+        "lib/services/production/budget-composer.test.ts",
+        "lib/production/proof-policy.ts"
+      ],
+      "evidence_paths": [
+        "docs/production/reports/wave2-freeze-20261005.json",
+        "evidence/integration/b6-c-fix-20261005/"
+      ],
+      "review": "Independent code-reviewer ACCEPT: per-call worker-draft scoping verified bug-catching (RED 'expected 1020 to be 1019' cross-wire proof), deviations ruled justified (generation-id sharing forced by budget.ts:294-299); 10/10 + typecheck + diff green at root; W-WIRE prerequisites cleared",
+      "external_effects": {
+        "network_calls": [],
+        "authenticated_calls": [],
+        "paid_calls": []
+      },
+      "notes": [
+        "freeze wording amendment recorded: worker artifacts differ per call; generation is quote-time-shared by design",
+        "reviewer finding A (missing diff-check log in worktree evidence) covered by root log evidence/integration/b6-c-fix-root-diffcheck-*.log"
+      ]
+    },
+    {
+      "id": "C11-PRE",
+      "parent_id": "C11",
+      "owner": "zcode software-engineer (Wave 2)",
+      "owner_stopped": false,
+      "status": "accepted_integrated",
+      "source_branch": "zcode/c11-pre",
+      "source_sha": "34e063dfdd1872ccf9033036405589bbae89ba4e",
+      "integration_branch": "zcode/production-core",
+      "integration_sha": "58f4a05",
+      "owned_files": [
+        "lib/production/manifest.ts",
+        "lib/production/manifest.test.ts",
+        "lib/services/production/manifest.ts",
+        "lib/services/production/manifest.test.ts"
+      ],
+      "evidence_paths": [
+        "docs/production/reports/C11-PRE-root-freeze.json",
+        "evidence/integration/c11-pre-20261005/"
+      ],
+      "review": "Independent code-reviewer ACCEPT: all 4 implementer interpretations ruled justified; manifestInputsHash field list verified exact vs freeze+ARCHITECTURE; compilerProtocol 10 steps verified; integer math safe; 17/17 + typecheck + diff green at root",
+      "external_effects": {
+        "network_calls": [],
+        "authenticated_calls": [],
+        "paid_calls": []
+      },
+      "carry_forward": [
+        "validateAudioExactness relies on schema-parsed cues; full C11 must re-parse creator-supplied arrays",
+        "comment nit: 'take-approval leg of takes.ts:128-130'",
+        "selectionVersion in fingerprint means no-op re-selection mints a new manifest row (freeze-mandated)"
+      ]
+    },
+    {
+      "id": "B6-C-FIX2",
+      "parent_id": "I01",
+      "owner": "zcode software-engineer (Wave 2)",
+      "owner_stopped": false,
+      "status": "accepted_integrated",
+      "source_branch": "zcode/b6-c-fix2",
+      "source_sha": "0b112404ba6b79b7c3dbd5831193c7dbc39910b0",
+      "integration_branch": "zcode/production-core",
+      "integration_sha": "3641a83 (fix) + db2ad30 (scope compliance)",
+      "owned_files": [
+        "lib/services/production/budget-composer.ts",
+        "lib/services/production/budget-composer.test.ts"
+      ],
+      "evidence_paths": [
+        "evidence/integration/b6-c-fix2-20261005/"
+      ],
+      "review": "Review basis: W-WIRE independent reviewer confirmed the defect and prescribed exactly this remedy (deterministic artifact createdAt from policyInput.capturedAt); fix applied verbatim with RED->GREEN regression proof (requote test failed pre-fix with 'Conflicting immutable provider proof artifact' at sqlite.ts:295); defect 2 refuted by reviewer as mathematically impossible (payload embeds generation+observedAt; createdAt is payload-pure), out-of-scope test removed per review; 11/11 + typecheck + diff green at root",
+      "external_effects": {
+        "network_calls": [],
+        "authenticated_calls": [],
+        "paid_calls": []
+      },
+      "impact": "requote flows under one installed reviewed policy now work (policy artifact re-inserts as no-op)"
+    },
+    {
+      "id": "C10-PRE",
+      "parent_id": "C10",
+      "owner": "zcode engineer (Wave 4/5)",
+      "owner_stopped": false,
+      "status": "accepted_integrated",
+      "source_branch": "zcode/c10-pre",
+      "source_sha": "eb39c7d",
+      "integration_branch": "zcode/production-core",
+      "integration_sha": "0729ce4",
+      "owned_files": [
+        "app/production/[projectId]/audio/page.tsx",
+        "components/production/audio.tsx",
+        "lib/production/audio-ui.test.ts",
+        "scripts/verify-production-audio.mjs"
+      ],
+      "evidence_paths": [
+        "docs/production/reports/C10-PRE-root-freeze.json",
+        "evidence/integration/c10-pre-20261005/"
+      ],
+      "review": "Independent code-reviewer ACCEPT with F1 (samplesToDisplayTime spec bug: 72000 rendered '1.24000s') fixed pre-integration with the reviewer's exact replacement formula + browser re-certification 21/21; 22/22 unit + typecheck + diff green at root; browser 7/7 scenarios incl. non-local-request tripwire",
+      "external_effects": {
+        "network_calls": [],
+        "authenticated_calls": [],
+        "paid_calls": []
+      },
+      "carry_forward": [
+        "413 hint copy understates 2GiB route cap (display-only)",
+        "node:crypto in client bundle via buildAudioCue \u2014 worked in dev, verify under next build at gate"
+      ]
+    },
+    {
+      "id": "C07-FULL-UI",
+      "parent_id": "C07",
+      "owner": "zcode engineer (Wave 4/5)",
+      "owner_stopped": false,
+      "status": "accepted_integrated",
+      "source_branch": "zcode/c07-full-ui",
+      "source_sha": "532a78db93b797ae75a64c4c49bc4345a90b34c5",
+      "integration_branch": "zcode/production-core",
+      "integration_sha": "c6cb1d9",
+      "owned_files": [
+        "app/production/page.tsx",
+        "app/production/new/page.tsx",
+        "app/production/[projectId]/page.tsx",
+        "app/production/[projectId]/canon/page.tsx",
+        "app/production/[projectId]/script/page.tsx",
+        "components/production/project-canon.tsx",
+        "scripts/verify-production-canon.mjs"
+      ],
+      "evidence_paths": [
+        "docs/production/reports/C07-FULL-UI-root-freeze.json",
+        "evidence/integration/c07-full-ui-20261005/"
+      ],
+      "review": "Independent code-reviewer ACCEPT with 3 pre-integration fixes applied (honest canon-save banner re dedupe re-pin; creation-flow TOO_MANY_BEATS preflight; diff-check evidence log); 28/28 + typecheck + diff green at root; browser 7/7 scenarios 26/26 checks",
+      "external_effects": {
+        "network_calls": [],
+        "authenticated_calls": [],
+        "paid_calls": []
+      },
+      "carry_forward": [
+        "beats narration duplicates script text \u2014 near-bound multi-byte scripts may hit the 2MB body cap (honest 413)",
+        "superseded-revision history is session-scoped (read model exposes only active revision)"
+      ]
+    },
+    {
+      "id": "C11-FULL",
+      "parent_id": "C11",
+      "owner": "zcode engineer (Wave 4/5)",
+      "owner_stopped": false,
+      "status": "accepted_integrated",
+      "source_branch": "zcode/c11-full",
+      "source_sha": "9218436",
+      "integration_branch": "zcode/production-core",
+      "integration_sha": "84deb1b",
+      "owned_files": [
+        "lib/media/production/assembly.ts",
+        "lib/media/production/assembly.test.ts",
+        "lib/media/production/profiles.ts",
+        "app/api/production/projects/[projectId]/manifests/route.ts",
+        "app/api/production/projects/[projectId]/exports/route.ts",
+        "lib/services/production/manifest.ts",
+        "lib/services/production/manifest.test.ts"
+      ],
+      "evidence_paths": [
+        "docs/production/reports/C11-FULL-root-freeze.json",
+        "evidence/integration/c11-full-20261005/"
+      ],
+      "review": "Independent code-reviewer ACCEPT: all 6 deviations ruled justified; deep checks A-G pass; REQUIRED fixture render evidence (deterministic output sha256 36d6534b..., identical rerun); 36 focused + full-suite 1301 green; export command validates pins + idempotent; runner lease/CAS state machine verified",
+      "external_effects": {
+        "network_calls": [],
+        "authenticated_calls": [],
+        "paid_calls": []
+      },
+      "contract_drift": [
+        "export completion uses ExportRecord + lease JSON, NOT ProductionJob (offline exports can never carry a provider receipt)",
+        "AssemblyPort.compile/qcReportId seam unfit \u2014 runExportAssembly is the frozen seam",
+        "202 export job = 202 + queued ExportRecord"
+      ]
+    },
+    {
+      "id": "C11-WIRE",
+      "parent_id": "C11",
+      "owner": "zcode engineer (Wave 4/5)",
+      "owner_stopped": false,
+      "status": "accepted_integrated",
+      "source_branch": "zcode/c11-wire",
+      "source_sha": "618ad34",
+      "integration_branch": "zcode/production-core",
+      "integration_sha": "352aaf9",
+      "owned_files": [
+        "app/api/production/projects/[projectId]/exports/route.ts",
+        "lib/services/production/manifest.test.ts"
+      ],
+      "evidence_paths": [
+        "evidence/integration/c11-wire-20261005/"
+      ],
+      "review": "Reviewer finding 1 (scheduler unwired) closed with the prescribed remedy: per-process export assembly scheduler wired into the exports route; queued->rendering->qc_pending proven through the real state machine with stubbed renderer; 29/29 focused + typecheck + diff + full-suite 1332 green on integrated base",
+      "external_effects": {
+        "network_calls": [],
+        "authenticated_calls": [],
+        "paid_calls": []
+      }
+    },
+    {
+      "id": "C08",
+      "parent_id": "C06/C08",
+      "owner": "zcode engineer (final wave)",
+      "owner_stopped": false,
+      "status": "accepted_integrated",
+      "source_branch": "zcode/c08",
+      "source_sha": "af9ff66084d3735071330d794de7793dd06e368c",
+      "integration_branch": "zcode/production-core",
+      "integration_sha": "aaa1da6",
+      "owned_files": [
+        "app/production/[projectId]/shots/page.tsx",
+        "app/production/[projectId]/anchors/page.tsx",
+        "app/production/[projectId]/takes/page.tsx",
+        "components/production/storyboard.tsx",
+        "lib/production/storyboard.test.ts",
+        "scripts/verify-production-shots.mjs"
+      ],
+      "evidence_paths": [
+        "docs/production/reports/C08-root-freeze.json",
+        "evidence/integration/c08-20261005/"
+      ],
+      "review": "Independent code-reviewer ACCEPT: checklist/vision-ack/selection/stale gates verified mirroring the server rules; browser 32/32 (158-control keyboard pass, non-local tripwire); honest degraded states (no fabricated candidates); REDUCED browser set frozen honestly (takes need provider receipts)",
+      "external_effects": {
+        "network_calls": [],
+        "authenticated_calls": [],
+        "paid_calls": []
+      },
+      "carry_forward": [
+        "browser screenshots live only in tmpdir (transcripts committed)",
+        "first live take-selection proof belongs to C13"
+      ]
+    },
+    {
+      "id": "C12",
+      "parent_id": "C12",
+      "owner": "zcode engineer (final wave)",
+      "owner_stopped": false,
+      "status": "accepted_integrated",
+      "source_branch": "zcode/c12",
+      "source_sha": "5809a92",
+      "integration_branch": "zcode/production-core",
+      "integration_sha": "eb5ccec",
+      "owned_files": [
+        "lib/production/qc.ts",
+        "lib/production/qc.test.ts",
+        "lib/services/production/qc.ts",
+        "lib/services/production/qc.test.ts",
+        "app/api/production/exports/[id]/route.ts",
+        "app/api/production/exports/[id]/download/route.ts",
+        "app/api/production/exports/[id]/draft/route.ts",
+        "app/production/[projectId]/export/page.tsx",
+        "components/production/export.tsx",
+        "lib/production/export-ui.test.ts",
+        "scripts/verify-production-export.mjs"
+      ],
+      "evidence_paths": [
+        "docs/production/reports/C12-root-freeze.json",
+        "evidence/integration/c12-20261005/"
+      ],
+      "review": "Independent code-reviewer ACCEPT with 3 LOW fixes applied pre-integration (id-named QC report artifacts kill the concurrent run_qc clobber; nonfinite audio duration now emits the frozen nonfinite_probe blocker; detector args built from constants); 41/41 + typecheck + diff + browser 10/10 green; measured G08 (real renders: I=-14.0, TP=-11.7) + human-only G09 + strict final/draft download separation",
+      "external_effects": {
+        "network_calls": [],
+        "authenticated_calls": [],
+        "paid_calls": []
+      },
+      "disclosed": "original RED log overwritten during iteration; faithful reproduction saved and disclosed \u2014 accepted by reviewer with standing noclobber requirement"
+    }
+  ],
+  "integrated_verification": {
+    "tests": 1091,
+    "test_files": 99,
+    "typecheck_exit_code": 0,
+    "build_exit_code": 0,
+    "built_http_requests": 10,
+    "cli_sigterm_exit_code": 0,
+    "code_sha": "c7c1e73716c28233b6628b49f85eccac3dfc9b06",
+    "built_health_status": 200,
+    "built_schema_version": 2
+  },
+  "ui_work": "deferred by user; core functionality first",
+  "ownership_transfers": [
+    {
+      "task_id": "C05",
+      "from": "/root/industry_research",
+      "to": "/root/shot_plan_build",
+      "basis": "User authorized continue; prior worker absent from live agent list and checkpoint explicitly stopped"
+    },
+    {
+      "task_id": "C04",
+      "from": "/root/worker_resume",
+      "to": "/root/worker_resume",
+      "basis": "User said continue; previous worker was completed/idle. Current GPT-6 Luna worker resumed exact committed checkpoint 477665e in retained worktree; no reset/clean."
+    },
+    {
+      "task_id": "I01-B6-P",
+      "from": "Codex /root/provider_proof_storage (stopped at weekly 1% 2026-10-04)",
+      "to": "ZCode orchestrator + software-engineer (GLM-5.3 primary, Flash implementer)",
+      "basis": "User instruction 2026-10-05: continue Perabyte production via /orchestrate ZCode team; prior writer confirmed idle; draft hashes verified identical to checkpoint before takeover; no reset/clean; branch/worktree preserved"
+    }
+  ],
+  "automation": {
+    "id": "resume-production-core-build",
+    "status": "consumed_deleted",
+    "scheduled_resume_local": "2026-10-03 20:41 Asia/Dhaka",
+    "one_shot": true,
+    "reason": "User-authorized automatic resume after usage reset"
+  },
+  "provider_discovery": {
+    "source": "read-only live Sogni catalog",
+    "sdk_version": "5.49.0",
+    "models": 191,
+    "observed_at": 1791022982976,
+    "raw_output": "evidence/C03/live-discovery.json",
+    "sha256": "d907473a842be8c596d41392bc974572a76c84e028ac3f29d81c65233b9722bd",
+    "paid_calls": [],
+    "credentials": "Existing original .env.local; values never copied into reports"
+  },
+  "shared_prerequisites": [
+    {
+      "packet_id": "C02",
+      "scope": "Canon lookup ports and safe outbox acknowledgement only; full packet remains active",
+      "worker_commits": [
+        "85ee734c110c35246bb362e5cccdb1ab66cefb46",
+        "5f71773fc2da3f3311cbe9cc1810092615ea7bb9"
+      ],
+      "integration_commits": [
+        "d3b714c",
+        "e9824cf"
+      ],
+      "reviewer": "/root/store_seam_review",
+      "verification": "16 store/import tests plus typecheck pass",
+      "finding": "Exact expiry claim acknowledgment fixed with strict > clock guard"
+    },
+    {
+      "task_id": "C02",
+      "scope": "Reviewed shared worker lease/cancellation prerequisites only; full C02 unaccepted",
+      "worker_commit": "f1c7ca20ad6307056c9f27301313d215c0af044a",
+      "integration_commit": "2be798b13f8df68f73c6372a878a99ff2d4c103d",
+      "independent_review": {
+        "agent": "/root/core_review",
+        "model": "gpt-6.1-sol",
+        "result": "No material blocker for this subset; monotonic heartbeat hardening pending"
+      },
+      "focused_tests": 12,
+      "typecheck_exit_code": 0,
+      "evidence": [
+        {
+          "path": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/worker-seams-tests.txt",
+          "sha256": "059a790052d780b477e678ef9d59da6a54d5238120f06e08df1ea6819ff6c866"
+        },
+        {
+          "path": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/worker-seams-typecheck.txt",
+          "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+        }
+      ],
+      "paid_calls": []
+    },
+    {
+      "task_id": "C04",
+      "scope": "ensureOutbox explicit trusted unknown-submission recovery prerequisite only",
+      "worker_commit": "e65f57168ae61dfe612a44bb2fdb5cc26fd68f84",
+      "integration_commit": "893e98787c18190bea338346ebf7abd69e495081",
+      "report": "docs/production/reports/C04-outbox-seam.json"
+    }
+  ],
+  "scheduled_resume": {
+    "automation_id": "resume-production-core-build",
+    "one_shot": true,
+    "status": "consumed_deleted",
+    "reason": "Scheduled reset resume fired; both prior workers absent; resumed with live headroom. Automation tool confirmed deletion."
+  },
+  "stop_reason": "Userweeklyremaining<=1%threshold reached; five-hour69%remaining. No new source/tests/reviews until liveheadroom.",
+  "resume_session": {
+    "date": "2026-10-04",
+    "trigger": "Explicit user continue after usage reset",
+    "prior_one_shot_automation": "consumed_deleted; no recurring automation",
+    "requested_orchestrator": "GPT-6.1 Sol architecture/review; GPT-6 Luna bounded implementation",
+    "current_usage_guard": "100% shorter/37% weekly remaining freshresume; allwindow checks continue",
+    "worktree": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio"
+  },
+  "accepted_slices": [
+    {
+      "packet": "I01",
+      "slice": "I01-B1",
+      "owner": "/root/i01_contracts_domain",
+      "worktree": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio",
+      "branch": "codex/production-budget",
+      "head_sha": "ff8d24277edef612ae366edf3319b0e41d75ff3b",
+      "dirty_files": [
+        "?? evidence/I01-B1/"
+      ],
+      "owner_stopped": true,
+      "report": "docs/production/reports/I01-B1-evidence.json"
+    },
+    {
+      "id": "I01",
+      "slice": "I01-B2 ledger/storage",
+      "owner": "/root/i01_ledger_storage",
+      "branch": "codex/production-ledger",
+      "worktree": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio",
+      "base_sha": "ffea35b2a7cdc7400b083ea0be7d388cbb0723f0",
+      "head_sha": "9e726f07745390d10dd60174a90bb84ace6aad11",
+      "status": "accepted_integrated_storage_slice",
+      "owner_stopped": true,
+      "dirty_files": [
+        "?? evidence/I01-B2/"
+      ],
+      "owned_files": [
+        "lib/repositories/production/sqlite.ts",
+        "lib/repositories/production/sqlite.test.ts"
+      ],
+      "evidence_paths": [
+        "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/",
+        "docs/production/reports/I01-B2-review.json",
+        "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/report.json"
+      ],
+      "next_command": [
+        "npm",
+        "test",
+        "--",
+        "lib/repositories/production/sqlite.test.ts",
+        "lib/repositories/production/legacy-import.test.ts"
+      ],
+      "unverified": [
+        "FullI01 incomplete"
+      ],
+      "review_owner": "/root/c04_core_audit",
+      "report": "docs/production/reports/I01-B2-evidence.json"
+    }
+  ],
+  "usage_stop_history": [
+    {
+      "observed_at": "2026-10-03T21:34:25Z",
+      "primary_remaining_percent": 2,
+      "secondary_remaining_percent": 38,
+      "minimum_remaining_percent": 2,
+      "implementation_stopped": true,
+      "integration_code_sha": "ffea35b2a7cdc7400b083ea0be7d388cbb0723f0",
+      "held_unaccepted_worker_sha": "4e97c5829fada681fe5ef37764961931956f9e8c",
+      "finding": "Concurrent fresh startup SQLITE_BUSY during WAL setup; no source fix/integration after hardstop",
+      "resumed_by_explicit_user_continue_at": "2026-10-04T03:48:39Z"
+    },
+    {
+      "observed_at": "2026-10-04T10:52:19Z",
+      "primary_remaining_percent": 2,
+      "secondary_remaining_percent": 6,
+      "minimum_remaining_percent": 2,
+      "implementation_stopped": true,
+      "integration_code_sha": "546636eae09089dda1c46e3032a331c2c3d5b4da",
+      "unaccepted_worker_base_sha": "2ded8389b71788001dc25b28b46d671f9ef4731e",
+      "unaccepted_dirty_source": [
+        " M lib/production/contracts.test.ts",
+        " M lib/production/contracts.ts",
+        " M lib/repositories/production/ports.ts",
+        " M lib/repositories/production/sqlite.ts",
+        "?? evidence/I01-B6-S/",
+        "?? lib/production/provider-proof.ts",
+        "?? lib/repositories/production/migrations/004-provider-proof.sql"
+      ],
+      "finding": "Bounded B6-S source draft incomplete, allchecks unrun; retainednointegration."
+    },
+    {
+      "observed_at": "2026-10-04T14:11:05Z",
+      "primary_remaining_percent": 2,
+      "secondary_remaining_percent": 6,
+      "minimum_remaining_percent": 2,
+      "implementation_stopped": true,
+      "integration_code_sha": "546636eae09089dda1c46e3032a331c2c3d5b4da",
+      "unaccepted_worker_base_sha": "2ded8389b71788001dc25b28b46d671f9ef4731e",
+      "unaccepted_dirty_source": [
+        " M lib/production/contracts.test.ts",
+        " M lib/production/contracts.ts",
+        " M lib/repositories/production/ports.ts",
+        " M lib/repositories/production/sqlite.test.ts",
+        " M lib/repositories/production/sqlite.ts",
+        "?? evidence/I01-B6-S/",
+        "?? lib/production/provider-proof.ts",
+        "?? lib/repositories/production/migrations/004-provider-proof.sql"
+      ],
+      "finding": "Frozen B6-S 2 focused SQLite tests, typecheck, and diff check passed; no independent review or source integration; exact final source/logs copied to durable checkpoint.",
+      "interpretation_correction": "Erroneous short2%remaining; actual98%short/6%weekly. No hard-stop threshold was reached in that observation."
+    },
+    {
+      "observed_at": "2026-10-04T15:16:47.761058+00:00",
+      "primary_remaining_percent": 69,
+      "secondary_remaining_percent": 1,
+      "minimum_remaining_percent": 1,
+      "implementation_stopped": true,
+      "integration_code_sha": "78426b7c3a5e825358dbb401b5f4d941bf8e2060",
+      "unaccepted_worker_base_sha": "78426b7c3a5e825358dbb401b5f4d941bf8e2060",
+      "finding": "B6-P uncommitted3file draft preserved; actualfailedlogs retained; no review/integration or newchecks afterstop."
+    }
+  ],
+  "usage_read_errors": [
+    {
+      "at": "2026-10-04T04:29:59Z",
+      "message": "Usage tool unavailable; implementation stopped and source/evidence preserved",
+      "resolved": "Immediate read-only retry returned all windows known:59% short,31% weekly; root explicitly resumed same owners."
+    }
+  ],
+  "auxiliary_worktrees": [
+    {
+      "purpose": "Controlled prospective rollback proof; mutant must never integrate",
+      "owner": "/root/i01_atomic_admission",
+      "owner_stopped": true,
+      "branch": "codex/production-admission-proof",
+      "worktree": "/Users/abid/.codex/worktrees/production-admission-proof/perabyte-studio",
+      "head_sha": "5a838a1b4d8b676f4a700c8bf9ce474a83e0ed1e",
+      "dirty_files": [
+        "M lib/jobs/production/queue.ts",
+        "?? evidence/I01-B4-proof/"
+      ],
+      "evidence": "evidence/I01-B4-proof/report.json"
+    }
+  ],
+  "verification_errors_preserved": [
+    "B3 actual smoke script first failed top-level await under CJS before starting server/assertions; raw error saved root-http-scaffold-failure.txt. Wrapped async main and actual6HTTP assertions passed.",
+    "B4 historical focused-green.log was overwritten by followup; original53raw retained in/tmp and restored distinct initial-focused-green.log with matching hash. Immutable original report, corrected reports and both logs preserved; independent metadata review closed.",
+    "Root checkpoint metadata first used unsupported state handover_preparation; verifier rejected it. Corrected to existing checkpointing enum; no runtime source change."
+  ],
+  "read_only_architecture_task": {
+    "owner": "/root/b6_boundary",
+    "owner_stopped": true,
+    "scope": "ExactminimalPproviderproofport/accountsession/finalguardboundary no code/livecalls",
+    "output": "/tmp/perabyte-I01-B6-P-freeze.json",
+    "status": "root_approved_frozen"
+  },
+  "worktree_cleanup_report": "docs/production/reports/completed-worktree-cleanup.json",
+  "cleanup_limitation": "C04 old ignored .studio uninspected before archive, not retained; source/evidence recovered and archived. Original/root data untouched.",
+  "minimal_feature_verification": {
+    "root_focused_tests": 8,
+    "root_test_files": 2,
+    "typecheck_exit_code": 0,
+    "code_sha": "78426b7c3a5e825358dbb401b5f4d941bf8e2060",
+    "evidence": [
+      "evidence/integration/i01-b6-s-accepted-20261004/root-focused.log",
+      "evidence/integration/i01-b6-s-accepted-20261004/root-typecheck.log"
+    ]
+  },
+  "usage_interpretation_corrections": [
+    {
+      "observed_at": "2026-10-04T14:29:13Z",
+      "incorrect_prior_observation": "2026-10-04T14:11:05Z recorded2%short remaining",
+      "actual_prior_observation": "Tool primary.usedPercent2 meant98%remaining; weekly.usedPercent94 meant6%remaining. Premature stop was erroneous; historical reports retained, never use erroneous usage as current fact."
+    }
+  ],
+  "usage_policy": {
+    "source": "Explicit user instruction2026-10-04",
+    "weekly_stop_remaining_percent": 1,
+    "five_hour_stop_remaining_percent": 2,
+    "dispatch_reserve_remaining_percent": null,
+    "unknown_required_data": "stop",
+    "formula": "remaining=100-usedPercent; perwindowstops, no min5%reserve"
+  },
+  "continuous_delivery_policy": "User2026-10-04: Immediately integrate verified independently reviewed completed slices into codex/production-core, preserve evidence and archive idle worktree, then continue next packet. Incomplete/draft source remains isolated. User additionally authorizes deletion of completed unused local branches after integration/evidence and verified recovery preservation.",
+  "local_branch_cleanup": "docs/production/reports/local-branch-cleanup-20261004.json",
+  "checkpoint_errors": [
+    "Branchcleanup metadata script encountered historical string entry in completed_packets; no source affected. Corrected mixed-entry handling; report committed591dca6."
+  ],
+  "eta_estimates": {
+    "provider_slice": "1\u20133 active engineering hours including review, conditional on next checks",
+    "proof_composer_and_worker": "1\u20132 active engineering days",
+    "first_uploadable_core_pilot": "5\u201310 active development days as a rough planning range, excluding usage pauses; audio/export/UI/creator review remain"
+  },
+  "usage_note": "Codex-account usage-stop policy paused the prior writer (weekly 1% 2026-10-04, reset ~2026-10-10). ZCode orchestration runs on the user's ZCode plan and is NOT gated by that Codex window; last_usage_observation retained as history. Paid/authenticated/credential provider calls remain forbidden regardless of window: packets are offline-verified only until a reviewed live-account proof packet (B6 composer/runtime) is authorized.",
+  "wave1_status": "COMPLETE 2026-10-05: all 5 packets implemented, independently reviewed ACCEPT, integrated, worktrees/branches cleaned. Root full suite 112 files/1259 tests exit 0 zero unhandled errors (evidence/integration/wave1-complete-fullsuite-*.log).",
+  "wave2_status": "COMPLETE: W2-FLAKE, B6-C-FIX, B6-W-WIRE, C11-PRE, B6-C-FIX2 all integrated+cleaned.",
+  "i01_b6_status": "ALL SLICES ACCEPTED+INTEGRATED: B6-S(5de5ead) B6-P(21e1e7a) B6-C(00cd62b) B6-W-LOCK(8d1173a) B6-W-WIRE(94d0004) + fixes B6-C-FIX(545b378) B6-C-FIX2(3641a83/db2ad30) W2-FLAKE(0edd55b). I01 acceptance gate at db2ad30: full suite 116 files/1282 tests exit 0 zero unhandled + production build exit 0 (evidence/integration/i01-acceptance-*). USER GATE remains: live account observation/reviewed-policy install are user acts; system fails closed until then.",
+  "wave45_status": "C10-PRE, C07-FULL-UI, C11-FULL, C11-WIRE integrated+reviewed. C08 + C12 frozen and dispatched (final implementable packets).",
+  "final_acceptance": {
+    "at": "5785177",
+    "full_suite": "122 files / 1399 tests exit 0, zero unhandled (rerun after one environment-load SIGKILL-test timeout; first run evidence preserved)",
+    "build": "exit 0",
+    "evidence": [
+      "evidence/integration/final-acceptance-fullsuite-rerun-*.log",
+      "evidence/integration/final-acceptance-build-*.log",
+      "evidence/integration/final-acceptance-fullsuite-*.log (first run w/ timeout)"
+    ]
+  },
+  "plan_status": "ALL OFFLINE-IMPLEMENTABLE PACKETS COMPLETE: C00-C12 (+C07/C08/C10/C11/C12 full-UI slices), I00-I02, U00-POLICY. Remaining are USER-GATED: C13/C14 paid pilots (need standing budget authorization + human G01-G09 review), C15 recovery gate (needs pilots), C16 optional adapter (needs spend authorization), C17 publication (needs C15)."
+}

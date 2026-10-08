@@ -1,0 +1,10 @@
+{
+  "source_sha256": {
+    "lib/providers/production/proof-port.ts": "0d25e827a8e30b45713a82bbea03f181ceb50a0c99b6b72b8b31b4eb08c25279",
+    "lib/providers/production/sogni-provider.ts": "a989175c27eb6fc63f63ecd2681a9ecbf859f81edaff165f1cacb68ef71c77cd",
+    "lib/providers/production/sogni-provider.test.ts": "150835929f2f9559ed10ca27af121c419087a780f770c60db147602677e11a06"
+  },
+  "head": "78426b7c3a5e825358dbb401b5f4d941bf8e2060",
+  "worker_idle_confirmed": true,
+  "accepted": false
+}

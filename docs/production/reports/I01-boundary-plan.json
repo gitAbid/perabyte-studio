@@ -1,0 +1,122 @@
+{
+  "kind": "read_only_boundary_plan",
+  "packet": "I01",
+  "status": "planning_only_blocked_on_C04_acceptance",
+  "integrationSHA": "2aeb1592c083898c47f281955285af7757e6a0f8",
+  "workerBaselineSHA": "ff6d3df93425e7f876d58162b96152eab2cf7ef9",
+  "authority": [
+    "docs/production/TASK_PACKETS.md I01-01..06 and normative accounting details",
+    "docs/production/ARCHITECTURE.md budget accounting ADR"
+  ],
+  "prerequisites": [
+    "Accepted/integrated C02, C04 and I00; announce actual resulting integration SHA. Do not implement or dispatch I01 before C04 acceptance.",
+    "Transfer queue/worker ownership from C04 and ports/contracts/sqlite ownership from C02 to I01; retain accepted lifecycle and approval semantics.",
+    "Integrator approve proposed transaction interface and DTO/port signatures before implementation.",
+    "Obtain verified SDK/account/quote/billing evidence producer design: configured key or model catalog availability is insufficient. Missing production evidence means blocked paid pipeline, even if fake fixtures pass.",
+    "Provider factory, HTTP quote handler and worker CLI composition are outside I01 owned files: integrator must assign narrow amendments or expose injected producers without silently widening ownership."
+  ],
+  "owned_files": [
+    "lib/production/budget.ts",
+    "lib/production/budget.test.ts",
+    "lib/services/production/budget.ts",
+    "lib/services/production/budget.test.ts",
+    "lib/repositories/production/migrations/002-budget.sql",
+    "lib/repositories/production/ports.ts",
+    "lib/repositories/production/sqlite.ts",
+    "lib/repositories/production/sqlite.test.ts",
+    "lib/production/contracts.ts",
+    "lib/production/contracts.test.ts",
+    "lib/jobs/production/queue.ts",
+    "lib/jobs/production/queue.test.ts",
+    "lib/jobs/production/worker.ts",
+    "lib/jobs/production/worker.test.ts",
+    "app/api/production/projects/[projectId]/budget/route.ts"
+  ],
+  "existing_boundaries": {
+    "store": "ProductionStore.transaction is synchronous and uses SQLite immediate transaction. Reuse same configured production.sqlite; no parallel ledger DB. Existing ProductionWritePort extends read port and exposes updateLeasedJob/appendJobEvent.",
+    "runtime": "withProductionStore lazily opens/closes configured PERABYTE_STUDIO_DATA_DIR or cwd/.studio. Keep injected services; no global setter.",
+    "queue": "beginSubmission currently delegates separate update transaction. Eligibility helper can consume transaction read port.",
+    "worker": "authorizeSubmission async boolean at worker.ts:61 followed by beginSubmission at :68 cannot atomically reserve and enter submitting. Capability/account discovery stays outside transactions.",
+    "quote": "Existing Quote has inputHash, entitlement, minor estimates, currency, expiry but no evidenced account/credential/unit binding. Preserve v1 Quote with typed companion binding where sufficient."
+  },
+  "proposed_interface_amendment": {
+    "queue_command": "beginAuthorizedSubmission(jobId, lease, expectedEligibility, capability, reserveInTransaction, now): ProductionJob|null",
+    "reserve_callback": "reserveInTransaction(tx: ProductionWritePort, current: ProductionJob, quote: ProductionQuote, capability: CapabilityReceipt, now: number): BudgetReservation; synchronous trusted server service callback, no network/filesystem.",
+    "worker_option": "Replace authorizeSubmission?: async boolean with injected synchronous reserveInTransaction callback. Missing callback stays BUDGET_BLOCKED. Worker invokes queue.beginAuthorizedSubmission once after asynchronous evidence discovery; no standalone reserve transaction.",
+    "transaction_algorithm": [
+      "Read current job by ID; require expected pre-submit status, current live leaseToken/deadline and unchanged requestHash/snapshot. Validate quote project/provider/model/operation/exact server quote-input binding, fresh expiry and capability at current clock.",
+      "Recompute productionSubmissionEligibilityFingerprint(tx,current,quote,snapshot) and compare expectedEligibility inside transaction, preserving current latest story/animatic/anchor decisions, plan membership and selected canon.",
+      "Synchronous budget service rechecks latest account policy/project authorization CAS versions, expiry/revocation, operation/model/entitlement scope, fresh evidence and credential/connection binding; sums project known actual plus all unresolved reservations and original-day account liability with safe integer arithmetic.",
+      "Insert unique reservation pinned to execution ID/project/idempotency/request hash/authorization/quote/evidence/account/unit/currency/original UTC bucket; exact replay is no-op, conflicting replay rejects.",
+      "Update leased job to submitting and append event through same tx. Any failed lease/status/CAS/event/ledger write throws and rolls back entire reserve+transition. Return current refreshed submitting job, not stale caller lease fields."
+    ],
+    "after_commit": "Provider I/O follows committed boundary. Recheck ownership/cancellation and preserved eligibility immediately before submit without new awaits. If affirmative server evidence proves call was never started, record idempotent nonacceptance release; otherwise any timeout/crash/cancellation/unknown keeps reservation. Revocation after atomic submission boundary does not retroactively erase liability.",
+    "recovery": "Expired submitting jobs enter submission_unknown, never call reserve-and-submit again. Recovered reference/receipt resumes same request. Existing reservation replay never grants permission to resubmit an uncertain acceptance."
+  },
+  "dto_and_port_proposals": [
+    "Strict AccountBudgetPolicy (provider/account/currency/unit, version, daily cap, expiry nullable, revoked, actor/time) and immutable BudgetAuthorization (project + policy ref/version, project cap, bounded model/operation/mode scopes, expiry, actor/time). Separate latest-pointer CAS from append-only versions.",
+    "AccountEvidence (stable provider account ID, source/reference, observedAt/expiresAt, nonsecret credential/connection binding). Trusted producer verifies; browser cannot insert evidence.",
+    "QuoteAccountBinding (quoteId, exact quoted input snapshot/hash, execution semantic binding, evidenceId/account/binding/currency/unit); reserve rejects credential/account drift. Do not hash ProviderRequestSnapshot directly against Quote.inputHash because existing quote shape differs.",
+    "BudgetReservation + append-only ReconciliationEvidence/BillingEvent; states distinguish reserved, known actual, confirmed release, unresolved. Provider facts and explicit human manual facts have distinct provenance; duplicate identical event no-op, conflicting event-key atomically rejects.",
+    "Read ports get latest account policy/project authorization/evidence/quote binding, lookup execution reservation, query project and UTC account totals. Write ports append version with CAS, insert evidence/binding/reservation, append unique reconciliation event; persistence enforces natural uniqueness/FKs.",
+    "Text operation is absent from media-only Quote operation enum. Require explicit I01 DTO/ledger amendment supporting text proposal server execution IDs before I02 charged calls; no fake media job/approval."
+  ],
+  "tasks": [
+    {
+      "id": "I01-B1",
+      "files": "contracts.ts/tests; budget.ts/tests; ports.ts",
+      "work": "Freeze strict DTOs, arithmetic and totals semantics; test null standing expiry vs null unauthorized caps, min>max, mixed unit/currency, overflow, bounded model/operation scope, browser billing-forgery rejection."
+    },
+    {
+      "id": "I01-B2",
+      "files": "002-budget.sql; sqlite.ts/tests",
+      "work": "Add ordered version-2 migration without changing 001.sql; immutable policy/auth/evidence/event tables and unique reservation/event keys. Preserve existing records and known-version rejection. Reopen old/fresh DB and verify migration once, FK integrity, atomic rollback, CAS and replay."
+    },
+    {
+      "id": "I01-B3",
+      "files": "services/production/budget.ts/tests; budget route",
+      "work": "Inject store and trusted evidence producers. Authorize/revoke policies via same-origin bounded strict commands and server account binding; GET returns liability/unknown/overrun safely. Never accept browser actual/refund facts."
+    },
+    {
+      "id": "I01-B4",
+      "files": "queue.ts/tests; worker.ts/tests",
+      "work": "Implement approved synchronous atomic boundary. Real two-store SQLite concurrent jobs/projects: only one fits jointly; exactly one reserve/submit. Cover lease/approval/policy revoke races, stale quote/account binding, rollback and uncertain acceptance recovery."
+    },
+    {
+      "id": "I01-B5",
+      "files": "budget service and SQLite tests",
+      "work": "Reconcile trusted events independently of media completion. Verify affirmative nonbilling release once; generic failure/cancel/unknown retains; duplicate/conflicting settlement and partial refund; actual overrun; lowered caps and renewals preserve totals; project outstanding liability survives midnight while original daily bucket remains pinned."
+    }
+  ],
+  "verification_commands": [
+    [
+      "npm",
+      "test",
+      "--",
+      "lib/production/contracts.test.ts",
+      "lib/production/budget.test.ts",
+      "lib/services/production/budget.test.ts",
+      "lib/repositories/production/sqlite.test.ts",
+      "lib/jobs/production/queue.test.ts",
+      "lib/jobs/production/worker.test.ts"
+    ],
+    [
+      "npm",
+      "run",
+      "typecheck"
+    ],
+    [
+      "git",
+      "diff",
+      "--check"
+    ]
+  ],
+  "verification_policy": "Future implementer saves behavioral RED then GREEN and real SQLite reopen/race outputs with hashes, no real credentials/network/billing. Integrator runs broader tests/build at integration milestone. This planning turn ran no tests.",
+  "out_of_scope": [
+    "No code, migration execution, dependent dispatch, acceptance or paid authorization performed.",
+    "No UI redesign; C07 minimal budget controls consume accepted service."
+  ],
+  "paid_calls": [],
+  "network_calls": [],
+  "credentials_accessed": false
+}

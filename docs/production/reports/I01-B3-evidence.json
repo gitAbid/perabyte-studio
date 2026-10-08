@@ -1,0 +1,88 @@
+{
+  "task_id": "I01",
+  "slice": "I01-B3 service/API",
+  "status": "accepted_integrated_slice",
+  "code_sha": "4997ecc322b24389c6cb84bb13c6ca967ddfbf4e",
+  "source_commits": [
+    "435449ae33210c087ad07d32b6faebdb0dd4464a",
+    "1c664c3f46bf993d59b1791ba2ac4961ca40ed9d"
+  ],
+  "integration_commits": [
+    "b7299dd",
+    "4997ecc"
+  ],
+  "independent_review": "reports/I01-B3-rereview.json",
+  "worker_report": {
+    "path": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/i01-b3-corrected/report.json",
+    "sha256": "2526944dbe85969b14c9ee68c82c8f4c64c70d2b73863488228213dc3e340344"
+  },
+  "root_checks": [
+    {
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "lib/services/production/budget.test.ts",
+        "app/api/production/projects/[projectId]/budget/route.test.ts"
+      ],
+      "exit_code": 0,
+      "observed": "27 tests, 2files",
+      "output_file": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/i01-b3-corrected/root-focused.txt",
+      "output_sha256": "82e3649d025bfe054f68015be4ca8a1b3d692db9e263753b186706e3d4cf2047"
+    },
+    {
+      "command": [
+        "npm",
+        "test"
+      ],
+      "exit_code": 0,
+      "observed": "1122 tests,101files",
+      "output_file": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/i01-b3-corrected/root-full-suite.txt",
+      "output_sha256": "a433638343078ebf209842fc6ec0bc64ee0ddb619f32bb89d2749867c8258aed"
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exit_code": 0,
+      "observed": "pass",
+      "output_file": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/i01-b3-corrected/root-typecheck.txt",
+      "output_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit_code": 0,
+      "observed": "pass",
+      "output_file": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/i01-b3-corrected/root-build.txt",
+      "output_sha256": "58b0a094c021e3173b707f20f58c33ab71149eea314204d2920a0809478cb397"
+    },
+    {
+      "command": [
+        "node_modules/.bin/tsx",
+        "evidence/integration/i01-b3-corrected/http-smoke.ts"
+      ],
+      "exit_code": 0,
+      "observed": "6 built HTTP assertions; unavailable account producer, no-store, sanitized responses; server stopped exit143 after SIGTERM",
+      "output_file": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/i01-b3-corrected/root-http-smoke.txt",
+      "output_sha256": "e96cd7b638e464d94036944d4004e568d09ba1bbf76b5ccfb1efedca29ccbcd3"
+    }
+  ],
+  "limitations": [
+    "No extra executed B3 nonbilling success case; direct nonbilling arithmetic/storage behavior covered accepted B1/B2. Worker B3-06 prose is broader than actual executed service case; independent review records qualification.",
+    "Full I01, real B3+B4 race/reconciliation gate, live proof composition, C06 human commands and real films remain unfinished."
+  ],
+  "paid_calls": [],
+  "verification_failures_preserved": [
+    {
+      "path": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/i01-b3-corrected/root-http-scaffold-failure.txt",
+      "reason": "Smoke script top-level await compiled as CJS; no server or assertions ran. Wrapped async main; successful smoke saved separately.",
+      "sha256": "658d4506c813370bdda04882bb1222d57802fc5b159406734b62a7862970dbc3"
+    }
+  ]
+}

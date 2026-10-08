@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "taskId": "I01-B4-independent-review",
+  "actualSHA": "5a838a1b4d8b676f4a700c8bf9ce474a83e0ed1e",
+  "baseSHA": "c7c1e73716c28233b6628b49f85eccac3dfc9b06",
+  "decision": "code_review_passed_slice_acceptance_pending_verifiability_and_service_gates",
+  "findings": [],
+  "ownership": {
+    "changedFiles": [
+      "lib/jobs/production/queue.test.ts",
+      "lib/jobs/production/queue.ts",
+      "lib/jobs/production/worker.test.ts",
+      "lib/jobs/production/worker.ts"
+    ],
+    "pass": true
+  },
+  "commands": [
+    {
+      "command": "npm test -- lib/jobs/production/queue.test.ts lib/jobs/production/worker.test.ts",
+      "exitCode": 0,
+      "testsPassed": 53,
+      "log": "/tmp/perabyte-I01-B4-independent-tests.txt"
+    },
+    {
+      "command": "git diff baseSHA actualSHA --check",
+      "exitCode": 0
+    }
+  ],
+  "hashAudit": [
+    {
+      "path": "lib/jobs/production/queue.ts",
+      "match": true
+    },
+    {
+      "path": "lib/jobs/production/queue.test.ts",
+      "match": true
+    },
+    {
+      "path": "lib/jobs/production/worker.ts",
+      "match": true
+    },
+    {
+      "path": "lib/jobs/production/worker.test.ts",
+      "match": true
+    },
+    {
+      "path": "/tmp/I01-B4-focused-green.log",
+      "match": true
+    },
+    {
+      "path": "/tmp/I01-B4-typecheck.log",
+      "match": true
+    },
+    {
+      "path": "/tmp/I01-B4-diff-check.log",
+      "match": true
+    }
+  ],
+  "allHashesMatch": true,
+  "independentEvidenceSHA256": "dee24c7865513a22efbc2d2fd1b9f387bd8955771dba9e98947af3d3a680a1f4",
+  "reviewedBehavior": [
+    "Same SQLite IMMEDIATE transaction rereads live job/lease/outbox/quote and current approvals before reserve; heartbeat outbox is rolled back on admission failure.",
+    "Exact persisted reservation is read back and all execution, quote/evidence/money scope, policy/auth revision and timestamp pins validated before updating submitting and appending event; false CAS throws to rollback.",
+    "Fresh transaction clock, quote/capability/evidence expiry and context policy/auth revisions prevent stale preparation admission; current credential rotation is trusted callback responsibility, exercised by fixture and must be bound by B3 adapter.",
+    "Existing reservation/submitting history prohibits duplicate admission; submission_unknown keeps durable reservation, zero automatic resubmit.",
+    "ACK during owned shutdown persists; approval/policy revocation after commit does not revoke crossed admission. Cancellation/media completion never settles billing.",
+    "Real SQLite two-project shared-account race allows exactly one200 reservation under300 cap; injected submitting event failure rolls back execution/reservation/job transition and provider call."
+  ],
+  "requiredCombinedGates": [
+    {
+      "id": "I01-B3-B4-real-service-race",
+      "description": "Replace test finance fixture with accepted B3 adapter in combined suite. Current worker.test.ts:41 sums upperEstimate and does not use B1 fold/summarize; race verifies fresh reservations only. Combined tests must exercise settled actual/refund/unresolved/overrun with real service and current credential getter."
+    },
+    {
+      "id": "I01-behavioral-RED",
+      "description": "No archived historical behavioral RED exists. Unsaved interface-migration failures are not RED acceptance evidence. Required packet RED remains open. Minimal prospective regression sensitivity evidence: isolated /tmp controlled split-transaction mutation commits reserve before job/event transaction; run existing rollback trigger regression and capture failure then exactSHA green. Label mutation evidence explicitly, never historical baseline."
+    }
+  ],
+  "unverified": [
+    "Independent typecheck not rerun; worker typecheck log hash verified.",
+    "B3 callbacks/live proof producer composition, full suite/build/built HTTP remain root combined gates.",
+    "Audio remains blocked; this slice explicitly admits anchor/take only; text reserve belongs service/I02 boundary."
+  ],
+  "fullI01Accepted": false,
+  "paidNetworkCalls": 0,
+  "sliceAccepted": false
+}

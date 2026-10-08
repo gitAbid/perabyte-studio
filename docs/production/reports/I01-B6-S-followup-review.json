@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "task_id": "I01-B6-S-followup-review",
+  "reviewed_at_utc": "2026-10-04T14:58:10.921391+00:00",
+  "reviewed_sha": "1490e94040105664957e5fc228a1d3f5a3f6cf5b",
+  "followup_base_sha": "e72aa3cbe0e2088a936c37a70457d48182ca3b3d",
+  "original_slice_base_sha": "2ded8389b71788001dc25b28b46d671f9ef4731e",
+  "worktree": "/Users/abid/.codex/worktrees/production-provider-proof/perabyte-studio",
+  "verdict": "accept",
+  "findings": [],
+  "closed_ids": [
+    "B6S-R1",
+    "B6S-R2",
+    "B6S-R3"
+  ],
+  "closed_findings": [
+    {
+      "id": "B6S-R1",
+      "status": "closed",
+      "file": "lib/repositories/production/sqlite.ts",
+      "line": 139,
+      "evidence": "Both observedAt and expiresAt require exact equality between archived account_session and pinned AccountEvidence. Existing atomic test separately varies each field; both reject and roll back quote/artifact/evidence writes."
+    },
+    {
+      "id": "B6S-R2",
+      "status": "closed",
+      "file": "lib/repositories/production/sqlite.ts",
+      "line": 157,
+      "evidence": "Execution expiry is bounded by workerPayload.expiresAt. Existing fixture short-lived worker variation rejects and verifies no job/execution/reservation/link or extra artifacts remain."
+    },
+    {
+      "id": "B6S-R3",
+      "status": "closed",
+      "file": "lib/repositories/production/sqlite.ts",
+      "line": 157,
+      "evidence": "Worker sdkVersion, sdkSourceHash and adapterVersion each compare exactly to quotePayload.session. Three separate fixture mismatches reject with aggregate rollback. Valid quote probe session/session-probe and worker session/session-worker differ in role and ID and still insert/replay/reopen successfully."
+    }
+  ],
+  "acceptance": {
+    "source_scope": "Only sqlite.ts and sqlite.test.ts changed; remaining original seven-path slice source unchanged.",
+    "v3_preservation": "Existing real 001/002/003 fixture now populates approval, take, asset, job and record-reference rows before migration004; before/after SQL rows compare equal and foreign_key_check is empty. Focused test passes.",
+    "proof_storage": "Original reviewed schema/archive/generation CAS/additive migration constraints remain unchanged. Fresh existing two-case selector passes proof/CAS reopen, link replay and new rejection/rollback cases.",
+    "parent_scope": "Accepts this frozen storage slice and followup for root integration consideration; no composer, current account truth, paid admission or full I01/release acceptance."
+  },
+  "ownership": {
+    "changed_paths": [
+      "lib/repositories/production/sqlite.test.ts",
+      "lib/repositories/production/sqlite.ts"
+    ],
+    "source_hashes": {
+      "lib/repositories/production/sqlite.test.ts": "407d7a2ada2ca12d4b414bb7137e57603906d645837e7453770415d142f0fd32",
+      "lib/repositories/production/sqlite.ts": "5e487bc52f6067210c8cfa1527ac6364ff257f1d3f214d1851420e4d734ab91d"
+    },
+    "source_matches_exact_commit": true,
+    "tracked_source_clean": true,
+    "untracked_worker_evidence_preserved": true
+  },
+  "boundary": {
+    "path": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/docs/production/reports/I01-B6-S-review-followup-boundary.json",
+    "sha256": "dfe6acfb27be3e4b0a87f06dc15188b6035d01a2c32f061876bbebe59f848c4a"
+  },
+  "original_review": {
+    "path": "/tmp/perabyte-I01-B6-S-review.json",
+    "sha256": "4e06e8f80a1dfc818a69afe3a665b62a2f30942d608a41899e26a439cffa913c"
+  },
+  "commands": [
+    {
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "lib/repositories/production/sqlite.test.ts",
+        "-t",
+        "I01-B6-S"
+      ],
+      "cwd": "/Users/abid/.codex/worktrees/production-provider-proof/perabyte-studio",
+      "exit_code": 0,
+      "result": "1 file passed; 2 tests passed, 27 skipped",
+      "output_file": "/tmp/perabyte-I01-B6-S-followup-1490e94-focused-20261004-1.log",
+      "output_sha256": "2abc23f9d1f69e080655dac4ff6f97e1cc2ad61db335d5b00a90c2648c7cbaf0"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check",
+        "e72aa3cbe0e2088a936c37a70457d48182ca3b3d",
+        "1490e94040105664957e5fc228a1d3f5a3f6cf5b"
+      ],
+      "cwd": "/Users/abid/.codex/worktrees/production-provider-proof/perabyte-studio",
+      "exit_code": 0,
+      "result": "No whitespace errors",
+      "output_file": null
+    }
+  ],
+  "worker_report": {
+    "path": "/Users/abid/.codex/worktrees/production-provider-proof/perabyte-studio/evidence/I01-B6-S/followup-20261004T1453Z.json",
+    "sha256": "8274fbb19c12b178030ebc11e27a097f26480d89965f773330c8577c479b44d0"
+  },
+  "worker_evidence_verified": [
+    {
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "lib/repositories/production/sqlite.test.ts",
+        "-t",
+        "I01-B6-S"
+      ],
+      "path": "/Users/abid/.codex/worktrees/production-provider-proof/perabyte-studio/evidence/I01-B6-S/followup-20261004-145218-69730-focused-final.log",
+      "sha256": "955e19d1f803bd28d8a6a65f2868d020f761e8c3e3d916b0c14a1b5faf26b48c",
+      "worker_exit_code": 0
+    },
+    {
+      "argv": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "path": "/Users/abid/.codex/worktrees/production-provider-proof/perabyte-studio/evidence/I01-B6-S/followup-20261004-145225-69969-typecheck-final.log",
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "worker_exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "path": "/Users/abid/.codex/worktrees/production-provider-proof/perabyte-studio/evidence/I01-B6-S/followup-20261004-145232-70061-diffcheck-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "worker_exit_code": 0
+    }
+  ],
+  "limitations": [
+    "Reviewer ran only the two existing acceptance tests; no full suite, build, broader matrix, additional test or repeated typecheck. Worker typecheck raw log read/hash-verified.",
+    "The migrated graph uses representative SQL records with placeholder media payloads; preservation establishes relational/history bytes, not a playable or semantically validated human-approved film.",
+    "Historical source-derived findings and preserved failing variations remain in original review; no new RED reconstruction or mutation run performed in this followup.",
+    "Opaque recipe/config parsing and actual provider session/client correctness remain future consumer responsibilities under frozen storage scope.",
+    "No source edits, integration, network/authentication/credential access or paid operations."
+  ],
+  "paid_calls": [],
+  "network_calls": [],
+  "source_edits": [],
+  "frozen_after_review": true
+}

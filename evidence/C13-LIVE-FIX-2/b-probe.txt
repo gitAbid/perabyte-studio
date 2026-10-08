@@ -1,0 +1,7 @@
+store: /Users/abid/Projects/perabyte-studio/.worktrees/zcode-production-core/.studio (readonly:true)
+job: 304f9c32-256b-4707-894b-88b758c6a6c3 status: blocked
+event rows: 1 raw row keys: at,jobId,message,progress,sequence,status
+raw-row JobReadModelSchema.parse: FAIL (Unrecognized key: "jobId")
+raw-row JobEventSchema.parse: FAIL (Unrecognized key: "jobId")
+projected JobReadModelSchema.parse: PASS {"jobStatus":"blocked","events":1,"firstEvent":{"sequence":1,"status":"blocked"}}
+PROBE OK: defect reproduces on raw rows; projected read model parses.

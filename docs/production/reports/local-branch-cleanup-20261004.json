@@ -1,0 +1,283 @@
+{
+  "date": "2026-10-04T15:05:09.442109+00:00",
+  "policy": "User requested immediate integration and deletion of no-longer-needed local branches; independently accepted source delivered via cherry-pick, do not redundantly merge old branches.",
+  "root_head": "f4f0cb78392af72cce388b144e732403cd8f9940",
+  "recovery_bundle": "evidence/branch-cleanup-20261004/local-refs-before-cleanup.bundle",
+  "bundle_sha256": "d8587d12aec523db4f39054c4c628728b7fb1f0e10c05f807caae0e00c51e67e",
+  "branches": [
+    {
+      "branch": "codex/c04-provider-recovery",
+      "head": "27dc9f742e3771fa5f850188bbec4945f86617cf",
+      "unmatched_commits": [
+        {
+          "sha": "25226bb77b3a3e19a6cf54ecc44751be631ba8a6",
+          "paths": [
+            "lib/repositories/production/ports.ts",
+            "lib/repositories/production/sqlite.test.ts",
+            "lib/repositories/production/sqlite.ts"
+          ],
+          "subject": "C04: restore outbox intent for reconciled submissions"
+        },
+        {
+          "sha": "8914c01bc1a8421d50cf1451c0b92a1339f6f221",
+          "paths": [
+            "lib/production/revisions.test.ts",
+            "lib/production/revisions.ts",
+            "lib/repositories/production/sqlite.test.ts",
+            "lib/repositories/production/sqlite.ts",
+            "lib/services/production/shot-plan.test.ts"
+          ],
+          "subject": "C02: require exact shot input equality for reuse"
+        }
+      ],
+      "integration_evidence": "All commits patch-equivalent to production-core; exceptions25226bb/8914c01 have exactly equal added/deleted lines to root893e987/db55bad; evidence-only65fecd4 content retained byte-identical under evidence/integration/c06-pre-r/worker.",
+      "action": "deleted_completed_local_branch",
+      "deletion_output": "Deleted branch codex/c04-provider-recovery (was 27dc9f7)."
+    },
+    {
+      "branch": "codex/compact-render-settings",
+      "head": "9341c4fdeb6f951c6bd7db5d68722e0e10e1e9c6",
+      "unmatched_commits": [],
+      "integration_evidence": "All commits patch-equivalent to production-core; exceptions25226bb/8914c01 have exactly equal added/deleted lines to root893e987/db55bad; evidence-only65fecd4 content retained byte-identical under evidence/integration/c06-pre-r/worker.",
+      "action": "deleted_completed_local_branch",
+      "deletion_output": "Deleted branch codex/compact-render-settings (was 9341c4f)."
+    },
+    {
+      "branch": "codex/production-admission",
+      "head": "bb43a01f2a42f1889bc30ecd8da79771a0a2c17d",
+      "unmatched_commits": [],
+      "integration_evidence": "All commits patch-equivalent to production-core; exceptions25226bb/8914c01 have exactly equal added/deleted lines to root893e987/db55bad; evidence-only65fecd4 content retained byte-identical under evidence/integration/c06-pre-r/worker.",
+      "action": "deleted_completed_local_branch",
+      "deletion_output": "Deleted branch codex/production-admission (was bb43a01)."
+    },
+    {
+      "branch": "codex/production-admission-proof",
+      "head": "5a838a1b4d8b676f4a700c8bf9ce474a83e0ed1e",
+      "unmatched_commits": [],
+      "integration_evidence": "Controlled experiment never merged: branch committed base already integrated; any archived draft mutant remains in recoverable app snapshot/bundle and is not product code.",
+      "action": "deleted_completed_local_branch",
+      "deletion_output": "Deleted branch codex/production-admission-proof (was 5a838a1)."
+    },
+    {
+      "branch": "codex/production-approval-storage",
+      "head": "c6c143063ebfc6f4adc13f020dd7ca667971a5bb",
+      "unmatched_commits": [],
+      "integration_evidence": "All commits patch-equivalent to production-core; exceptions25226bb/8914c01 have exactly equal added/deleted lines to root893e987/db55bad; evidence-only65fecd4 content retained byte-identical under evidence/integration/c06-pre-r/worker.",
+      "action": "deleted_completed_local_branch",
+      "deletion_output": "Deleted branch codex/production-approval-storage (was c6c1430)."
+    },
+    {
+      "branch": "codex/production-budget",
+      "head": "b38712c569d2beb6901f9f057c86aa909b98189b",
+      "unmatched_commits": [],
+      "integration_evidence": "All commits patch-equivalent to production-core; exceptions25226bb/8914c01 have exactly equal added/deleted lines to root893e987/db55bad; evidence-only65fecd4 content retained byte-identical under evidence/integration/c06-pre-r/worker.",
+      "action": "deleted_completed_local_branch",
+      "deletion_output": "Deleted branch codex/production-budget (was b38712c)."
+    },
+    {
+      "branch": "codex/production-budget-service",
+      "head": "1c664c3f46bf993d59b1791ba2ac4961ca40ed9d",
+      "unmatched_commits": [],
+      "integration_evidence": "All commits patch-equivalent to production-core; exceptions25226bb/8914c01 have exactly equal added/deleted lines to root893e987/db55bad; evidence-only65fecd4 content retained byte-identical under evidence/integration/c06-pre-r/worker.",
+      "action": "deleted_completed_local_branch",
+      "deletion_output": "Deleted branch codex/production-budget-service (was 1c664c3)."
+    },
+    {
+      "branch": "codex/production-capabilities",
+      "head": "fada33a857dc1c63f8ef58012346bfd2146fc746",
+      "unmatched_commits": [],
+      "integration_evidence": "All commits patch-equivalent to production-core; exceptions25226bb/8914c01 have exactly equal added/deleted lines to root893e987/db55bad; evidence-only65fecd4 content retained byte-identical under evidence/integration/c06-pre-r/worker.",
+      "action": "deleted_completed_local_branch",
+      "deletion_output": "Deleted branch codex/production-capabilities (was fada33a)."
+    },
+    {
+      "branch": "codex/production-contracts",
+      "head": "a16b95295f31d4ef07cf239a146fc1709414620e",
+      "unmatched_commits": [],
+      "integration_evidence": "All commits patch-equivalent to production-core; exceptions25226bb/8914c01 have exactly equal added/deleted lines to root893e987/db55bad; evidence-only65fecd4 content retained byte-identical under evidence/integration/c06-pre-r/worker.",
+      "action": "deleted_completed_local_branch",
+      "deletion_output": "Deleted branch codex/production-contracts (was a16b952)."
+    },
+    {
+      "branch": "codex/production-core",
+      "head": "f4f0cb78392af72cce388b144e732403cd8f9940",
+      "unmatched_commits": [],
+      "action": "retained_active_or_primary"
+    },
+    {
+      "branch": "codex/production-handover-guard",
+      "head": "9c1305c68cf952c49176d5ffc222301f1781483c",
+      "unmatched_commits": [],
+      "integration_evidence": "All commits patch-equivalent to production-core; exceptions25226bb/8914c01 have exactly equal added/deleted lines to root893e987/db55bad; evidence-only65fecd4 content retained byte-identical under evidence/integration/c06-pre-r/worker.",
+      "action": "deleted_completed_local_branch",
+      "deletion_output": "Deleted branch codex/production-handover-guard (was 9c1305c)."
+    },
+    {
+      "branch": "codex/production-human-approval",
+      "head": "1a369266954850fb694949cae5c569f6df572884",
+      "unmatched_commits": [],
+      "integration_evidence": "All commits patch-equivalent to production-core; exceptions25226bb/8914c01 have exactly equal added/deleted lines to root893e987/db55bad; evidence-only65fecd4 content retained byte-identical under evidence/integration/c06-pre-r/worker.",
+      "action": "deleted_completed_local_branch",
+      "deletion_output": "Deleted branch codex/production-human-approval (was 1a36926)."
+    },
+    {
+      "branch": "codex/production-ledger",
+      "head": "631b45262087ab9287b370df36e396ac73410276",
+      "unmatched_commits": [],
+      "integration_evidence": "All commits patch-equivalent to production-core; exceptions25226bb/8914c01 have exactly equal added/deleted lines to root893e987/db55bad; evidence-only65fecd4 content retained byte-identical under evidence/integration/c06-pre-r/worker.",
+      "action": "deleted_completed_local_branch",
+      "deletion_output": "Deleted branch codex/production-ledger (was 631b452)."
+    },
+    {
+      "branch": "codex/production-media-recipe",
+      "head": "65fecd44eb1f0ee8cd58e97fe4b9da823e1f915e",
+      "unmatched_commits": [
+        {
+          "sha": "65fecd44eb1f0ee8cd58e97fe4b9da823e1f915e",
+          "paths": [
+            "evidence/C06-PRE-R/context-followup-report.json"
+          ],
+          "subject": "docs(production): record async context review follow-up"
+        }
+      ],
+      "integration_evidence": "All commits patch-equivalent to production-core; exceptions25226bb/8914c01 have exactly equal added/deleted lines to root893e987/db55bad; evidence-only65fecd4 content retained byte-identical under evidence/integration/c06-pre-r/worker.",
+      "action": "deleted_completed_local_branch",
+      "deletion_output": "Deleted branch codex/production-media-recipe (was 65fecd4)."
+    },
+    {
+      "branch": "codex/production-provider-proof",
+      "head": "1490e94040105664957e5fc228a1d3f5a3f6cf5b",
+      "unmatched_commits": [],
+      "integration_evidence": "All commits patch-equivalent to production-core; exceptions25226bb/8914c01 have exactly equal added/deleted lines to root893e987/db55bad; evidence-only65fecd4 content retained byte-identical under evidence/integration/c06-pre-r/worker.",
+      "action": "deleted_completed_local_branch",
+      "deletion_output": "Deleted branch codex/production-provider-proof (was 1490e94)."
+    },
+    {
+      "branch": "codex/production-provider-session",
+      "head": "78426b7c3a5e825358dbb401b5f4d941bf8e2060",
+      "unmatched_commits": [],
+      "action": "retained_active_or_primary"
+    },
+    {
+      "branch": "codex/production-render-policy",
+      "head": "7cd60586b4383d1ad703b656c63bf9c2a0c5f512",
+      "unmatched_commits": [],
+      "integration_evidence": "All commits patch-equivalent to production-core; exceptions25226bb/8914c01 have exactly equal added/deleted lines to root893e987/db55bad; evidence-only65fecd4 content retained byte-identical under evidence/integration/c06-pre-r/worker.",
+      "action": "deleted_completed_local_branch",
+      "deletion_output": "Deleted branch codex/production-render-policy (was 7cd6058)."
+    },
+    {
+      "branch": "codex/production-revisions",
+      "head": "e65f57168ae61dfe612a44bb2fdb5cc26fd68f84",
+      "unmatched_commits": [],
+      "integration_evidence": "All commits patch-equivalent to production-core; exceptions25226bb/8914c01 have exactly equal added/deleted lines to root893e987/db55bad; evidence-only65fecd4 content retained byte-identical under evidence/integration/c06-pre-r/worker.",
+      "action": "deleted_completed_local_branch",
+      "deletion_output": "Deleted branch codex/production-revisions (was e65f571)."
+    },
+    {
+      "branch": "codex/production-runtime",
+      "head": "ae3a22e7cb9b5ae565e82f0ddf46b51827b45093",
+      "unmatched_commits": [],
+      "integration_evidence": "All commits patch-equivalent to production-core; exceptions25226bb/8914c01 have exactly equal added/deleted lines to root893e987/db55bad; evidence-only65fecd4 content retained byte-identical under evidence/integration/c06-pre-r/worker.",
+      "action": "deleted_completed_local_branch",
+      "deletion_output": "Deleted branch codex/production-runtime (was ae3a22e)."
+    },
+    {
+      "branch": "codex/production-shot-plan",
+      "head": "d416302d78204d7243538348d9ef7d9306bf7a2c",
+      "unmatched_commits": [],
+      "integration_evidence": "All commits patch-equivalent to production-core; exceptions25226bb/8914c01 have exactly equal added/deleted lines to root893e987/db55bad; evidence-only65fecd4 content retained byte-identical under evidence/integration/c06-pre-r/worker.",
+      "action": "deleted_completed_local_branch",
+      "deletion_output": "Deleted branch codex/production-shot-plan (was d416302)."
+    },
+    {
+      "branch": "codex/production-store",
+      "head": "9b0a3abc748cfed75103a799d80d7deb8c7e9e06",
+      "unmatched_commits": [],
+      "integration_evidence": "All commits patch-equivalent to production-core; exceptions25226bb/8914c01 have exactly equal added/deleted lines to root893e987/db55bad; evidence-only65fecd4 content retained byte-identical under evidence/integration/c06-pre-r/worker.",
+      "action": "deleted_completed_local_branch",
+      "deletion_output": "Deleted branch codex/production-store (was 9b0a3ab)."
+    },
+    {
+      "branch": "codex/production-story-continuity",
+      "head": "e080542781f7276cd4d5b9666bfd2d352effe99e",
+      "unmatched_commits": [],
+      "integration_evidence": "All commits patch-equivalent to production-core; exceptions25226bb/8914c01 have exactly equal added/deleted lines to root893e987/db55bad; evidence-only65fecd4 content retained byte-identical under evidence/integration/c06-pre-r/worker.",
+      "action": "deleted_completed_local_branch",
+      "deletion_output": "Deleted branch codex/production-story-continuity (was e080542)."
+    },
+    {
+      "branch": "codex/production-take-selection",
+      "head": "ac114aa75a42595f042ebb1180308de1ddc2928b",
+      "unmatched_commits": [],
+      "integration_evidence": "All commits patch-equivalent to production-core; exceptions25226bb/8914c01 have exactly equal added/deleted lines to root893e987/db55bad; evidence-only65fecd4 content retained byte-identical under evidence/integration/c06-pre-r/worker.",
+      "action": "deleted_completed_local_branch",
+      "deletion_output": "Deleted branch codex/production-take-selection (was ac114aa)."
+    },
+    {
+      "branch": "codex/production-usage-policy",
+      "head": "c5bc6774150ebcad80a003646c3843d163cfbc60",
+      "unmatched_commits": [],
+      "integration_evidence": "All commits patch-equivalent to production-core; exceptions25226bb/8914c01 have exactly equal added/deleted lines to root893e987/db55bad; evidence-only65fecd4 content retained byte-identical under evidence/integration/c06-pre-r/worker.",
+      "action": "deleted_completed_local_branch",
+      "deletion_output": "Deleted branch codex/production-usage-policy (was c5bc677)."
+    },
+    {
+      "branch": "codex/production-worker",
+      "head": "b09ddb103abd340bb41c24a0be90ea1dc21033a9",
+      "unmatched_commits": [
+        {
+          "sha": "25226bb77b3a3e19a6cf54ecc44751be631ba8a6",
+          "paths": [
+            "lib/repositories/production/ports.ts",
+            "lib/repositories/production/sqlite.test.ts",
+            "lib/repositories/production/sqlite.ts"
+          ],
+          "subject": "C04: restore outbox intent for reconciled submissions"
+        },
+        {
+          "sha": "8914c01bc1a8421d50cf1451c0b92a1339f6f221",
+          "paths": [
+            "lib/production/revisions.test.ts",
+            "lib/production/revisions.ts",
+            "lib/repositories/production/sqlite.test.ts",
+            "lib/repositories/production/sqlite.ts",
+            "lib/services/production/shot-plan.test.ts"
+          ],
+          "subject": "C02: require exact shot input equality for reuse"
+        }
+      ],
+      "integration_evidence": "All commits patch-equivalent to production-core; exceptions25226bb/8914c01 have exactly equal added/deleted lines to root893e987/db55bad; evidence-only65fecd4 content retained byte-identical under evidence/integration/c06-pre-r/worker.",
+      "action": "deleted_completed_local_branch",
+      "deletion_output": "Deleted branch codex/production-worker (was b09ddb1)."
+    },
+    {
+      "branch": "feat/ui-overhall",
+      "head": "79a8c89c25eee32b699ea68217487e519963e8ce",
+      "unmatched_commits": [],
+      "action": "retained_active_or_primary"
+    },
+    {
+      "branch": "master",
+      "head": "42bf1591868a6fcf0b2fadfa90d5d66bb0febe12",
+      "unmatched_commits": [],
+      "action": "retained_active_or_primary"
+    },
+    {
+      "branch": "story-consistency",
+      "head": "816d8bfccde0758c380cc386ae14aba0f2fe48d1",
+      "unmatched_commits": [],
+      "integration_evidence": "All commits patch-equivalent to production-core; exceptions25226bb/8914c01 have exactly equal added/deleted lines to root893e987/db55bad; evidence-only65fecd4 content retained byte-identical under evidence/integration/c06-pre-r/worker.",
+      "action": "deleted_completed_local_branch",
+      "deletion_output": "Deleted branch story-consistency (was 816d8bf)."
+    }
+  ],
+  "deleted_count": 24,
+  "remaining_branches": [
+    "codex/production-core",
+    "codex/production-provider-session",
+    "feat/ui-overhall",
+    "master"
+  ],
+  "remote_branches_changed": false
+}

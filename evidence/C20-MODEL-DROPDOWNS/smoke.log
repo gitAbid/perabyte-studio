@@ -1,0 +1,27 @@
+PASS  server health — http://127.0.0.1:3211
+PASS  route /api/production/models?kind=anchor — ["flux1-schnell-fp8"]
+PASS  route /api/production/models?kind=take — ["minimax-h3-fl2va-fp8_i2v_turbo","minimax-h3-fl2va-fp8_i2v"]
+PASS  route rejects invalid kind — status 400
+PASS  project created — 76b61a0b-014b-4f4f-9b68-ac8680d6c948
+PASS  story approved
+PASS  plan + animatic approved
+PASS  anchors: provider control is a SELECT
+PASS  anchors: model control is a SELECT
+PASS  anchors: provider offers sogni
+PASS  anchors: baseline flux1-schnell-fp8 served — flux1-schnell-fp8
+PASS  anchors: default preselected — flux1-schnell-fp8
+PASS  anchors: PROVIDER_MODEL_REQUIRED gone
+PASS  anchors: submit enabled
+SCREENSHOT 01-anchors-dropdowns.png
+PASS  takes: provider control is a SELECT
+PASS  takes: model control is a SELECT
+PASS  takes: i2v baseline served — minimax-h3-fl2va-fp8_i2v_turbo, minimax-h3-fl2va-fp8_i2v
+PASS  takes: only i2v image-to-video options — minimax-h3-fl2va-fp8_i2v_turbo, minimax-h3-fl2va-fp8_i2v
+PASS  takes: default preselected — minimax-h3-fl2va-fp8_i2v_turbo
+PASS  takes: PROVIDER_MODEL_REQUIRED gone after prompt — ANCHOR_APPROVAL_REQUIREDthis shot has no current approved anchor; approve an anchor before generating a take
+PASS  takes: only the by-design anchor-approval gate remains — ANCHOR_APPROVAL_REQUIREDthis shot has no current approved anchor; approve an anchor before generating a take
+PASS  takes: submit disabled only by the missing (offline-impossible) anchor approval
+SCREENSHOT 02-takes-dropdowns.png
+PASS  zero media-quote/enqueue requests — 20 production API requests, all read/approval/plan
+
+0 failure(s)

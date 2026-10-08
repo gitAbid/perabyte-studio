@@ -1,0 +1,18 @@
+
+> perabyte-studio@0.1.0 test
+> vitest run lib/jobs/production/worker.test.ts lib/jobs/production/queue.test.ts lib/media/production/vault.test.ts lib/providers/production/sogni-provider.test.ts
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.0 /Users/abid/.codex/worktrees/production-worker/perabyte-studio
+
+
+ Test Files  4 passed (4)
+      Tests  17 passed (17)
+   Start at  17:23:31
+   Duration  535ms (tests 44%, transform 29%, import 26%, worker 1%)
+
+
+EXIT=0

@@ -1,0 +1,26 @@
+{
+  "actual_sha": "4e97c5829fada681fe5ef37764961931956f9e8c",
+  "decision": "changes_required",
+  "artifacts": [
+    {
+      "original": "/tmp/perabyte-I01-B2-review-tests.txt",
+      "archived_path": "evidence/integration/i01-b2-review-artifacts/perabyte-I01-B2-review-tests.txt",
+      "sha256": "2ee736554fd13ac51c0c1b229ab81b4e2332aa684725e5a24e8c9724a6ea5dc2",
+      "reported_hash_matches": true
+    },
+    {
+      "original": "/tmp/perabyte-I01-B2-process-startup.txt",
+      "archived_path": "evidence/integration/i01-b2-review-artifacts/perabyte-I01-B2-process-startup.txt",
+      "sha256": "3b6a42e9c6a01c517352632854b1793b7fef48e65f188cd6432f453a1d400ab9",
+      "reported_hash_matches": true
+    },
+    {
+      "original": "/tmp/perabyte-b2-startup.py",
+      "archived_path": "evidence/integration/i01-b2-review-artifacts/perabyte-b2-startup.py",
+      "sha256": "82faf298d3c0215daf64246ac9da078e038e231fc92848c5b48dcee271d41108",
+      "reported_hash_matches": true
+    }
+  ],
+  "worker_report_sha256": "f48bd8f34d8b57c0277c8cf9849f524e98f6bd5a264520e3d2ed471022373052",
+  "worker_report_audit": "JSON/source snapshot retained; independent workerreport audit notclaimed"
+}

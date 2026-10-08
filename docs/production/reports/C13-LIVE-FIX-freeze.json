@@ -1,0 +1,33 @@
+{
+  "packet": "C13-LIVE-FIX",
+  "created": "2026-10-05",
+  "status": "frozen",
+  "orchestrator": "zcode orchestration (GLM-5.3)",
+  "context": {
+    "root_branch": "zcode/production-core",
+    "base_contains": ["5b568f6 (C13-UNBLOCK-FIX B)", "6b6cd08 (B6-POLICY-LOAD)"],
+    "live_defect": "Every live media quote is blocked with BUDGET_BLOCKED 'Fresh live provider capability evidence does not satisfy this operation'. Reproduced twice against the live stack (requestIds 9807ea7b, 399e59c3). Root cause: `prepareMediaQuoteDraft` captures `const at = clockNow()` and then `await`s `options.provider.discoverCapabilities(recipe.modelId)`. The live Sogni provider stamps the receipt's `observedAt` with its own clock AFTER the awaited catalog network round-trip, so `capability.observedAt > at` (and `freshLive(receipt, at)`'s `observedAt <= now` inside canSatisfy) is essentially always true for live receipts -> blocked. Fake-provider tests pass because their receipts reuse the test clock, making observedAt === at."
+  },
+  "owns": {
+    "capability-clock-order": {
+      "files": ["lib/services/production/budget-composer.ts", "lib/services/production/budget-composer.test.ts"],
+      "change": "In the composer's `discoverCapabilities` (budget-composer.ts, ~line 181): after the provider await resolves, capture `const capabilityAt = clockNow()` and evaluate the freshness predicate (`capability.expiresAt === null || capability.expiresAt <= capabilityAt || capability.observedAt > capabilityAt || ...`) and the `canSatisfy(capability, required, capabilityAt)` call against `capabilityAt` instead of the pre-await `at`. `at` remains the clock for account session, policy artifact, quote createdAt/expiresAt math — ONLY the capability freshness comparison moves to the post-await clock. Add a brief comment stating why: a live catalog discovery legitimately observes after the request clock snapshot; requiring observedAt <= a pre-await clock blocks every live quote.",
+      "tests": [
+        "RED first: a fake provider whose discoverCapabilities returns a fresh receipt with observedAt strictly AFTER the composer's entry clock (drive with an injectable fake clock that the fake provider advances, e.g. receipt observedAt = clockNow() + a step the fake performs) — under the current code quote composition must fail with the capability-blocked message (record RED), after the fix it must compose a BOUND subscription quote end-to-end (GREEN).",
+        "Anti-cheat test stays green: a receipt stamped with observedAt far in the future (greater than the post-await clock, e.g. clockNow() + 60_000 from the provider side) must STILL be blocked (the predicate must not become vacuous).",
+        "Existing budget-composer tests pass unchanged."
+      ]
+    }
+  },
+  "constraints": [
+    "One commit on branch zcode/c13-live-fix from base 5b568f6; only the two owned files.",
+    "No changes to provider files, routes, contracts, or the capability predicate itself — only which clock feeds it.",
+    "Preserve the fail-closed direction: when in doubt, still blocked.",
+    "Never print SOGNI_API_KEY; noclobber evidence logs."
+  ],
+  "acceptance": [
+    "Focused tests (budget-composer.test.ts) exit 0 with the new RED->GREEN pair present.",
+    "`npm run typecheck` and `git diff --check` clean.",
+    "Integrator (orchestrator) will live-verify: POST media-quotes for the pilot project must return a BOUND quote (entitlement subscription, withinAuthorizedCap yes) after this fix — recorded as integration evidence, not a unit test."
+  ]
+}

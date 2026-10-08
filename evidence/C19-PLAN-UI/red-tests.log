@@ -1,0 +1,20 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+ RUN  v5.0.0 /Users/abid/Projects/perabyte-studio/.worktrees/c19-plan-ui
+ ❯ lib/production/plan-ui.test.ts (0 test)
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  lib/production/plan-ui.test.ts [ lib/production/plan-ui.test.ts ]
+Error: Cannot find package '@/components/production/plan-builder' imported from /Users/abid/Projects/perabyte-studio/.worktrees/c19-plan-ui/lib/production/plan-ui.test.ts
+ ❯ lib/production/plan-ui.test.ts:8:1
+      6| } from "./contracts";
+      7| import { APPROVAL_CHECKLISTS } from "./approval";
+      8| import {
+       | ^
+      9|   H3_FRAME_GRID, PLAN_DEFAULT_MOTION_INTENT, PLAN_DEFAULT_TARGET_FRAME…
+     10|   deriveCreateShotPlanCommand, derivePlanCanonOptions, derivePlanDraft…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  19:29:12
+   Duration  336ms (worker 97%, environment 3%)

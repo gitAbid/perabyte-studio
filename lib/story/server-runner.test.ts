@@ -29,6 +29,7 @@ import {
 } from "@/lib/repositories/provider-config.repository";
 import { advanceSceneAfterKeyframe } from "@/lib/story/server-runner";
 
+const mockKeyframeCapacity = vi.hoisted(() => ({ max: 3 }));
 vi.mock("@/lib/story/keyframe-models", () => ({
   listImageModelDescriptors: () => [
     {
@@ -37,7 +38,7 @@ vi.mock("@/lib/story/keyframe-models", () => ({
       model: "qwen_image_edit_2511",
       label: "Qwen Edit",
       kind: "image",
-      contextImages: { min: 1, max: 3 },
+      contextImages: { min: 1, max: mockKeyframeCapacity.max },
     },
   ],
 }));
@@ -140,6 +141,7 @@ beforeEach(() => {
   enqueued.jobs = [];
   enqueued.body = {};
   failEnqueueWith = null;
+  mockKeyframeCapacity.max = 3;
 });
 
 describe("server story runner", () => {
@@ -167,6 +169,55 @@ describe("server story runner", () => {
     expect(enqueued.body.modelId).toBe("sogni:krea2_turbo_fp8_scaled");
     expect(enqueued.body.safe).toBe(false);
     expect(current().settings.modelId).toBe("sogni:krea2_turbo_fp8_scaled");
+  });
+
+  it("rejects stale explicit canon before mutating the story", async () => {
+    putStory(story("stale-canon", [scene("one")], {
+      meta: { characterIds: ["deleted-character"] },
+    }));
+    await expect(startStoryRun("stale-canon")).rejects.toThrow(/deleted-character/);
+    expect(enqueued.jobs).toHaveLength(0);
+    expect(current().meta).toEqual({ characterIds: ["deleted-character"] });
+    expect(sceneStatus("one")).toBe("queued");
+  });
+
+  it("composes an explicit scene cast when the legacy story has no declared cast", async () => {
+    putCharacterRepository({
+      id: "scene-only-character",
+      name: "Mara",
+      spec: { ...DEFAULT_CHARACTER_SPEC, outfit: "Fantasy armor" },
+      createdAt: 1,
+      updatedAt: 1,
+    });
+    putStory(story("scene-only-cast", [scene("one", {
+      state: { characters: [{ id: "scene-only-character" }] },
+    })]));
+    await startStoryRun("scene-only-cast");
+    expect(String(enqueued.body.prompt)).toContain("fantasy armor");
+  });
+
+  it("does not inject unrelated library characters into a legacy prose-only story", async () => {
+    putCharacterRepository({
+      id: "unrelated-library-character",
+      name: "Mara",
+      spec: { ...DEFAULT_CHARACTER_SPEC, outfit: "Fantasy armor" },
+      createdAt: 1,
+      updatedAt: 1,
+    });
+    putStory(story("prose-only", [scene("one")]));
+    await startStoryRun("prose-only");
+    expect(String(enqueued.body.prompt)).not.toContain("fantasy armor");
+  });
+
+  it("halts advancement if a referenced entity disappears before enqueue", async () => {
+    putStory(story("stale-advance", [scene("one")], {
+      meta: { running: true, characterIds: ["deleted-character"] },
+    }));
+    await advanceStoryChain("stale-advance");
+    expect(enqueued.jobs).toHaveLength(0);
+    expect(current().meta?.running).toBe(false);
+    expect(current().scenes?.[0].status).toBe("failed");
+    expect(current().scenes?.[0].error).toMatch(/deleted-character/);
   });
 
   it("mints the world base seed once and keeps scene seeds stable across runs", async () => {
@@ -538,11 +589,46 @@ describe("keyframe substage", () => {
     expect(enqueued.jobs[0].modelId).toBe("sogni:qwen_image_edit_2511");
     // References: first cast front, location plate (interleaved priority).
     expect(enqueued.body.referenceImageRefs).toEqual(["front_mara.png", "loc_plate.png"]);
+    expect(enqueued.body.referencePolicy).toBe("strict");
     // Seed derives from the world base + scene + attempt 0.
     expect(enqueued.body.seed).toBeTypeOf("number");
     const sc1 = current().scenes![0];
     expect(sc1.status).toBe("generating");
     expect(sc1.progress?.stage).toBe("keyframe");
+  });
+
+  it("uses an explicit scene-local cast for keyframe references without a story cast", async () => {
+    putCharacterRepository({
+      id: "local-cast", name: "Mara", spec: DEFAULT_CHARACTER_SPEC,
+      identity: { front: "local-front.png" }, createdAt: 1, updatedAt: 1,
+    });
+    putStory(story("local-keyframe", [scene("sc1", {
+      kind: "video", state: { characters: [{ id: "local-cast" }] },
+    })]));
+    await startStoryRun("local-keyframe");
+    expect(enqueued.jobs[0].clientTag).toBe("k_local-keyframe:sc1");
+    expect(enqueued.body.referenceImageRefs).toEqual(["local-front.png"]);
+  });
+
+  it("fails before video enqueue when canonical references exceed model capacity", async () => {
+    anchorWorld();
+    putCharacterRepository({
+      id: "ch_second", name: "Pip", spec: DEFAULT_CHARACTER_SPEC,
+      identity: { front: "front_pip.png" }, createdAt: 1, updatedAt: 1,
+    });
+    putStory(story("capacity-fail", [scene("sc1", {
+      kind: "video",
+      state: { locationId: "loc_kf", characters: [{ id: "ch_kf" }, { id: "ch_second" }] },
+    })], {
+      meta: { continuity: true, running: false, characterIds: ["ch_kf", "ch_second"] },
+      world: { baseSeed: 424242, locationIds: ["loc_kf"] },
+    }));
+    mockKeyframeCapacity.max = 2;
+    await startStoryRun("capacity-fail");
+    expect(enqueued.jobs).toHaveLength(0);
+    expect(current().scenes?.[0].status).toBe("failed");
+    expect(current().scenes?.[0].error).toMatch(/required keyframe references exceed/);
+    expect(current().meta?.running).toBe(false);
   });
 
   it("animates from the keyframe ref once it is absorbed", async () => {
@@ -560,6 +646,36 @@ describe("keyframe substage", () => {
     expect(enqueued.jobs[0].kind).toBe("video");
     // The keyframe outranks the (absent) predecessor end frame.
     expect(enqueued.body.startImageRef).toBe("kf_still.png");
+    expect(enqueued.body.referencePolicy).toBe("strict");
+  });
+
+  it("halts post-keyframe submission if canonical references changed while rendering", async () => {
+    anchorWorld();
+    await startStoryRun("s_kf");
+    patchStoryRepository(storyId, {
+      scenes: (current().scenes ?? []).map((s) =>
+        s.id === "sc1" ? { ...s, keyframeRef: "kf_still.png" } : s,
+      ),
+    });
+    setCharactersPathForTests(path.join(os.tmpdir(), `deleted-cast-${Date.now()}.json`));
+    enqueued.jobs = [];
+    await advanceSceneAfterKeyframe(storyId, "sc1");
+    expect(enqueued.jobs).toHaveLength(0);
+    expect(current().meta?.running).toBe(false);
+    expect(current().scenes?.[0].status).toBe("failed");
+  });
+
+  it("composes the canonical location description into story and keyframe prompts", async () => {
+    anchorWorld();
+    putStory(story("s-location", [scene("sc1", {
+      kind: "video", state: { locationId: "loc_kf" },
+    })], {
+      meta: { continuity: true, running: false, characterIds: ["ch_kf"] },
+      world: { baseSeed: 424242, locationIds: ["loc_kf"] },
+    }));
+    await startStoryRun("s-location");
+    expect(String(enqueued.body.prompt)).toContain("Rooftop bar — neon rooftop");
+    expect(current().scenes?.[0].runPrompt).toContain("Rooftop bar — neon rooftop");
   });
 
   it("a manual start frame skips the keyframe entirely", async () => {

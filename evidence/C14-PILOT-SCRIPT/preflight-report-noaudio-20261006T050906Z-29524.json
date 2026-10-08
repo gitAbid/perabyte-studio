@@ -1,0 +1,116 @@
+{
+  "packet": "C14-PILOT-SCRIPT",
+  "mode": "preflight",
+  "base": "http://127.0.0.1:3100",
+  "recordedAt": "2026-10-06T05:08:29.461Z",
+  "expectedState": "RED",
+  "projectId": "85d0e07d-df41-4cce-9413-45a0c2be2c24",
+  "artifactsDir": "/var/folders/6b/kpkrtysx23n_0zjbhw_llvqr0000gn/T/pilot-long-landscape-muw7x8zt5emt-cHWlm6",
+  "fixture": {
+    "profileId": "storybook-long-v1",
+    "format": "16:9",
+    "shots": 24,
+    "shotFrames": 226,
+    "totalFrames": 5424,
+    "durationSeconds": 226,
+    "profileTargetFrames": 5760,
+    "profileTargetNote": "profile targetFrames (5760) is the planning target; the shot-plan/animatic schemas pin only the gapless shot sum, which this fixture asserts as 24 x 226 = 5424 (surveyed lib/production/contracts.ts, lib/services/production/shot-plan.ts)",
+    "h3Grid": "124 + 17n, max 362 (226 = 124 + 17*6)"
+  },
+  "pagination": {
+    "shotCount": 24,
+    "pageSize": 6,
+    "pages": 4,
+    "stableAcrossReads": true,
+    "matchesOrderedShotRevisionIds": true,
+    "timelineGapless": true,
+    "totalFrames": 5424,
+    "readModelNote": "the v2 read model exports the plan's shots as one bounded ordered array; pagination is asserted page-by-page (offset windows) across two independent reads against orderedShotRevisionIds and the gapless animatic timeline"
+  },
+  "offlineWalk": [
+    {
+      "step": "health",
+      "state": "ok",
+      "detail": "storage ready, worker available true"
+    },
+    {
+      "step": "seed:project/canon/story/approvals/LONG-shot-plan",
+      "state": "ok",
+      "detail": "project 85d0e07d-df41-4cce-9413-45a0c2be2c24, story 85417942-0014-46bc-8127-b8f8bf8d0a04, plan 652426d6-55e6-4e5b-b554-b3c91fa97f8b (24 shots x 226 frames)"
+    },
+    {
+      "step": "long-plan pagination/order stability",
+      "state": "ok",
+      "detail": "4 pages of 6 across two independent reads; orderedShotRevisionIds match; animatic gapless; totalFrames 5424"
+    }
+  ],
+  "blockers": [
+    {
+      "code": "NARRATION_ASSETS_ABSENT",
+      "step": "assets/import + audio mix",
+      "message": "The final film requires creator-supplied narration (one file per narrated beat), music and at least one SFX file; none were provided to preflight.",
+      "hint": "Prepare 48 kHz WAV/MP3 files and pass --narration/--music/--sfx (the C14 preflight accepts the C13 48 kHz placeholders)."
+    },
+    {
+      "code": "BUDGET_IDENTITY_UNAVAILABLE",
+      "step": "budget?unit=spark_token",
+      "message": "availability available; reasons: POLICY_MISSING, AUTHORIZATION_MISSING",
+      "hint": "The standing policy authorization is PER-PROJECT: authorize this freshly seeded project via the budget routes (docs/production/pilots/long-landscape.md section 4) after starting the server with SOGNI_API_KEY and the reviewed policy (B6-POLICY-LOAD)."
+    },
+    {
+      "code": "BUDGET_IDENTITY_UNAVAILABLE",
+      "step": "budget?unit=minor_currency&currency=USD",
+      "message": "availability available; reasons: AUTHORIZATION_MISSING",
+      "hint": "The standing policy authorization is PER-PROJECT: authorize this freshly seeded project via the budget routes (docs/production/pilots/long-landscape.md section 4) after starting the server with SOGNI_API_KEY and the reviewed policy (B6-POLICY-LOAD)."
+    },
+    {
+      "code": "QUOTE_NOT_BOUND",
+      "step": "media-quotes (anchor)",
+      "message": "quote quote:783dfb3e-ba6f-4fee-8cec-b5e8a28b20ba is entitlement=subscription, withinAuthorizedCap=unknown; the paid path is closed.",
+      "hint": "Install the reviewed policy (B6-POLICY-LOAD) and authorize the project; rerun preflight, then use --final."
+    },
+    {
+      "code": "PAID_ENQUEUE_WITHHELD",
+      "step": "anchors enqueue",
+      "message": "Preflight never sends a paid enqueue by construction (48 anchors + 48 takes would be the long-film spend).",
+      "hint": "Use --final with the env gate satisfied and a bound quote; the standing authorization is per-project."
+    },
+    {
+      "code": "ANCHOR_APPROVAL_UNAVAILABLE",
+      "step": "approvals (anchor)",
+      "message": "No anchor candidate can exist without a completed live render.",
+      "hint": "Run --final after policy install and project authorization."
+    },
+    {
+      "code": "TAKE_CHAIN_UNAVAILABLE",
+      "step": "media-quotes/enqueue/approve (take)",
+      "message": "Takes require an approved anchor and live provider capacity.",
+      "hint": "Run --final after policy install and project authorization."
+    },
+    {
+      "code": "SELECTION_UNAVAILABLE",
+      "step": "shots/[shotId]/selection",
+      "message": "No approved take exists to select.",
+      "hint": "Run --final after policy install and project authorization."
+    },
+    {
+      "code": "AUDIO_APPROVAL_UNAVAILABLE",
+      "step": "approvals (audio)",
+      "message": "No audio mix revision can exist without imported creator audio.",
+      "hint": "Run --final after policy install with the audio files."
+    },
+    {
+      "code": "MANIFEST_EXPORT_QC_UNAVAILABLE",
+      "step": "manifests/exports/run_qc",
+      "message": "Manifest compilation requires selected approved takes; export/QC require the rendered artifact.",
+      "hint": "Run --final after policy install."
+    },
+    {
+      "code": "FINAL_REVIEW_UNAVAILABLE",
+      "step": "final review + download",
+      "message": "The human G09 review and checksum-bound download require an approved export.",
+      "hint": "Run --final, then perform the step-8 creator review."
+    }
+  ],
+  "exitMeaning": "exit 0 with recorded blockers = the contract RED state (offline walk succeeded; live-dependent steps are blocked)"
+}

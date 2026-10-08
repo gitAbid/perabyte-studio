@@ -1,0 +1,30 @@
+{
+  "packet": "C13-UI-TAKE-FIX",
+  "created": "2026-10-06",
+  "status": "frozen",
+  "orchestrator": "zcode orchestration (GLM-5.3)",
+  "context": {
+    "root_branch": "zcode/production-core",
+    "base_contains": ["768ec28 (C13-LIVE-FIX-4)"],
+    "live_defect": "Reproduced in the browser on /production/[id]/takes (project b9839951, requestId 07f04210-5837-4f87-a5df-c7e8b804005f): the takes page generation form submits `POST /api/production/media-quotes {kind:'take', command:{projectId, shotRevisionId, motionSettings}}` WITHOUT the required anchorId/approvalId, so the server rejects every submission with INVALID_INPUT 'Request body does not match the expected shape' and take generation from the UI can never succeed. The component already holds both values (approvedAnchor.anchor.id, approvedAnchor.latestDecision.id) and even prints them in the hint line; the enqueue call at storyboard.tsx:1074 sends them correctly — only the quote call at :1052-1054 omits them. The server schema (MediaQuoteCommandSchema) requires them for kind 'take' (the accepted pilot script sends them and composes BOUND quotes)."
+  },
+  "owns": {
+    "take-quote-bindings": {
+      "files": ["components/production/storyboard.tsx"],
+      "change": "In the takes-page submit handler (storyboard.tsx ~line 1052): include `anchorId: approvedAnchor.anchor.id` and `approvalId: approvedAnchor.latestDecision.id` in the media-quotes command for kind 'take', matching the enqueue call and the server schema. Nothing else changes.",
+      "tests": [
+        "If a storyboard test file covers the take submit body (lib/production/storyboard.test.ts), extend it to assert the quote command carries anchorId+approvalId; otherwise verify via the live page after integration (integrator).",
+        "`npm run typecheck`, `npm test -- lib/production/storyboard.test.ts` (if touched), `git diff --check` green."
+      ]
+    }
+  },
+  "constraints": [
+    "One commit on branch zcode/c13-ui-take-fix from base 768ec28; only the owned file(s).",
+    "No server/schema changes — the server is right, the UI is wrong.",
+    "Noclobber evidence under evidence/C13-UI-TAKE-FIX/."
+  ],
+  "acceptance": [
+    "Quote command carries the bindings (code review + optional unit assert).",
+    "Integrator live verification: submit a take from the fixed UI page and observe the accepted-job status."
+  ]
+}

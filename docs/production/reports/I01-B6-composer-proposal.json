@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 1,
+  "packet": "I01-B6",
+  "status": "read-only proposal for root review; no code or dispatch",
+  "scope": "Smallest offline-tested root composition after B3/B4 kernel acceptance. No live authentication, provider estimate/submit, credential access, UI or SDK upgrade.",
+  "observed_sources": [
+    "lib/providers/production/http-routes.ts",
+    "lib/providers/production/sogni-provider.ts",
+    "lib/production/runtime.ts",
+    "scripts/production-worker.mjs",
+    "lib/production/contracts.ts",
+    "lib/repositories/production/sqlite.ts",
+    "docs/production/reports/I01-provider-evidence-research.json",
+    "docs/production/reports/I01-provider-subscription-research.json",
+    "docs/production/reports/I01-subscription-evidence-architecture.json",
+    "docs/production/task-registry.json C06 depends_on I01",
+    "docs/production/ARCHITECTURE.md C06 ProviderResultTarget ownership"
+  ],
+  "findings": [
+    "Sogni quote() always unknown; transport SDK client exposes projects only, not account methods. Existing createQuoteHandler persists only media Quote.",
+    "CreateQuoteCommand.inputSnapshot has limited settings/revisionIds/assetIds; no prompt, semantic roles, billing mode, anchor approval or result target. It cannot establish complete execution semantic hash.",
+    "No current production C06 request builder exists in core. Reusing hashCanonicalJson(inputSnapshot) as executionSemanticHash is invalid.",
+    "SDK account.me().walletAddress is strongest inspected authenticated stable identity; configured key/local isAuthenticated/appId/username are not proof.",
+    "SDK getSubscriptionStatus is account-level only; no inspected account+model entitlement preflight. Explicit billingMode subscription prevents fallback but admission remains server-authoritative.",
+    "Worker CLI currently constructs ProductionWorker without budget callbacks; keep it fail closed until complete composition verified."
+  ],
+  "dependency_amendment": {
+    "sequence": [
+      "Accept/review B3+B4 finance kernel and combined regression gates; full I01 remains open.",
+      "Root ADR/registry add narrow C06-PRE slice depending on accepted C02/C04/C05 and B3/B4 kernel, rather than full I01.",
+      "C06-PRE supplies approval validation, one canonical anchor/take recipe builder and enqueue commands under missing budget composer: jobs may persist, paid submission remains blocked. No duplicate B6 recipe builder.",
+      "B6 consumes exact C06-PRE recipe and pins it to durable quote/proof companions; offline conformance only.",
+      "Full I01 and full C06 accepted only after remaining parent acceptance/gates; real paid pilot needs existing human budget scope and separate verified enabled composition."
+    ],
+    "C06_PRE_owned": [
+      "lib/production/approval.ts",
+      "lib/production/approval.test.ts",
+      "lib/services/production/approval.ts",
+      "lib/services/production/approval.test.ts",
+      "lib/services/production/takes.ts",
+      "lib/services/production/takes.test.ts",
+      "app/api/production/approvals/route.ts",
+      "app/api/production/shots/[shotId]/takes/route.ts",
+      "app/api/production/shots/[shotId]/anchors/route.ts"
+    ],
+    "C06_PRE_boundary": "Use existing computeProductionInputsHash and approval helpers; export validated candidate recipe from takes.ts for quote and enqueue consumers. Candidate excludes transport IDs (jobId/idempotencyKey/quoteId), includes exact selected shot/canon/anchor approval pins, ordered roles/assets, prompt, parameters and explicit billing mode. Server generates semantic hash; browser cannot supply proof/hash/approval outcomes. Enqueue fills only server transport IDs and verifies recipe identity against quote archive. API command shape/recipe lookup needs root freeze in C06-PRE, not guesswork in B6.",
+    "not_accepted_by_slice": [
+      "full C06 retake/selection scope",
+      "full I01",
+      "audio generation",
+      "text scheduler",
+      "paid submission authorization"
+    ]
+  },
+  "minimal_B6_owned_paths": {
+    "new": [
+      "lib/production/provider-proof.ts",
+      "lib/production/provider-proof.test.ts",
+      "lib/repositories/production/migrations/003-provider-proof.sql",
+      "lib/services/production/budget-composer.ts",
+      "lib/services/production/budget-composer.test.ts"
+    ],
+    "amend_after_prior_owners_idle": [
+      "lib/repositories/production/ports.ts",
+      "lib/repositories/production/sqlite.ts",
+      "lib/repositories/production/sqlite.test.ts",
+      "lib/providers/production/sogni-provider.ts",
+      "lib/providers/production/sogni-provider.test.ts",
+      "lib/providers/production/http-routes.ts",
+      "lib/providers/production/http-routes.test.ts",
+      "lib/production/runtime.ts",
+      "lib/production/runtime.test.ts",
+      "scripts/production-worker.mjs",
+      "app/api/production/projects/[projectId]/budget/route.ts"
+    ],
+    "root_docs": [
+      "docs/production/ARCHITECTURE.md ADR",
+      "docs/production/task-registry.json",
+      "docs/production/TASK_PACKETS.md",
+      "docs/production/HANDOVER.md",
+      "docs/production/SESSION_STATE.json"
+    ],
+    "do_not_touch_now": "B3/B4 are independent active writers. No edits to their files during planning. Future audio admission edits to budget service/queue/worker require distinct ownership after B3/B4 acceptance."
+  },
+  "small_shared_amendment": "Root approval required: one ordered migration with immutable content-addressed neutral proof archive and a CAS current provider credential-generation row. Existing B1 finance DTOs, 001/002 migrations and financial ledger stay unchanged. Archive is source evidence, not second financial truth.",
+  "interfaces_ts": "// Proposed neutral persisted types, root-owned provider-proof.ts, strict versioned schemas.\ntype ProofArtifact = Readonly<{schemaVersion:1; hash:string; canonicalPayload:string; createdAt:number}>;\ntype ProviderCredentialGeneration = Readonly<{schemaVersion:1; providerId:string; revision:number; generationId:string; accountId:string; credentialFingerprint:string; changedAt:number}>;\n// Four narrowly scoped ports added to existing ProductionReadPort/WritePort.\ngetProofArtifact(hash:string): ProofArtifact | null;\ngetProviderCredentialGeneration(providerId:string): ProviderCredentialGeneration | null;\ninsertProofArtifact(artifact:ProofArtifact): InsertOutcome<ProofArtifact>;\ncompareAndSetProviderCredentialGeneration(record:ProviderCredentialGeneration, expectedRevision:number|null): boolean;\n// No raw credentials, arbitrary file paths or remote fetch on artifact resolution.\n// Existing SogniProviderTransport gets optional account methods; missing => unknown.\nreadAuthenticatedAccount?(): Promise<{walletAddress:string; subscription:unknown; observedAt:number; connectionId:string}>;\n// same cached SDK client invokes account.me() and account.getSubscriptionStatus(); not a second account client.\n// C06-PRE actual exported recipe type becomes authoritative (name frozen by its boundary review).\ntype QuoteRecipeResolver = (read:ProductionReadPort, command:CreateQuoteCommand) => ValidatedMediaRecipe | null;\n// Root composer consumes store, provider, exact resolver, reviewed policy and injected clock.\ncreateProductionBudgetComposer(options:{store:ProductionStore; provider:ProviderPort; resolveQuoteRecipe:QuoteRecipeResolver; proofPolicy:ReviewedSubscriptionPolicy|null; now?:()=>number}): {\n composeQuote(command:CreateQuoteCommand):Promise<ProductionQuote>;\n resolveAccountIdentity(providerId:string):Promise<TrustedAccountIdentity>;\n prepareExecutionEvidence(input:{execution:BudgetExecution;budgetQuoteId:string}):Promise<TrustedPreparedExecutionEvidence>;\n currentCredentialBindingId(providerId:string):string|null;\n // B3 createProductionBudgetService and B4 structural callbacks are wired by root runtime.\n};\n",
+  "durable_archive": {
+    "storage": "production.sqlite migration003 provider_proof_artifacts(hash PRIMARY KEY,canonical_payload,created_at) with immutable update/delete rejection; provider_credential_generations(provider_id PRIMARY KEY,revision,generation_id,account_id,fingerprint,changed_at) CAS. No asset/vault receipt fabrication and no evidence directory runtime dependency.",
+    "hash": "hashCanonicalJson(parsed strict proof DTO) and canonicalJson payload; verify hash on insertion AND load, schema/source versions and bounds (suggest256KiB bundle; policy capture separate bounded artifact). ID sha256:<64 lowercasehex> reference fits B1. Equal hash/content insert no-op; conflicting hash/content rejects. No unsafe arbitrary path/URL resolution.",
+    "bundle": "Quote-attestation bundle includes schema/producer/review policy version, mediaQuoteId/project/provider/exact model/operation, exact C06 recipe and original CreateQuoteCommand.inputSnapshot/inputHash, executionSemanticHash, explicit billingMode, account/current generation, sanitized authenticated account/status observations plus causal timestamp/expiry, live CapabilityReceipt, reviewed source captures/hashes and exact catalog coverage mapping, monetary liability meaning. Persist source payloads or approved sanitized fact snapshots plus hashes; hashes without durable captured facts are insufficient.",
+    "linkage": "B1 AccountEvidence.source = vetted producer/version; reference = sha256:<bundlehash>. Per-quote AccountEvidence may point to full quote bundle while identity-only AccountEvidence points to identity bundle. QuoteAccountBinding.accountEvidenceId links durable bundle transitively. No B1 fields added. Source/reference string alone is never accepted as verification.",
+    "secrets": "Archive contains no API key/email/raw account.me object/cookies/SDK backup or credential hash without local keyed derivation. Sanitized stable account/status fields only; public route omits account/proof/binding. Installation HMAC key lives in private credential-state/keychain storage outside proof archive and loads before transactions; never copied to evidence."
+  },
+  "credential_generation": {
+    "shared": "Account-wide generation independent of web/worker/probe app IDs. Stable accountId derives from verified canonical wallet identity with provider namespace. credentialFingerprint is HMAC of active secret with private installation key, never raw key or unkeyed hash. Same secret+account sees same shared generation on repeated observation; secret/account changes allocate server UUID and increment CAS revision.",
+    "refresh": "Each role maintains its own connectionId/session proof; reconnect invalidates that session evidence and requires authenticated account refresh. Role connection identity is recorded in bundle but does not partition account-wide budgets or force each short-lived web connection to rotate shared generation. Root should explicitly approve this distinction from vague connection-binding wording.",
+    "atomic": "Getter used by B3 inside reserve transaction reads current generation row synchronously from same SQLite connection and checks cached authenticated session/account plus current process secret fingerprint. New process/account update makes old process getter null; no filesystem/network inside transaction. Credential/env mutation in process nulls until reauthenticated. Current generation update and account-evidence append transact together. Failed authentication produces no usable generation/proof.",
+    "rotation_scope": "Reconnect revealing account change or credential replacement rotates shared generation; identical-credential fresh reconnection refreshes role session evidence only. Stale quotes deny; accepted old reservations remain immutable."
+  },
+  "subscription_zero_policy": {
+    "initial": "Only reviewed exact H3 take IDs/configurations; no fuzzy family matching or generic active flag. reviewed exact finite map backed by immutable official page capture, captureHash, URL, capturedAt, expiresAt, app review version and SDK no-fallback contract. Empty/unreviewed registry stays disabled.",
+    "requirements": "Authenticated SAME credential/current account; status active true and approved paid status/tier (exclude trial/grace/unknown); exact live model/workflow/capabilities; no unreviewed add-ons/config; valid C06 recipe billingMode subscription; every source/status/capability/generation expiry fresh. No provider-model preflight claim.",
+    "currency": "Only when all proof succeeds, approved policy projection {unit:minor_currency,currency:USD,meaning:incremental_job_charge_excluding_subscription_period} permits estimateMin/Max0. This versioned researched projection is not token conversion or blanket configured USD0. Missing required fact returns genuinely unknown media quote and null BudgetQuote binding; never auto/tokens fallback.",
+    "expiry": "Minimum of finite local account/status TTL, reviewed coverage expiry, live capability expiry, quote-policy TTL and known subscription period/scheduled policy change. TTL is app conservative policy, not vendor guarantee.",
+    "actual": "Zero estimate remains unsettled. Media completion cannot prove final actual0. Exact trusted billing record is required; ambiguous numeric/render-value/absence stays unknown. Contradictory positive actual persists overrun and suspends corresponding zero-proof policy; no invented settlement producer."
+  },
+  "atomic_quote_algorithm": [
+    "Validate request/origin/project before provider/account access. Obtain exact C06 recipe outside tx via read snapshot; compute original quote input hash and semantic helper result independently. Discover/authenticate through same injected provider transport outside tx.",
+    "Build verified immutable proof DTO and candidate media Quote/BudgetQuote/QuoteAccountBinding in memory. If proof unavailable, preserve unknown quote and null binding (still archive exact recipe if available). No companion rebinding after immutable insert.",
+    "One synchronous store.transaction samples clock, rereads current account generation/selected recipe dependencies and compares recipe hash, validates all proof times/current credential, persists source artifacts + quote bundle + AccountEvidence + media Quote + BudgetQuote/binding atomically. Trigger fault leaves none visible; no network/FS in transaction. Uses existing tx.insertQuote,insertAccountEvidence,insertBudgetQuote.",
+    "Root route supports optional injected composer with existing providerFactory compatibility; absence returns current unknown quote. Do not make provider.quote responsible for SQL; HTTP factory coordinates shared store and composer. Browser gets existing sanitized ProductionQuote only.",
+    "Worker async prepare reloads artifact via evidence reference, verifies content hash/source/account/generation/full C06 recipe versus actual immutable job snapshot, returns existing B3 TrustedPreparedExecutionEvidence. Root reserve adapter reconstructs exact media BudgetExecution with computeProductionInputsHash(tx,...); B3 reserves inside B4 admission tx. No reserve during quote or prepare."
+  ],
+  "audio_mapping_amendment": {
+    "storage_change": "B2 registerBudgetExecution currently requires job.operation===execution.operation; allow audio mapping ONLY after exact server-owned audio recipe exists. Preserve all project/key/requestHash/provider/model checks.",
+    "required_check": "For execution operation speech/music require job.operation audio; parse immutable ProviderRequestSnapshot, exact jobId/project/key/quote/provider/model, find media Quote via job.quoteId and budget companion, require quote.operation===execution.operation===budgetQuote.operation. Load verified archived server audio recipe carrying operation and exact snapshot/semantic hash; require canonical snapshot equality to recipe and hashCanonicalJson(snapshot)===job.requestHash. Browser parameters alone cannot select speech versus music. Reject absent proof, mismatched quote or forged operation.",
+    "sequence": "C09 audio import remains critical path. Root may add storage regression for proposed mapping in B6, but do not enable audio submit: current ProviderResultTarget/computeProductionInputsHash/approval eligibility support anchor/take only. A separate server audio recipe, approval boundary and actual speech/music provider adapter must be accepted before changing B3/B4 audio admission. No blanket job.audio exemption."
+  },
+  "factory_wiring": {
+    "runtime": "Root runtime composes same configured ProductionStore and same provider client instance; no global setter. Provider proof/generation state uses same dataDir/database. Factory receives explicit reviewed policy+resolver; missing config yields no usable callbacks/unknown GET account scope.",
+    "budget_route": "After B3 acceptance, route imports root runtime serviceOptions supplying resolver/prepare/getter; factory injection tests keep default no proofs fail closed. No provider secret values appear in route command or response.",
+    "workerCLI": "After B4 acceptance, script supplies async prepareBudgetContext and sync reserveSubmission adapters from runtime, with same provider passed to worker. No CLI launch merely to test live auth; offline injected SDK/fake provider child process tests. Existing process locks/app IDs/shutdown recovery retained.",
+    "pre_provider_await": "Current provider.submit loads asset bytes asynchronously after admission. Require same immutable cached generation/client at actual transport submission, deny generation drift without fallback and retain ambiguous reservation unless affirmative nonacceptance proof exists. No claim all provider-side drift can be prevented."
+  },
+  "steps": [
+    {
+      "id": "B6-S1",
+      "work": "Root review dependency/ownership amendment; accept C06-PRE boundary, B3/B4 exact commits; no active shared writer overlap."
+    },
+    {
+      "id": "B6-S2",
+      "work": "Implement strict neutral archive/current-generation schemas and ordered migration/ports with real reopen, hash and CAS tests."
+    },
+    {
+      "id": "B6-S3",
+      "work": "Extend existing same-client account/status transport plus generation lifecycle, all tests injected/offline; no actual auth."
+    },
+    {
+      "id": "B6-S4",
+      "work": "Implement reviewed-proof interpreter and atomic media quote companion composer consuming C06 recipe; unsupported scopes stay unknown."
+    },
+    {
+      "id": "B6-S5",
+      "work": "Wire explicit root quote/budget/worker factories; retain absent producer policy default; review optional audio storage mapping separately."
+    },
+    {
+      "id": "B6-S6",
+      "work": "Focused RED/GREEN then root npm test/typecheck/build, migration/HTTP/CLI restart fixtures; record limitations and keep paid enablement separate."
+    }
+  ],
+  "tests": {
+    "I01-B6-01": "C06 recipe quote/enqueue identity; roles/prompt/model/anchor approval/settings mutation deny; original quote hash differs correctly from semantic/request hash.",
+    "I01-B6-02": "Proof hash tamper/source-version/unknown reference/reopen guards; no raw secrets/paths in SQL archive or response.",
+    "I01-B6-03": "Two SQLite stores/web+worker same account generation; key/account drift CAS, old session getter null, reconnect refresh and role IDs independent.",
+    "I01-B6-04": "Only genuine paid active+exact reviewed model+live capability+forced subscription produces conditional0; trial/grace/unknown ID/mode/add-on/stale policy deny.",
+    "I01-B6-05": "Atomic quote/evidence/archive/companion trigger-fault rollback; unknown quote binding null; no later mutation to known.",
+    "I01-B6-06": "Default missing composer/policy/resolver yields unknown/blocked and fake submit counter0; sanitized malformed/missingproject route access counter0.",
+    "I01-B6-07": "Injected CLI shared store/generation restart and owned ACK/unknown recovery retain reservation and never duplicate submit.",
+    "I01-B6-08": "Audio exact operation/quote/snapshot/server-proof mapping allow correct storage registration; mismatches deny. Audio live worker remains blocked.",
+    "I01-B6-09": "Quote0+completed media remains actual unknown/unsettled; trusted billing contradiction stores overrun; no media-driven settlement."
+  },
+  "unresolved_root_decisions": [
+    "Freeze C06-PRE exported exact recipe/API boundary rather than reconstruct from quote projection.",
+    "Approve four neutral archive/current-generation port methods and migration003, distinct from B1 finance DTOs.",
+    "Approve shared credential-generation versus per-role session distinction; explicit identical reconnect refresh rule.",
+    "Select/review exact published model ID/configuration registry/source captures and liability projection; no family heuristic.",
+    "Budget read model currently flags unresolved monetary amount; zero unsettled reservation can have amount0. Add root-reviewed unsettledReservationCount/unknownActualCount to avoid presenting quote0 as known final billing, or defer consumer presentation with explicit limitation."
+  ],
+  "no_calls": {
+    "authenticated": [],
+    "paid": [],
+    "network": [],
+    "credentials_accessed": false,
+    "code_changed": false,
+    "tests_run": false
+  }
+}

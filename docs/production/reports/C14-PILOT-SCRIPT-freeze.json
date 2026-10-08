@@ -1,0 +1,33 @@
+{
+  "packet": "C14-PILOT-SCRIPT",
+  "created": "2026-10-06",
+  "status": "frozen",
+  "orchestrator": "zcode orchestration (GLM-5.3)",
+  "context": {
+    "root_branch": "zcode/production-core",
+    "base_contains": ["768ec28 (C13-LIVE-FIX-4)"],
+    "prior_art": "C13's scripts/pilot-short-portrait.mjs + docs/production/pilots/short-portrait.md are the accepted pattern (review-ACCEPT, live-proven through step-8). C14 mirrors its safety architecture for the LONG film. The live stack and reviewed policy exist: profile `storybook-long-v1` (16:9, targetFrames 5760 = 4 min at 24fps) already ships in lib/production/profiles.ts; the policy covers flux1-schnell-fp8 (anchor) and all minimax-h3-* (take) models; account policy 80bb1e6f is standing (per-project authorize flow documented in short-portrait.md section 4)."
+  },
+  "owns": {
+    "long-pilot": {
+      "files": ["docs/production/pilots/long-landscape.md", "scripts/pilot-long-landscape.mjs"],
+      "change": "A long-film pilot in the exact mold of pilot-short-portrait.mjs, adapted per TASK_PACKETS C14: 3-6 minute 16:9 film on profile storybook-long-v1 (5760 frames), MANY shots (fixture plan: 24 shots x 240 frames = 5760 frames — no 6-shot ceiling; assert the shot plan read model paginates and order stays stable across pages), BOUND-quote + anchor + take per shot with the SAME fail-closed ordering as C13 (env gates SOGNI_API_KEY + PERABYTE_STUDIO_REVIEWED_POLICY_PATH before any request; loopback-only base URL; budget identity resolves BEFORE any quote/enqueue, with the bounded wait --budget-wait-seconds for mid-run authorization; no retry of paid enqueues; every paid step appended to paid-steps.jsonl), narration/music/sfx creator files (48kHz WAV/MP3 pre-probe), restart/resume drill support (--restart-after-shot N: the script exits cleanly after shot N's take selection with a resumable state file covering completed shots; --resume <state> continues from shot N+1 — this proves restart/resume across shot batches; the run book documents killing the worker and restarting it between batches), human gates identical to C13 (TTY approve / --yes supervised acknowledgment; step-8 STOP for the human G09 with pilot-state.json + resume command; --creator-approved resume records the checksum-bound final review, downloads, verifies sha256, runs the ffprobe reopen probe against the 16:9 long profile 1920x1080/24fps). Constants mirror the accepted lib surfaces exactly (approval checklists, manifest samples-per-frame 2000, H3 grid 124+17n max 362 — 240 frames is legal (124+17*6=226? NO: 124+17n: 226 for n=6 — use 226-frame shots? 24x226=5424, within 5760 target? targetFrames is the profile target, animatic totalFrames must match shot sum; choose shot frames from the H3 grid so take frameCount is legal: e.g. 24 shots x 238? 238-124=114 not divisible by 17. Use 228 (124+17*6=226; 243? no). Compute: grid values 124,141,...,124+17n<=362. 226 = 124+102 (n=6). 24x226=5424 frames = 226s = 3:46 — inside 3-6 min. Use 24 x 226 = 5424 totalFrames and assert the profile target window (profile targetFrames is a target, not an equality constraint — verify what CreateShotPlanCommand enforces; if it requires totalFrames == profile.targetFrames exactly, use 5760 = e.g. 12 shots x 480? 480>362 illegal. 5760/226=25.49... pick shots of mixed legal frame counts summing 5760 if the schema demands exact equality; OTHERWISE use 24x226=5424 and assert the schema's actual constraint. SURVEY lib/production/contracts.ts shot-plan/animatic schemas + profiles first and follow what the core enforces — the fixture must be seedable for real.)",
+      "tests": [
+        "RED: `node scripts/pilot-long-landscape.mjs --preflight http://127.0.0.1:3100` against the live stack (it is running) exits 0 with a structured blockers report (budget identity unavailable on the fresh seeded project — the standing authorization is per-project; paid enqueues withheld by construction; creator audio absent) — the offline walk (health, project seed on storybook-long-v1, canon, story, approvals, LONG shot plan with >6 shots, animatic totalFrames asserted, pagination assertions) must SUCCEED.",
+        "`--final` with env removed exits 1 before any request (fail-closed gate).",
+        "`node --check` exit 0; `npm run typecheck` exit 0; `git diff --check` clean."
+      ]
+    }
+  },
+  "constraints": [
+    "One commit on branch zcode/c14-pilot-script from base 768ec28; only the two owned files.",
+    "Mirror pilot-short-portrait.mjs's verified request shapes and hash recipes; do NOT import lib modules (node builtins + fetch only, like C13).",
+    "Never print SOGNI_API_KEY; noclobber evidence logs under evidence/C14-PILOT-SCRIPT/. The engineer MAY run the preflight against the live stack (read-only + free seeding; NO paid enqueues).",
+    "The LIVE --final run belongs to the integrator after review+integration (paid)."
+  ],
+  "acceptance": [
+    "Preflight RED recorded against the live stack with a successful long-plan seed (>6 shots, paginated, animatic asserted).",
+    "Fail-closed env gate proven; node --check/typecheck/diff-check green.",
+    "Integrator live verification after integration: authorize the seeded project, restart-drill mid-run, film completes to step-8 with QC passed on the 16:9 long profile."
+  ]
+}

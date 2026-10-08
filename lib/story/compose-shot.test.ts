@@ -74,6 +74,19 @@ describe("composeShot", () => {
     expect(out).not.toContain("Setting:");
   });
 
+  it("retains canonical location details when scene prose names only the location", () => {
+    const out = composeShot(
+      story(true),
+      scene({
+        prompt: "At the rooftop bar, she waits for the train.",
+        state: { locationId: "loc_1" },
+      }),
+      { characters: [], locations: LOCATIONS },
+    );
+    expect(out).toContain("neon-lit downtown rooftop");
+    expect(out).toContain("moody neon glow");
+  });
+
   it("does not duplicate a time of day the prompt already sets", () => {
     const out = composeShot(
       story(true),

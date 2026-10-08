@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "id": "project-short",
+  "name": "Pip and the Lantern",
+  "profileId": "storybook-short-v1",
+  "profile": {
+    "id": "storybook-short-v1",
+    "format": "9:16",
+    "language": "en",
+    "ageIntent": "5-8",
+    "targetFrames": 1152,
+    "projectCapMinor": null,
+    "dailyCapMinor": null
+  },
+  "activeCanonRevisionIds": [
+    "canon-pip-v1",
+    "canon-moss-v1",
+    "canon-cedar-v1",
+    "canon-lantern-v1"
+  ],
+  "activeStoryRevisionId": "story-short-v1",
+  "activeShotPlanRevisionId": "shotplan-short-v1",
+  "activeAnimaticRevisionId": null,
+  "activeAudioMixRevisionId": null,
+  "takeSelectionVersion": 0,
+  "audioMixVersion": 0,
+  "createdAt": 1790985600000,
+  "updatedAt": 1790985600000,
+  "saveVersion": 1
+}

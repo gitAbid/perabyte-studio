@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "task_id": "C06-PRE-A",
+  "actualSHA": "cac0f4e774c8da0f613961826a641fc4e1d62070",
+  "baseSHA": "460bff068e4d18bc452545f7790616e22337559d",
+  "parentSHA": "460bff068e4d18bc452545f7790616e22337559d",
+  "worktree": "/Users/abid/.codex/worktrees/production-human-approval/perabyte-studio",
+  "decision": "changes_required",
+  "findings": [
+    {
+      "priority": "P2",
+      "title": "Pin the reviewed media context across asynchronous byte verification",
+      "file": "/Users/abid/.codex/worktrees/production-human-approval/perabyte-studio/lib/services/production/approval.ts",
+      "start": 231,
+      "end": 234,
+      "trigger": "An anchor/take command starts under current contextA, awaits readAssetVerified, and meanwhile the selected story/plan/animatic or exact current approval set changes to compatible contextB. The candidate identity/hash and media bytes remain unchanged.",
+      "actual": "validateMediaProvenance only tests productionSubmissionEligibilityFingerprint for nonnull at each read, discarding its value. The commit compares target hash and asset ID/checksum/vaultRef but no initial context fingerprint, so contextB can still append this command decision.",
+      "expected": "Reject the original command with STALE_REVISION and append no decision when relevant initial context changes during await. A fresh retry may approve the same candidate if the successor context is currently compatible.",
+      "requiredChange": "Preserve the initial media eligibility fingerprint and compare with the transaction reread, alongside relevant verified asset metadata; do not use project saveVersion or require prior manual candidate selection.",
+      "requiredEvidence": "One bounded async verification/drift case showing no write for the original command and current-compatible fresh retry. Existing six-case suite and typecheck remain the verification scope.",
+      "basis": "Original approval.transaction says drift/error returns no writes; root explicitly confirmed exact relevant initial context must be frozen across await and current compatible successor is accepted only on fresh retry.",
+      "proofType": "Source inspection; no new test/probe or source edits performed by reviewer."
+    }
+  ],
+  "metadataFindings": [],
+  "normativeFreeze": {
+    "path": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/docs/production/reports/C06-PRE-root-freeze.json",
+    "SHA256": "ccf34a0060b31bcdf684a2d56296b5015efdb5c81d725ed5ba64d218ddff92b5",
+    "section": "decisions.candidate_review"
+  },
+  "reviewedBehavior": [
+    "Frozen per-kind checklist dimensions and strict uniqueness/exact set checks are present. Approved outcomes require every mandatory item passed through existing DTOs.",
+    "Deterministic ID uses the frozen schemaVersion/operation/project/idempotency tuple. Exact historical replay checks actor, target/hash, decision, checklist order/strings, notes and advisory order/strings byte-for-byte before fresh target validation.",
+    "Current selected revision/project ownership checks are present. Anchor/take candidates may be reviewed before manual selection; shared helper checks compatible originating shots, current canon/story/plan/animatic and current actual approval pins.",
+    "Media validation checks completed job/result target, result asset membership, exact durable receipt; take validates anchor approval/hash pins, measured asset/take frame equality and muted provider audio policy.",
+    "Canon/audio media require known rights and checksum-verifiable bytes. Provider rights accepted; unknown and legacy_unreviewed denied. Current audio story/mix and cue assets are resolved.",
+    "Null anchor vision maps to unavailable and requires nonblank vision_unavailable acknowledgement. Fresh final decisions return QC_BLOCKED without writes.",
+    "Decision now sampled inside synchronous transaction and must exceed maximum existing target time; no synthetic future timestamp. Exact replay after an async concurrent append is handled.",
+    "Route is strict same-origin/body guarded, bounded64KiB and no-store201/200. Actor is trusted server local creator; default vault reader uses configured data directory and maps failures to sanitized MEDIA_UNAVAILABLE.",
+    "No other material finding identified within the five-file scope. Current source leaves the existing WAL retry/timing behavior unchanged."
+  ],
+  "changedFiles": [
+    "app/api/production/approvals/route.ts",
+    "lib/production/approval.test.ts",
+    "lib/production/approval.ts",
+    "lib/services/production/approval.test.ts",
+    "lib/services/production/approval.ts"
+  ],
+  "workerReportSHA256": "41d297a87767810382d0679c564bc656c8955bd5b2785f948ed08e41b5fa9a9f",
+  "workerEvidenceAudit": [
+    {
+      "path": "/Users/abid/.codex/worktrees/production-human-approval/perabyte-studio/evidence/C06-PRE-A/red-03-tests.txt",
+      "expectedSHA256": "c824b9b97edcd09eb7be82bd52624ee8e2216ad8b208a625c81e6687fb2b057e",
+      "actualSHA256": "c824b9b97edcd09eb7be82bd52624ee8e2216ad8b208a625c81e6687fb2b057e",
+      "match": true,
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "lib/production/approval.test.ts",
+        "lib/services/production/approval.test.ts"
+      ],
+      "reportedExitCode": 1
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-human-approval/perabyte-studio/evidence/C06-PRE-A/green-11-tests.txt",
+      "expectedSHA256": "55674f0c730ff790132b487e52346cb56976b0d9ee1f98e5a7a508685ee8604c",
+      "actualSHA256": "55674f0c730ff790132b487e52346cb56976b0d9ee1f98e5a7a508685ee8604c",
+      "match": true,
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "lib/production/approval.test.ts",
+        "lib/services/production/approval.test.ts"
+      ],
+      "reportedExitCode": 0
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-human-approval/perabyte-studio/evidence/C06-PRE-A/typecheck-06.txt",
+      "expectedSHA256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "actualSHA256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "match": true,
+      "argv": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "reportedExitCode": 0
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-human-approval/perabyte-studio/evidence/C06-PRE-A/diff-check-02.txt",
+      "expectedSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actualSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true,
+      "argv": [
+        "git",
+        "diff",
+        "--cached",
+        "--check"
+      ],
+      "reportedExitCode": 0
+    }
+  ],
+  "allWorkerEvidenceHashesMatch": true,
+  "evidenceInterpretation": "Read saved GREEN6tests, typecheck without diagnostics, and RED3executed failures against stubs. RED is bootstrap behavior, not a counterfactual proof for the current async-context gap. Argv and hashes match report.",
+  "independentVerification": {
+    "argv": [
+      "npm",
+      "test",
+      "--",
+      "lib/production/approval.test.ts",
+      "lib/services/production/approval.test.ts"
+    ],
+    "exitCode": 0,
+    "testsPassed": 6,
+    "filesPassed": 2,
+    "log": "/tmp/perabyte-C06-PRE-A-review-test.txt",
+    "logSHA256": "defdbcff10ce2049c3d8c6b71d54e7dcd329b63c80ffcb81a6a3101aca22dafb",
+    "diffCheck": {
+      "argv": [
+        "git",
+        "diff",
+        "--check",
+        "460bff068e4d18bc452545f7790616e22337559d",
+        "cac0f4e774c8da0f613961826a641fc4e1d62070"
+      ],
+      "exitCode": 0
+    }
+  },
+  "limitations": [
+    "Existing six tests do not exercise async selected-context drift, every canon/audio/take target, historical replay after reopen, or backward time; source branches reviewed without additional coverage.",
+    "Worker typecheck evidence hash verified; independent typecheck not repeated.",
+    "No broad suite, build, paid/authenticated calls, credentials or provider evidence inspected.",
+    "Integration acceptance withheld until the bounded material finding is fixed and exact follow-up SHA reviewed."
+  ],
+  "sourceEdits": false,
+  "paidNetworkCalls": 0,
+  "fullC06Accepted": false,
+  "frozenAfterReview": true
+}

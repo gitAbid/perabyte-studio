@@ -1,0 +1,95 @@
+{
+  "name": "PeraByte Studio Modular Feature Specifications",
+  "version": "1.0",
+  "generated_from": "Production Studio Product Requirements v2.0",
+  "files": [
+    {
+      "name": "00_README.md",
+      "title": "PeraByte Studio \u2014 Modular Feature Specification Pack"
+    },
+    {
+      "name": "01_PRODUCT_NORTH_STAR.md",
+      "title": "Product North Star"
+    },
+    {
+      "name": "02_SHARED_CONTRACTS.md",
+      "title": "Shared Contracts \u2014 Cross-Feature Authority"
+    },
+    {
+      "name": "03_UX_DESIGN_SYSTEM.md",
+      "title": "UX Design System for Product Features"
+    },
+    {
+      "name": "04_STUDIO_HOME.md",
+      "title": "Studio Home & Navigation"
+    },
+    {
+      "name": "05_WORKSPACES.md",
+      "title": "Workspaces, World Bible & Production Recipes"
+    },
+    {
+      "name": "06_CHARACTER_STUDIO.md",
+      "title": "Character Studio"
+    },
+    {
+      "name": "07_ENVIRONMENT_STUDIO.md",
+      "title": "Environment Studio"
+    },
+    {
+      "name": "08_STORY_STUDIO.md",
+      "title": "Story Studio"
+    },
+    {
+      "name": "09_STORYBOARD_SHOTS.md",
+      "title": "Storyboard & Shots"
+    },
+    {
+      "name": "10_SCENE_GENERATION_TAKES.md",
+      "title": "Scene Generation & Takes"
+    },
+    {
+      "name": "11_CONTINUITY_ENGINE.md",
+      "title": "Continuity Engine"
+    },
+    {
+      "name": "12_VOICE_AUDIO_STUDIO.md",
+      "title": "Voice & Audio Studio"
+    },
+    {
+      "name": "13_PRODUCTION_EDITOR.md",
+      "title": "First Cut & Production Editor"
+    },
+    {
+      "name": "14_AUTO_MODE.md",
+      "title": "Auto Mode"
+    },
+    {
+      "name": "15_PUBLISH_EXPORT.md",
+      "title": "Publish & Export Studio"
+    },
+    {
+      "name": "16_LIBRARY_VERSIONING.md",
+      "title": "Library, Canon Lineage & Retention"
+    },
+    {
+      "name": "17_COST_BUDGET_QUALITY.md",
+      "title": "Cost, Budget & Quality Strategy"
+    },
+    {
+      "name": "18_MUSIC_VIDEO_MODE.md",
+      "title": "Music Video Mode"
+    },
+    {
+      "name": "19_SUBAGENT_PLAYBOOK.md",
+      "title": "Parallel Subagent Implementation Playbook"
+    },
+    {
+      "name": "20_FEATURE_SPEC_TEMPLATE.md",
+      "title": "<Feature Name>"
+    },
+    {
+      "name": "21_IMPLEMENTATION_ROADMAP.md",
+      "title": "Implementation Roadmap"
+    }
+  ]
+}

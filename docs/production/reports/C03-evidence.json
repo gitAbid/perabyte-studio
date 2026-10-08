@@ -1,0 +1,122 @@
+{
+  "task_id": "C03",
+  "status": "integrated",
+  "base_sha": "9a5454471a9b4a4d84728813a20f9823105832c1",
+  "head_sha": "fada33a857dc1c63f8ef58012346bfd2146fc746",
+  "commits": [
+    "0c22783f1b061316ca6e130a66cd3ca1e6062912",
+    "4e655fb1e73a9f2953d14310649074b553aaa26a",
+    "fada33a857dc1c63f8ef58012346bfd2146fc746"
+  ],
+  "integrated_head": "5260be9",
+  "worktree": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio",
+  "evidence": [
+    {
+      "kind": "red",
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "lib/providers/production/capabilities.test.ts"
+      ],
+      "exit_code": 1,
+      "output_file": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/followup2-red.txt",
+      "output_sha256": "4c1f4f163bfdccf432a3f3d8a018c685dff2373261e829526d68dc715b7ec2b7"
+    },
+    {
+      "kind": "green",
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "lib/providers/production/capabilities.test.ts",
+        "lib/providers/production/sogni-h3.test.ts"
+      ],
+      "exit_code": 0,
+      "output_file": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/followup2-green.txt",
+      "output_sha256": "4b9ae2ca29ba3107c9e0b6e83db99dbcd4d9a7551ade2aa7c6e0f7306a902fdf"
+    },
+    {
+      "kind": "typecheck",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exit_code": 0,
+      "output_file": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/followup2-typecheck.txt",
+      "output_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    },
+    {
+      "kind": "diff-check",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "output_file": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/followup2-diff-check.txt",
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "kind": "manual",
+      "command": [
+        "node",
+        "scripts/probe-production-capabilities.mjs",
+        "--fixture"
+      ],
+      "exit_code": 0,
+      "output_file": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/probe-fixture.json",
+      "output_sha256": "8c2a014bbc60cc4d0d145dbdc73eb611033fe38ec791caacb5ee7a1c7347bc1a"
+    },
+    {
+      "kind": "manual",
+      "command": [
+        "env",
+        "-u",
+        "SOGNI_API_KEY",
+        "node",
+        "scripts/probe-production-capabilities.mjs"
+      ],
+      "exit_code": 2,
+      "output_file": "/Users/abid/.codex/worktrees/production-capabilities/perabyte-studio/evidence/C03/probe-missing-credentials.json",
+      "output_sha256": "ca01c7e7641a42ab6e58fc90676ac7ad97d7bd563f417cc2ab9e246473c66537"
+    }
+  ],
+  "focused_tests": 20,
+  "test_files": 2,
+  "root_reproduced": true,
+  "review": {
+    "disposition": "approved",
+    "reviewer": "/root/planner_review",
+    "model": "gpt-6.1-sol",
+    "unresolved_findings": []
+  },
+  "paid_calls": [],
+  "unverified": [
+    "Server discovery/quote adapter composition awaits C04",
+    "Actual paid transport not performed"
+  ],
+  "root_live_discovery": {
+    "source": "read-only live Sogni catalog",
+    "sdk_version": "5.49.0",
+    "models": 191,
+    "observed_at": 1791022982976,
+    "raw_output": "evidence/C03/live-discovery.json",
+    "sha256": "d907473a842be8c596d41392bc974572a76c84e028ac3f29d81c65233b9722bd",
+    "paid_calls": [],
+    "credentials": "Existing original .env.local; values never copied into reports"
+  },
+  "read_only_account_observation": {
+    "source": "installed Sogni SDK5.49.0 AccountApi.getSubscriptionStatus and CurrentAccount.walletAddress",
+    "output_path": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/C03/account-discovery.json",
+    "output_sha256": "cd51816bfcc4348bd545d07a238510173da8f47aced2dab62a9d799d4efda011",
+    "observed_at_ms": 1791025090313,
+    "account_identity_known": true,
+    "subscription_active": true,
+    "tier": "unlimited",
+    "model_specific_entitlement": "unknown",
+    "pricing": "unknown",
+    "paid_calls": []
+  }
+}

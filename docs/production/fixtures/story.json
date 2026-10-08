@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "id": "story-short-v1",
+  "projectId": "project-short",
+  "parentRevisionId": null,
+  "scriptText": "Pip the fox finds a fallen star-shaped lantern beside the cedar.\nPip sees that its light dims when carried too quickly.\nMoss the rabbit explains that gentle steps keep the light steady.\nThey walk together along the marked forest path.\nThey return the lantern to its stand beside the cedar.\nThe lantern glows and both friends celebrate helping their forest.",
+  "beats": [
+    {
+      "id": "opening",
+      "action": "Pip the fox finds a fallen star-shaped lantern beside the cedar.",
+      "narration": "Pip the fox finds a fallen star-shaped lantern beside the cedar.",
+      "dialogue": [],
+      "order": 0
+    },
+    {
+      "id": "discovery",
+      "action": "Pip sees that its light dims when carried too quickly.",
+      "narration": "Pip sees that its light dims when carried too quickly.",
+      "dialogue": [],
+      "order": 1
+    },
+    {
+      "id": "wonder",
+      "action": "Moss the rabbit explains that gentle steps keep the light steady.",
+      "narration": "Moss the rabbit explains that gentle steps keep the light steady.",
+      "dialogue": [],
+      "order": 2
+    },
+    {
+      "id": "journey",
+      "action": "They walk together along the marked forest path.",
+      "narration": "They walk together along the marked forest path.",
+      "dialogue": [],
+      "order": 3
+    },
+    {
+      "id": "return",
+      "action": "They return the lantern to its stand beside the cedar.",
+      "narration": "They return the lantern to its stand beside the cedar.",
+      "dialogue": [],
+      "order": 4
+    },
+    {
+      "id": "ending",
+      "action": "The lantern glows and both friends celebrate helping their forest.",
+      "narration": "The lantern glows and both friends celebrate helping their forest.",
+      "dialogue": [],
+      "order": 5
+    }
+  ],
+  "canonRevisionIds": [
+    "canon-pip-v1",
+    "canon-moss-v1",
+    "canon-cedar-v1",
+    "canon-lantern-v1"
+  ],
+  "contentHash": "94d36c431fe6cd3e180b3d992174e4d34bc6b4808081bdcfa0dd9694397d9441",
+  "createdAt": 1790985600000
+}

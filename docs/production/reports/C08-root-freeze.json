@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "packet": "C08",
+  "status": "BOUNDARY_FROZEN implementation authorized (storyboard/anchors/takes UI over EXISTING accepted routes, consumed read-only)",
+  "frozenBy": "software-architect 2026-10-05; accepted by zcode orchestrator; base 352aaf9 (84deb1b + C11-WIRE)",
+  "scope": "UI only: ordered shots with duration and pinned canon provenance, per-shot anchor/take candidate histories, approval-state workspace (checklist-gated approve/reject commands, take selection), exact stale notices, offline-degraded states. NO new API routes, NO schema edits, NO provider calls, NO media byte serving.",
+  "owns": [
+    "app/production/[projectId]/shots/page.tsx",
+    "app/production/[projectId]/anchors/page.tsx",
+    "app/production/[projectId]/takes/page.tsx",
+    "components/production/storyboard.tsx",
+    "lib/production/storyboard.test.ts",
+    "scripts/verify-production-shots.mjs"
+  ],
+  "consumeReadOnly": [
+    "GET /api/production/projects/[projectId] read model v2: shots[] {shotRevision, selectedAnchor, selectedTake, takeSelection{takeId,version}, anchorHistory, takeHistory, approvals}, dependencyIssues, revisionApprovals, canonRevisions, activeJobs/jobs, project.takeSelectionVersion",
+    "POST /api/production/approvals (ApprovalRouteCommandSchema: projectId, idempotencyKey, command{targetKind,targetId,expectedHash,decision,checklist,notes,advisoryAcknowledgements}); anchor vision acknowledgement rule 'vision_<status>' for status!=='pass' (approval.ts:180-186); rejection requires notes or a failed check",
+    "POST /api/production/shots/[shotId]/selection (SelectTakeCommandSchema {projectId, shotRevisionId, takeId|null, expectedSelectionVersion}; takeId null reverses)",
+    "POST anchors/takes enqueue + POST media-quotes: rendered as gated submit actions ONLY, never auto-invoked by rendering; BUDGET_BLOCKED envelope displayed as the blocked state",
+    "lib/production/project-canon.ts deriveStaleDependencyNotices (verbatim); lib/production/approval.ts APPROVAL_CHECKLISTS/requiredApprovalChecklist (anchor G03: identity,wardrobe,location,props,framing; take G05: identity,wardrobe,location,props,intended_action,motion_camera,artifacts) as client checklist source",
+    "C07/C10 UI conventions (deriveMutationFailure envelope rendering, pure deriveX helpers importable in node, verify-script protocol)",
+    "NEVER import in UI/verify code: lib/services/*, lib/repositories/*, lib/media/*, lib/jobs/* (server-only). computeAnchorApprovalHash/computeTakeApprovalHash are SERVER-computed; the UI must not reimplement them"
+  ],
+  "forbiddenEdits": [
+    "C06 approval files + takes service + approvals/anchors/selection/takes routes",
+    "C02 files (revisions.ts, read model service, projects/canon/stories/shot-plans routes, contracts.ts)",
+    "C04/C05/C09/C10/C11 files",
+    "app/api/production/* (every route)",
+    "lib/production/{contracts,http,errors,hash,runtime}.ts",
+    "components/ui/*",
+    "app/story/* legacy pages",
+    "package.json/lockfiles",
+    "docs/production/* owned by others"
+  ],
+  "uiModel": {
+    "dataSources": "Each page fetches GET read model once per mount (+ Reload). No project/active story -> fail-closed empty state linking to project page.",
+    "shotsView": "Stable order = read-model shots[] order (plan order); >6 shots supported (no six-shot ceiling); chunked/paginated rendering preserves order + indices; duration = targetFrames at 24fps via integer math. Provenance row: castBindings -> canon descriptions, location/prop/style revision pins; pinned reference asset IDs as IDs with explicit 'reference media not exposed by the read model' note.",
+    "staleNotices": "deriveStaleDependencyNotices(dependencyIssues) filtered to shot/shotplan rows + pinned-vs-active mismatch; rendered verbatim with pinnedDependencyId/activeDependencyId + code \u2014 never paraphrased away.",
+    "approvalWorkspace": "deriveApprovalReadiness(candidate, latestDecision, context): enabled ONLY when (a) candidate current, (b) full required checklist rendered with every item explicitly set, (c) all saved inputs displayed before submit, (d) advisory acknowledgements present when visionAssessment null or status!=='pass' (code 'vision_<status>', mirroring the server rule as client preflight). deriveApprovalCommand emits the exact POST body with expectedHash = the candidate's stable targetHash from its latest prior decision in read-model approvals[]. FROZEN DEGRADED STATE: a candidate with NO prior decision exposes no targetHash in the read model -> controls disabled with honest reason 'approval hash unavailable from the read model' (integrator proposal filed). Submit/animation buttons disabled whenever approval missing/pending/stale/rejected \u2014 disabled reason text always visible.",
+    "takesView": "Per shot: takeHistory siblings newest-first with decisions and selection state; selected take visually distinct + reversible via POST selection takeId:null; every selection carries expectedSelectionVersion (project-global CAS). Rejection/retake retains prior take; UI displays, never cascades.",
+    "degradedOfflineStates": "anchorHistory/takeHistory empty offline (no provider jobs) -> explicit empty states naming the prerequisite chain; selection/submit controls disabled with reasons; no fabricated candidates ever.",
+    "loadingErrorRetry": "Fetch phases idle/loading/failed; network failure -> role=alert + Retry, nothing lost; aborted mutations keep local state.",
+    "keyboardA11y": "Every control keyboard-reachable, visible label or aria-label, DOM-order focus, role=alert/status; chunk pagination keyboard-only operable."
+  },
+  "minimalTests": [
+    {
+      "name": "C08 stable order and duration across chunks",
+      "file": "lib/production/storyboard.test.ts",
+      "checks": "Fixture read model with 8+ shots in non-lexicographic order: deriveShotboardModel preserves read-model order across chunk boundaries, indices and targetFrames durations deterministic; duration strings integer math at 24fps."
+    },
+    {
+      "name": "C08 approve/reject states and checklist gating",
+      "file": "lib/production/storyboard.test.ts",
+      "checks": "deriveApprovalReadiness: missing/unset/failed checklist item, stale shot, rejected-latest, pending job -> disabled with exact reason; complete checklist + current candidate + saved inputs -> enabled; visionAssessment null/warning/failed/exhausted -> explicit acknowledgement text required (approval.ts:180-186 codes); deriveApprovalCommand emits exact ApprovalRouteCommand with the candidate's stable targetHash and displayed revision."
+    },
+    {
+      "name": "C08 sibling selection is distinct and reversible; rejection retains prior take",
+      "file": "lib/production/storyboard.test.ts",
+      "checks": "Fixture with 3 sibling takes + one selected: selected row distinct; selection command uses takeSelection.version exactly; reversal carries takeId:null; rejecting a non-selected sibling leaves selection untouched; rejecting the selected take never auto-selects a sibling."
+    },
+    {
+      "name": "C08 exact stale reasons and provenance",
+      "file": "lib/production/storyboard.test.ts",
+      "checks": "STORY_CHANGED shotplan pin, DEPENDENCY_REPLACED canon pin, DEPENDENCY_MISSING continuation render pinned vs active ids + code verbatim; provenance rows name cast/location/prop/style revisions + pinned reference asset IDs with the honest no-bytes note."
+    },
+    {
+      "name": "C08 honest degraded states",
+      "file": "lib/production/storyboard.test.ts",
+      "checks": "Empty anchor/take histories -> empty states naming prerequisites; candidate without prior decision -> approval disabled 'hash unavailable from read model'; submit gate disabled for missing/pending/stale/rejected with reason strings."
+    }
+  ],
+  "browserGreenProtocol": {
+    "script": "scripts/verify-production-shots.mjs (playwright chromium; conventions from verify-production-audio.mjs)",
+    "preconditions": "Script does NOT start the dev server; fail fast GET /api/production/health with actionable start hint, exit 1. No ffmpeg requirement.",
+    "seeding": "HTTP-only (fetch, Origin: base on mutations), offline, exact steps: (1) POST /api/production/projects {name, profileId:'storybook-short-v1'}; (2) POST /projects/{id}/canon x2 (location 'loc_harbor' + style 'style_book', CreateCanonRevisionCommandSchema) -> record revision ids; (3) POST /projects/{id}/canon/selection x2 (SelectCanonRevisionCommandSchema); (4) POST /projects/{id}/stories with >=2 beats {id, action, narration, dialogue:[]} + canonRevisionIds:[loc,style] -> record id + contentHash; (5) POST /api/production/approvals story approval: targetKind 'story', targetId story.id, expectedHash story.contentHash, decision 'approved', checklist EXACTLY [protagonist_goal, cause_consequence_order, earned_resolution, plot_fidelity, spoken_lines] each {passed:true, note:'...'} (APPROVAL_CHECKLISTS.story, approval.ts:14) -> REQUIRED before a plan exists (shot-plan.ts:109-116 fails APPROVAL_REQUIRED otherwise); (6) POST /projects/{id}/shot-plans (CreateShotPlanCommandSchema: projectId, storyRevisionId, approvedStoryHash, shots: EIGHT entries shotId 'shot_1'..'shot_8', beatIds from seeded beats, castBindings [], locationRevisionId = location canon REVISION id, propRevisionIds [], styleRevisionId = style revision id, varied framing/targetFrames) -> 201 returns {shotRevisions, shotPlanRevision, animaticRevision}; (7) POST approvals for shotplan [beat_coverage, spoken_lines, canon_bindings, duration_format, plot_fidelity] and animatic [beat_coverage, spoken_lines, timing, duration_format, continuity] with expectedHash = each contentHash; (8) stale scenario: POST stories again (v2 narration) -> read model shows shotplan STORY_CHANGED.",
+    "scenarios": [
+      "T08-order: /production/{id}/shots lists 8 shots in plan order with stable indices across chunk/page navigation and per-shot duration; >6 proves no six-shot ceiling.",
+      "T08-provenance-stale: cast/location/style pins displayed per shot; after story v2, the shots page shows the exact stale notice naming pinned vs active ids and code STORY_CHANGED.",
+      "T08-gates: anchors and takes pages render honest empty states; every animation/submit/approve control disabled WITH reason; keyboard-only pass reaches and operates every enabled control.",
+      "T08-approval-display: story/shotplan/animatic approval states rendered with decision, actor, checklist summary, exact revision id; approving story v2 through the server API (real POST approvals with exact displayed revision + full checklist) succeeds and leaves the plan visibly stale \u2014 no cascade, no fake currency.",
+      "T08-error-retry: page.route abort on the read-model GET -> role=alert error state, Retry recovers; aborted mutation keeps local state.",
+      "T08-tripwire: zero non-local requests for the whole run."
+    ],
+    "disclosure": "REDUCED SCENARIO SET, FROZEN HONESTLY: anchors and takes CANNOT exist over HTTP without provider receipts (insertAnchor/insertTake only from job-completion path queue.ts:253,262; jobs complete only via real worker+provider; jobs/[id] GET-only; no HTTP route creates takes/anchors). Take-sibling approve/reject with live candidates, live selection and reversal are proven at pure-derivation level (minimalTests) with fixture read models, NOT in browser; first live proof belongs to C13. The verify script must NOT seed the store directly and must NOT fabricate candidates."
+  },
+  "verification": {
+    "red": "npm test -- lib/production/storyboard.test.ts fails first on >6 shots ordering, approve/reject states and sibling selection",
+    "green": [
+      "npm test -- lib/production/storyboard.test.ts",
+      "node scripts/verify-production-shots.mjs http://127.0.0.1:3100 (server started by the runner, fresh PERABYTE_STUDIO_DATA_DIR)",
+      "npm run typecheck",
+      "git diff --check"
+    ],
+    "bounds": "Offline/localhost only; no provider calls; no full-suite/build; no edits outside the 6 owned files."
+  },
+  "decisions": [
+    "Owns exactly the 6 contract files. No new API routes \u2014 read model v2 + approvals/selection/enqueue routes cover every enabled action.",
+    "FROZEN READ-MODEL GAPS (integrator proposals filed, no C08 action): (1) anchor/take media bytes \u2014 no asset records/byte-serving -> v1 shows metadata + decisions only; (2) first-decision expectedHash \u2014 approval hashes need asset.sha256 which the read model never exports -> candidates without prior decision cannot be approved from UI; proposal: small read-model amendment pre-slice BEFORE provider-era use (C13 needs it); (3) no per-shot job provenance beyond summaries.",
+    "Approval truth is the server route; UI reuses APPROVAL_CHECKLISTS + vision-acknowledgement rule read-only as preflight so UI-disabled and server 4xx cannot disagree by construction.",
+    "Take selection commands always carry expectedSelectionVersion exactly as read; 409 STALE_REVISION renders 'selection changed; reload' and retains local state.",
+    "Submit (anchor/take generation) never auto-invoked; BUDGET_BLOCKED/unknown-entitlement envelopes render as the fault-matrix blocked state.",
+    "Visual conventions from components/production/project-canon.tsx + components/ui; no redesign, no new dependencies.",
+    "All other packets' files remain untouched (read-only)."
+  ],
+  "collisionCheck": "All 6 owned files NEW at base. Disjoint from C07 (canon/script pages), C10 (audio UI), C11 (manifest/assembly/routes). Shared consumption read-only: GET read model, POST approvals/shot-plans/stories/selection. No in-flight packet owns any C08 file."
+}

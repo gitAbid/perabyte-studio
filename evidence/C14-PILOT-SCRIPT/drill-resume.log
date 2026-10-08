@@ -1,0 +1,34 @@
+[2026-10-06T05:48:04.338Z] FINAL (live) against http://127.0.0.1:3100; artifacts: /tmp/c14-fix-drill/out-batch1
+[2026-10-06T05:48:04.340Z] RESUME of batch run c14resumefix1: project 05d70b64-9701-412d-a7b7-c6d70988cfdf, 1/24 shots complete; continuing from shot 2
+[2026-10-06T05:48:04.371Z] [1] health ok (worker heartbeat 2317ms; env: key set, policy /tmp/c14-fix-drill/policy-placeholder.json)
+[2026-10-06T05:48:04.376Z] [audio] NOTE: music bed /tmp/c14-fix-drill/audio/music.wav spans 1.0s of the 226.0s timeline; the mix pins it to the first 1.0s. For the release long film supply a full-length bed.
+[2026-10-06T05:48:04.377Z] [1] narration /tmp/c14-fix-drill/audio/narr-01.wav: 4800 samples (0.1s)
+[2026-10-06T05:48:04.377Z] [1] narration /tmp/c14-fix-drill/audio/narr-02.wav: 4800 samples (0.1s)
+[2026-10-06T05:48:04.377Z] [1] narration /tmp/c14-fix-drill/audio/narr-03.wav: 4800 samples (0.1s)
+[2026-10-06T05:48:04.377Z] [1] narration /tmp/c14-fix-drill/audio/narr-04.wav: 4800 samples (0.1s)
+[2026-10-06T05:48:04.377Z] [1] narration /tmp/c14-fix-drill/audio/narr-05.wav: 4800 samples (0.1s)
+[2026-10-06T05:48:04.377Z] [1] narration /tmp/c14-fix-drill/audio/narr-06.wav: 4800 samples (0.1s)
+[2026-10-06T05:48:04.377Z] [1] narration /tmp/c14-fix-drill/audio/narr-07.wav: 4800 samples (0.1s)
+[2026-10-06T05:48:04.377Z] [1] narration /tmp/c14-fix-drill/audio/narr-08.wav: 4800 samples (0.1s)
+[2026-10-06T05:48:04.377Z] [1] narration /tmp/c14-fix-drill/audio/narr-09.wav: 4800 samples (0.1s)
+[2026-10-06T05:48:04.377Z] [1] narration /tmp/c14-fix-drill/audio/narr-10.wav: 4800 samples (0.1s)
+[2026-10-06T05:48:04.377Z] [1] narration /tmp/c14-fix-drill/audio/narr-11.wav: 4800 samples (0.1s)
+[2026-10-06T05:48:04.377Z] [1] narration /tmp/c14-fix-drill/audio/narr-12.wav: 4800 samples (0.1s)
+[2026-10-06T05:48:04.377Z] [1] narration /tmp/c14-fix-drill/audio/narr-13.wav: 4800 samples (0.1s)
+[2026-10-06T05:48:04.377Z] [1] narration /tmp/c14-fix-drill/audio/narr-14.wav: 4800 samples (0.1s)
+[2026-10-06T05:48:04.377Z] [1] narration /tmp/c14-fix-drill/audio/narr-15.wav: 4800 samples (0.1s)
+[2026-10-06T05:48:04.377Z] [1] narration /tmp/c14-fix-drill/audio/narr-16.wav: 4800 samples (0.1s)
+[2026-10-06T05:48:04.377Z] [1] narration /tmp/c14-fix-drill/audio/narr-17.wav: 4800 samples (0.1s)
+[2026-10-06T05:48:04.377Z] [1] narration /tmp/c14-fix-drill/audio/narr-18.wav: 4800 samples (0.1s)
+[2026-10-06T05:48:04.377Z] [1] narration /tmp/c14-fix-drill/audio/narr-19.wav: 4800 samples (0.1s)
+[2026-10-06T05:48:04.377Z] [1] narration /tmp/c14-fix-drill/audio/narr-20.wav: 4800 samples (0.1s)
+[2026-10-06T05:48:04.377Z] [1] narration /tmp/c14-fix-drill/audio/narr-21.wav: 4800 samples (0.1s)
+[2026-10-06T05:48:04.377Z] [1] narration /tmp/c14-fix-drill/audio/narr-22.wav: 4800 samples (0.1s)
+[2026-10-06T05:48:04.377Z] [1] narration /tmp/c14-fix-drill/audio/narr-23.wav: 4800 samples (0.1s)
+[2026-10-06T05:48:04.377Z] [1] narration /tmp/c14-fix-drill/audio/narr-24.wav: 4800 samples (0.1s)
+[2026-10-06T05:48:04.377Z] [1] music /tmp/c14-fix-drill/audio/music.wav: 48000 samples (1.0s)
+[2026-10-06T05:48:04.377Z] [1] sfx /tmp/c14-fix-drill/audio/sfx-01.wav: 4800 samples (0.1s)
+
+PILOT STOPPED: Completed shot shot_01 now selects nothing, but the batch state recorded take drill-placeholder-take-not-rendered; refusing to resume over a changed selection.
+run artifacts: /tmp/c14-fix-drill/out-batch1
+exit=1

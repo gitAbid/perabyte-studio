@@ -1,0 +1,15 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.0 /Users/abid/Projects/perabyte-studio/.worktrees/zcode-production-core/.worktrees/c18-uncertain-submission
+
+ ✓ lib/providers/production/submission-errors.test.ts (8 tests) 3ms
+ ✓ lib/jobs/production/worker.test.ts (48 tests) 1898ms
+   ✓ production worker recovery (42)
+     ✓ keeps one scheduler owner, preserves its heartbeat on a second start, and recovers after SIGKILL 1071ms
+
+ Test Files  2 passed (2)
+      Tests  56 passed (56)
+   Start at  12:27:45
+   Duration  2.41s (tests 79%, transform 11%, import 10%)

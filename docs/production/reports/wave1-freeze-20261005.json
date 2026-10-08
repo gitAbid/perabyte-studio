@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "packet": "WAVE1-2026-10-05",
+  "status": "ROOT_FROZEN parallel wave (architect proposal accepted by zcode orchestrator)",
+  "base": "21e1e7a (zcode/production-core)",
+  "packets": [
+    {
+      "id": "I01-B6-C",
+      "boundary": "reports/I01-B6-C-root-freeze.json",
+      "owns": ["lib/production/proof-policy.ts", "lib/production/proof-policy.test.ts", "lib/services/production/budget-composer.ts", "lib/services/production/budget-composer.test.ts", "lib/services/production/takes.ts", "lib/services/production/takes.test.ts"]
+    },
+    {
+      "id": "I01-B6-W-LOCK",
+      "boundary": "reports/I01-B6-W-LOCK-root-freeze.json",
+      "owns": ["lib/providers/production/sogni-provider.ts", "lib/providers/production/sogni-provider.test.ts"]
+    },
+    {
+      "id": "I02-PRE",
+      "boundary": "TASK_PACKETS.md I02 contract + PRE constraints below",
+      "owns": ["lib/production/proposals.ts", "lib/production/proposals.test.ts", "lib/services/production/proposals.ts", "lib/services/production/proposals.test.ts", "lib/providers/production/text-planner.ts", "lib/providers/production/text-planner.test.ts", "app/api/production/projects/[projectId]/proposals/route.ts"],
+      "preConstraints": "Strict versioned DTOs, deterministic server-side speech parser (source-range reconstruction, Unicode boundary safety, byte-exact speech), fake-TextProvider proposal engine reusing the existing TextProvider guard (lib/providers/types.ts:162) through a narrow adapter, C05 validators, one-repair-then-fail, zero revision/approval/media writes on proposal. No real provider calls, no text reservation, no entitlement/pricing claims (I01 text-charge coverage stays blocked by not calling the budget service). Parent I02 acceptance still needs full I01 + I02-04 review.",
+      "verification": "RED: npm test -- lib/production/proposals.test.ts lib/providers/production/text-planner.test.ts (absent). GREEN: npm test -- lib/production/proposals.test.ts lib/services/production/proposals.test.ts lib/providers/production/text-planner.test.ts; npm run typecheck; git diff --check."
+    },
+    {
+      "id": "C09-PRE",
+      "boundary": "TASK_PACKETS.md C09 contract (required cases T09) + PRE constraints below",
+      "owns": ["lib/production/audio.ts", "lib/production/audio.test.ts", "lib/services/production/audio.ts", "lib/services/production/audio.test.ts", "app/api/production/projects/[projectId]/audio/route.ts", "scripts/production-audio-import.mjs"],
+      "preConstraints": "Registry edge 'C09 deps C06' satisfied in substance by accepted C06-PRE-A/R/SEL (audio approval checklist delivered at lib/production/approval.ts:19; audio mix ports at ports.ts:180,188). C09 must not edit C06/I01-owned files; Approval.targetKind=audio binding consumes the delivered approval service as-is. WAV/MP3 fixtures only, no paid service.",
+      "verification": "RED: npm test -- lib/production/audio.test.ts (absent). GREEN: npm test -- lib/production/audio.test.ts lib/services/production/audio.test.ts; npm run typecheck; git diff --check."
+    },
+    {
+      "id": "C07-PRE-DOMAIN",
+      "boundary": "TASK_PACKETS.md C07 contract, domain-only slice",
+      "owns": ["lib/production/project-canon.ts", "lib/production/project-canon.test.ts"],
+      "preConstraints": "Pure view-model/domain derivation only: canon/project creation flow state, import bounds validation, stale-dependency notices derived from the C02 read model's schemaVersion-2 dependencyIssues, provenance display data. No app/ pages, no components, no provider calls. Rest of C07 (pages/components/verify script) BLOCKED-ON I02 acceptance + formal C06 completion.",
+      "verification": "RED: npm test -- lib/production/project-canon.test.ts (absent). GREEN: npm test -- lib/production/project-canon.test.ts; npm run typecheck; git diff --check."
+    }
+  ],
+  "collisionCheck": "C(6 files) / W-LOCK(2) / I02-PRE(7) / C09-PRE(6) / C07-PRE-DOMAIN(2) — pairwise disjoint. Shared seam files consumed read-only: contracts.ts, provider-proof.ts, ports.ts, queue.ts, worker.ts (nobody in Wave 1 edits them; any need => proposal to integrator).",
+  "wavePlan": [
+    { "wave": 1, "packets": ["I01-B6-C", "I01-B6-W-LOCK", "I02-PRE", "C09-PRE", "C07-PRE-DOMAIN"], "waitsOn": "21e1e7a", "userGates": [] },
+    { "wave": 2, "packets": ["I01-B6-W-WIRE (after B6-C + W-LOCK)", "C11 domain (after C09-PRE)"], "waitsOn": "Wave 1 acceptances", "userGates": [] },
+    { "wave": 3, "packets": ["I01 full acceptance", "C06 full acceptance", "C09 full acceptance", "I02 full acceptance", "C10"], "waitsOn": "Wave 2 integrated + integrator full-suite/build gate", "userGates": ["To move past fail-closed: user must install reviewed pricing/coverage policy capture AND create standing budget authorization (live-account-proof gate). Until then every quote stays unknown and zero paid calls are possible."] },
+    { "wave": 4, "packets": ["C07 full (pages + script UI)", "C11 full (FFmpeg assembly)"], "waitsOn": "C06+I02 accepted; C09 accepted", "userGates": [] },
+    { "wave": 5, "packets": ["C08 (storyboard/takes UI)", "C12 (QC + download UI)"], "waitsOn": "C07; C11", "userGates": ["G08/G09 mechanics on fixtures; final-download approval is a human decision by design"] },
+    { "wave": 6, "packets": ["C13 short portrait pilot"], "waitsOn": "C08+C10+C12", "userGates": ["USER REQUIRED: paid calls only within existing standing authorized scope/cap (stop if absent/ambiguous/exceeded); creator personally reviews G01-G09 on the real film"] },
+    { "wave": 7, "packets": ["C14 long landscape pilot"], "waitsOn": "C13", "userGates": ["USER REQUIRED: paid spend within scope/cap; creator review G01-G09"] },
+    { "wave": 8, "packets": ["C15 recovery/backup/restore + release gate"], "waitsOn": "C12+C13+C14", "userGates": ["USER REQUIRED: G10 release checklist on real data; backup/restore drill sign-off"] },
+    { "wave": 9, "packets": ["C16 optional speech/music adapter (only if wanted)"], "waitsOn": "C09+C10 (+C15 recommended)", "userGates": ["USER REQUIRED: per-request spend authorization + scoped paid adapter smoke"] },
+    { "wave": 10, "packets": ["C17 publication/derivatives"], "waitsOn": "C15", "userGates": ["G09/G10-bound derivative outputs; publishing is manual upload by the user"] }
+  ],
+  "honestLimits": [
+    "Every frozen packet is offline/fixture-only; nothing in Waves 1-5 can validate live Sogni account semantics. First live observeAccount under the user's key, first reviewed policy, first standing authorization are user acts; system fails closed until then.",
+    "B6-C/W offline evidence proves composition/resolver correctness against schema-valid fakes, not that Sogni's real account/subscription responses match the whitelist; real-world drift surfaces as sanitized BUDGET_BLOCKED, never silent spend.",
+    "Full I01/C06 acceptance (Wave 3) needs the integrator's full-suite/build gate.",
+    "SDK stays pinned at 5.49.0 (timed-keyframe controls remain blocked); any upgrade is a separate user-approved milestone."
+  ],
+  "blockedRulings": {
+    "C11": "BLOCKED-ON C09-PRE acceptance (manifest.ts hashes cue content/gains into manifestInputsHash, needs C09 cue types), then starts parallel with UI packets",
+    "C10": "BLOCKED-ON C09 acceptance (audio service API)",
+    "C08": "BLOCKED-ON C07 (pages exist)",
+    "C16": "BLOCKED-ON, do not PRE (needs C09+C10 + user spend authorization + verified SDK speech/music contract)",
+    "C12-C17": "BLOCKED-ON per registry edges + user gates in wavePlan"
+  }
+}

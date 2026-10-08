@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "independent Sol architecture reviewer",
+  "actualSHA": "4e97c5829fada681fe5ef37764961931956f9e8c",
+  "baseSHA": "ffea35b2a7cdc7400b083ea0be7d388cbb0723f0",
+  "decision": "changes_required",
+  "scope": "I01 B2 storage slice only",
+  "findings": [
+    {
+      "priority": "P2",
+      "file": "lib/repositories/production/sqlite.ts",
+      "line": 44,
+      "title": "Concurrent fresh database startup can fail before migration locking",
+      "trigger": "Two separate processes open the same previously absent production.sqlite simultaneously. One exited SQLITE_BUSY at journal_mode=WAL; the other opened successfully.",
+      "expected": "Both bounded opens succeed and observe one contiguous migration history, or contention is handled with an explicit bounded retry; no duplicate migrations.",
+      "requiredFix": "Apply busy timeout before WAL transition and robustly handle WAL setup contention if needed. Add actual separate-process fresh database and true-v1 concurrent startup regression.",
+      "reproduction": "python3 /tmp/perabyte-b2-startup.py; exact source frozen at actualSHA. Independent run produced fresh children exit1/0 and v1 exit0/0.",
+      "evidence": "/tmp/perabyte-I01-B2-process-startup.txt"
+    }
+  ],
+  "checks": [
+    {
+      "command": "npm test -- lib/repositories/production/sqlite.test.ts lib/repositories/production/legacy-import.test.ts",
+      "exitCode": 0,
+      "result": "23 storage plus 6 legacy tests passed",
+      "log": "/tmp/perabyte-I01-B2-review-tests.txt"
+    },
+    {
+      "command": "python3 /tmp/perabyte-b2-startup.py",
+      "exitCode": 1,
+      "result": "Fresh DB simultaneous opens failed one child; true-v1 opens both passed. Both databases had exact001/002 history, integrity ok, no foreign key violations."
+    },
+    {
+      "command": "git diff baseSHA actualSHA --check",
+      "exitCode": 0
+    }
+  ],
+  "sourceHashes": {
+    "lib/repositories/production/ports.ts": "e35d4d3f61de7ca83ba1562299d6681bd4fe2517b181f196a9b4ec5bed90d006",
+    "lib/repositories/production/sqlite.ts": "a33e6f31bd3ab21b588cfa148f728950b662b8714fead0343a0f554645ea6393",
+    "lib/repositories/production/sqlite.test.ts": "0a5d3c1242691448b50ac1e813cd980a582a614a07391321cb126f8b9e84c000",
+    "lib/repositories/production/migrations/002-budget.sql": "85373e4a8851018fa72150f8b5dfcdf79c19a23dde3f6f292bc9d8b28b725735"
+  },
+  "migration001Unchanged": true,
+  "evidenceHashes": {
+    "/tmp/perabyte-I01-B2-review-tests.txt": "2ee736554fd13ac51c0c1b229ab81b4e2332aa684725e5a24e8c9724a6ea5dc2",
+    "/tmp/perabyte-I01-B2-process-startup.txt": "3b6a42e9c6a01c517352632854b1793b7fef48e65f188cd6432f453a1d400ab9",
+    "/tmp/perabyte-b2-startup.py": "82faf298d3c0215daf64246ac9da078e038e231fc92848c5b48dcee271d41108"
+  },
+  "reviewedBehavior": [
+    "Mandatory ports in same production SQLite database; immutable scoped policy/auth history and CAS heads",
+    "Unknown quotes persist with null binding; known binding/account/currency/semantic and media job tuple validation",
+    "Standing authorization older policy provenance is retained while reservation requires latest policy and latest authorization",
+    "Original UTC day account scope and project all-day ledger reads return shared pure fold inputs",
+    "Reconciliation scoped dedupe/conflict handling and fold-before-insert enforce monotonic liability/refund constraints",
+    "Savepoints prevent caught multiwrite failures from leaking partial writes",
+    "Migration history names/contiguity validation and apply execute inside IMMEDIATE with rollback/close on failure"
+  ],
+  "unverified": [
+    "Worker strict report.json was not yet present; report evidence hashes not audited.",
+    "No independent typecheck rerun; worker typecheck logs present but not acceptance proof.",
+    "B3 budget service eligibility/current credentials/cap enforcement and B4 atomic worker reservation are unfinished and outside this storage review."
+  ],
+  "fullI01Accepted": false
+}

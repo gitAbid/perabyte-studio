@@ -1,0 +1,38 @@
+{
+  "task_id": "C04",
+  "status": "changes_requested",
+  "reviewed_sha": "036afc841fa446b29ffc5393aee1b46d0fd052f1",
+  "reviewer": "/root/core_review",
+  "model": "gpt-6.1-sol",
+  "review_kind": "independent specification and architecture inspection",
+  "tests_run": [],
+  "paid_calls": [],
+  "findings": [
+    {
+      "priority": "P1",
+      "path": "lib/providers/production/sogni-provider.ts",
+      "issue": "Explicit billing mode omitted; ordered duplicate-asset roles collapse; plural references overwritten; crash-stale lock blocks restart; real discovery leaves required reference capacity unknown."
+    },
+    {
+      "priority": "P1",
+      "path": "lib/jobs/production/queue.ts",
+      "issue": "Completion inserts only Asset/job, missing AnchorCandidate/Take and actual resultId semantics; cancellation needs unleased CAS and acknowledgement preservation."
+    },
+    {
+      "priority": "P1",
+      "path": "lib/jobs/production/worker.ts",
+      "issue": "Reference-only reconciliation lacks durable receipt; catalog failures escape scheduler; missing operational budget guard intentionally blocks CLI until I01."
+    },
+    {
+      "priority": "P2",
+      "path": "lib/jobs/production/queue.ts",
+      "issue": "Outbox deadline not renewed with job heartbeat; 30s retained job lease and repeated busy oldest intents cause slow polling/starvation."
+    },
+    {
+      "priority": "P2",
+      "path": "app/api/production/health/route.ts",
+      "issue": "Schema/heartbeat alone overstates operational readiness; doctor minimum Node differs from installed SDK requirement."
+    }
+  ],
+  "required_followup": "ARCHITECTURE.md durable worker result and lifecycle seams ADR plus original C04 acceptance; review corrected actual SHA before integration."
+}

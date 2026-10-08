@@ -1,0 +1,76 @@
+
+> perabyte-studio@0.1.0 test
+> vitest run lib/production/development-guard.test.ts
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.0 /Users/abid/.codex/worktrees/production-usage-policy/perabyte-studio
+
+ ❯ lib/production/development-guard.test.ts (27 tests | 3 failed) 12ms
+   ❯ evaluateUsageSnapshot (17)
+     × applies explicit per-duration usage policy: weekly 1.5% remains above its configured stop 5ms
+     × returns unknown when explicit policy windows have an unknown duration 0ms
+   ❯ validateHandoverState (10)
+     × requires usage_paused windows to meet their configured duration-specific stops 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lib/production/development-guard.test.ts > evaluateUsageSnapshot > applies explicit per-duration usage policy: weekly 1.5% remains above its configured stop
+AssertionError: expected 'stop' to be 'continue' // Object.is equality
+
+Expected: "continue"
+Received: "stop"
+
+ ❯ lib/production/development-guard.test.ts:28:29
+     26|     });
+     27|
+     28|     expect(result.decision).toBe(decision);
+       |                             ^
+     29|     expect(result.minimumRemainingPercent).toBe(minimumRemaining);
+     30|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  lib/production/development-guard.test.ts > evaluateUsageSnapshot > returns unknown when explicit policy windows have an unknown duration
+AssertionError: expected 'continue' to be 'unknown' // Object.is equality
+
+Expected: "unknown"
+Received: "continue"
+
+ ❯ lib/production/development-guard.test.ts:45:29
+     43|     });
+     44|
+     45|     expect(result.decision).toBe('unknown');
+       |                             ^
+     46|     expect(result.reasons.join(' ')).toMatch(/duration/i);
+     47|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  lib/production/development-guard.test.ts > validateHandoverState > requires usage_paused windows to meet their configured duration-specific stops
+AssertionError: expected 'usage_paused requires at least one kn…' to match /configured usage stop/i
+
+- Expected:
+/configured usage stop/i
+
++ Received:
+"usage_paused requires at least one known remaining percentage"
+
+ ❯ lib/production/development-guard.test.ts:294:20
+    292|       usage_policy: policy,
+    293|       last_usage_observation: observation(1.5, 80),
+    294|     })).join(' ')).toMatch(/configured usage stop/i);
+       |                    ^
+    295|     expect(validateHandoverState(validState({
+    296|       state: 'usage_paused',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 24 passed (27)
+   Start at  20:53:28
+   Duration  223ms (transform 54%, tests 22%, import 19%, worker 5%)
+

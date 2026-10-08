@@ -1,0 +1,137 @@
+{
+  "task_id": "C04",
+  "status": "incomplete_usage_paused",
+  "head_sha": "036afc841fa446b29ffc5393aee1b46d0fd052f1",
+  "base_sha": "9c0397a66922a37ae99eb79460f421f2c96fa10d",
+  "integrated": false,
+  "independent_review": "pending",
+  "reported_tests": 17,
+  "reported_typecheck_exit_code": 0,
+  "evidence": [
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/core-green.txt",
+      "sha256": "af9f50e6e3119dac6e46e775b56ec84fc15554c17037d3255351269d7fad9dab"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/diff-check.txt",
+      "sha256": "418a5c17f33c70e99b0cc0a07fce69191489cfedc94164bfa903785777c5bd4b"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/doctor-check.txt",
+      "sha256": "a1428e78ceca4b9916b043d54dc7cd22e1c718e27b2abf64d3d374ceaa4c3d3c"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/focused-final.txt",
+      "sha256": "2959b7e12ddc2a81770ca86c6ef25ec0f16b3ae84035d8939bc5baf7da64a227"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/focused-green-final.txt",
+      "sha256": "74905e0ac10b0adaa522312921e808fd5640ffc9f299261df9f161c91f63296f"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/focused-green.txt",
+      "sha256": "9056cc54903d31ffe1560914d5e36429f5bce40ae621fa4eb44ecd4859722d0f"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/focused-green2.txt",
+      "sha256": "e146521802c560efeb4ac2c1cfc367b0ed8b76b872607ff34f37fa176326f41b"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/focused-green3.txt",
+      "sha256": "af12ad34d25fa152c32284f8e8990094997ec3842191db4b6726f2630982f6f9"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/focused-green4.txt",
+      "sha256": "ac4c1fbd8f6aec4fb77b466e7428de1204eb8656f0a7277512019806ae5608f7"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/queue-check.txt",
+      "sha256": "32c5614a9f63c46d64c7a01ec11c6ab2ae7cc8120ed6311a5d79fb032b1c18c4"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/queue-progress.txt",
+      "sha256": "6d0d9fe3798b1f25c72f13fdc080526b4311b16c8e34cf9aa7c64f186eb526eb"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/red.txt",
+      "sha256": "e5e35f482858296d44577c15e945ee9a34e1e98bd57c82c96d748cba712b51b6"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/red2.txt",
+      "sha256": "dd50b5c14357a70c6e55d8b63b41e46ffc99fe0966cb0810ebb989e8054a32ae"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/red3.txt",
+      "sha256": "0d513f2443a8edad99aed4138b0917d7c3f8ac5ead78b5853d241647a3481894"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-final.txt",
+      "sha256": "e9d6ec6bb07f39d9cf0c3c8e7f54d865df3ab8b0641b9b009a66a6274defa904"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-final2.txt",
+      "sha256": "e9d6ec6bb07f39d9cf0c3c8e7f54d865df3ab8b0641b9b009a66a6274defa904"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-progress.txt",
+      "sha256": "52930a051c7880a6961411914bd47fd143afbeb1ca0a05a906f8d8e59d151d45"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-progress2.txt",
+      "sha256": "e6480492eabcf9b8c38b750b728740f77718c10f59d13e3aa8dee8a62acbcbfd"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-progress3.txt",
+      "sha256": "b2b49f2e71d8461a6db350fb29c66b25de879d133c47662e5eb8316ba469fd51"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-progress4.txt",
+      "sha256": "9fffe6e99637d9e772522e96850d5d94507aef8c9def911abbb397b5318497af"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-progress5.txt",
+      "sha256": "e083b2b42d325c1be092c737460503e3724b7952d4ac2b989e8a2fbb4f86d311"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck.txt",
+      "sha256": "e9d6ec6bb07f39d9cf0c3c8e7f54d865df3ab8b0641b9b009a66a6274defa904"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck2.txt",
+      "sha256": "e9d6ec6bb07f39d9cf0c3c8e7f54d865df3ab8b0641b9b009a66a6274defa904"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck3.txt",
+      "sha256": "e9d6ec6bb07f39d9cf0c3c8e7f54d865df3ab8b0641b9b009a66a6274defa904"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck4.txt",
+      "sha256": "e9d6ec6bb07f39d9cf0c3c8e7f54d865df3ab8b0641b9b009a66a6274defa904"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck5.txt",
+      "sha256": "e9d6ec6bb07f39d9cf0c3c8e7f54d865df3ab8b0641b9b009a66a6274defa904"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck6.txt",
+      "sha256": "ad5eef5618fc0450d1ff465eb5c1da8f301ae9105b7ae01cba2c154edb9d4eb9"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck7.txt",
+      "sha256": "e9d6ec6bb07f39d9cf0c3c8e7f54d865df3ab8b0641b9b009a66a6274defa904"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/vault-root-red.txt",
+      "sha256": "a9c601cdf2c335acd1275ae8b6886f21e13c949334317848b1ccccc7dfeda25c"
+    }
+  ],
+  "unverified": [
+    "C04 checkpoint036afc8 is incomplete and unreviewed, never integrated. 17 focused tests and typecheck reported by worker; root has not reproduced or independently reviewed whole packet.",
+    "Multipart streaming import missing. Promote maintained @fastify/busboy3.2.2 direct dependency after reset, update lockfiles, and consume reviewed optional Asset.importProvenance. No dependency install was done.",
+    "Vault requires actual decoder/ffprobe validation and metadata; magic bytes alone insufficient.",
+    "Cancellation races/retry dead-letter/worker health/disconnected-worker behavior and actual route composition tests pending.",
+    "Provider ambiguity reconciliation is unsupported by SDK lookup and stays manual/unknown; default budget guard blocks paid submit until I01.",
+    "Commit includes six raw evidence files outside registry implementation ownership; review/report this scope exception, preserve bytes."
+  ],
+  "paid_calls": []
+}

@@ -41,6 +41,7 @@ import type { CharacterIdentity } from "@/lib/repositories/character-row";
 import { addAsset, updateAsset, useAssets } from "@/lib/store";
 import { titleFromPrompt } from "@/lib/constants";
 import type { Asset } from "@/lib/types";
+import { deriveApprovalState, type ApprovalState } from "@/lib/production/approval-state";
 
 type CreationMode = "simple" | "details";
 
@@ -422,6 +423,48 @@ export function CharacterStudio({
     [renderParams, characterModelId],
   );
 
+  /* ------------------- Canon approval state (C8) ------------------- */
+  /** The saved sheet that stands for the character's current canon: the one
+   * this session just saved, else the newest sheet tagged to the character.
+   * Approval lives with the immutable version (asset meta) — approving is an
+   * explicit user action and never happens automatically. */
+  const canonAsset = useMemo(() => {
+    if (lastSavedAsset) return assets.find((a) => a.id === lastSavedAsset.id) ?? null;
+    if (!galleryId) return null;
+    return (
+      assets
+        .filter(
+          (a) =>
+            Array.isArray(a.meta?.sheetOrder) &&
+            Array.isArray(a.meta?.characterIds) &&
+            (a.meta?.characterIds as string[]).includes(galleryId),
+        )
+        .sort((a, b) => b.createdAt - a.createdAt)[0] ?? null
+    );
+  }, [assets, lastSavedAsset, galleryId]);
+
+  const canonApproval = useMemo(() => {
+    if (!canonAsset) return null;
+    const meta = canonAsset.meta ?? {};
+    const state: ApprovalState = deriveApprovalState({
+      approval:
+        typeof meta.approvedAt === "number" ? { decision: "approved" as const } : null,
+      recommendedAt: typeof meta.recommendedAt === "number" ? meta.recommendedAt : null,
+    });
+    return {
+      state,
+      onApprove:
+        state === "approved"
+          ? undefined
+          : () => {
+              updateAsset(canonAsset.id, {
+                meta: { ...meta, approvedAt: Date.now() },
+              });
+              toast.push("Approved — this version is the character's canon.", "success");
+            },
+    };
+  }, [canonAsset, toast]);
+
   /* ------------------------------ Not found ------------------------------ */
   if (missing) {
     return (
@@ -642,6 +685,7 @@ export function CharacterStudio({
             onSaveAsCopy={handleSaveAsCopy}
             onSaveToLibrary={handleSaveToLibrary}
             onSetPoster={handleSetPoster}
+            approval={canonApproval}
           />
         </aside>
       </div>

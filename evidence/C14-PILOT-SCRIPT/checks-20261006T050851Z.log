@@ -1,0 +1,9 @@
+== node --check scripts/pilot-long-landscape.mjs ==
+exit=0
+== npm run typecheck ==
+> perabyte-studio@0.1.0 typecheck
+> tsc --noEmit
+
+typecheck exit=0
+== git diff --check ==
+exit=0 clean

@@ -1,0 +1,155 @@
+{
+  "kind": "I01_storage_and_service_boundary_proposal",
+  "status": "read_only_plan_for_integrator_freeze",
+  "inspectedIntegrationSHA": "336e22b2cc60a38d78fc6862ec2401b4eb56243a",
+  "prerequisites": [
+    "Freeze accepted B1 DTO/function names at its reviewed exact SHA before B2. Proposed signatures below use approved B1 conceptual names; integrator reconciles any actual export spelling once, not alternate schemas.",
+    "B2 completes and is independently accepted before B3/B4 consume its shared store/ports. B3 freezes synchronous service callback before B4 edits queue/worker. No dependent dispatch performed.",
+    "Worker B1 refinements include complete shared execution fields/modelId, timestamps and revocation. Reconcile actual exported DTO names/field constraints once at accepted B1 SHA before B2 dispatch; no second DTO vocabulary."
+  ],
+  "ownership": {
+    "B2": [
+      "lib/repositories/production/ports.ts",
+      "lib/repositories/production/sqlite.ts",
+      "lib/repositories/production/sqlite.test.ts",
+      "lib/repositories/production/migrations/002-budget.sql"
+    ],
+    "B3": [
+      "lib/services/production/budget.ts",
+      "lib/services/production/budget.test.ts",
+      "app/api/production/projects/[projectId]/budget/route.ts"
+    ],
+    "B4": [
+      "lib/jobs/production/queue.ts",
+      "lib/jobs/production/queue.test.ts",
+      "lib/jobs/production/worker.ts",
+      "lib/jobs/production/worker.test.ts"
+    ]
+  },
+  "port_shape": {
+    "composition": "Integrator-approved: separate BudgetReadPort/BudgetWritePort, ProductionReadPort extends BudgetReadPort; ProductionWritePort extends ProductionReadPort,BudgetWritePort. Same B2 commit implements all mandatory methods on SQLite. No alternate store or extension infrastructure. Inventory found zero directly typed literal fake stores outside sqlite; existing shot-plan/revisions/runtime partial fakes are explicit casts and keep their existing test purpose.",
+    "support_types": [
+      "BudgetScope={providerId,accountId,currency,unit}",
+      "LedgerScope=BudgetScope & ({kind:project;projectId}|{kind:account_day;utcDay})",
+      "StoredEvidence={sequence:number,evidence:ReconciliationEvidence,semanticHash:string}",
+      "BudgetLedgerEntry={reservation:BudgetReservation,events:StoredEvidence[]}",
+      "InsertOutcome<T>={record:T,created:boolean}; identical natural-key payload replay false; differing semantic payload throws.",
+      "ScopeVersionExpectation={expectedRevision:number|null}; null=create, non-null=exact current CAS."
+    ],
+    "BudgetReadPort": [
+      "getAccountPolicyRevision(revisionId:string):AccountBudgetPolicy|null",
+      "getLatestAccountPolicy(scope:BudgetScope):AccountBudgetPolicy|null",
+      "getBudgetAuthorizationRevision(revisionId:string):BudgetAuthorization|null",
+      "getLatestBudgetAuthorization(projectId:string,policyId:string):BudgetAuthorization|null",
+      "getAccountEvidence(id:string):AccountEvidence|null",
+      "getLatestAccountEvidence(providerId:string,credentialBindingId:string):AccountEvidence|null",
+      "getBudgetQuote(id:string):BudgetQuote|null",
+      "getBudgetQuoteForMediaQuote(mediaQuoteId:string):BudgetQuote|null",
+      "getQuoteAccountBinding(budgetQuoteId:string):QuoteAccountBinding|null",
+      "getBudgetExecution(executionId:string):BudgetExecution|null",
+      "getBudgetReservation(id:string):BudgetReservation|null",
+      "getReservationByExecution(executionId:string):BudgetReservation|null",
+      "getReservationByIdempotency(projectId:string,idempotencyKey:string):BudgetReservation|null",
+      "getReconciliationEvent(providerId:string,accountId:string,eventKey:string):StoredEvidence|null",
+      "listBudgetLedger(scope:LedgerScope):BudgetLedgerEntry[]"
+    ],
+    "BudgetWritePort": [
+      "appendAccountPolicy(record:AccountBudgetPolicy,expectedRevision:number|null):boolean",
+      "appendBudgetAuthorization(record:BudgetAuthorization,expectedRevision:number|null):boolean",
+      "insertAccountEvidence(record:AccountEvidence):InsertOutcome<AccountEvidence>",
+      "insertBudgetQuote(record:BudgetQuote,binding:QuoteAccountBinding|null):InsertOutcome<BudgetQuote>",
+      "registerBudgetExecution(execution:BudgetExecution):InsertOutcome<BudgetExecution>",
+      "insertBudgetReservation(record:BudgetReservation):InsertOutcome<BudgetReservation>",
+      "appendReconciliationEvidence(evidence:ReconciliationEvidence):InsertOutcome<StoredEvidence>"
+    ],
+    "semantics": [
+      "Append policy/auth revision and latest-head CAS in same tx; CAS false leaves zero writes (check prior state before insert or throw/rollback internally). Revision=prior+1 overflow checked; new revisionId distinct. Scope identity immutable.",
+      "Storage validates strict schemas before SQL; repeated immutable ID/natural key semantic equality returns original record. Never INSERT OR REPLACE/UPSERT existing history payload.",
+      "registerBudgetExecution verifies project exists and media execution matches existing job/project/idempotency/requestHash/operation. Text ID is supplied only by trusted server service and registered once; no fake job.",
+      "listBudgetLedger returns every relevant reservation across every policy/auth revision and all associated ordered events, without default LIMIT/truncation. Pure fold computes safe totals. Account_day uses original utcDay; project uses all days. No cached accounting projection needed in first local implementation.",
+      "insertBudgetQuote accepts binding:null for genuinely unknown quote/account facts; preserve query-visible immutable unknown BudgetQuote. Reserve always requires valid binding and complete known unit/currency/account/estimate facts. A later verified quote receives a new quote ID; do not rewrite unknown history or upgrade old quote silently."
+    ]
+  },
+  "tables": {
+    "budget_policies": "policy_id PK; provider/account/currency/unit stable columns; UNIQUE(provider_id,account_id,unit,currency_key), currency_key=COALESCE(currency,''); CHECK unit/currency pairing. Mutable head_revision only via CAS; never allow project-specific competing policy scope.",
+    "budget_policy_revisions": "revision_id PK; policy_id FK; revision positive-safe; UNIQUE(policy_id,revision); payload JSON; scope must match policy identity. Append-only.",
+    "budget_authorizations": "authorization_id PK; project_id FK projects; policy_id FK; UNIQUE(project_id,policy_id); mutable head_revision only CAS.",
+    "budget_authorization_revisions": "revision_id PK; authorization_id FK; policy_revision_at_authorization FK; revision; UNIQUE(auth_id,revision); payload; append-only. Latest stable policy revisions apply immediately; historic referenced revision is provenance, not authorization to ignore latest cap/revocation.",
+    "budget_account_evidence": "id PK; provider/account/credential_binding_id/observed_at/expires_at columns + strict payload; immutable. Index(provider_id,credential_binding_id,observed_at DESC,id). Lookup does not prove current connection; trusted current credential binding required by service.",
+    "budget_quotes": "id PK; project_id FK; optional media_quote_id UNIQUE with composite FK records(kind=quote,id); payload. Text permits null media quote. Unknown quote persists with currency/unit nullable per actual B1 schema and no binding row; null facts cannot create policy scope/reservation.",
+    "budget_quote_bindings": "budget_quote_id UNIQUE FK; id PK; account_evidence_id FK; account/scope/binding/semantic hashes projected. If available, insert quote+binding in same tx; absence is explicit unknown; matching scope/evidence enforced by validated adapter.",
+    "budget_executions": "execution_id PK; project_id FK; idempotency_key; kind; media_job_id nullable UNIQUE FK jobs; CHECK media_job needs media_job_id=execution_id, text needs NULL; UNIQUE(project_id,idempotency_key); immutable recipe payload/hash.",
+    "budget_reservations": "id PK; execution_id UNIQUE FK; project/idempotency UNIQUE; policy/auth revision IDs FK; quote/binding/evidence FKs; provider/account/currency/unit/utc_day/reserved_at/upper_estimate projected; immutable payload. Index(project_id,provider_id,account_id,unit,currency_key); Index(provider_id,account_id,unit,currency_key,utc_day).",
+    "budget_reconciliation_events": "sequence INTEGER PRIMARY KEY; reservation_id FK; provider/account/event_key; UNIQUE(provider_id,account_id,event_key); semantic_hash/payload; append-only. Index(reservation_id,sequence). Auto sequence allocated only new event; repeated key compares canonical evidence excluding ingest sequence, rejects conflict including changed reservation.",
+    "constraints": "Revision/count/amount integers constrained0..MAX_SAFE_INTEGER as appropriate; budget times constrained0..MAX_BUDGET_UTC_MILLIS; JSON schema validation remains mandatory. FKs ON DELETE RESTRICT; no cascade ledger deletion. Append-only SQL UPDATE/DELETE rejection triggers on history/evidence/executions/reservations/events; head tables only intended head CAS mutable."
+  },
+  "migration": "Keep001.sql byte-identical. Ordered registry001/002 must validate applied migration history is contiguous with exact known names and no unknown newer/gapped versions BEFORE preparing schema-dependent statements. Apply missing002 and schema_migrations insert in one immediate transaction; on any open/migration failure close Database and preserve original001 data. Test real v1 database constructed from original001 (not new opener pretending v1), meaningful schemaVersion2 expectations, rollback/reopen, malformed history rejection. Retain WAL/FKs/FULL/configured production.sqlite; no package changes.",
+  "B3_service_contract": {
+    "factory": "createBudgetService({store:ProductionStore,now:()=>number,resolveCurrentAccountEvidence:TrustedAccountEvidenceProducer,reconciliationProducer:TrustedReconciliationProducer})",
+    "methods": [
+      "authorizeProjectBudget(projectId:string,command:AuthorizeBudgetCommand):BudgetAuthorization; server evidence resolved outside tx then latest scope/evidence/version rechecked inside tx.",
+      "setAccountPolicy(command:AccountPolicyCommand):AccountBudgetPolicy; explicit human account policy CAS; never implicit raise by project command.",
+      "readProjectBudget(projectId:string):BudgetReadModel; expose unknown/overrun/liabilities, no credential binding or filesystem/secret data.",
+      "recordQuote(quote:BudgetQuote,binding:QuoteAccountBinding|null):BudgetQuote; trusted producer only, no browser accounting facts.",
+      "reserveInTransaction(tx:ProductionWritePort,context:{job:ProductionJob,quote:ProductionQuote,capability:CapabilityReceipt,currentCredentialBindingId:string,now:number}):BudgetReservation",
+      "reconcileTrusted(evidence:ReconciliationEvidence):ReservationAccounting; fetch trusted evidence outside tx, append/dedupe/fold inside same tx, reject conflict and invalid refunds; persist overrun even over cap."
+    ],
+    "route": "GET query + POST strict discriminated policy/project authorization commands only. Same-origin bounded JSON/error helpers, injected service from existing runtime. No reconciliation/refund/actual/evidence mutation route. Actor denotes local human profile, not hosted auth."
+  },
+  "B4_transaction_seam": {
+    "queue_signature": "beginSubmission(job:ProductionJob,lease:JobLease,now:number,authorization:{expectedEligibility:string,reserve:(tx:ProductionWritePort,current:ProductionJob,quote:ProductionQuote,capability:CapabilityReceipt,now:number)=>BudgetReservation,capability:CapabilityReceipt}):ProductionJob|null",
+    "algorithm": [
+      "Open existing short store.transaction. Re-read current job; require queued/retry-eligible pre-submit state, exact immutable request and live owned lease; cancel_requested/unknown/submitting never grants new submission.",
+      "Re-read current quote and semantic/account binding; use current time/fresh capability and productionSubmissionEligibilityFingerprint(tx,...) exact expected value to preserve approvals/selected plan/canon.",
+      "Invoke synchronous B3 reserve callback using tx. Validate latest standing policy/auth/credential/evidence/scope/quote; fold complete account-day and project totals, reserve upper estimate.",
+      "Perform updateLeasedJob to submitting and append event inside SAME tx. Any false CAS/event failure throws, rolling back reservation. Return refreshed lease/current record. Provider network follows commit outside transaction.",
+      "Worker async account discovery happens before this boundary; no async boolean authorization and no reserve-now/submit-later transaction. Post-boundary shutdown ACK persistence/cancellation/unknown handling remains intact; accounting never releases just from status."
+    ],
+    "store_type_note": "Use unchanged single ProductionStore abstraction with mandatory BudgetRead/Write methods implemented atomically in B2. B3/B4 real SQLite fixtures; no alternate typed budget store."
+  },
+  "composer_amendments_outside_B2_B3_B4": [
+    "lib/providers/production/http-routes.ts createQuoteHandler: inject trusted account evidence + quote evidence producer; produce BudgetQuote companion and QuoteAccountBinding only after exact authenticated account/credential/currency/unit evidence. Existing ProductionQuote API compatible. Save both atomically; unknown remains visibly blocked.",
+    "lib/providers/production/sogni-provider.ts/SogniFactoryOptions and ProviderPort-adjacent producer: expose evidence through separate TrustedAccountEvidenceProducer/TrustedQuoteEvidenceProducer, not fabricated catalog/account identity. Integrator must explicitly assign these provider-owned files plus tests.",
+    "scripts/production-worker.mjs: explicit budget service + trusted provider evidence wiring and synchronous reserve callback; CLI readiness reflects connected accounting rather than hardcoded blocked default. Integrator-owned narrow amendment, no global setters.",
+    "I02 text planner composer: register server text execution and BudgetQuote before same budget reserve service; charged text must not create media job/approval. Deferred until reviewed I01 interfaces."
+  ],
+  "verification": [
+    "B2 real v1/fresh/reopen migration once; FK/immutability/CAS; two store policy races; execution/reservation exact replay/conflict; event dedupe/conflict after reopen; original-day/all-days totals; abort transaction leaves no partial head/event/reservation.",
+    "B3 strict browser forged accounting rejection; standing latest revisions/expiry/revocation; credential drift; quote min/max and missing facts; cumulative settlement/refund/overrun scope queries.",
+    "B4 two jobs fit singly but jointly exceed cap->one reserve/submission; approval/lease/revoke races; injected job-event/update failure rolls back reserve; crash after boundary retains liability; reopen uncertain acceptance zero resubmit."
+  ],
+  "commands": [
+    "npm test -- lib/repositories/production/sqlite.test.ts",
+    "npm test -- lib/services/production/budget.test.ts",
+    "npm test -- lib/jobs/production/queue.test.ts lib/jobs/production/worker.test.ts",
+    "npm run typecheck",
+    "git diff --check"
+  ],
+  "paid_calls": [],
+  "network_calls": [],
+  "code_written": false,
+  "tests_run": false,
+  "scope_truth": "BudgetScope for policies/bindings/reservations must be known: explicit ISO money minor-unit or explicit supported token unit only when trusted provider evidence identifies that denomination. BudgetQuote may retain currency/unit=null unknown. Sogni entitlement spark does not prove a spark_token ledger unit or token-to-money conversion; configured credentials/catalog alone produce no account identity or known denomination. Reserve blocks unknown facts. Future token-unit support remains explicit evidence-backed extension, not fabricated Sogni facts.",
+  "B1_actual_export_reconciliation": {
+    "inspectedSHA": "ff8d24277edef612ae366edf3319b0e41d75ff3b",
+    "status": "accepted independently; integration/dispatch controlled by root",
+    "symbols": [
+      "MoneyScope",
+      "AccountBudgetPolicy",
+      "BudgetAuthorization",
+      "AccountEvidence",
+      "BudgetQuote",
+      "QuoteAccountBinding",
+      "BudgetExecution",
+      "BudgetReservation",
+      "ReconciliationEvidence",
+      "ReservationAccountingRecord"
+    ],
+    "command_schema": "AccountBudgetPolicyCommandSchema (no exported inferred type yet; B3 may use z.infer until integrator assigns type export)",
+    "unknown_quote_unit": "literal unknown, not nullable; currency may be null for unknown. Known MoneyScope minor_currency requires currency; spark_token requires null.",
+    "accounting_type": "budget.ts exports ReservationAccounting; contracts.ts exports ReservationAccountingRecord schema output. Use budget.ts pure type for summaries without duplicate DTO.",
+    "scope_keys": "schemaVersion/revisionId/policyId/authorizationId/revision; BudgetReservation.execution carries projectId/idempotencyKey/executionId/requestHash/providerId/modelId/operation/semantic hash.",
+    "timestamps": "MAX_BUDGET_UTC_MILLIS=9999-12-31T23:59:59.999Z; BudgetUtcMillisSchema and utcBudgetDay share bound. SQL projected budget times use0..MAX_BUDGET_UTC_MILLIS; policy/auth createdAt and binding evidence chronology enforced by accepted eligibility.",
+    "accounting": "foldReservation handles higher pending correction by reopening liability; equal/unknown retain finality. summarizeBudget checks reservation-consistent totals. listBudgetLedger must return immutable events for this fold, never trust SQL projection."
+  }
+}

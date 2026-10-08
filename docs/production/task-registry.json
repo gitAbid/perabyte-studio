@@ -1,0 +1,1507 @@
+{
+  "schema_version": 1,
+  "base_sha": "8f9c18adbde4d70105662489eff0878ec1e0e0f7",
+  "tasks": [
+    {
+      "id": "C00",
+      "title": "Architecture contracts and fixtures",
+      "wave": 0,
+      "lane": "integrator",
+      "depends_on": [],
+      "owned_files": [
+        "docs/production/ARCHITECTURE.md",
+        "docs/production/task-registry.json",
+        "lib/production/contracts.ts",
+        "lib/production/contracts.test.ts",
+        "lib/production/errors.ts",
+        "lib/production/hash.ts",
+        "lib/production/hash.test.ts",
+        "lib/repositories/production/ports.ts",
+        "docs/production/fixtures/project.json",
+        "docs/production/fixtures/story.json",
+        "docs/production/fixtures/shot-plan.json",
+        "package.json",
+        "package-lock.json",
+        "pnpm-lock.yaml"
+      ],
+      "acceptance_ids": [
+        "A-01",
+        "A-02",
+        "A-03",
+        "A-04",
+        "A-05",
+        "A-06",
+        "A-07",
+        "A-08",
+        "A-09",
+        "A-10",
+        "T00-01",
+        "T00-02",
+        "T00-03",
+        "T00-04"
+      ],
+      "gate_ids": [
+        "G00"
+      ],
+      "status": "done",
+      "packet_anchor": "c00-architecture-contracts-and-fixtures-integrator",
+      "release_required": false,
+      "commands": [
+        [
+          "npm",
+          "test",
+          "--",
+          "lib/production/contracts.test.ts",
+          "lib/production/hash.test.ts"
+        ],
+        [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        [
+          "git",
+          "diff",
+          "--check"
+        ]
+      ],
+      "allow_paid_calls": false,
+      "shared_files_requested": [],
+      "evidence": {
+        "worker_head": "a16b95295f31d4ef07cf239a146fc1709414620e",
+        "integrated_head": "eb866f5",
+        "focused_tests": 18,
+        "review": "specification and independent code-quality review passed after corrections"
+      }
+    },
+    {
+      "id": "C01",
+      "title": "Durable local store and lossless import",
+      "wave": 1,
+      "lane": "storage",
+      "depends_on": [
+        "C00"
+      ],
+      "owned_files": [
+        "lib/repositories/production/sqlite.ts",
+        "lib/repositories/production/migrations/001.sql",
+        "lib/repositories/production/legacy-import.ts",
+        "lib/repositories/production/sqlite.test.ts",
+        "lib/repositories/production/legacy-import.test.ts",
+        "scripts/import-legacy-studio.mjs"
+      ],
+      "acceptance_ids": [
+        "A-01",
+        "T01-01",
+        "T01-02",
+        "T01-03",
+        "T01-04",
+        "T01-05",
+        "T01-06"
+      ],
+      "gate_ids": [
+        "G00"
+      ],
+      "status": "done",
+      "packet_anchor": "c01-durable-local-store-and-lossless-import",
+      "release_required": false,
+      "commands": [
+        [
+          "npm",
+          "test",
+          "--",
+          "lib/repositories/production/sqlite.test.ts",
+          "lib/repositories/production/legacy-import.test.ts"
+        ],
+        [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        [
+          "git",
+          "diff",
+          "--check"
+        ]
+      ],
+      "allow_paid_calls": false,
+      "shared_files_requested": [],
+      "evidence": {
+        "worker_head": "9b0a3abc748cfed75103a799d80d7deb8c7e9e06",
+        "integrated_head": "65ff9c1",
+        "focused_tests": 15,
+        "review": "Root specification and independent Sol review approved after four corrections"
+      }
+    },
+    {
+      "id": "C03",
+      "title": "Provider capability truth and H3 compatibility",
+      "wave": 1,
+      "lane": "provider",
+      "depends_on": [
+        "C00"
+      ],
+      "owned_files": [
+        "lib/providers/production/capabilities.ts",
+        "lib/providers/production/capabilities.test.ts",
+        "lib/providers/production/sogni-h3.ts",
+        "lib/providers/production/sogni-h3.test.ts",
+        "scripts/probe-production-capabilities.mjs",
+        "app/api/production/capabilities/route.ts",
+        "app/api/production/quotes/route.ts"
+      ],
+      "acceptance_ids": [
+        "A-04",
+        "T03-01",
+        "T03-02",
+        "T03-03",
+        "T03-04",
+        "T03-05",
+        "T03-06",
+        "T03-07"
+      ],
+      "gate_ids": [
+        "G03",
+        "G04"
+      ],
+      "status": "done",
+      "packet_anchor": "c03-provider-capability-truth-and-h3-compatibility",
+      "release_required": false,
+      "commands": [
+        [
+          "npm",
+          "test",
+          "--",
+          "lib/providers/production/capabilities.test.ts",
+          "lib/providers/production/sogni-h3.test.ts"
+        ],
+        [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        [
+          "git",
+          "diff",
+          "--check"
+        ]
+      ],
+      "allow_paid_calls": false,
+      "shared_files_requested": [],
+      "evidence": {
+        "worker_head": "fada33a857dc1c63f8ef58012346bfd2146fc746",
+        "integrated_head": "5260be9",
+        "focused_tests": 20,
+        "review": "Root specification and independent Sol review approved after endpoint/normalization fixes"
+      }
+    },
+    {
+      "id": "C05",
+      "title": "Shot planning, long stories and animatic",
+      "wave": 1,
+      "lane": "planning",
+      "depends_on": [
+        "C00"
+      ],
+      "owned_files": [
+        "lib/production/shot-plan.ts",
+        "lib/production/shot-plan.test.ts",
+        "lib/production/animatic.ts",
+        "lib/production/animatic.test.ts",
+        "lib/services/production/shot-plan.ts",
+        "lib/services/production/shot-plan.test.ts"
+      ],
+      "acceptance_ids": [
+        "A-07",
+        "T05-01",
+        "T05-02",
+        "T05-03",
+        "T05-04",
+        "T05-05",
+        "T05-06",
+        "T05-07",
+        "T05-08"
+      ],
+      "gate_ids": [
+        "G02"
+      ],
+      "status": "done",
+      "packet_anchor": "c05-shot-planning-long-stories-and-animatic",
+      "release_required": false,
+      "commands": [
+        [
+          "npm",
+          "test",
+          "--",
+          "lib/production/shot-plan.test.ts",
+          "lib/production/animatic.test.ts",
+          "lib/services/production/shot-plan.test.ts"
+        ],
+        [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        [
+          "git",
+          "diff",
+          "--check"
+        ]
+      ],
+      "allow_paid_calls": false,
+      "shared_files_requested": [],
+      "evidence": {
+        "worker_head": "d416302d78204d7243538348d9ef7d9306bf7a2c",
+        "integrated_head": "95f0570",
+        "focused_tests": 34,
+        "review": "Root specification review and independent GPT-6.1 Sol review approved six-file module scope"
+      }
+    },
+    {
+      "id": "C02",
+      "title": "Canonical immutable revisions and dependency invalidation",
+      "wave": 3,
+      "lane": "domain",
+      "depends_on": [
+        "C01",
+        "C00",
+        "C05",
+        "I00"
+      ],
+      "owned_files": [
+        "lib/production/revisions.ts",
+        "lib/production/revisions.test.ts",
+        "lib/services/production/revisions.ts",
+        "lib/services/production/revisions.test.ts",
+        "app/api/production/projects/route.ts",
+        "app/api/production/projects/[projectId]/canon/route.ts",
+        "app/api/production/projects/[projectId]/stories/route.ts",
+        "app/api/production/projects/[projectId]/shot-plans/route.ts",
+        "app/api/production/projects/[projectId]/route.ts",
+        "lib/services/production/shot-plan.ts",
+        "lib/services/production/shot-plan.test.ts",
+        "lib/repositories/production/ports.ts",
+        "lib/repositories/production/sqlite.ts",
+        "lib/repositories/production/sqlite.test.ts",
+        "lib/production/contracts.ts",
+        "lib/production/contracts.test.ts",
+        "app/api/production/projects/[projectId]/canon/selection/route.ts"
+      ],
+      "acceptance_ids": [
+        "A-02",
+        "T02-01",
+        "T02-02",
+        "T02-03",
+        "T02-04",
+        "T02-05",
+        "T02-06",
+        "T02-07",
+        "T02-08",
+        "T02-09",
+        "T02-10"
+      ],
+      "gate_ids": [
+        "G01",
+        "G02",
+        "G03",
+        "G07"
+      ],
+      "status": "done",
+      "packet_anchor": "c02-canonical-immutable-revisions-and-dependency-invalidation",
+      "release_required": false,
+      "commands": [
+        [
+          "npm",
+          "test",
+          "--",
+          "lib/production/revisions.test.ts",
+          "lib/services/production/revisions.test.ts"
+        ],
+        [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        [
+          "git",
+          "diff",
+          "--check"
+        ]
+      ],
+      "allow_paid_calls": false,
+      "shared_files_requested": [],
+      "reviewed_worker_sha": "845a7e8c6ba14862bfe1b90609326463be8a10a6",
+      "integration_sha": "a2c571cc9bbf603b5bb30d1d7b25bffc46659fa0",
+      "evidence_report": "docs/production/reports/C02-evidence.json"
+    },
+    {
+      "id": "C04",
+      "title": "Durable same-host worker and media vault hardening",
+      "wave": 3,
+      "lane": "worker",
+      "depends_on": [
+        "C01",
+        "C03",
+        "C00",
+        "I00"
+      ],
+      "owned_files": [
+        "lib/production/approval-policy.test.ts",
+        "lib/production/approval-policy.ts",
+        "lib/jobs/production/worker.ts",
+        "lib/jobs/production/worker.test.ts",
+        "lib/jobs/production/queue.ts",
+        "lib/jobs/production/queue.test.ts",
+        "lib/repositories/production/jobs.sqlite.ts",
+        "lib/media/production/vault.ts",
+        "lib/media/production/vault.test.ts",
+        "scripts/production-worker.mjs",
+        "app/api/production/jobs/[id]/route.ts",
+        "app/api/production/assets/import/route.ts",
+        "scripts/production-doctor.mjs",
+        "app/api/production/health/route.ts",
+        "lib/providers/production/sogni-provider.ts",
+        "lib/providers/production/sogni-provider.test.ts",
+        "app/api/production/capabilities/route.ts",
+        "app/api/production/quotes/route.ts",
+        "lib/providers/production/http-routes.ts"
+      ],
+      "acceptance_ids": [
+        "A-05",
+        "T04-01",
+        "T04-02",
+        "T04-03",
+        "T04-04",
+        "T04-05",
+        "T04-06",
+        "T04-07",
+        "T04-08",
+        "T04-09",
+        "T04-10"
+      ],
+      "gate_ids": [
+        "G04",
+        "G05"
+      ],
+      "status": "done",
+      "packet_anchor": "c04-durable-same-host-worker-and-media-vault-hardening",
+      "release_required": false,
+      "commands": [
+        [
+          "npm",
+          "test",
+          "--",
+          "lib/production/approval-policy.test.ts",
+          "lib/jobs/production/worker.test.ts",
+          "lib/jobs/production/queue.test.ts",
+          "lib/media/production/vault.test.ts"
+        ],
+        [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        [
+          "git",
+          "diff",
+          "--check"
+        ]
+      ],
+      "allow_paid_calls": false,
+      "shared_files_requested": [],
+      "checkpoint_sha": "ff6d3df93425e7f876d58162b96152eab2cf7ef9",
+      "owner_stopped": true,
+      "evidence_report": "docs/production/reports/C04-resume-review.json",
+      "checkpoint_note": "Hard reserve reached4%; implementation/dispatch stopped. Integrity slice review passed; remaining operational C04 acceptance not started.",
+      "latest_review_report": "docs/production/reports/C04-continuation-review.json",
+      "current_execution": {
+        "checkpoint_sha": "ff6d3df93425e7f876d58162b96152eab2cf7ef9",
+        "lanes": [
+          {
+            "owner": "/root/c04_runtime_finish",
+            "branch": "codex/production-worker",
+            "worktree": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio",
+            "base_sha": "ff6d3df93425e7f876d58162b96152eab2cf7ef9",
+            "owned_files": [
+              "scripts/production-worker.mjs",
+              "scripts/production-doctor.mjs",
+              "app/api/production/health/route.ts",
+              "lib/jobs/production/worker.test.ts",
+              "lib/jobs/production/queue.test.ts",
+              "lib/media/production/vault.ts",
+              "lib/media/production/vault.test.ts",
+              "app/api/production/assets/import/route.ts",
+              "lib/jobs/production/queue.ts",
+              "lib/jobs/production/worker.ts"
+            ],
+            "scope_amendment": "Independent exact-SHA audit: ensureOutbox false means existing intent, not failed recovery; preserve existing claim and prove fullack retained-intent recovery. Also stop stale provider/media side effects after lease loss; two-worker real-store fixtures.",
+            "head_sha": "b09ddb103abd340bb41c24a0be90ea1dc21033a9",
+            "status": "integrated",
+            "owner_stopped": true
+          },
+          {
+            "owner": "/root/c04_provider_recovery",
+            "branch": "codex/c04-provider-recovery",
+            "worktree": "/Users/abid/.codex/worktrees/c04-provider-recovery/perabyte-studio",
+            "base_sha": "ff6d3df93425e7f876d58162b96152eab2cf7ef9",
+            "owned_files": [
+              "lib/providers/production/sogni-provider.ts",
+              "lib/providers/production/sogni-provider.test.ts"
+            ],
+            "head_sha": "27dc9f742e3771fa5f850188bbec4945f86617cf",
+            "status": "integrated",
+            "evidence_report": "/Users/abid/.codex/worktrees/c04-provider-recovery/perabyte-studio/evidence/C04-provider-recovery-followup/report.json",
+            "owner_stopped": true,
+            "independent_review": "docs/production/reports/C04-provider-final-review.json",
+            "root_reproduction": {
+              "tests": 21,
+              "exit_code": 0,
+              "output_file": "/Users/abid/.codex/worktrees/c04-provider-recovery/perabyte-studio/evidence/C04-provider-recovery-followup/root-focused-green.txt",
+              "output_sha256": "32db50f74d15f1e11ec2a29da75a4aa554a858c793815143600c9bebfd6f1bc2"
+            }
+          }
+        ],
+        "acceptance": "incomplete; independent final review and integrated full verification required",
+        "w2_flake": "worker.test.ts stream-fixture flake fixed at 0edd55b; 3/3 clean full-suite runs verified at root"
+      },
+      "evidence": {
+        "worker_head": "b09ddb103abd340bb41c24a0be90ea1dc21033a9",
+        "provider_head": "27dc9f742e3771fa5f850188bbec4945f86617cf",
+        "integrated_head": "b48c9ee457a992273c7fcf8767164cd291bc1449",
+        "report": "docs/production/reports/C04-evidence.json",
+        "tests": 1060,
+        "review": "Independent Sol source reviews plus root full suite/type/build/10 builtHTTP requests and direct CLI SIGTERM0"
+      }
+    },
+    {
+      "id": "C06",
+      "title": "Human approval and retake services",
+      "wave": 5,
+      "lane": "domain",
+      "depends_on": [
+        "C02",
+        "C04",
+        "C05",
+        "I01"
+      ],
+      "owned_files": [
+        "lib/production/approval.ts",
+        "lib/production/approval.test.ts",
+        "lib/services/production/approval.ts",
+        "lib/services/production/approval.test.ts",
+        "lib/services/production/takes.ts",
+        "lib/services/production/takes.test.ts",
+        "app/api/production/approvals/route.ts",
+        "app/api/production/shots/[shotId]/takes/route.ts",
+        "app/api/production/shots/[shotId]/anchors/route.ts",
+        "app/api/production/shots/[shotId]/selection/route.ts"
+      ],
+      "acceptance_ids": [
+        "A-03",
+        "T06-01",
+        "T06-02",
+        "T06-03",
+        "T06-04",
+        "T06-05",
+        "T06-06",
+        "T06-07",
+        "T06-08",
+        "T06-09"
+      ],
+      "gate_ids": [
+        "G01",
+        "G02",
+        "G03",
+        "G05"
+      ],
+      "status": "active",
+      "packet_anchor": "c06-human-approval-and-retake-services",
+      "release_required": false,
+      "commands": [
+        [
+          "npm",
+          "test",
+          "--",
+          "lib/production/approval.test.ts",
+          "lib/services/production/approval.test.ts",
+          "lib/services/production/takes.test.ts"
+        ],
+        [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        [
+          "git",
+          "diff",
+          "--check"
+        ]
+      ],
+      "allow_paid_calls": false,
+      "shared_files_requested": [],
+      "current_execution": {
+        "sequencing": "PRE exception after accepted B3/B4 kernel; full I01 dependency remains for parent acceptance",
+        "boundary": "reports/C06-PRE-root-freeze.json",
+        "lanes": [],
+        "full_packet_acceptance": "incomplete",
+        "next_verification": "Core service slices accepted; full parent awaits I01 live proof composition."
+      },
+      "accepted_slices": [
+        {
+          "id": "C06-PRE-S",
+          "integration_sha": "e36f84359ede5895d69ef712807e9884ab003dbe",
+          "report": "reports/C06-PRE-S-integrated.json",
+          "full_packet_acceptance": "incomplete"
+        },
+        {
+          "id": "C06-PRE-A",
+          "integration_sha": "1487bfc1f90262affa4730dece7420493c103e7d",
+          "report": "reports/C06-PRE-A-integrated.json",
+          "full_packet_acceptance": "incomplete"
+        },
+        {
+          "id": "C06-PRE-R",
+          "integration_sha": "7e29b314cf37c1ec3f684dcf26e811b72ce5caa0",
+          "report": "reports/C06-PRE-R-integrated.json",
+          "full_packet_acceptance": "incomplete"
+        },
+        {
+          "id": "C06-SEL",
+          "integration_sha": "546636eae09089dda1c46e3032a331c2c3d5b4da",
+          "report": "reports/C06-SEL-integrated.json",
+          "full_packet_acceptance": "incomplete"
+        }
+      ]
+    },
+    {
+      "id": "C07",
+      "title": "Canon and script UI",
+      "wave": 6,
+      "lane": "ui",
+      "depends_on": [
+        "C02",
+        "C04",
+        "C06",
+        "I02"
+      ],
+      "owned_files": [
+        "app/production/page.tsx",
+        "app/production/new/page.tsx",
+        "app/production/[projectId]/page.tsx",
+        "app/production/[projectId]/canon/page.tsx",
+        "app/production/[projectId]/script/page.tsx",
+        "components/production/project-canon.tsx",
+        "lib/production/project-canon.test.ts",
+        "scripts/verify-production-canon.mjs"
+      ],
+      "acceptance_ids": [
+        "T07-01",
+        "T07-02",
+        "T07-03",
+        "T07-04",
+        "T07-05"
+      ],
+      "gate_ids": [
+        "G01",
+        "G02"
+      ],
+      "status": "planned",
+      "packet_anchor": "c07-canon-and-script-ui",
+      "release_required": false,
+      "commands": [
+        [
+          "npm",
+          "test",
+          "--",
+          "lib/production/project-canon.test.ts"
+        ],
+        [
+          "node",
+          "scripts/verify-production-canon.mjs",
+          "http://127.0.0.1:3100"
+        ],
+        [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        [
+          "git",
+          "diff",
+          "--check"
+        ]
+      ],
+      "allow_paid_calls": false,
+      "shared_files_requested": [],
+      "current_execution": {
+        "slice": "C07-FULL-UI accepted/integrated c6cb1d9 (2026-10-05)",
+        "owner": "zcode-orchestrator",
+        "status": "canon/script pages delivered + browser-verified (26/26)",
+        "boundary": "docs/production/reports/C07-FULL-UI-root-freeze.json"
+      }
+    },
+    {
+      "id": "C09",
+      "title": "Audio cue domain and local import",
+      "wave": 6,
+      "lane": "audio",
+      "depends_on": [
+        "C01",
+        "C02",
+        "C04",
+        "C06",
+        "C00"
+      ],
+      "owned_files": [
+        "lib/production/audio.ts",
+        "lib/production/audio.test.ts",
+        "lib/services/production/audio.ts",
+        "lib/services/production/audio.test.ts",
+        "app/api/production/projects/[projectId]/audio/route.ts",
+        "scripts/production-audio-import.mjs"
+      ],
+      "acceptance_ids": [
+        "T09-01",
+        "T09-02",
+        "T09-03",
+        "T09-04",
+        "T09-05",
+        "T09-06",
+        "T09-07",
+        "T09-08"
+      ],
+      "gate_ids": [
+        "G06"
+      ],
+      "status": "planned",
+      "packet_anchor": "c09-audio-cue-domain-and-local-import",
+      "release_required": false,
+      "commands": [
+        [
+          "npm",
+          "test",
+          "--",
+          "lib/production/audio.test.ts",
+          "lib/services/production/audio.test.ts"
+        ],
+        [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        [
+          "git",
+          "diff",
+          "--check"
+        ]
+      ],
+      "allow_paid_calls": false,
+      "shared_files_requested": [],
+      "current_execution": {
+        "slice": "C09-PRE accepted/integrated 0c34a7e (2026-10-05)",
+        "owner": "zcode-orchestrator",
+        "status": "full C09 contract delivered offline (domain+service+route+CLI, 29 tests); parent acceptance at Wave 3 with full-suite gate",
+        "boundary": "docs/production/reports/wave1-freeze-20261005.json",
+        "carry_forward": [
+          "asset sampleRate gap",
+          "overlap O(n^2) cap"
+        ]
+      }
+    },
+    {
+      "id": "C08",
+      "title": "Storyboard and takes UI",
+      "wave": 7,
+      "lane": "ui",
+      "depends_on": [
+        "C05",
+        "C06",
+        "C07"
+      ],
+      "owned_files": [
+        "app/production/[projectId]/shots/page.tsx",
+        "app/production/[projectId]/anchors/page.tsx",
+        "app/production/[projectId]/takes/page.tsx",
+        "components/production/storyboard.tsx",
+        "lib/production/storyboard.test.ts",
+        "scripts/verify-production-shots.mjs"
+      ],
+      "acceptance_ids": [
+        "T08-01",
+        "T08-02",
+        "T08-03",
+        "T08-04",
+        "T08-05",
+        "T08-06",
+        "T08-07"
+      ],
+      "gate_ids": [
+        "G02",
+        "G03",
+        "G05"
+      ],
+      "status": "planned",
+      "packet_anchor": "c08-storyboard-and-takes-ui",
+      "release_required": false,
+      "commands": [
+        [
+          "npm",
+          "test",
+          "--",
+          "lib/production/storyboard.test.ts"
+        ],
+        [
+          "node",
+          "scripts/verify-production-shots.mjs",
+          "http://127.0.0.1:3100"
+        ],
+        [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        [
+          "git",
+          "diff",
+          "--check"
+        ]
+      ],
+      "allow_paid_calls": false,
+      "shared_files_requested": [],
+      "current_execution": {
+        "slice": "accepted/integrated aaa1da6 (2026-10-05)",
+        "owner": "zcode-orchestrator",
+        "status": "storyboard/anchors/takes UI delivered + browser-verified; reduced browser set frozen honestly",
+        "boundary": "docs/production/reports/C08-root-freeze.json"
+      }
+    },
+    {
+      "id": "C10",
+      "title": "Audio cue UI",
+      "wave": 7,
+      "lane": "ui",
+      "depends_on": [
+        "C09"
+      ],
+      "owned_files": [
+        "app/production/[projectId]/audio/page.tsx",
+        "components/production/audio.tsx",
+        "scripts/verify-production-audio.mjs",
+        "lib/production/audio-ui.test.ts"
+      ],
+      "acceptance_ids": [
+        "T10-01",
+        "T10-02",
+        "T10-03",
+        "T10-04",
+        "T10-05",
+        "T10-06"
+      ],
+      "gate_ids": [
+        "G06"
+      ],
+      "status": "planned",
+      "packet_anchor": "c10-audio-cue-ui",
+      "release_required": false,
+      "commands": [
+        [
+          "npm",
+          "test",
+          "--",
+          "lib/production/audio-ui.test.ts"
+        ],
+        [
+          "node",
+          "scripts/verify-production-audio.mjs",
+          "http://127.0.0.1:3100"
+        ],
+        [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        [
+          "git",
+          "diff",
+          "--check"
+        ]
+      ],
+      "allow_paid_calls": false,
+      "shared_files_requested": [],
+      "current_execution": {
+        "slice": "C10-PRE accepted/integrated 0729ce4 (2026-10-05)",
+        "owner": "zcode-orchestrator",
+        "status": "audio cue UI delivered + browser-verified; F1 display-formula spec bug fixed pre-integration",
+        "boundary": "docs/production/reports/C10-PRE-root-freeze.json"
+      }
+    },
+    {
+      "id": "C11",
+      "title": "Manifest compiler and local FFmpeg export",
+      "wave": 8,
+      "lane": "assembly",
+      "depends_on": [
+        "C02",
+        "C04",
+        "C05",
+        "C06",
+        "C09",
+        "C00"
+      ],
+      "owned_files": [
+        "lib/production/manifest.ts",
+        "lib/production/manifest.test.ts",
+        "lib/services/production/manifest.ts",
+        "lib/services/production/manifest.test.ts",
+        "lib/media/production/assembly.ts",
+        "lib/media/production/assembly.test.ts",
+        "lib/media/production/profiles.ts",
+        "app/api/production/projects/[projectId]/exports/route.ts",
+        "app/api/production/projects/[projectId]/manifests/route.ts"
+      ],
+      "acceptance_ids": [
+        "T11-01",
+        "T11-02",
+        "T11-03",
+        "T11-04",
+        "T11-05",
+        "T11-06",
+        "T11-07",
+        "T11-08",
+        "T11-09"
+      ],
+      "gate_ids": [
+        "G07",
+        "G08"
+      ],
+      "status": "planned",
+      "packet_anchor": "c11-manifest-compiler-and-local-ffmpeg-export",
+      "release_required": false,
+      "commands": [
+        [
+          "npm",
+          "test",
+          "--",
+          "lib/production/manifest.test.ts",
+          "lib/services/production/manifest.test.ts",
+          "lib/media/production/assembly.test.ts"
+        ],
+        [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        [
+          "git",
+          "diff",
+          "--check"
+        ]
+      ],
+      "allow_paid_calls": false,
+      "shared_files_requested": [],
+      "current_execution": {
+        "slice": "C11-PRE + C11-FULL + C11-WIRE accepted/integrated (58f4a05, 84deb1b, 352aaf9)",
+        "owner": "zcode-orchestrator",
+        "status": "manifest compiler + FFmpeg assembly + export execution + scheduler wiring complete; deterministic fixture render evidenced",
+        "boundary": "docs/production/reports/C11-FULL-root-freeze.json"
+      }
+    },
+    {
+      "id": "C12",
+      "title": "Export QC and download UI",
+      "wave": 9,
+      "lane": "quality",
+      "depends_on": [
+        "C11"
+      ],
+      "owned_files": [
+        "lib/production/qc.ts",
+        "lib/production/qc.test.ts",
+        "lib/services/production/qc.ts",
+        "lib/services/production/qc.test.ts",
+        "app/api/production/exports/[id]/route.ts",
+        "app/api/production/exports/[id]/download/route.ts",
+        "app/production/[projectId]/export/page.tsx",
+        "components/production/export.tsx",
+        "lib/production/export-ui.test.ts",
+        "scripts/verify-production-export.mjs",
+        "app/api/production/exports/[id]/draft/route.ts"
+      ],
+      "acceptance_ids": [
+        "T12-01",
+        "T12-02",
+        "T12-03",
+        "T12-04",
+        "T12-05",
+        "T12-06",
+        "T12-07",
+        "T12-08"
+      ],
+      "gate_ids": [
+        "G08",
+        "G09"
+      ],
+      "status": "planned",
+      "packet_anchor": "c12-export-qc-and-download-ui",
+      "release_required": false,
+      "commands": [
+        [
+          "npm",
+          "test",
+          "--",
+          "lib/production/qc.test.ts",
+          "lib/services/production/qc.test.ts",
+          "lib/production/export-ui.test.ts"
+        ],
+        [
+          "node",
+          "scripts/verify-production-export.mjs",
+          "http://127.0.0.1:3100"
+        ],
+        [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        [
+          "git",
+          "diff",
+          "--check"
+        ]
+      ],
+      "allow_paid_calls": false,
+      "shared_files_requested": [],
+      "current_execution": {
+        "slice": "accepted/integrated eb5ccec (2026-10-05)",
+        "owner": "zcode-orchestrator",
+        "status": "QC engine + final review + download/draft separation delivered; service-level proofs vs real renders",
+        "boundary": "docs/production/reports/C12-root-freeze.json"
+      }
+    },
+    {
+      "id": "C13",
+      "title": "Short portrait pilot",
+      "wave": 10,
+      "lane": "pilot",
+      "depends_on": [
+        "C08",
+        "C10",
+        "C12"
+      ],
+      "owned_files": [
+        "docs/production/pilots/short-portrait.md",
+        "scripts/pilot-short-portrait.mjs"
+      ],
+      "acceptance_ids": [
+        "T13-01",
+        "T13-02",
+        "T13-03",
+        "T13-04",
+        "T13-05",
+        "T13-06"
+      ],
+      "gate_ids": [
+        "G01",
+        "G02",
+        "G03",
+        "G04",
+        "G05",
+        "G06",
+        "G07",
+        "G08",
+        "G09"
+      ],
+      "status": "planned (USER-GATED: paid calls need standing budget authorization; creator G01-G09 review is human)",
+      "packet_anchor": "c13-short-portrait-pilot",
+      "release_required": true,
+      "commands": [
+        [
+          "node",
+          "scripts/pilot-short-portrait.mjs",
+          "--preflight"
+        ],
+        [
+          "node",
+          "scripts/pilot-short-portrait.mjs",
+          "--final"
+        ],
+        [
+          "npm",
+          "test"
+        ],
+        [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        [
+          "npm",
+          "run",
+          "build"
+        ]
+      ],
+      "allow_paid_calls": true,
+      "shared_files_requested": []
+    },
+    {
+      "id": "C14",
+      "title": "Long landscape pilot",
+      "wave": 11,
+      "lane": "pilot",
+      "depends_on": [
+        "C13",
+        "C12"
+      ],
+      "owned_files": [
+        "docs/production/pilots/long-landscape.md",
+        "scripts/pilot-long-landscape.mjs"
+      ],
+      "acceptance_ids": [
+        "T14-01",
+        "T14-02",
+        "T14-03",
+        "T14-04",
+        "T14-05",
+        "T14-06"
+      ],
+      "gate_ids": [
+        "G01",
+        "G02",
+        "G03",
+        "G04",
+        "G05",
+        "G06",
+        "G07",
+        "G08",
+        "G09"
+      ],
+      "status": "planned (USER-GATED: same as C13)",
+      "packet_anchor": "c14-long-landscape-pilot",
+      "release_required": true,
+      "commands": [
+        [
+          "node",
+          "scripts/pilot-long-landscape.mjs",
+          "--preflight"
+        ],
+        [
+          "node",
+          "scripts/pilot-long-landscape.mjs",
+          "--final"
+        ],
+        [
+          "npm",
+          "test"
+        ],
+        [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        [
+          "npm",
+          "run",
+          "build"
+        ]
+      ],
+      "allow_paid_calls": true,
+      "shared_files_requested": []
+    },
+    {
+      "id": "C15",
+      "title": "Recovery, backup/restore and release gate",
+      "wave": 12,
+      "lane": "reliability",
+      "depends_on": [
+        "C01",
+        "C04",
+        "C12",
+        "C13",
+        "C14"
+      ],
+      "owned_files": [
+        "scripts/production-backup.mjs",
+        "scripts/production-restore.mjs",
+        "scripts/verify-production-recovery.mjs",
+        "lib/production/recovery.test.ts",
+        "docs/production/RELEASE_CHECKLIST.md"
+      ],
+      "acceptance_ids": [
+        "T15-01",
+        "T15-02",
+        "T15-03",
+        "T15-04",
+        "T15-05",
+        "T15-06",
+        "T15-07",
+        "T15-08"
+      ],
+      "gate_ids": [
+        "G10"
+      ],
+      "status": "planned (BLOCKED-ON C13/C14 per registry; drill design can be pre-frozen on request)",
+      "packet_anchor": "c15-recovery-backup-restore-and-release-gate",
+      "release_required": true,
+      "commands": [
+        [
+          "npm",
+          "test",
+          "--",
+          "lib/production/recovery.test.ts"
+        ],
+        [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        [
+          "git",
+          "diff",
+          "--check"
+        ],
+        [
+          "node",
+          "scripts/verify-production-recovery.mjs"
+        ]
+      ],
+      "allow_paid_calls": false,
+      "shared_files_requested": []
+    },
+    {
+      "id": "C16",
+      "title": "Optional Sogni speech/music adapter",
+      "wave": 13,
+      "lane": "extension",
+      "depends_on": [
+        "C09",
+        "C10"
+      ],
+      "owned_files": [
+        "lib/providers/production/sogni-audio.ts",
+        "lib/providers/production/sogni-audio.test.ts",
+        "lib/services/production/audio-generation.ts",
+        "lib/services/production/audio-generation.test.ts"
+      ],
+      "acceptance_ids": [
+        "T16-01",
+        "T16-02",
+        "T16-03",
+        "T16-04"
+      ],
+      "gate_ids": [
+        "G04",
+        "G06"
+      ],
+      "status": "planned",
+      "packet_anchor": "c16-optional-sogni-speech-music-adapter",
+      "release_required": false,
+      "commands": [
+        [
+          "npm",
+          "test",
+          "--",
+          "lib/providers/production/sogni-audio.test.ts",
+          "lib/services/production/audio-generation.test.ts"
+        ],
+        [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        [
+          "git",
+          "diff",
+          "--check"
+        ]
+      ],
+      "allow_paid_calls": true,
+      "shared_files_requested": []
+    },
+    {
+      "id": "C17",
+      "title": "Publication, genre profiles and derivatives",
+      "wave": 14,
+      "lane": "roadmap",
+      "depends_on": [
+        "C15"
+      ],
+      "owned_files": [
+        "lib/production/publishing.ts",
+        "lib/production/publishing.test.ts",
+        "lib/services/production/publishing.ts",
+        "lib/services/production/publishing.test.ts"
+      ],
+      "acceptance_ids": [
+        "T17-01",
+        "T17-02",
+        "T17-03",
+        "T17-04"
+      ],
+      "gate_ids": [
+        "G09",
+        "G10"
+      ],
+      "status": "planned",
+      "packet_anchor": "c17-publication-genre-profiles-and-derivatives",
+      "release_required": false,
+      "commands": [
+        [
+          "npm",
+          "test",
+          "--",
+          "lib/production/publishing.test.ts",
+          "lib/services/production/publishing.test.ts"
+        ],
+        [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        [
+          "git",
+          "diff",
+          "--check"
+        ]
+      ],
+      "allow_paid_calls": false,
+      "shared_files_requested": []
+    },
+    {
+      "id": "I00",
+      "title": "Shared runtime, project profiles and HTTP boundary",
+      "wave": 2,
+      "lane": "composition",
+      "depends_on": [
+        "C01",
+        "C03",
+        "C05"
+      ],
+      "owned_files": [
+        "lib/production/runtime.ts",
+        "lib/production/runtime.test.ts",
+        "lib/production/profiles.ts",
+        "lib/production/profiles.test.ts",
+        "lib/production/http.ts",
+        "lib/production/http.test.ts"
+      ],
+      "acceptance_ids": [
+        "I00-01",
+        "I00-02",
+        "I00-03",
+        "I00-04"
+      ],
+      "gate_ids": [
+        "G00"
+      ],
+      "status": "done",
+      "packet_anchor": "i00-shared-runtime-project-profiles-and-http-boundary",
+      "release_required": false,
+      "commands": [
+        [
+          "npm",
+          "test",
+          "--",
+          "lib/production/runtime.test.ts",
+          "lib/production/profiles.test.ts",
+          "lib/production/http.test.ts"
+        ],
+        [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        [
+          "git",
+          "diff",
+          "--check"
+        ]
+      ],
+      "allow_paid_calls": false,
+      "shared_files_requested": []
+    },
+    {
+      "id": "I01",
+      "title": "Standing budget authorization and durable spend reservations",
+      "wave": 4,
+      "lane": "integrator",
+      "depends_on": [
+        "C02",
+        "C04",
+        "I00"
+      ],
+      "owned_files": [
+        "lib/production/budget.ts",
+        "lib/production/budget.test.ts",
+        "lib/services/production/budget.ts",
+        "lib/services/production/budget.test.ts",
+        "lib/repositories/production/migrations/002-budget.sql",
+        "lib/repositories/production/ports.ts",
+        "lib/repositories/production/sqlite.ts",
+        "lib/repositories/production/sqlite.test.ts",
+        "lib/production/contracts.ts",
+        "lib/production/contracts.test.ts",
+        "lib/jobs/production/queue.ts",
+        "lib/jobs/production/queue.test.ts",
+        "lib/jobs/production/worker.ts",
+        "lib/jobs/production/worker.test.ts",
+        "app/api/production/projects/[projectId]/budget/route.ts",
+        "app/api/production/projects/[projectId]/budget/route.test.ts"
+      ],
+      "acceptance_ids": [
+        "I01-01",
+        "I01-02",
+        "I01-03",
+        "I01-04",
+        "I01-05",
+        "I01-06"
+      ],
+      "gate_ids": [
+        "G04",
+        "G05"
+      ],
+      "status": "active",
+      "packet_anchor": "i01-standing-budget-authorization-and-durable-spend-reservations",
+      "release_required": true,
+      "commands": [
+        [
+          "npm",
+          "test",
+          "--",
+          "lib/production/budget.test.ts",
+          "lib/services/production/budget.test.ts",
+          "lib/jobs/production/queue.test.ts",
+          "lib/jobs/production/worker.test.ts"
+        ],
+        [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        [
+          "git",
+          "diff",
+          "--check"
+        ]
+      ],
+      "allow_paid_calls": false,
+      "shared_files_requested": [],
+      "current_execution": {
+        "slice": "ALL B6 slices accepted+integrated (B6-S/P/C/W-LOCK/W-WIRE + 3 fix rounds)",
+        "owner": "zcode-orchestrator",
+        "status": "I01 acceptance gate PASSED at db2ad30: full suite 116f/1282t exit 0 + build exit 0; release-required live-account proof remains USER-GATED",
+        "boundary": "docs/production/reports/I01-B6-C-root-freeze.json + I01-B6-W-WIRE-root-freeze.json",
+        "full_i01_complete": true,
+        "note": "functional/offline I01 complete; live proof composition awaits user policy install + standing authorization"
+      },
+      "accepted_slices": [
+        {
+          "id": "I01-B1",
+          "integration_sha": "ffea35b2a7cdc7400b083ea0be7d388cbb0723f0",
+          "report": "reports/I01-B1-evidence.json",
+          "full_packet_acceptance": "incomplete"
+        },
+        {
+          "id": "I01-B2",
+          "integration_sha": "c7c1e73716c28233b6628b49f85eccac3dfc9b06",
+          "report": "reports/I01-B2-evidence.json",
+          "full_packet_acceptance": "incomplete"
+        },
+        {
+          "id": "I01-B1-quote-compatibility",
+          "integration_sha": "8b8abf5a791bc99f4424c3664c8880b185d85a33",
+          "report": "reports/I01-helper-review.json",
+          "full_packet_acceptance": "incomplete"
+        },
+        {
+          "id": "I01-B3",
+          "integration_sha": "4997ecc322b24389c6cb84bb13c6ca967ddfbf4e",
+          "report": "reports/I01-B3-evidence.json",
+          "full_packet_acceptance": "incomplete"
+        },
+        {
+          "id": "I01-B4",
+          "integration_sha": "e2624d7af7130785e1a7f935cbc42777fe690228",
+          "report": "reports/I01-B4-integrated-kernel.json",
+          "full_packet_acceptance": "incomplete"
+        }
+      ]
+    },
+    {
+      "id": "I02",
+      "title": "Script-to-story and storyboard draft proposals",
+      "wave": 5,
+      "lane": "worker",
+      "depends_on": [
+        "C02",
+        "C05",
+        "I00",
+        "I01"
+      ],
+      "owned_files": [
+        "lib/production/proposals.ts",
+        "lib/production/proposals.test.ts",
+        "lib/services/production/proposals.ts",
+        "lib/services/production/proposals.test.ts",
+        "lib/providers/production/text-planner.ts",
+        "lib/providers/production/text-planner.test.ts",
+        "app/api/production/projects/[projectId]/proposals/route.ts"
+      ],
+      "acceptance_ids": [
+        "I02-01",
+        "I02-02",
+        "I02-03",
+        "I02-04"
+      ],
+      "gate_ids": [
+        "G01",
+        "G02",
+        "G03"
+      ],
+      "status": "planned",
+      "packet_anchor": "i02-script-to-story-and-storyboard-draft-proposals",
+      "release_required": true,
+      "commands": [
+        [
+          "npm",
+          "test",
+          "--",
+          "lib/production/proposals.test.ts",
+          "lib/services/production/proposals.test.ts",
+          "lib/providers/production/text-planner.test.ts"
+        ],
+        [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        [
+          "git",
+          "diff",
+          "--check"
+        ]
+      ],
+      "allow_paid_calls": false,
+      "shared_files_requested": [],
+      "current_execution": {
+        "slice": "I02-PRE accepted/integrated 907292c (2026-10-05)",
+        "owner": "zcode-orchestrator",
+        "status": "fixture-only proposal engine delivered (47 tests, full-suite green); parent acceptance at Wave 3",
+        "boundary": "docs/production/reports/wave1-freeze-20261005.json"
+      }
+    }
+  ],
+  "auxiliary_packets": [
+    {
+      "id": "U00-POLICY",
+      "status": "accepted_integrated",
+      "owner": "/root/usage_policy_update",
+      "worktree": "/Users/abid/.codex/worktrees/production-usage-policy/perabyte-studio",
+      "branch": "codex/production-usage-policy",
+      "purpose": "Wire user weekly1/five-hour2 usage policy through guard and actual handover CLI",
+      "acceptance": "Focused per-window behavior, CLI smoke, typecheck, diff check and independent review",
+      "source_sha": "c5bc6774150ebcad80a003646c3843d163cfbc60",
+      "integration_sha": "78426b7c3a5e825358dbb401b5f4d941bf8e2060",
+      "review": "docs/production/reports/U00-POLICY-review.json"
+    }
+  ]
+}

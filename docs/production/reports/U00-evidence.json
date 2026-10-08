@@ -1,0 +1,67 @@
+{
+  "task_id": "U00",
+  "scope": "preserved worker RED/GREEN and CLI outputs; see checkpoint for observed acceptance",
+  "worker_head": "9c1305c68cf952c49176d5ffc222301f1781483c",
+  "outputs": [
+    {
+      "path": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/cli-bad-state.txt",
+      "sha256": "678991d4c1e813228ac78a0ad38c26b3917a982a2213d2529d42d622b25607c9"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/cli-checkpoint.txt",
+      "sha256": "27ee1f828f044fd6a239d7962cbff4b0b804ea9c14b60c8ed0e5bc0b24c437fa"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/cli-continue.txt",
+      "sha256": "7ff1ff67aa8fac75d9dc3e61bc1bcc878d782c206a7af0ea6c7d41f2bf35fb10"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/cli-integration-state.txt",
+      "sha256": "2898d64ac49d2fa0cfbde1d83b4814c25ad6f0fce3944585e84f59aa9e3d90fc"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/cli-stop.txt",
+      "sha256": "54d9a59e29d16b5b1a99518a820422c6551c134cf4cab7f5563e01f1d19e2da5"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/cli-unknown.txt",
+      "sha256": "6d21bd129e0a453f50332ab28c640822762e67825890c9e3ffdc717b2cf9eed0"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/correction/diff-check.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/correction/green.txt",
+      "sha256": "1085f9c31f3bc32578961dd870e4eac0855629b4d0ea1bb6a287f369a546f52f"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/correction/red.txt",
+      "sha256": "3128e3df202daf713f4ab376578e481253e5a8e1518970e00300ee95cd27c42d"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/correction/typecheck.txt",
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/diff-check.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/green-focused.txt",
+      "sha256": "9cbd48183b598744508fdad77a963543472df168b3cb2296f322164d1a63cbe9"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/red-controls.txt",
+      "sha256": "b29e6aa472b946ed72fd404d1fc0bc09a7239d0a92eb0c11c51d2bc9326c6936"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/red-focused.txt",
+      "sha256": "2031630ec4a3b096a17782ab41ed9800e04431a521658423fe9b859a85de0017"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-handover-guard/perabyte-studio/evidence/U00/typecheck.txt",
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    }
+  ]
+}

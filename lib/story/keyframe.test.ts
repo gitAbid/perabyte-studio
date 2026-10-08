@@ -115,6 +115,39 @@ describe("resolveKeyframeStrategy", () => {
     });
   });
 
+  it("strict references reserve all character fronts and location before optional predecessor", () => {
+    const strategy = resolveKeyframeStrategy({
+      story: {} as never,
+      scene: scene(),
+      cast: [character("a", "front_a.png"), character("b", "front_b.png")],
+      location: LOCATION,
+      predecessorEndRef: "prev.jpg",
+      strictReferences: true,
+      imageModels: [descriptor("qwen", { contextImages: { min: 1, max: 3 } })],
+    });
+    expect(strategy).toEqual({
+      rung: "multi",
+      modelId: "qwen",
+      refs: ["front_a.png", "front_b.png", "locplate.png"],
+    });
+  });
+
+  it("strict references fail when required references exceed model capacity", () => {
+    const strategy = resolveKeyframeStrategy({
+      story: {} as never,
+      scene: scene(),
+      cast: [character("a", "front_a.png"), character("b", "front_b.png")],
+      location: LOCATION,
+      predecessorEndRef: "prev.jpg",
+      strictReferences: true,
+      imageModels: [descriptor("qwen", { contextImages: { min: 1, max: 2 } })],
+    });
+    expect(strategy).toEqual({
+      rung: "none",
+      reason: "required keyframe references exceed available model capacity",
+    });
+  });
+
   it("rung single: img2img fallback takes the first ref (the first cast front)", () => {
     const strategy = resolveKeyframeStrategy({
       story: {} as never,

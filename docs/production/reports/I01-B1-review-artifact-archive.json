@@ -1,0 +1,46 @@
+{
+  "scope": "Archive of actual independent/root review outputs, originals unchanged",
+  "code_sha": "ffea35b2a7cdc7400b083ea0be7d388cbb0723f0",
+  "artifacts": [
+    {
+      "original": "/tmp/perabyte-I01-B1-review-tests.txt",
+      "archived_path": "evidence/integration/i01-b1-review-artifacts/perabyte-I01-B1-review-tests.txt",
+      "sha256": "0768ab08f58b0765d7a2a134027b6813284f7c055c95f2a52a66bac480e0de37"
+    },
+    {
+      "original": "/tmp/perabyte-I01-B1-review-typecheck.txt",
+      "archived_path": "evidence/integration/i01-b1-review-artifacts/perabyte-I01-B1-review-typecheck.txt",
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    },
+    {
+      "original": "/tmp/perabyte-I01-B1-probes.ts",
+      "archived_path": "evidence/integration/i01-b1-review-artifacts/perabyte-I01-B1-probes.ts",
+      "sha256": "167df04507e5779fd59ed16c0fc887217e186dd9d82cab1c29817ada20924d2a"
+    },
+    {
+      "original": "/tmp/perabyte-I01-B1-probes-output.json",
+      "archived_path": "evidence/integration/i01-b1-review-artifacts/perabyte-I01-B1-probes-output.json",
+      "sha256": "73918347a1203305564b04dd7e21d42e51313187737d29be9df202dfecf943b1"
+    },
+    {
+      "original": "/tmp/perabyte-I01-B1-corrected-review-tests.txt",
+      "archived_path": "evidence/integration/i01-b1-review-artifacts/perabyte-I01-B1-corrected-review-tests.txt",
+      "sha256": "cc46b257e196aef1fa50f9796c250ff220585c30b61b8220f5eb84f7db8d0d3b"
+    },
+    {
+      "original": "/tmp/perabyte-I01-B1-corrected-probes.ts",
+      "archived_path": "evidence/integration/i01-b1-review-artifacts/perabyte-I01-B1-corrected-probes.ts",
+      "sha256": "ad2da920fb819a9add4f48898c67124993e387c0fbbb3d475109873eb4455973"
+    },
+    {
+      "original": "/tmp/perabyte-I01-B1-corrected-probes-output.json",
+      "archived_path": "evidence/integration/i01-b1-review-artifacts/perabyte-I01-B1-corrected-probes-output.json",
+      "sha256": "b9722390f8c838a6f45c90db62998336e779327d030d9d2c0cb643888518e246"
+    },
+    {
+      "original": "/tmp/perabyte-I01-B1-root-corrected-focused.txt",
+      "archived_path": "evidence/integration/i01-b1-review-artifacts/perabyte-I01-B1-root-corrected-focused.txt",
+      "sha256": "bdb9e40c7db727b1f851b8df477812aad0e36316c3ba25277bbd8325df469f66"
+    }
+  ]
+}

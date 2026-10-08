@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "packet": "WAVE2-2026-10-05",
+  "status": "ROOT_FROZEN parallel wave (architect + orchestrator)",
+  "base": "4b0d805 (zcode/production-core; all Wave-1 packets integrated, full suite 112 files/1259 tests green)",
+  "packets": [
+    {
+      "id": "C11-PRE",
+      "owns": ["lib/production/manifest.ts", "lib/production/manifest.test.ts", "lib/services/production/manifest.ts", "lib/services/production/manifest.test.ts"],
+      "fullBoundary": "docs/production/reports/C11-PRE-root-freeze.json",
+      "summary": "Manifest compiler domain + offline service: deterministic manifestInputsHash (recipeVersion 1 incl. captionCues-present-but-empty), integer timeline arithmetic (2000 samples/frame, half-open [start,end) trims, crop bounds, 8-frame crossfade subtraction, safe-integer sums), audio exactness vs video timeline, compileManifest pins only accepted matching take revisions + approved audio mix with selection CAS, plan-order shots, zero writes on failure, content-addressed id manifest-<hash> with created:false idempotent recompile. Constants: MANIFEST_MASTERING_RECIPE_VERSION=1, MANIFEST_CROSSFADE_FRAMES=8, MANIFEST_SAMPLES_PER_FRAME=2000. v1 defaults: trim [0,targetFrames) requiring actualFrames>=targetFrames, full-frame crop, all-cut transitions (domain validates arbitrary legal values). Consumes read-only: contracts schemas, hash, revisions.shotsCompatibleWithStory, approval-policy.latestMatchingApproval, approval.computeTakeApprovalHash, audio.serializeAudioTimeline. NEVER imports takes.ts/budget-composer/proposals/sogni-provider.",
+      "minimalTests": [
+        "C11-PRE manifest fingerprint and timeline arithmetic are deterministic and fail closed (key-order-independent hash; hash changes on every pinned semantic input; illegal trim/crop/null-dims/last-shot-crossfade/total-mismatch reject naming the shot; crossfade subtracts exactly 8 frames per internal boundary)",
+        "C11-PRE audio exactness is integer-exact against the video timeline (totalSamples=totalFrames*2000; cue at exactly totalSamples passes, one past rejects naming cue id)",
+        "C11-PRE compiler pins only accepted matching selections with zero writes on failure (real SQLite fixture + reopen; negatives: stale selection version, take-set mismatch, rejected take approval, missing/stale audio approval, mix bound to different story, frames mismatch, shot outside plan — each typed error AND zero rows written)",
+        "C11-PRE recompile determinism and canon-only successor compatibility (identical inputs => created:false byte-identical; compatible successor compiles, script-changed successor rejects APPROVAL_REQUIRED)"
+      ],
+      "verification": "RED: npm test -- lib/production/manifest.test.ts lib/services/production/manifest.test.ts (absent). GREEN: same command; npm run typecheck; git diff --check. Offline only; NO full suite, no FFmpeg, no live calls."
+    },
+    {
+      "id": "W2-FLAKE",
+      "owns": ["lib/jobs/production/worker.test.ts"],
+      "rootCause": "worker.test.ts:97 stream fixture: ReadableStream start() enqueues then setTimeout(()=>controller.close(),1000); the handler rejects early (422) and the import route destroys the unconsumed body (correct C04 behavior), cancelling the stream; the pending timer then calls close() on a closed controller => uncaught TypeError, vitest exit 1 with all tests passing. Intermittent because it only surfaces when the worker.test.ts fork is still alive at timer fire. Stack evidence: evidence/integration/c09-pre-20261005/green-full-suite-20261005T144449Z.txt:993-995; base reproduction at df64534 with zero lib/jobs diff.",
+      "fixProtocol": [
+        "Fixture-only fix; every existing assertion stays byte-identical (same test name, body, boundary, headers, single enqueue, 1500ms hang guard, deferred-close delay, assertions).",
+        "Make the stream double close-safe: cancelled flag set in cancel() callback; deferred close skips when cancelled and swallows only the already-closed case: let cancelled=false; new ReadableStream<Uint8Array>({start(controller){controller.enqueue(...);setTimeout(()=>{if(cancelled)return;try{controller.close();}catch{/* cancelled by early 422 */}},1000);},cancel(){cancelled=true;}}).",
+        "Forbidden: changing assertions, adding sleeps/retries, editing the import route / worker.ts / queue.ts / vitest.config, unref tricks.",
+        "Escalation: if a DIFFERENT unhandled-error signature appears, STOP and report with reproduction logs; only request owns-extension to worker.ts with reproducible evidence of a worker.ts defect (current evidence: none)."
+      ],
+      "verification": "REQUIRED: FULL suite npm test three separate times, each exit 0, all files/tests passed, ZERO occurrences of 'Unhandled Errors'/'Uncaught Exception'/'Controller is already closed'; save each complete log. Plus npm run typecheck and git diff --check. This packet BLOCKS Wave-3 full acceptances."
+    },
+    {
+      "id": "B6-C-FIX",
+      "owns": ["lib/services/production/budget-composer.ts", "lib/services/production/budget-composer.test.ts", "lib/production/proof-policy.ts"],
+      "origin": "I01-B6-C independent review findings 1-3 (accepted with carry-forward); prerequisites for I01-B6-W-WIRE",
+      "fixProtocol": [
+        "Finding 1 (minor, must-fix): capturedWorkerDraft shared closure cell at budget-composer.ts:311 (set 315/330, read 332-333) is per-composer state — two interleaved prepareWorkerBudgetContext calls on one composer can cross-wire worker artifacts/generations. Make the worker draft per-call: thread it through the prepareWorkerBudgetContext call scope (e.g. local capture returned/carried into the context object) so each call's providerProofDraft reflects its own observation. Add a behavioral test: two interleaved prepareWorkerBudgetContext calls (deferred observeAccount per call via injected fake provider) each receive their OWN workerArtifact/generation in the returned context (assert hashes/ids differ and match their own observation).",
+        "Finding 2 (minor): remove the unused hashCanonicalJson import from proof-policy.ts:5.",
+        "Finding 3 (note): correct the doc comment at budget-composer.ts:103-108 — own-transaction writes exist per protocol steps 2/10/11 (generation CAS, evidence inserts); state that accurately.",
+        "Behavior-preserving otherwise: no protocol changes, no schema changes, no signature changes visible to callers beyond the captured-draft scoping."
+      ],
+      "verification": "npm test -- lib/services/production/budget-composer.test.ts lib/production/proof-policy.test.ts lib/services/production/takes.test.ts; npm run typecheck; git diff --check."
+    }
+  ],
+  "collisionCheck": "C11-PRE (4 new files) / W2-FLAKE (worker.test.ts) / B6-C-FIX (budget-composer+proof-policy) — pairwise disjoint, and disjoint from all accepted files they consume read-only. B6-W-WIRE remains BLOCKED-ON B6-C-FIX acceptance (it imports the composer API)."
+}

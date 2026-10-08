@@ -1,0 +1,49 @@
+{
+  "packet": "C13-UNBLOCK-FIX",
+  "created": "2026-10-05",
+  "status": "frozen",
+  "orchestrator": "zcode orchestration (GLM-5.3)",
+  "context": {
+    "root_branch": "zcode/production-core",
+    "base_contains": ["6b6cd08 (B6-POLICY-LOAD)", "C13-PILOT-SCRIPT review ACCEPT pending integration"],
+    "live_run_blockers": [
+      "B1: `next start` (turbopack build) server composition throws BUDGET_BLOCKED 'Sogni provider proof could not be validated' on every provider-composition route (budget GET observed as bare HTTP 500). Root cause verified in the built chunk: turbopack rewrites `createRequire(import.meta.url)` + `req.resolve('@sogni-ai/sogni-client/package.json')` into an internal module id constant, so `readFileSync(<number>)` throws at runtime and the catch maps to BUDGET_BLOCKED. Unbundled execution (vitest, doctor via tsx, production worker via tsx) is unaffected.",
+      "B2: pilot `--final` cannot converge: it seeds a NEW project each run, then stops when the budget read model is unavailable (no authorization for that exact project). A run stopped at the budget gate leaves no reusable state (state is only saved at step 8), so re-running after authorizing seeds a different project and stops again. Empirically reproduced live (zero spend): run 1 seeded project bd6f7b21-64ed-4e22-9fa5-ddad6f4c70b6 and stopped cleanly at the budget gate."
+    ],
+    "review_findings_folded_in": [
+      "C13 review observation 3: `--final --state <file>` without `--creator-approved` silently starts a brand-new live run; must error.",
+      "C13 review observations 1+5: run book prerequisite 6 Node wording must say >= 22.12 for node:sqlite readOnly and must not claim the repo pins Node 26.10."
+    ]
+  },
+  "owns": {
+    "A-proof-metadata-cwd": {
+      "files": ["lib/providers/production/sogni-provider.ts"],
+      "change": "readInstalledSogniProofMetadata must not depend on `import.meta.url` or `require.resolve` (both are rewritten by the bundler). Anchor the package location on the process working directory with literal path joins: read `node_modules/@sogni-ai/sogni-client/package.json` under `process.cwd()` (repo root for every server/worker entrypoint), validate its version, and hash the same SOGNI_PACKAGE_FILES under that package root. Behavior must be byte-identical when unbundled (doctor, vitest, worker) — same metadata output for the same installed package.",
+      "tests": [
+        "Existing sogni-provider tests pass unchanged (unbundled cwd = repo root).",
+        "Focused test: metadata equals the metadata derived from the cwd-anchored package (identity of sdkVersion + adapterVersion + sdkSourceHash across two calls; sdkSourceHash stable).",
+        "Integrator-level GREEN (recorded as evidence, not a unit test): `npm run build`, start `next start`, curl `GET /api/production/projects/<id>/budget?providerId=sogni&unit=minor_currency&currency=USD` for an existing project and observe a JSON read model (or a mapped error envelope) instead of a bare 500 BUDGET_BLOCKED composition failure."
+      ]
+    },
+    "B-pilot-budget-wait": {
+      "files": ["scripts/pilot-short-portrait.mjs", "docs/production/pilots/short-portrait.md"],
+      "change": "In `runFinal`, when the budget identity check on the seeded project is unavailable, enter a bounded wait: re-check both scopes every 15 seconds up to `--budget-wait-seconds` (new flag, default 600; 0 restores the immediate stop), logging each attempt with the project id and a clear 'authorize this project now via the budget routes' instruction. The fail-closed ordering is unchanged: no media quote or enqueue is sent until a scope resolves available; on timeout the existing PilotStop fires. Additionally: `--final --state <file>` without `--creator-approved` must exit 1 with an actionable message (never silently start a new run). Run book: document the authorize-during-wait flow in section 4, fix prerequisite 6 Node wording (>= 22.12 required by node:sqlite readOnly; do not claim a repo Node pin), and document the new flag.",
+      "tests": [
+        "`node --check scripts/pilot-short-portrait.mjs` exit 0.",
+        "`--final` against a keyless stack still exits 1 before any request with the env-gate message (unchanged).",
+        "Simulated wait path: with a seeded-but-unauthorized project the script logs the wait instruction, re-checks, and stops after the configured wait expires without sending any quote/enqueue (verify from the log that no media-quotes POST occurred)."
+      ]
+    }
+  },
+  "constraints": [
+    "Two separate commits (A then B) on one branch; files strictly disjoint as listed.",
+    "No changes to the budget composer, routes, or QC services.",
+    "Never print SOGNI_API_KEY; evidence logs must be redactable.",
+    "Engineer may run the real server/worker locally for verification; paid provider calls remain forbidden (a budget GET performs account observation but never a paid render)."
+  ],
+  "acceptance": [
+    "Focused tests + `npm run typecheck` + `git diff --check` green per commit.",
+    "A: built-server budget GET no longer fails with the composition-level BUDGET_BLOCKED (evidence log with curl output).",
+    "B: node --check green; env-gate still fails closed; wait path logged without any paid request."
+  ]
+}

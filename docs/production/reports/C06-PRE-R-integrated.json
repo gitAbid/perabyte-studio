@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "task_id": "C06-PRE-R",
+  "status": "accepted_integrated",
+  "code_sha": "7e29b314cf37c1ec3f684dcf26e811b72ce5caa0",
+  "source_commits": [
+    "a59df0b401b74b0542ff84db74962b1f24b97777",
+    "877b63e205ea9d721b69a3e7365c6a83450d8ea8"
+  ],
+  "excluded_evidence_only_commit": "65fecd44eb1f0ee8cd58e97fe4b9da823e1f915e",
+  "reviews": [
+    "reports/C06-PRE-R-review.json",
+    "reports/C06-PRE-R-followup-review.json"
+  ],
+  "combined_functional_tests": 10,
+  "typecheck_exit_code": 0,
+  "evidence": [
+    {
+      "path": "evidence/integration/c06-pre-r/root-combined-01.txt",
+      "exit_code": 0,
+      "sha256": "33148f0d085055b61449d68b9b325cf87719d595f5feac59b5d23b4aee3da28d"
+    },
+    {
+      "path": "evidence/integration/c06-pre-r/root-typecheck-01.txt",
+      "exit_code": 0,
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    }
+  ],
+  "unverified": [
+    "Manual selection next, no automatic take selection.",
+    "Full I01/B6 live account/quote composition and default trusted billing-mode resolver not implemented; paid pipeline blocked.",
+    "Audio/assembly/export/UI and actual films unfinished.",
+    "Expanded coverage/full suite/build deferred.",
+    "Early recipe fixture failure raw logs overwritten; original report discloses loss; followup regression genuine distinct RED/GREEN retained."
+  ],
+  "paid_calls": []
+}

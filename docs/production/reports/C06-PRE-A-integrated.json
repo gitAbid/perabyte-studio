@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "task_id": "C06-PRE-A",
+  "status": "accepted_integrated",
+  "code_sha": "1487bfc1f90262affa4730dece7420493c103e7d",
+  "source_commits": [
+    "cac0f4e774c8da0f613961826a641fc4e1d62070",
+    "1a369266954850fb694949cae5c569f6df572884"
+  ],
+  "reviews": [
+    "reports/C06-PRE-A-review.json",
+    "reports/C06-PRE-A-followup-review.json"
+  ],
+  "functional_tests": 6,
+  "typecheck_exit_code": 0,
+  "evidence": [
+    {
+      "path": "evidence/integration/c06-pre-a/root-focused-01.txt",
+      "exit_code": 0,
+      "sha256": "d6da8fd00e4e717828f44b4920a6b2c314a99fc3f10a9ba3e40eabf841fdf7da"
+    },
+    {
+      "path": "evidence/integration/c06-pre-a/root-typecheck-01.txt",
+      "exit_code": 0,
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    }
+  ],
+  "unverified": [
+    "Full C06/I01 and default paid pipeline are unfinished; take selection next.",
+    "Comprehensive coverage/full suite/build deferred per user instruction."
+  ],
+  "paid_calls": []
+}

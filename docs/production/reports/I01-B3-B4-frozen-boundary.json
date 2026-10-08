@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "status": "root-approved-interface-freeze; implementation not performed",
+  "base": {
+    "B1": "ffea35b2a7cdc7400b083ea0be7d388cbb0723f0",
+    "B2_proposed": "9e726f07745390d10dd60174a90bb84ace6aad11",
+    "B2_integrated": "834e80687ba724bc3901489d48b27c0588269fa5"
+  },
+  "ownership": {
+    "B3": [
+      "lib/services/production/budget.ts",
+      "lib/services/production/budget.test.ts",
+      "app/api/production/projects/[projectId]/budget/route.ts",
+      "app/api/production/projects/[projectId]/budget/route.test.ts"
+    ],
+    "B4": [
+      "lib/jobs/production/queue.ts",
+      "lib/jobs/production/queue.test.ts",
+      "lib/jobs/production/worker.ts",
+      "lib/jobs/production/worker.test.ts"
+    ],
+    "root": "Producer proof/quote composer, runtime/scripts injection, shared amendments and integration only. Original checkout untouched; no UI/network/paid calls."
+  },
+  "common_types_ts": "// Existing imports from contracts.ts and ports.ts; no new shared DTO/port files.\n// B4 exports these structural types from queue.ts. B3 declares identical structural types\n// locally, so B4 never imports the unfinished B3 service and workers can compile separately.\nexport type PreparedBudgetContext = Readonly<{\n  accountEvidenceId: string; budgetQuoteId: string; policyId: string;\n  expectedPolicyRevision: number; expectedAuthorizationRevision: number;\n  expectedQuoteInputHash: string; executionSemanticHash: string; credentialBindingId: string;\n}>;\nexport type ReserveSubmission = (\n  tx: ProductionWritePort, currentJob: ProductionJob, quote: ProductionQuote,\n  capability: CapabilityReceipt, now: number, context: PreparedBudgetContext\n) => BudgetReservation;\nexport type SubmissionAdmission = Readonly<{\n  quote: ProductionQuote; capability: CapabilityReceipt; eligibilityFingerprint: string;\n  context: PreparedBudgetContext; reserve: ReserveSubmission; outbox: OutboxIntent;\n}>;\n// Replace old beginSubmission(job,lease,now); no caller-sampled now parameter.\n// Existing constructor(store, now=Date.now) stays unchanged.\nbeginSubmission(job: ProductionJob, lease: JobLease, admission: SubmissionAdmission): ProductionJob | null;\n// ProductionWorkerOptions replacement; all unrelated options unchanged.\nprepareBudgetContext?: (job: ProductionJob, quote: ProductionQuote, capability: CapabilityReceipt) => Promise<PreparedBudgetContext>;\nreserveSubmission?: ReserveSubmission;\n// Remove authorizeSubmission. Missing either replacement blocks without reserve/submit.\n",
+  "B3_factory_ts": "export type BudgetScopeRequest = Pick<MoneyScope, \"providerId\" | \"unit\" | \"currency\">;\nexport type AccountBudgetPolicyCommand = z.infer<typeof AccountBudgetPolicyCommandSchema>;\nexport type CreateAccountPolicyCommand = BudgetScopeRequest & Pick<AccountBudgetPolicy, \"dailyCap\" | \"expiresAt\" | \"revoked\" | \"actorId\">;\nexport type TrustedAccountIdentity = Readonly<{\n  providerId: string; accountId: string; accountEvidenceId: string; credentialBindingId: string;\n}>;\nexport type TrustedPreparedExecutionEvidence = Readonly<{\n  accountEvidenceId: string; budgetQuoteId: string; expectedQuoteInputHash: string;\n  executionSemanticHash: string; credentialBindingId: string;\n}>;\nexport interface BudgetServiceOptions {\n  store: ProductionStore;\n  resolveAccountIdentity?: (providerId: string) => Promise<TrustedAccountIdentity>;\n  prepareExecutionEvidence?: (input: Readonly<{execution: BudgetExecution; budgetQuoteId: string}>) => Promise<TrustedPreparedExecutionEvidence>;\n  currentCredentialBindingId?: (providerId: string) => string | null;\n  produceReconciliationEvidence?: (input: Readonly<{reservation: BudgetReservation; reference: string}>) => Promise<ReconciliationEvidence>;\n  now?: () => number; idFactory?: () => string;\n}\nexport interface ProductionBudgetService {\n  createPolicy(projectId: string, command: CreateAccountPolicyCommand): Promise<AccountBudgetPolicy>;\n  updatePolicy(projectId: string, scope: BudgetScopeRequest, command: AccountBudgetPolicyCommand): Promise<AccountBudgetPolicy>;\n  authorizeProject(projectId: string, scope: BudgetScopeRequest, command: AuthorizeBudgetCommand): Promise<BudgetAuthorization>;\n  getReadModel(projectId: string, scope: BudgetScopeRequest): Promise<ProjectBudgetReadModel>;\n  prepareBudgetContext(execution: BudgetExecution, budgetQuoteId: string): Promise<PreparedBudgetContext>;\n  reserveInTransaction(tx: ProductionWritePort, execution: BudgetExecution, now: number, context: PreparedBudgetContext): BudgetReservation;\n  reconcile(reservationId: string, reference: string): Promise<StoredEvidence>;\n}\nexport function createProductionBudgetService(options: BudgetServiceOptions): ProductionBudgetService;\n// Service file owns injectable HTTP factory too, avoiding unsupported extra Next route exports.\nexport interface BudgetRouteHandlerOptions {\n  withStore?: <T>(work: (store: ProductionStore) => T | Promise<T>) => Promise<T>;\n  serviceOptions?: Omit<BudgetServiceOptions, \"store\">;\n}\nexport function createBudgetRouteHandlers(options?: BudgetRouteHandlerOptions): {\n  GET(request: Request, context: {params: Promise<{projectId: string}>}): Promise<Response>;\n  POST(request: Request, context: {params: Promise<{projectId: string}>}): Promise<Response>;\n};\n// route.ts imports factory and exports only GET/POST; default withStore wraps withProductionStore.\n",
+  "http": {
+    "GET": "Exactly one providerId and one unit query required; minor_currency requires exactly one currency=uppercase ISO 3 chars; spark_token requires currency absent and normalizes to null. Reject duplicates/extra query keys. Validate route project IdSchema. Server resolves account; no accountId query. Return ProjectBudgetReadModel with no-store.",
+    "POST_ts": "type BudgetRouteCommand =\n | ({kind: \"create_policy\"} & CreateAccountPolicyCommand)\n | ({kind: \"update_policy\"; command: AccountBudgetPolicyCommand} & BudgetScopeRequest)\n | ({kind: \"authorize\"; command: AuthorizeBudgetCommand} & BudgetScopeRequest);\n// strict discriminated zod objects; nested commands use existing B1 strict schemas.\n// JSON currency is required nullable: null only for spark_token.\n// create has no policyId/expected revision; service generates policyId and uses CAS null.\n// update command expectedPolicyRevision must be positive (null rejected for update).\n// authorize expectedAuthorizationRevision nullable retains B1 create/update CAS semantics.\n",
+    "POST_success": "201 create_policy -> {kind:\"create_policy\",policy:BudgetPolicyView}; 200 update_policy -> {kind:\"update_policy\",policy:BudgetPolicyView}; 200 authorize -> {kind:\"authorize\",authorization:BudgetAuthorizationView}.",
+    "guards": "assertSameOriginMutation then readProductionJson(...,{maxBytes:16384}); no provider/account discovery for rejected input. All error responses through productionErrorResponse/getRequestId; no-store. No browser reconciliation/reserve/billing/source/evidence/credential/hash fields."
+  },
+  "read_model_ts": "type BudgetPolicyView = Omit<AccountBudgetPolicy, \"accountId\">;\ntype BudgetAuthorizationView = BudgetAuthorization;\ntype BudgetReadReason = \"ACCOUNT_IDENTITY_UNAVAILABLE\" | \"POLICY_MISSING\" | \"AUTHORIZATION_MISSING\" | \"EVIDENCE_MISSING_OR_STALE\" | \"ACCOUNT_BINDING_MISMATCH\" | \"POLICY_REVOKED\" | \"POLICY_EXPIRED\" | \"POLICY_NOT_YET_VALID\" | \"POLICY_CAP_UNKNOWN\" | \"DAILY_CAP_BLOCKED\" | \"AUTHORIZATION_REVOKED\" | \"AUTHORIZATION_EXPIRED\" | \"AUTHORIZATION_NOT_YET_VALID\" | \"PROJECT_CAP_UNKNOWN\" | \"PROJECT_CAP_BLOCKED\" | \"TOTALS_INVALID\";\nexport interface ProjectBudgetReadModel {\n  schemaVersion: 1; projectId: string; scope: BudgetScopeRequest; utcDay: string;\n  availability: \"available\" | \"unavailable\";\n  policy: BudgetPolicyView | null; authorization: BudgetAuthorizationView | null;\n  projectTotals: BudgetSummary | null; accountDailyTotals: BudgetSummary | null;\n  unresolved: boolean | null; overrun: boolean | null; reconciliationConflict: boolean | null;\n  reasons: BudgetReadReason[];\n}\n// available means trusted account scope/totals readable, not permission for a specific execution.\n// Unknown account => unavailable, null totals/flags, ACCOUNT_IDENTITY_UNAVAILABLE.\n// Missing caps remain null and reasons; never synthesize 0 or reset ledger.\n",
+  "error_mapping": {
+    "INVALID_INPUT_400": "Malformed/extra/forged fields, mismatched monetary scope, invalid GET or update null expected revision. Bounded body overflow uses existing 413.",
+    "UNKNOWN_REFERENCE_404": "Missing project or scoped policy does not exist/match requested policyId; no cross-account policy disclosure.",
+    "STALE_REVISION_409": "Expected policy/auth revision differs from latest scoped value or append CAS false.",
+    "BUDGET_BLOCKED_403": "Missing/unavailable trusted producer, stale evidence/current generation, validation denial. details only {reason: BudgetBlockReason} or approved generic ACCOUNT_IDENTITY_UNAVAILABLE; no identities/raw errors.",
+    "SUBMISSION_UNKNOWN_409": "Queue sees preexisting execution/key reservation or prior submitting event before new admission; no reserve/submit.",
+    "INTERNAL_ERROR_500": "Unexpected storage/producer exceptions via sanitized existing envelope. Transaction exceptions never fall through to submit."
+  },
+  "algorithms": {
+    "identity": "Resolver and prepare producer await outside SQLite transaction. Resolver results are server-injected only. Every transaction rereads persisted AccountEvidence by ID and validates provider/account/credential/times against identity plus synchronous currentCredentialBindingId(providerId), sampled inside callback. Current generation rotates on secret/account reconnect. Missing getter fails closed. Scope from browser is monetary selector only. getReadModel account unavailable returns explicit unavailable, mutation denies.",
+    "policies": "Verify project. Resolve identity outside tx; current clock and binding inside tx. create requires no current scoped policy (else STALE_REVISION), generates IDs/revision1, appendAccountPolicy(record,null). update finds latest scoped policy, verifies policyId and positive expected revision, preserves policyId/scope, appends revision+1 using expected number. authorize finds same scoped latest policy, verifies expected policy revision, finds latest authorization(projectId,policyId), CAS expected nullable revision; preserves authorizationId on update and pins current policy revisionId as provenance. Do not reset any reservations/events. Null expiry standing, null cap unauthorized, zero blocks, timestamps bounded B1.",
+    "prepare": "Producer input is exact BudgetExecution + BudgetQuote ID. Return only persisted proof pins; service rereads evidence/quote/binding, rejects any mismatch, loads latest policy and project authorization, returns their expected revision numbers. No reservation or provider submit. Media root adapter uses getBudgetQuoteForMediaQuote(quote.id), exact companion, and actual existing semantic hash. No producer proof means unavailable.",
+    "new_reservation": "Inside caller transaction: parse execution/context; sample injected credential getter synchronously; load exact quote/binding/evidence; select latest policy from persisted account/currency/unit and authorization(projectId,policyId), check expected revisions. For anchor/take reread job and validate exact execution fields + recomputed semantic hash, mediaQuoteId and all companion/media identity/inputHash pins. Fold listBudgetLedger({kind:\"project\",projectId,...scope}) all days and account_day current utcBudgetDay(now), events ordered by stored sequence. summarizeBudget + validateReservationEligibility with known actual and unresolved liability. registerBudgetExecution then insertBudgetReservation with server ID, estimateMax, current immutable revision pins, original UTC bucket in same transaction. Denial throws. No awaits/files/network.",
+    "replay": "Before adding estimate, inspect getReservationByExecution and getReservationByIdempotency; if either exists they must identify same reservation. Exact service replay requires canonicalJson execution equality and exact context budgetQuote/evidence/credential/semantic/input proof; inspect pinned immutable policy/auth and match policyId + expected revision numbers. Return stored reservation with its original id/reservedAt/utcDay; append nothing and do not count estimate again. Contradictory pins/key/execution reject. Accounting replay is never dispatch permission: queue rejects any preexisting reservation before reserve callback regardless of exactness. Text service caller must own an atomic one-time admission state; I02 owns scheduler/recovery.",
+    "queue": "tx closure samples this.now() immediately. Reread current job; require lease jobId/token/live deadline, expected caller status queued only (current contracts have no retry_wait), no providerRef, unchanged requestHash and canonical snapshot. Require claimed outbox job/token match and tx.heartbeatOutbox(outbox.id,token,now,current.leaseUntil) true; false throws/rolls back. Reread exact quote, enforce pins/freshness; parse current snapshot, recompute approval eligibility fingerprint inside tx and compare admission expectation; validate capability provider/model/observedAt/expiresAt/supportedOperations and required conditioning with existing canSatisfy. Reject prior submitting history or existing reservation. Call sync reserve(tx,current,liveQuote,capability,now,context) only after all checks. Verify returned reservation durably exists and matches current execution/key/request/semantic/quote context. updateLeasedJob submitting must return true; append event must succeed; otherwise throw rollback. Return refreshed submitting job with current lease/attempt fields. Pre-reserve lost job/lease may return null; after any writes always throw on failure.",
+    "worker": "Discover capability and prepareBudgetContext asynchronously outside tx. Require both callbacks; zero calls if missing. Final lease/signal checks then single beginSubmission admission. Remove postcommit approval-change block: boundary decision is committed; later approval edits do not undo spend. Pre-submit ownership/cancel check with no extra async discovery. Provider submit only after returned new admission. Once submitting is durable, aborted/uncertain outcome retains reservation and recovers as submission_unknown, never reserve/submit again. Persist owned ACK even shutdown signal aborts. Poll/reconcile existing refs without new reserve. Media completion/cancel/fail never settles billing.",
+    "reconcile": "Trusted producer receives stored reservation + reference outside tx; browser has no endpoint. Parse provider provenance and exact immutable scope; reject non-provider facts in this path. Transaction appendReconciliationEvidence returns StoredEvidence using existing InsertOutcome.record; B1 fold controls deductions/conflicts/unknown/overrun. Explicit nonbilling only via confirmedNonacceptanceOrNonbilling true. No invented automatic release from failed/canceled job."
+  },
+  "hash_and_source_truth": {
+    "quote": "ProviderQuoteRequest.inputSnapshot is existing {revisionIds:string[],assetIds:string[],parameters:Record<string,JsonValue>}; hashCanonicalJson(command.inputSnapshot) is quote.inputHash in lib/providers/production/http-routes.ts. It is not job.requestHash or result semantic hash. Root owns durable server-validated recipe proof/loader.",
+    "media_semantic": "Existing computeProductionInputsHash(tx,\"anchor\"|\"take\",snapshot) in queue.ts; equals snapshot.resultTarget.inputsHash. Actual recipe {recipeVersion:1,operation,shotContentHash,canon:[{revisionId,contentHash}],references:[{role,required,assetSha256}],providerId,modelId,prompt,parameters,billingMode,anchor:null|{anchorId,checksum,approvalId,approvalTargetHash}}. Do not reimplement alternative hash.",
+    "approval": "productionSubmissionEligibilityFingerprint(tx,current,quote,snapshot) existing helper, distinct from semantic and quote hash.",
+    "sourceDTOs": "B1 AccountEvidence {schemaVersion,id,providerId,accountId,source,reference,observedAt,expiresAt,credentialBindingId}; QuoteAccountBinding {schemaVersion,id,budgetQuoteId,accountEvidenceId,providerId,accountId,credentialBindingId,currency,unit,executionSemanticHash,quotedAt}. Evidence source/reference are vetted producer proof references, not attestation alone; root owns proof verification and composer. No B1 fields invented."
+  },
+  "blocking_seams": [
+    "Root must approve and integrate Vitest route-discovery include amendment; route tests otherwise cannot satisfy B3 acceptance. This does not require new application DTO/ports.",
+    "No B3/B4 implementation blocker after integrated B2 acceptance and this freeze. Root composition stays disabled until verified authenticated durable recipe/account/entitlement proofs are implemented.",
+    "Speech/music media execution cannot match current ProductionJob.operation=\"audio\" while B2 registerBudgetExecution compares job.operation===execution.operation. Anchor/take only admitted now; root must approve subsequent adapter/storage amendment. No claim I01 audio ready.",
+    "Text_proposal reservation DTO/store service is supported, but text durable dispatch/recovery state is I02-owned; no fabricated media job or scheduler in B3/B4."
+  ],
+  "test_ids": {
+    "B3_service": {
+      "I01-B3-01": "Trusted account resolver, persisted proof reread and rotated generation reject forged/stale identity; zero writes.",
+      "I01-B3-02": "Create/update/authorize scoped CAS, null/zero caps, standing/expired/revoked revisions; no cap reset.",
+      "I01-B3-03": "Exact quote/input/semantic/media companion pins and credential getter sampled inside transaction.",
+      "I01-B3-04": "Real SQLite reopen all-day project liability/current original-day account liability; midnight/lowered caps.",
+      "I01-B3-05": "Exact service reservation replay append-free; conflicting execution/key/context rejected.",
+      "I01-B3-06": "Trusted actual unknown/overrun/nonbilling/refund, dedupe/conflicting evidence; media status cannot settle.",
+      "I01-B3-07": "Text_proposal pure reservation uses correct DTO and mediaQuoteId null; no job/scheduler."
+    },
+    "B3_route": {
+      "I01-B3-R01": "Strict GET scope, unknown/duplicate queries/currency pairing rejected; missing project404.",
+      "I01-B3-R02": "Strict three POST envelopes including nested extras/account/billing forgery, malformed/oversize JSON, same-origin reject before resolver.",
+      "I01-B3-R03": "Success status/read views/no-store; no account/credential/reference/path/raw error leak; missing producer unavailable GET and denied POST.",
+      "I01-B3-R04": "Cross-account policyId/scoped mismatch404; revision409; stable error envelope and safe reason."
+    },
+    "B4": {
+      "I01-B4-01": "Missing prepare/reserve callbacks zero reservation/provider submits.",
+      "I01-B4-02": "Two real SQLite connections projects shared account jointly exceed cap: one committed reservation/admission and fake-provider submit.",
+      "I01-B4-03": "Revocation before versus after boundary, approval race and unchanged selected inputs.",
+      "I01-B4-04": "Expired/foreign job lease or outbox claim prevents reserve; false heartbeat/CAS after writes rolls back.",
+      "I01-B4-05": "Trigger fault after reserve/event insert rollback: zero execution/reservation/submitting/provider calls.",
+      "I01-B4-06": "Advance injected clock during async discovery; quote/capability/account evidence expiry and generation rotation deny.",
+      "I01-B4-07": "Existing reservation/prior submitting cannot be readmitted even queued; restart unknown/reconcile same ref never duplicates.",
+      "I01-B4-08": "Owned ACK on shutdown persisted; ambiguous outcomes retain; completion/cancel/failure no settlement.",
+      "I01-B4-09": "Existing C04 recovery/lease/shutdown/input-role tests retained; anchor/take recipe uses canonical helper."
+    }
+  },
+  "verification": "No tests run by architect. Implementers save behavioral RED/GREEN with exact owned paths, typecheck and git diff --check. Root combined npm test/typecheck/build and offline route/worker composition after independent reviews; no real providers.",
+  "root_validation_amendments": {
+    "tsconfig_review": {
+      "finding": "Reasonable project boundary: exclude evidence from global **/*.ts/**.tsx because evidence contains preserved standalone review probes with .ts imports. Evidence is archival and not imported runtime/test code. Strict compiler options and all archives remain unchanged.",
+      "observed": "Read current tsconfig.json exclude [node_modules,evidence] and saved typecheck log evidence/integration/i01-b2-typecheck-evidence-excluded.txt; log has tsc invocation/no diagnostics. Exit0 is root-reported, architect did not rerun.",
+      "limit": "Do not store executable application/test dependencies under evidence; importing such files from source can still bring them into typechecking."
+    },
+    "vitest_route_discovery": {
+      "finding": "Current vitest.config.ts test.include=[lib/**/*.test.ts] excludes B3-owned app/api/production/projects/[projectId]/budget/route.test.ts. Explicit positional file filter alone does not broaden include.",
+      "root_amendment": "Add narrowly scoped app/api/production/projects/**/budget/route.test.ts to include while preserving lib/**/*.test.ts. Root ownership of vitest.config.ts; B3 does not edit unowned runner config.",
+      "acceptance": "Confirm route tests execute and are counted in focused and combined suites; no-test exit is not acceptance."
+    }
+  },
+  "verification_commands": {
+    "B3": [
+      "npm test -- lib/services/production/budget.test.ts app/api/production/projects/\\[projectId\\]/budget/route.test.ts",
+      "npm run typecheck",
+      "git diff --check"
+    ],
+    "B4": [
+      "npm test -- lib/jobs/production/queue.test.ts lib/jobs/production/worker.test.ts",
+      "npm run typecheck",
+      "git diff --check"
+    ],
+    "root": [
+      "npm test",
+      "npm run typecheck",
+      "npm run build",
+      "git diff --check"
+    ]
+  }
+}

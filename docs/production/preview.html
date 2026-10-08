@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>PeraByte Production Studio — design preview</title>
+  <style>
+    :root {
+      --canvas:#f4f1e9; --surface:#e9e5db; --surface-2:#dfdacd; --raised:#fbf9f4;
+      --ink:#202b27; --ink-soft:#485650; --muted:#5f6b64; --border:#d9d3c7;
+      --border-strong:#c3bbad; --primary:#315f4b; --primary-strong:#234c3b;
+      --primary-dark:#183d30; --primary-soft:#e0eade; --accent:#c96c4c;
+      --success:#3d7657; --success-soft:#e6efe6; --warning:#97602e;
+      --warning-soft:#f5ebdb; --danger:#a8463a; --danger-soft:#f5e5e0;
+      --display:"Iowan Old Style","Palatino Linotype","Book Antiqua",Georgia,serif;
+      --sans:Inter,"Avenir Next",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+      --r-sm:5px; --r-md:8px; --r-lg:12px; --r-xl:18px;
+      --shadow:0 1px 2px rgba(38,45,39,.04),0 8px 24px -16px rgba(38,45,39,.2);
+      --lift:0 16px 38px -24px rgba(26,43,34,.38);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--canvas);color:var(--ink);font:15px/1.65 var(--sans);-webkit-font-smoothing:antialiased}
+    button,input,textarea,select{font:inherit;color:inherit}
+    button{cursor:pointer}
+    button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+    .shell{min-height:100vh;display:grid;grid-template-columns:218px minmax(0,1fr)}
+    .rail{position:sticky;top:0;height:100vh;padding:24px 16px;background:#151b18;color:#f2efe7;display:flex;flex-direction:column;z-index:5}
+    .brand{display:flex;align-items:center;gap:11px;padding:0 9px 26px;border-bottom:1px solid rgba(255,255,255,.12)}
+    .mark{width:34px;height:34px;border:1px solid #bed09a;border-radius:50% 50% 50% 4px;display:grid;place-items:center;color:#bed09a;font:20px var(--display);transform:rotate(-8deg)}
+    .brand-name{font:20px/1 var(--display);letter-spacing:-.04em}.brand-caption{font-size:9px;color:#a8b4aa;letter-spacing:.16em;text-transform:uppercase;margin-top:5px}
+    .rail-label{padding:22px 10px 7px;font-size:9px;text-transform:uppercase;letter-spacing:.18em;color:#8d9b90;font-weight:700}
+    .rail-link{height:42px;display:flex;align-items:center;gap:11px;padding:0 11px;border-radius:7px;color:#c6cec4;text-decoration:none;font-size:12px;font-weight:600;margin:2px 0}
+    .rail-link .glyph{width:17px;text-align:center;color:#aab69f;font-size:15px}
+    .rail-link.active{background:#263b30;color:#fff}.rail-link.active .glyph{color:#bed09a}
+    .rail-bottom{margin-top:auto;padding:15px 10px 0;border-top:1px solid rgba(255,255,255,.12);font-size:11px;color:#a8b4aa}
+    .local-dot{display:inline-block;width:7px;height:7px;background:#91c19b;border-radius:50%;margin-right:7px}
+    main{min-width:0;max-width:1600px;width:100%;margin:0 auto;padding:0 42px 54px}
+    .topline{height:68px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+    .crumb{font-size:11px;color:var(--muted)}.crumb strong{color:var(--ink);font-weight:650}.top-spacer{flex:1}
+    .save-state{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:11px}
+    .save-state .dot{width:7px;height:7px;background:var(--success);border-radius:50%}
+    .save-state.error{color:var(--danger)}.save-state.error .dot{background:var(--danger)}
+    .icon-button{height:36px;width:36px;border:1px solid var(--border);border-radius:50%;background:transparent;display:grid;place-items:center;color:var(--ink-soft)}
+    .intro{padding:28px 0 18px;display:flex;align-items:end;justify-content:space-between;gap:24px}
+    .eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:.19em;color:var(--accent);font-weight:750}
+    h1,h2,h3,p{margin-top:0}h1{font:500 34px/1.12 var(--display);letter-spacing:-.045em;margin:7px 0 7px}
+    .intro p{font-size:13px;color:var(--muted);margin:0;max-width:560px}
+    .format-badge,.soft-badge,.status{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--raised);padding:5px 9px;border-radius:999px;font-size:10px;font-weight:700;white-space:nowrap}
+    .format-badge{color:var(--ink-soft)}.format-badge span{color:var(--accent)}
+    .steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin:0 0 28px}
+    .step{position:relative;min-width:0;display:flex;align-items:center;gap:9px;padding:13px 10px;border:0;background:none;color:var(--muted);text-align:left;font-size:11px;font-weight:650}
+    .step:not(:first-child):before{content:"";height:1px;width:12px;background:var(--border-strong);position:absolute;left:-6px}
+    .step-num{width:23px;height:23px;flex:none;border:1px solid var(--border-strong);border-radius:50%;display:grid;place-items:center;font-size:10px;background:var(--canvas)}
+    .step.done{color:var(--primary)}.step.done .step-num{border-color:#adc1ac;background:var(--primary-soft);color:var(--primary-strong)}
+    .step.current{color:var(--ink)}.step.current .step-num{background:var(--primary-strong);border-color:var(--primary-strong);color:white}
+    .step-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .page-panel{display:none;animation:enter .2s ease-out both}.page-panel.active{display:block}
+    @keyframes enter{from{opacity:.65;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+    .review-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:18px}
+    .review-heading h2{font:500 24px/1.2 var(--display);letter-spacing:-.035em;margin:0 0 3px}
+    .review-heading p{font-size:12px;color:var(--muted);margin:0}
+    .review-count{color:var(--ink-soft);font-size:11px;font-weight:650}
+    .workarea{display:grid;grid-template-columns:minmax(0,1.27fr) minmax(340px,.83fr);gap:20px;align-items:start}
+    .sheet{border:1px solid var(--border);background:rgba(251,249,244,.72);padding:16px;border-radius:var(--r-lg)}
+    .sheet-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;gap:12px}
+    .sheet-title{font-size:11px;font-weight:750}.sheet-title small{font-size:10px;color:var(--muted);font-weight:500;margin-left:5px}
+    .filters{display:flex;gap:4px}.filter{border:0;background:transparent;color:var(--muted);font-size:9px;padding:5px 7px;border-radius:5px}.filter.active{background:var(--surface);color:var(--ink);font-weight:700}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+    .shot-card{min-width:0;padding:0;text-align:left;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden;transition:border-color .18s,transform .18s,box-shadow .18s}
+    .shot-card:hover{border-color:var(--border-strong);transform:translateY(-1px)}.shot-card.selected{border:2px solid var(--primary);box-shadow:0 0 0 2px var(--primary-soft)}
+    .art{position:relative;aspect-ratio:1.43;background:#d9ddd0;overflow:hidden;isolation:isolate}
+    .art:before,.art:after{content:"";position:absolute;z-index:-1}
+    .art .sun{position:absolute;width:25%;aspect-ratio:1;border-radius:50%;top:14%;right:19%;background:#e3bd78;opacity:.85}
+    .art .hill{position:absolute;left:-10%;bottom:-25%;width:75%;height:65%;border-radius:60% 70% 0 0;background:#81977d;transform:rotate(-8deg)}
+    .art .hill.two{left:36%;bottom:-32%;width:82%;height:72%;background:#516f5b;transform:rotate(10deg)}
+    .art .figure{position:absolute;left:44%;bottom:14%;width:10%;height:22%;background:#9d644d;border-radius:40% 40% 12% 12%}
+    .art .figure:before{content:"";position:absolute;width:75%;aspect-ratio:1;background:#d3a079;border-radius:50%;top:-35%;left:12%}
+    .art .tree{position:absolute;left:14%;bottom:14%;width:0;height:0;border-left:19px solid transparent;border-right:19px solid transparent;border-bottom:62px solid #385849;filter:drop-shadow(25px 11px 0 #57715a)}
+    .art.a2{background:#d8e0d6}.art.a2 .sun{right:auto;left:20%;background:#f0d493}.art.a2 .hill{background:#8d9d77}.art.a2 .hill.two{background:#526a52}.art.a2 .figure{left:64%;background:#704d59}.art.a2 .tree{left:24%;border-bottom-color:#3d5e4c}
+    .art.a3{background:#d6d5c6}.art.a3 .sun{top:24%;right:24%;width:19%;background:#f4db9e}.art.a3 .hill{background:#a3a077}.art.a3 .hill.two{background:#687253}.art.a3 .figure{left:30%;background:#a15c43}.art.a3 .tree{left:73%;border-bottom-color:#53634b}
+    .art.a4{background:#d5ddd3}.art.a4 .sun{top:10%;right:44%;width:20%;background:#e8c87f}.art.a4 .hill{background:#718d76}.art.a4 .hill.two{background:#3f624e}.art.a4 .figure{left:72%;background:#775b4e}.art.a4 .tree{left:18%;border-bottom-color:#3b5c48}
+    .art.a5{background:#e1dccb}.art.a5 .sun{right:14%;top:20%;background:#eac18b}.art.a5 .hill{background:#9e9778}.art.a5 .hill.two{background:#687253}.art.a5 .figure{left:53%;background:#9a604b}.art.a5 .tree{left:79%;border-bottom-color:#4f654d}
+    .art.a6{background:#d8e1da}.art.a6 .sun{left:17%;right:auto;top:12%;background:#efd8a3}.art.a6 .hill{background:#9aa17e}.art.a6 .hill.two{background:#54705d}.art.a6 .figure{left:40%;background:#875445}.art.a6 .tree{left:64%;border-bottom-color:#42614d}
+    .art-caption{position:absolute;left:8px;bottom:7px;font-size:8px;text-transform:uppercase;letter-spacing:.1em;color:#fff;background:rgba(32,43,39,.63);padding:3px 6px;border-radius:3px}
+    .card-foot{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:9px 9px 10px}
+    .shot-meta{min-width:0}.shot-name{font-size:10px;font-weight:720;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.shot-sub{font-size:9px;color:var(--muted);margin-top:2px}
+    .status{padding:3px 6px;font-size:8px;background:transparent}.status.pending{color:var(--warning);border-color:#e3d1b7;background:var(--warning-soft)}.status.approved{color:var(--success);border-color:#c9d9c8;background:var(--success-soft)}.status.rejected{color:var(--danger);border-color:#e8c8c1;background:var(--danger-soft)}
+    .illustrative{margin:13px 0 0;font-size:9px;color:var(--muted);display:flex;align-items:center;gap:6px}.illustrative i{display:inline-block;width:9px;height:7px;border:1px solid var(--border-strong);background:linear-gradient(135deg,#b7c1a4 50%,#799078 50%)}
+    .detail{border:1px solid var(--border);background:var(--raised);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow)}
+    .detail-top{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+    .detail-top strong{font-size:11px}.detail-top span{font-size:10px;color:var(--muted)}
+    .large-art{margin:14px 14px 0;aspect-ratio:1.72;border-radius:6px;position:relative;overflow:hidden;background:#d9ddd0;isolation:isolate}
+    .large-art .hill{width:78%;height:70%;left:-4%;bottom:-28%}.large-art .hill.two{width:82%;height:78%;left:35%;bottom:-38%}.large-art .figure{width:8%;height:25%;bottom:15%;left:49%}.large-art .tree{border-left-width:29px;border-right-width:29px;border-bottom-width:88px}
+    .detail-copy{padding:13px 16px 4px}.detail-copy h3{font:500 19px/1.25 var(--display);letter-spacing:-.025em;margin:0 0 4px}.detail-copy p{font-size:11px;color:var(--muted);margin:0}
+    .ref-block{padding:12px 16px 15px}.ref-label{display:flex;align-items:center;justify-content:space-between;font-size:10px;font-weight:750;margin-bottom:8px}.ref-label span{font-weight:500;color:var(--success)}
+    .refs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+    .ref{display:flex;align-items:center;gap:7px;padding:6px;border:1px solid var(--border);border-radius:6px;background:var(--canvas);min-width:0}
+    .ref-icon{width:29px;height:29px;flex:none;border-radius:5px;background:#d5ddd3;position:relative;overflow:hidden}
+    .ref-icon.character:before{content:"";position:absolute;width:10px;height:10px;background:#c98f68;border-radius:50%;top:5px;left:10px}.ref-icon.character:after{content:"";position:absolute;width:17px;height:13px;background:#5a7058;border-radius:50% 50% 2px 2px;bottom:0;left:6px}
+    .ref-icon.place{background:linear-gradient(160deg,#d9cda8 0 40%,#87967a 41% 62%,#536b57 63%)}
+    .ref-icon.prop{background:#eee2cb}.ref-icon.prop:after{content:"✦";position:absolute;color:#c96c4c;font-size:19px;left:7px;top:1px}
+    .ref-text{min-width:0}.ref-text b{display:block;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ref-text small{display:block;font-size:8px;color:var(--muted)}
+    .ref-check{padding:0 16px 13px;display:flex;align-items:center;gap:7px;color:var(--success);font-size:10px}
+    .ref-check .check{width:16px;height:16px;border-radius:50%;background:var(--success-soft);display:grid;place-items:center;font-size:10px}
+    .actions{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--border);background:#f8f6f0}
+    .btn{min-height:40px;border-radius:var(--r-md);padding:0 14px;border:1px solid var(--border-strong);background:var(--raised);font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:background .16s,color .16s,border-color .16s,transform .16s}
+    .btn:hover{background:var(--surface)}.btn:active{transform:translateY(1px)}.btn.primary{background:var(--primary-strong);border-color:var(--primary-strong);color:white}.btn.primary:hover{background:var(--primary-dark)}.btn.danger{color:var(--danger);border-color:#dfb9b2}.btn.quiet{border-color:transparent;background:transparent;color:var(--ink-soft)}
+    .btn:disabled{opacity:.48;cursor:not-allowed}.actions .btn{flex:1}
+    .helper{margin:0;padding:0 16px 14px;font-size:9px;color:var(--muted)}
+    .next-callout{margin-top:16px;display:flex;align-items:center;gap:10px;border-top:1px solid var(--border);padding:13px 2px 0;color:var(--ink-soft);font-size:11px}
+    .next-callout .step-icon{width:22px;height:22px;border-radius:50%;background:var(--primary-soft);color:var(--primary);display:grid;place-items:center;font-size:11px;flex:none}
+    .next-callout b{color:var(--ink)}
+    .bottom-bar{display:flex;align-items:center;justify-content:space-between;margin-top:28px;padding-top:17px;border-top:1px solid var(--border)}
+    .text-button{border:0;background:transparent;color:var(--ink-soft);font-size:11px;font-weight:650;padding:8px}
+    .workflow-preview{min-height:350px;border:1px solid var(--border);background:var(--raised);border-radius:var(--r-lg);padding:26px;display:grid;grid-template-columns:1fr .8fr;gap:28px;align-items:center}
+    .workflow-preview h2{font:500 27px/1.2 var(--display);letter-spacing:-.035em;margin:8px 0}.workflow-preview p{font-size:13px;color:var(--muted);max-width:460px}
+    .field{display:block;margin:16px 0}.field span{display:block;font-size:10px;font-weight:700;margin-bottom:6px}.field input,.field textarea,.field select{width:100%;border:1px solid var(--border-strong);border-radius:6px;background:white;padding:10px 12px;font-size:12px}.field textarea{min-height:100px;resize:vertical}
+    .summary-art{aspect-ratio:1.4;border:1px solid var(--border);border-radius:7px;overflow:hidden;position:relative;background:#d9ddd0;isolation:isolate}.summary-art .hill{width:80%;height:72%;left:-8%;bottom:-30%}.summary-art .hill.two{width:83%;height:75%;left:38%;bottom:-35%}
+    .callout{padding:14px;border-left:2px solid var(--accent);background:#f5f1e8;font-size:11px;color:var(--ink-soft);margin:16px 0}
+    .finish-tabs{display:flex;gap:18px;border-bottom:1px solid var(--border);margin-bottom:18px}.finish-tab{padding:8px 2px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--muted);font-size:11px;font-weight:700}.finish-tab.active{border-color:var(--primary);color:var(--ink)}
+    .tab-panel{display:none}.tab-panel.active{display:block}
+    .notice{display:none;margin:12px 0;padding:10px 12px;border-radius:6px;background:var(--danger-soft);color:#7e3029;font-size:10px}.notice.show{display:block}
+    .toast{position:fixed;right:24px;bottom:24px;z-index:20;background:#203b30;color:#f5f2e9;border-radius:7px;padding:11px 15px;box-shadow:var(--lift);font-size:11px;opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .18s,transform .18s}.toast.show{opacity:1;transform:translateY(0)}
+    .mobile-menu{display:none;border:1px solid var(--border);background:transparent;border-radius:7px;width:36px;height:36px;place-items:center}
+    @media(max-width:1100px){main{padding:0 26px 40px}.shell{grid-template-columns:190px minmax(0,1fr)}.workarea{grid-template-columns:minmax(0,1fr) minmax(310px,.82fr)}.grid{gap:8px}.sheet{padding:12px}.refs{grid-template-columns:1fr}}
+    @media(max-width:760px){.shell{display:block}.rail{display:none}main{padding:0 16px 32px}.topline{height:58px}.mobile-menu{display:grid}.intro{padding:23px 0 15px;align-items:start}.intro h1{font-size:29px}.intro p{font-size:12px}.format-badge{margin-top:4px}.steps{display:flex;overflow-x:auto;scrollbar-width:none;margin-bottom:21px}.steps::-webkit-scrollbar{display:none}.step{flex:1;justify-content:center;padding:10px 7px}.step-name{font-size:10px}.step:not(:first-child):before{display:none}.workarea{display:flex;flex-direction:column}.detail{order:0;width:100%}.sheet{order:1;width:100%}.large-art{aspect-ratio:1.8}.refs{grid-template-columns:repeat(3,minmax(0,1fr))}.review-heading{align-items:start}.workflow-preview{grid-template-columns:1fr;padding:19px}.summary-art{order:-1}.bottom-bar{margin-top:21px}.review-heading h2{font-size:22px}}
+    @media(max-width:420px){body{font-size:16px}.intro{display:block}.format-badge{margin-top:12px}.step{gap:5px;padding:9px 3px}.step-name{font-size:9px}.step-num{width:21px;height:21px}.sheet{padding:10px}.grid{gap:7px}.card-foot{padding:7px 6px}.shot-name{font-size:9px}.status{font-size:7px;padding:3px 4px}.filters .filter{font-size:8px;padding:5px}.detail-copy{padding-left:13px;padding-right:13px}.refs{gap:5px}.ref{padding:5px;gap:5px}.ref-icon{width:25px;height:25px}.actions{padding:10px;gap:6px}.btn{padding:0 9px;font-size:10px}.large-art{aspect-ratio:1.55}.review-heading{gap:8px}.review-count{font-size:9px;text-align:right}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+    .filter,.icon-button{min-height:44px}.icon-button{min-width:44px}
+    .shot-name{font-size:12px}.shot-sub,.helper{font-size:11px}
+    @media(max-width:760px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.card-foot{align-items:flex-start;flex-direction:column;gap:6px}.shot-name{white-space:normal}.refs{grid-template-columns:1fr}.step{min-height:44px}.status{font-size:10px}.shot-sub{font-size:11px}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="rail" aria-label="Studio navigation">
+      <div class="brand"><div class="mark" aria-hidden="true">P</div><div><div class="brand-name">PeraByte</div><div class="brand-caption">Production studio</div></div></div>
+      <div class="rail-label">Make</div>
+      <a class="rail-link active" href="#production"><span class="glyph">✳</span>Production</a>
+      <a class="rail-link" href="#"><span class="glyph">▧</span>Image studio</a>
+      <a class="rail-link" href="#"><span class="glyph">▷</span>Motion studio</a>
+      <div class="rail-label">Collect</div>
+      <a class="rail-link" href="#"><span class="glyph">▤</span>Library</a>
+      <div class="rail-label">Build a world</div>
+      <a class="rail-link" href="#"><span class="glyph">◉</span>Characters & locations</a>
+      <div class="rail-bottom"><span class="local-dot"></span>Saved on this computer</div>
+    </aside>
+    <main>
+      <header class="topline">
+        <button class="mobile-menu" aria-label="Open navigation">☰</button>
+        <div class="crumb">Production <span aria-hidden="true">/</span> <strong>Fern & the Lantern</strong></div>
+        <div class="top-spacer"></div>
+        <div id="saveState" class="save-state" aria-live="polite"><span class="dot"></span><span id="saveText">Saved locally · just now</span></div>
+        <button class="icon-button" aria-label="Project options" title="Project options">···</button>
+      </header>
+      <section class="intro">
+        <div><div class="eyebrow">Production workspace</div><h1>Fern & the Lantern</h1><p>Manage your script, visual references, shots and approvals in one workspace.</p></div>
+        <div class="format-badge"><span>✦</span> Short story · Portrait</div>
+      </section>
+      <nav class="steps" aria-label="Production steps">
+        <button class="step" data-page="project"><span class="step-num">✓</span><span class="step-name">Project</span></button>
+        <button class="step" data-page="story"><span class="step-num">✓</span><span class="step-name">Story</span></button>
+        <button class="step" data-page="shots"><span class="step-num">3</span><span class="step-name">Shots</span></button>
+        <button class="step current" data-page="review" aria-current="step"><span class="step-num">4</span><span class="step-name">Review</span></button>
+        <button class="step" data-page="finish"><span class="step-num">5</span><span class="step-name">Finish</span></button>
+      </nav>
+
+      <section class="page-panel" id="page-project" aria-label="Project setup">
+        <div class="workflow-preview"><div><div class="eyebrow">Step 1 · Project</div><h2>Set up your production.</h2><p>Choose a story or begin with a single scene. Your work is saved on this computer as you go.</p><label class="field"><span>Project name</span><input value="Fern & the Lantern" aria-label="Project name"></label><label class="field"><span>Make a</span><select aria-label="Video length"><option>Short video · about 30–60 seconds</option><option>Long story · about 3–6 minutes</option></select></label><button class="btn primary go-next" data-next="story">Save and continue <span>→</span></button></div><div class="summary-art"><span class="sun"></span><span class="hill"></span><span class="hill two"></span><span class="tree"></span></div></div>
+      </section>
+      <section class="page-panel" id="page-story" aria-label="Script and references">
+        <div class="workflow-preview"><div><div class="eyebrow">Step 2 · Script & references</div><h2>Define the script and visual references.</h2><p>Keep the words and the visual references together. Each image is a starting point for your review.</p><label class="field"><span>Story idea</span><textarea aria-label="Story idea">Fern finds a lantern beneath an old cedar tree and follows its warm light home.</textarea></label><button class="btn primary go-next" data-next="shots">Save story and continue <span>→</span></button></div><div><div class="ref-block"><div class="ref-label">Pinned references <span>✓ Ready</span></div><div class="refs"><div class="ref"><div class="ref-icon character"></div><div class="ref-text"><b>Fern</b><small>Character</small></div></div><div class="ref"><div class="ref-icon place"></div><div class="ref-text"><b>Cedar clearing</b><small>Place</small></div></div><div class="ref"><div class="ref-icon prop"></div><div class="ref-text"><b>Old lantern</b><small>Prop</small></div></div></div></div><div class="callout">Pinned character, location and prop references are available beside every shot.</div></div></div>
+      </section>
+      <section class="page-panel" id="page-shots" aria-label="Shot plan">
+        <div class="workflow-preview"><div><div class="eyebrow">Step 3 · Shot plan</div><h2>Plan the shots and pacing.</h2><p>Review the order and timing. The small preview is a planning aid, not the finished video.</p><div class="callout"><b>Animatic preview</b><br>Scene 1 · Fern finds the lantern<br>Scene 2 · A glow in the trees<br>Scene 3 · The path home</div><button class="btn primary go-next" data-next="review">Approve shot plan <span>→</span></button></div><div class="summary-art"><span class="sun"></span><span class="hill"></span><span class="hill two"></span><span class="figure"></span><span class="tree"></span></div></div>
+      </section>
+      <section class="page-panel active" id="page-review" aria-label="Review key images">
+        <div class="review-heading"><div><h2>Review your key images</h2><p>Approve each image you want to bring to life.</p></div><div class="review-count" id="reviewCount">3 of 6 need a decision</div></div>
+        <div class="workarea">
+          <section class="sheet" aria-label="Key image contact sheet">
+            <div class="sheet-top"><div class="sheet-title">Storyboard <small>6 images</small></div><div class="filters" aria-label="Filter images"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="pending">To review</button></div></div>
+            <div class="grid" id="shotGrid">
+              <button class="shot-card" data-shot="0" aria-label="Select shot 1, approved"><div class="art a1"><span class="sun"></span><span class="hill"></span><span class="hill two"></span><span class="tree"></span><span class="figure"></span><span class="art-caption">Illustrative preview</span></div><div class="card-foot"><div class="shot-meta"><div class="shot-name">Beneath the cedar</div><div class="shot-sub">Shot 01 · Opening</div></div><span class="status approved">✓ Approved</span></div></button>
+              <button class="shot-card selected" data-shot="1" aria-label="Select shot 2, needs review"><div class="art a2"><span class="sun"></span><span class="hill"></span><span class="hill two"></span><span class="tree"></span><span class="figure"></span><span class="art-caption">Illustrative preview</span></div><div class="card-foot"><div class="shot-meta"><div class="shot-name">A glimmer below</div><div class="shot-sub">Shot 02 · Discovery</div></div><span class="status pending">To review</span></div></button>
+              <button class="shot-card" data-shot="2" aria-label="Select shot 3, needs review"><div class="art a3"><span class="sun"></span><span class="hill"></span><span class="hill two"></span><span class="tree"></span><span class="figure"></span><span class="art-caption">Illustrative preview</span></div><div class="card-foot"><div class="shot-meta"><div class="shot-name">Light through leaves</div><div class="shot-sub">Shot 03 · Wonder</div></div><span class="status pending">To review</span></div></button>
+              <button class="shot-card" data-shot="3" aria-label="Select shot 4, rejected"><div class="art a4"><span class="sun"></span><span class="hill"></span><span class="hill two"></span><span class="tree"></span><span class="figure"></span><span class="art-caption">Illustrative preview</span></div><div class="card-foot"><div class="shot-meta"><div class="shot-name">The forest path</div><div class="shot-sub">Shot 04 · Journey</div></div><span class="status rejected">↺ Try again</span></div></button>
+              <button class="shot-card" data-shot="4" aria-label="Select shot 5, approved"><div class="art a5"><span class="sun"></span><span class="hill"></span><span class="hill two"></span><span class="tree"></span><span class="figure"></span><span class="art-caption">Illustrative preview</span></div><div class="card-foot"><div class="shot-meta"><div class="shot-name">Home at last</div><div class="shot-sub">Shot 05 · Return</div></div><span class="status approved">✓ Approved</span></div></button>
+              <button class="shot-card" data-shot="5" aria-label="Select shot 6, needs review"><div class="art a6"><span class="sun"></span><span class="hill"></span><span class="hill two"></span><span class="tree"></span><span class="figure"></span><span class="art-caption">Illustrative preview</span></div><div class="card-foot"><div class="shot-meta"><div class="shot-name">A gentle glow</div><div class="shot-sub">Shot 06 · Ending</div></div><span class="status pending">To review</span></div></button>
+            </div>
+            <div class="illustrative"><i aria-hidden="true"></i> Abstract illustrations · not generated images</div>
+          </section>
+          <aside class="detail" aria-label="Selected image details">
+            <div class="detail-top"><strong id="detailShot">Shot 02 · Discovery</strong><span id="detailCounter">2 of 6</span></div>
+            <div class="large-art art a2" id="selectedArt"><span class="sun"></span><span class="hill"></span><span class="hill two"></span><span class="tree"></span><span class="figure"></span><span class="art-caption">Illustrative preview</span></div>
+            <div class="detail-copy"><h3 id="detailTitle">A glimmer below</h3><p>Fern kneels as a small warm light shines under the cedar roots.</p></div>
+            <div class="ref-block"><div class="ref-label">Pinned references <span>✓ All included</span></div><div class="refs"><div class="ref"><div class="ref-icon character"></div><div class="ref-text"><b>Fern</b><small>Character</small></div></div><div class="ref"><div class="ref-icon place"></div><div class="ref-text"><b>Cedar clearing</b><small>Place</small></div></div><div class="ref"><div class="ref-icon prop"></div><div class="ref-text"><b>Old lantern</b><small>Prop</small></div></div></div></div>
+            <div class="ref-check"><span class="check">✓</span> The three selected references are included.</div>
+            <div class="actions"><button class="btn danger" id="rejectButton">Try another</button><button class="btn primary" id="approveButton">✓ &nbsp; Approve image</button></div>
+            <p class="helper" id="actionHelp">Only this image will be approved. You can change your mind later.</p>
+            <div class="notice" id="rejectNotice">Marked for another try. This image is kept in your history.</div>
+          </aside>
+        </div>
+        <div class="next-callout"><span class="step-icon">4</span><span><b>Next:</b> choose the images you want before making them move.</span></div>
+      </section>
+      <section class="page-panel" id="page-finish" aria-label="Audio and export">
+        <div class="review-heading"><div><h2>Audio and delivery</h2><p>Add a voice or sounds, then prepare a file for your computer.</p></div></div>
+        <div class="finish-tabs" role="tablist"><button class="finish-tab active" data-tab="audio" role="tab">Voice & sound</button><button class="finish-tab" data-tab="export" role="tab">Export check</button></div>
+        <div class="workflow-preview" style="display:block;min-height:260px">
+          <div class="tab-panel active" id="tab-audio"><div class="eyebrow">Voice, music & sound</div><h2>Review the audio mix.</h2><p>Keep one voice through the story and add a gentle music bed. Silent clips can be saved as drafts.</p><div class="callout">Narration, music and sound effects need review for a finished story.<br>This visual prototype does not contain real audio or video takes.</div><button class="btn primary" id="audioContinue">Review export requirements</button></div>
+          <div class="tab-panel" id="tab-export"><div class="eyebrow">Export check</div><h2>Check delivery requirements.</h2><p>Review the selected images, timing, voice and sound before creating a video file.</p><div class="callout" id="exportStatus">✓ Story and shot plan ready &nbsp; · &nbsp; Sound review required<br>✓ Local destination available &nbsp; · &nbsp; Review images to continue</div><button class="btn primary" id="exportButton" disabled title="Review each image first">Create video file</button><p class="helper">After accepted video takes and sound, review the exported film before marking it ready to upload.</p></div>
+        </div>
+      </section>
+      <div class="bottom-bar"><button class="text-button" id="backButton">← Back</button><button class="btn quiet" id="saveErrorButton">Preview save problem</button><button class="btn primary" id="continueButton">Continue to sound & export <span>→</span></button></div>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script>
+    const pages=['project','story','shots','review','finish'];
+    const names=['Beneath the cedar','A glimmer below','Light through leaves','The forest path','Home at last','A gentle glow'];
+    const descriptors=['Opening','Discovery','Wonder','Journey','Return','Ending'];
+    const states=['approved','pending','pending','rejected','approved','pending'];
+    let page='review', selected=1, filter='all', toastTimer;
+    const $=(q,root=document)=>root.querySelector(q), $$=(q,root=document)=>[...root.querySelectorAll(q)];
+    const toast=(text)=>{const el=$('#toast');el.textContent=text;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2400)};
+    function render(){
+      $$('.step').forEach((b,i)=>{b.classList.toggle('current',b.dataset.page===page);b.classList.toggle('done',i<pages.indexOf(page));if(b.dataset.page===page)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current')});
+      $$('.page-panel').forEach(p=>p.classList.toggle('active',p.id===`page-${page}`));
+      $('#continueButton').style.display=page==='finish'?'none':'';
+      $('#continueButton').innerHTML=page==='review'?'Continue to sound & export <span>→</span>':page==='project'?'Continue to story <span>→</span>':page==='story'?'Continue to shot plan <span>→</span>':page==='shots'?'Review key images <span>→</span>':'Continue <span>→</span>';
+      $('#backButton').style.visibility=page==='project'?'hidden':'visible';
+      $$('.shot-card').forEach((card,i)=>{card.classList.toggle('selected',i===selected);card.querySelector('.status').textContent=states[i]==='approved'?'✓ Approved':states[i]==='rejected'?'↺ Try again':'To review';card.querySelector('.status').className=`status ${states[i]}`;card.setAttribute('aria-label',`Select shot ${i+1}, ${states[i]==='pending'?'needs review':states[i]}`);card.hidden=filter==='pending'&&states[i]==='approved'});
+      $('#detailShot').textContent=`Shot ${String(selected+1).padStart(2,'0')} · ${descriptors[selected]}`;$('#detailCounter').textContent=`${selected+1} of 6`;$('#detailTitle').textContent=names[selected];
+      $('#selectedArt').className=`large-art art a${selected+1}`;
+      const pending=states.filter(s=>s!=='approved').length;$('#reviewCount').textContent=pending?`${pending} of 6 need a decision`:'All images reviewed';
+      $('#approveButton').innerHTML=states[selected]==='approved'?'✓ &nbsp; Approved':'✓ &nbsp; Approve image';$('#approveButton').disabled=states[selected]==='approved'||$('#saveState').classList.contains('error');
+      $('#actionHelp').textContent=states[selected]==='approved'?'This image is approved for its shot. You can review it again anytime.':'Only this image will be approved. You can change your mind later.';
+      $('#rejectNotice').classList.toggle('show',states[selected]==='rejected');
+      $('#exportButton').disabled=true;$('#exportButton').title='Accepted video takes and reviewed audio are required; this prototype contains illustrations only';
+      $('#exportStatus').innerHTML=pending?`✓ Story and shot plan ready &nbsp; · &nbsp; Sound review required<br>! ${pending} image${pending===1?' needs':'s need'} approval before animation`:'✓ Images approved<br>Next: accept video takes, review sound, then watch the finished export. This prototype cannot export a film.';
+    }
+    function go(next){page=next;render();window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})}
+    $$('.step').forEach(b=>b.addEventListener('click',()=>go(b.dataset.page)));
+    $$('.go-next').forEach(b=>b.addEventListener('click',()=>go(b.dataset.next)));
+    $('#continueButton').addEventListener('click',()=>go(pages[Math.min(pages.indexOf(page)+1,pages.length-1)]));
+    $('#backButton').addEventListener('click',()=>go(pages[Math.max(0,pages.indexOf(page)-1)]));
+    $$('.shot-card').forEach(c=>c.addEventListener('click',()=>{selected=Number(c.dataset.shot);render()}));
+    $('#approveButton').addEventListener('click',()=>{if(states[selected]==='approved')return;states[selected]='approved';render();toast(`Shot ${String(selected+1).padStart(2,'0')} image approved.`)});
+    $('#rejectButton').addEventListener('click',()=>{states[selected]='rejected';render();toast('Image set aside for another try. Its history is kept.')});
+    $$('.filter').forEach(b=>b.addEventListener('click',()=>{filter=b.dataset.filter;$$('.filter').forEach(x=>x.classList.toggle('active',x===b));render()}));
+    $$('.finish-tab').forEach(b=>b.addEventListener('click',()=>{$$('.finish-tab').forEach(x=>x.classList.toggle('active',x===b));$$('.tab-panel').forEach(x=>x.classList.toggle('active',x.id===`tab-${b.dataset.tab}`))}));
+    $('#audioContinue').addEventListener('click',()=>{toast('Review sound and accepted video takes before export.');$$('.finish-tab').find(b=>b.dataset.tab==='export').click()});
+    $('#exportButton').addEventListener('click',()=>{if($('#exportButton').disabled)return;toast('Preview only — the design prototype does not create a video file.')});
+    $('#saveErrorButton').addEventListener('click',()=>{const retrying=$('#saveState').classList.contains('error');$('#saveState').classList.toggle('error',!retrying);$('#saveText').textContent=retrying?'Saved locally · just now':'Save paused · Retry';$('#saveErrorButton').textContent=retrying?'Preview save problem':'Retry save';$('#approveButton').disabled=!retrying||states[selected]==='approved';toast(retrying?'Simulated save restored.':'Simulated save failure: dependent actions paused.')});
+    render();
+  </script>
+</body>
+</html>

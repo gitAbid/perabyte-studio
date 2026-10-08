@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "task_id": "C06-PRE-A",
+  "slice": "async context followup",
+  "actualSHA": "1a369266954850fb694949cae5c569f6df572884",
+  "baseSHA": "cac0f4e774c8da0f613961826a641fc4e1d62070",
+  "parentSHA": "cac0f4e774c8da0f613961826a641fc4e1d62070",
+  "worktree": "/Users/abid/.codex/worktrees/production-human-approval/perabyte-studio",
+  "decision": "accepted_for_integration",
+  "findings": [],
+  "metadataFindings": [],
+  "closedFinding": {
+    "id": "independent-review-P2-async-context",
+    "priorReview": "/tmp/perabyte-C06-PRE-A-review.json",
+    "resolution": "validateMediaProvenance returns the exact shared productionSubmissionEligibilityFingerprint. resolveTarget carries it for anchor/take, capturing initial selected dependency/approval context before readAssetVerified. Final transaction requires equality with the reread value plus existing target and media hashes.",
+    "evidence": "Amended existing real-store/checksum-vault anchor fixture appends a newer exact approved story decision during verified-byte await. Original command rejects with STALE_REVISION, no anchor approval written. Fresh key under stable new context succeeds and the anchor remains unselected.",
+    "noFalseStale": "Shared fingerprint binds relevant selected story/plan/animatic and exact approval sets without unrelated project saveVersion/name metadata. Compatible static successors remain allowed on fresh retry; manual prior candidate selection remains unnecessary."
+  },
+  "review": [
+    "Only two owned service/test files changed. No shared queue helper formula, contracts, storage, paid admission or route composition changes.",
+    "Nonmedia target branches carry null contextFingerprint while retaining exact current target hash/selection and asset checks.",
+    "Existing replay-before-target-validation, actor/byte equality, strict clocks, checklist/advisory checks, media provenance and finalQC blocker remain unchanged.",
+    "One existing functional case was extended with bounded async drift and fresh retry assertions; no broader test matrix introduced."
+  ],
+  "changedFiles": [
+    "lib/services/production/approval.test.ts",
+    "lib/services/production/approval.ts"
+  ],
+  "normativeFreeze": {
+    "path": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/docs/production/reports/C06-PRE-root-freeze.json",
+    "SHA256": "ccf34a0060b31bcdf684a2d56296b5015efdb5c81d725ed5ba64d218ddff92b5",
+    "section": "decisions.async_context"
+  },
+  "workerReportSHA256": "863f3af9b9783c41d476516e5bdb4c634f6df9be2895a17e8816335f40662d53",
+  "expectedWorkerReportSHA256": "863f3af9b9783c41d476516e5bdb4c634f6df9be2895a17e8816335f40662d53",
+  "originalReportSHA256": "41d297a87767810382d0679c564bc656c8955bd5b2785f948ed08e41b5fa9a9f",
+  "originalReportPreserved": true,
+  "workerEvidenceAudit": [
+    {
+      "path": "/Users/abid/.codex/worktrees/production-human-approval/perabyte-studio/evidence/C06-PRE-A/context-red-01.txt",
+      "expectedSHA256": "1888a77f05465c0c18ee6dbd985c9ee8d0516e5714441b35d14fe6ba9e74b317",
+      "actualSHA256": "1888a77f05465c0c18ee6dbd985c9ee8d0516e5714441b35d14fe6ba9e74b317",
+      "match": true,
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "lib/services/production/approval.test.ts",
+        "-t",
+        "reviews a checksum-verified current anchor"
+      ],
+      "reportedExitCode": 1
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-human-approval/perabyte-studio/evidence/C06-PRE-A/context-green-02.txt",
+      "expectedSHA256": "aeed8aef8e1d2bf35d06381252e3dbaca97272df3e5e80d0bb097430dde02ed6",
+      "actualSHA256": "aeed8aef8e1d2bf35d06381252e3dbaca97272df3e5e80d0bb097430dde02ed6",
+      "match": true,
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "lib/production/approval.test.ts",
+        "lib/services/production/approval.test.ts"
+      ],
+      "reportedExitCode": 0
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-human-approval/perabyte-studio/evidence/C06-PRE-A/context-typecheck-02.txt",
+      "expectedSHA256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "actualSHA256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "match": true,
+      "argv": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "reportedExitCode": 0
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-human-approval/perabyte-studio/evidence/C06-PRE-A/context-diff-01.txt",
+      "expectedSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actualSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true,
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "reportedExitCode": 0
+    }
+  ],
+  "allWorkerEvidenceHashesMatch": true,
+  "evidenceInterpretation": "Read saved targeted RED1failed/3skipped: original command resolved approved instead of rejecting. Read followup GREEN6passed/2files and typecheck output without diagnostics. All argv and hashes match; original report bytes unchanged.",
+  "independentVerification": {
+    "argv": [
+      "npm",
+      "test",
+      "--",
+      "lib/services/production/approval.test.ts",
+      "-t",
+      "reviews a checksum-verified current anchor"
+    ],
+    "exitCode": 0,
+    "testsPassed": 1,
+    "testsSkipped": 3,
+    "log": "/tmp/perabyte-C06-PRE-A-followup-review-test.txt",
+    "logSHA256": "b274fbb0bca6376ad23ca595b0e51ebfd7c997a199f2bb697c5b118bc8b6e2e3",
+    "diffCheck": {
+      "argv": [
+        "git",
+        "diff",
+        "--check",
+        "cac0f4e774c8da0f613961826a641fc4e1d62070",
+        "1a369266954850fb694949cae5c569f6df572884"
+      ],
+      "exitCode": 0
+    }
+  },
+  "unrun": [
+    "Independent full owned6-case suite/typecheck not repeated for followup; saved worker GREEN/typecheck hashes and output verified. Initial6-case suite independently passed in prior review.",
+    "Broader target-kind fixture expansion, broad suite, build, paid/authenticated calls and real-film release remain outside scope.",
+    "Root integrated verification remains pending."
+  ],
+  "sourceEdits": false,
+  "paidNetworkCalls": 0,
+  "fullC06Accepted": false,
+  "frozenAfterReview": true
+}

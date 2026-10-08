@@ -1,0 +1,71 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.0 /Users/abid/Projects/perabyte-studio/.worktrees/c21-proposal-dropdowns
+
+ ❯ lib/services/text-engine-chain.test.ts (0 test)
+ ❯ lib/production/proposal-dropdowns.test.ts (3 tests | 3 failed) 4ms
+   ❯ proposal text-engine dropdown view model (3)
+     × parses a well-formed route payload and refuses anything else 2ms
+     × dedupes provider ids in first-appearance (chain priority) order 0ms
+     × selects a provider's first listed engine and null for an unknown provider 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lib/services/text-engine-chain.test.ts [ lib/services/text-engine-chain.test.ts ]
+Error: Cannot find package '@/app/api/production/text-engines/route' imported from /Users/abid/Projects/perabyte-studio/.worktrees/c21-proposal-dropdowns/lib/services/text-engine-chain.test.ts
+ ❯ lib/services/text-engine-chain.test.ts:14:1
+     12| import { SOGNI_TEXT_MODELS } from "@/lib/providers/sogni/sogni.text";
+     13| import { POLLINATIONS_TEXT_MODELS } from "@/lib/providers/pollinations…
+     14| import * as textEnginesRoute from "@/app/api/production/text-engines/r…
+       | ^
+     15|
+     16| /** Options the default (all-built-ins-enabled) config must produce, i…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lib/production/proposal-dropdowns.test.ts > proposal text-engine dropdown view model > parses a well-formed route payload and refuses anything else
+TypeError: parseTextEnginesPayload is not a function
+ ❯ lib/production/proposal-dropdowns.test.ts:16:12
+     14|   it("parses a well-formed route payload and refuses anything else", (…
+     15|     const payload = { engines: ENGINES };
+     16|     expect(parseTextEnginesPayload(payload)).toEqual<TextEngineOptionV…
+       |            ^
+     17|
+     18|     for (const broken of [
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  lib/production/proposal-dropdowns.test.ts > proposal text-engine dropdown view model > dedupes provider ids in first-appearance (chain priority) order
+TypeError: textEngineProviderIds is not a function
+ ❯ lib/production/proposal-dropdowns.test.ts:35:12
+     33|
+     34|   it("dedupes provider ids in first-appearance (chain priority) order"…
+     35|     expect(textEngineProviderIds(ENGINES)).toEqual(["sogni", "pollinat…
+       |            ^
+     36|     expect(textEngineProviderIds([])).toEqual([]);
+     37|     expect(textEngineProviderIds([{ providerId: "sogni", modelId: "m",…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  lib/production/proposal-dropdowns.test.ts > proposal text-engine dropdown view model > selects a provider's first listed engine and null for an unknown provider
+TypeError: firstTextEngineModelForProvider is not a function
+ ❯ lib/production/proposal-dropdowns.test.ts:41:12
+     39|
+     40|   it("selects a provider's first listed engine and null for an unknown…
+     41|     expect(firstTextEngineModelForProvider(ENGINES, "sogni")).toEqual(…
+       |            ^
+     42|     expect(firstTextEngineModelForProvider(ENGINES, "pollinations")).t…
+     43|     expect(firstTextEngineModelForProvider(ENGINES, "unknown")).toBeNu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed (3)
+   Start at  21:15:12
+   Duration  384ms (transform 48%, import 48%, worker 3%, tests 2%)

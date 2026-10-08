@@ -1,0 +1,60 @@
+{
+  "task_id": "I01-B2-lock-test-followup",
+  "status": "accepted_test_followup",
+  "full_I01_status": "incomplete",
+  "worktree": "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio",
+  "base_sha": "9e726f07745390d10dd60174a90bb84ace6aad11",
+  "head_sha": "631b45262087ab9287b370df36e396ac73410276",
+  "commit_sha": "631b45262087ab9287b370df36e396ac73410276",
+  "changed_files": [
+    "lib/repositories/production/sqlite.test.ts"
+  ],
+  "source_sha256": {
+    "lib/repositories/production/sqlite.test.ts": "941f2e960a104275dbfaf90ac1599985f556d3f98899405f9d89cf0d0c88dd9e"
+  },
+  "change": "The held-lock startup regression now retains its DELETE-mode EXCLUSIVE lock until the child process exits, with a 10-second safety watchdog. It asserts the watchdog did not release the lock and validates the elapsed time measured inside the child after its startup barrier.",
+  "evidence": [
+    {
+      "kind": "red",
+      "command": ["npm", "test"],
+      "exit_code": 1,
+      "output_file": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/i01-b2-full-tests.txt",
+      "output_sha256": "39d8a836c358929d4079ba6fb9b7c26ff7cb1061c76bf68783cc5784d9be66a9",
+      "assertion": "Integrated full suite: 1088 passed and 2 failed. The held-lock test incorrectly passed because its parent timer released the lock before the child process started; an unrelated worker test also failed under the integrated run."
+    },
+    {
+      "kind": "green",
+      "command": ["npm", "test", "--", "lib/repositories/production/sqlite.test.ts"],
+      "exit_code": 0,
+      "output_file": "evidence/I01-B2/startup-lock-followup-test-green.txt",
+      "output_sha256": "91dbf049dd39c42fd695e1f97162e9f44b5a0d53b18c24fb74e5e5931baba81f",
+      "assertion": "All 26 SQLite repository tests pass with the deterministic lock lifetime."
+    },
+    {
+      "kind": "green",
+      "command": ["npm", "run", "typecheck"],
+      "exit_code": 0,
+      "output_file": "evidence/I01-B2/startup-lock-followup-typecheck.txt",
+      "output_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "assertion": "TypeScript check passes."
+    },
+    {
+      "kind": "green",
+      "command": ["git", "diff", "--check"],
+      "exit_code": 0,
+      "output_file": "evidence/I01-B2/startup-lock-followup-diffcheck.txt",
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "assertion": "Whitespace check passes."
+    }
+  ],
+  "review": {
+    "independent_review": "Accepted and integrated by parent."
+  },
+  "unverified": [
+    "The full integrated suite was not rerun for this test-only correction.",
+    "Full I01 remains incomplete pending remaining services, queue/worker reservation, trusted evidence wiring, and integration work."
+  ],
+  "paid_calls": [],
+  "authorization": {"reference": null, "scope": null, "cap": null, "currency": null},
+  "spend": {"actual": null, "currency": null, "status": "none", "receipt_refs": []}
+}

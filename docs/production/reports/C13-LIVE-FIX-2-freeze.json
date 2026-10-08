@@ -1,0 +1,42 @@
+{
+  "packet": "C13-LIVE-FIX-2",
+  "created": "2026-10-06",
+  "status": "frozen",
+  "orchestrator": "zcode orchestration (GLM-5.3)",
+  "context": {
+    "root_branch": "zcode/production-core",
+    "base_contains": ["9f31c07 (C13-LIVE-FIX)"],
+    "live_defects": [
+      "D1 (blocks all live submissions): the store's insert-time execution-proof validator (lib/repositories/production/sqlite.ts:157) requires canonicalJson(quotePayload.capability) === canonicalJson(payload.capability). The worker re-discovers its own capability at submit time (lib/jobs/production/worker.ts ~line 59), so the execution payload embeds a receipt with a different observedAt than the quote-time receipt — canonical equality can NEVER hold for a live provider (two network discoveries). Reproduced live via a rollback-protected probe against fresh queued job 9965dc1b-34d8-4b7d-8523-9df8099b0bd0: reserveSubmission threw 'Provider execution proof does not match its quote, worker session, or capability'. Fake-provider tests never caught it because fake discoverCapabilities returns deterministic receipts. Fix direction: the execution proof must pin the QUOTE-TIME capability (the evidence the quote was authorized against); the worker's own fresh discovery remains a fail-fast admission gate in worker.ts (expiry + canSatisfy) and the provider submit keeps its own live_catalog/expiry gate — the proof chain just stops re-embedding a second, necessarily-different receipt.",
+      "D2 (read-model 500): app/api/production/jobs/[id]/route.ts parses store events with strict JobEventSchema, but listJobEvents returns rows including an extra `jobId` key -> zod unrecognized_keys -> every job poll with >=1 event returns bare HTTP 500 INTERNAL_ERROR. Reproduced live (requestIds d77d64b0, 033dfceb; sqlite row inspection confirmed the extra key)."
+    ]
+  },
+  "owns": {
+    "A-execution-proof-pins-quote-capability": {
+      "files": ["lib/services/production/budget-composer.ts", "lib/services/production/budget-composer.test.ts"],
+      "change": "In `reserveSubmission`: the execution payload must embed the QUOTE payload's capability (`quotePayload.capability`, already parsed a few lines above) instead of the worker-passed `capability` parameter; the `expiresAt` min bound and the null-expiresAt guard switch to `quotePayload.capability.expiresAt`. The worker-passed capability parameter stays in the signature (the durable-chain guard message may still reference it) but must NOT be embedded in the proof. Add a brief comment: the reservation pins the quote's authorized evidence; the worker's own discovery remains the admission/submit gate. Do NOT touch the sqlite validator, worker.ts, or provider files.",
+      "tests": [
+        "RED first: extend the fake provider so a SECOND discoverCapabilities call returns a receipt with a different observedAt (simulating the worker's separate live discovery). Drive the existing worker-admission-shaped test path (prepareWorkerBudgetContext -> reserveSubmission with the second receipt) — under current code it must fail with the sqlite insert error 'Provider execution proof does not match its quote, worker session, or capability' (record RED); after the fix the reservation commits with the QUOTE-time capability embedded in the execution proof (assert via the stored execution proof payload's capability canonical equality to the quote payload's capability).",
+        "Existing budget-composer tests pass unchanged.",
+        "Typecheck + git diff --check clean."
+      ]
+    },
+    "B-job-events-projection": {
+      "files": ["app/api/production/jobs/[id]/route.ts"],
+      "change": "Project the store's event rows to the exact JobEventSchema shape before parsing (strip the internal `jobId` key; keep sequence/at/status/message/progress). Smallest possible change; no port/schema changes.",
+      "tests": [
+        "Verification: `npm run typecheck` + `git diff --check` clean; node-level check that JobReadModelSchema.parse succeeds on {job, events: store.listJobEvents(...).map(strip), recoveryAction} — the engineer may verify via a one-off tsx probe against the real .studio store (job 304f9c32-256b-4707-894b-88b758c6a6c3 is a blocked job with events; it must now parse) — record the probe output as evidence (read-only store access, readOnly:true)."
+      ]
+    }
+  },
+  "constraints": [
+    "Two commits (A then B) on branch zcode/c13-live-fix-2 from base 9f31c07; files strictly disjoint as listed.",
+    "No changes to sqlite.ts, worker.ts, provider files, contracts, or proof schemas.",
+    "Never print SOGNI_API_KEY; noclobber evidence logs under evidence/C13-LIVE-FIX-2/."
+  ],
+  "acceptance": [
+    "A: focused RED->GREEN pair present; existing suite green.",
+    "B: the blocked-job read model parses (probe evidence).",
+    "Integrator live verification after integration: job poll route returns 200 JSON for a job with events, and a fresh worker submission admission succeeds end-to-end (reservation composed; paid render proceeds)."
+  ]
+}

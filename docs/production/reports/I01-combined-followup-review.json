@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "task_id": "I01",
+  "slice": "B4 combined gate provider attribution follow-up",
+  "actualSHA": "bb43a01f2a42f1889bc30ecd8da79771a0a2c17d",
+  "baseSHA": "72ab962cd8bbd5e084eca8740e171f44ce338255",
+  "decision": "accepted_for_integration",
+  "findings": [],
+  "metadataFindings": [],
+  "worktree": "/Users/abid/.codex/worktrees/production-admission/perabyte-studio",
+  "changedFiles": [
+    "lib/jobs/production/worker.test.ts"
+  ],
+  "review": [
+    "Verified queue outbox ordering is created_at,id; outbox IDs are randomUUID values, so worker fixture position does not identify its claimed job.",
+    "Fake acknowledgement derives providerRef and honoredInputs jobId/receipt ID from the actual ProviderRequestSnapshot passed to submit.",
+    "Winner and loser submit assertions filter snapshot.jobId across both providers, preserving exactly one winner call and zero loser calls without assuming worker/job assignment.",
+    "New explicit loser getBudgetExecution null assertion strengthens the already preserved absent-reservation check.",
+    "Matching200 quotes, cap300 race, unknown actual retains200/fresh200 denial, final actual50/fresh200 admission with folded250, immutable original200 reservation and cumulative two submits are preserved.",
+    "Direct SQLite trigger, real reserveInTransaction spy, no submit, and rolled-back execution/reservation/submitting-event assertions are preserved unchanged.",
+    "Follow-up changes only worker.test.ts; no service, queue, store, accounting algorithm or production source edits."
+  ],
+  "priorReviewCorrection": "The initial bounded review missed the provider-position attribution assumption. Root integration exposed the preserved failure. This follow-up closes that test defect; the original acceptance is superseded for provider attribution.",
+  "workerReportSHA256": "0878cc38342d552f51142478da26a096cadeb3c1d60616d4089dcd71c2530b80",
+  "expectedWorkerReportSHA256": "0878cc38342d552f51142478da26a096cadeb3c1d60616d4089dcd71c2530b80",
+  "workerEvidenceAudit": [
+    {
+      "path": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/i01-b4-combined/root-focused.txt",
+      "expectedSHA256": "a646e839678bb919c6c8c20e4b15a0b1da0cfbaad56246e8f4a32b0eb182bf81",
+      "actualSHA256": "a646e839678bb919c6c8c20e4b15a0b1da0cfbaad56246e8f4a32b0eb182bf81",
+      "match": true,
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "lib/jobs/production/queue.test.ts",
+        "lib/jobs/production/worker.test.ts",
+        "lib/services/production/budget.test.ts"
+      ],
+      "reportedExitCode": 1
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-admission/perabyte-studio/evidence/I01-B4-combined/flake-fix-focused-1.txt",
+      "expectedSHA256": "8e28ce51cb730da1af6ba89c13ff44d5577175697976c97517bc834d4478ba7e",
+      "actualSHA256": "8e28ce51cb730da1af6ba89c13ff44d5577175697976c97517bc834d4478ba7e",
+      "match": true,
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "lib/jobs/production/worker.test.ts",
+        "-t",
+        "races, retains unknown actual|rolls back execution and reservation"
+      ],
+      "reportedExitCode": 0
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-admission/perabyte-studio/evidence/I01-B4-combined/flake-fix-focused-2.txt",
+      "expectedSHA256": "c39814a0af87ce49cdab9bbbd4cc0341386786381eca387daf6b7dce2cd3dab7",
+      "actualSHA256": "c39814a0af87ce49cdab9bbbd4cc0341386786381eca387daf6b7dce2cd3dab7",
+      "match": true,
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "lib/jobs/production/worker.test.ts",
+        "-t",
+        "races, retains unknown actual|rolls back execution and reservation"
+      ],
+      "reportedExitCode": 0
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-admission/perabyte-studio/evidence/I01-B4-combined/flake-fix-focused-3.txt",
+      "expectedSHA256": "f60fcacc429801acd3fcb20d45fca09f297cd8d69ace3e2f8468b232ba3ba8c9",
+      "actualSHA256": "f60fcacc429801acd3fcb20d45fca09f297cd8d69ace3e2f8468b232ba3ba8c9",
+      "match": true,
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "lib/jobs/production/worker.test.ts",
+        "-t",
+        "races, retains unknown actual|rolls back execution and reservation"
+      ],
+      "reportedExitCode": 0
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-admission/perabyte-studio/evidence/I01-B4-combined/flake-fix-diff-check.txt",
+      "expectedSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actualSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true,
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "reportedExitCode": 0
+    }
+  ],
+  "allWorkerEvidenceHashesMatch": true,
+  "evidenceSemantics": "Read preserved root RED: 79 passed/1 failed and actual submitted snapshot.jobId job-second at the fixture-position assertion. Read all three worker GREEN logs: each 2 passed/42 skipped with reported filter argv. Diff-check log is empty with matching hash.",
+  "independentVerification": {
+    "argv": [
+      "npm",
+      "test",
+      "--",
+      "lib/jobs/production/worker.test.ts",
+      "-t",
+      "real combined production budget admission"
+    ],
+    "exitCode": 0,
+    "testsPassed": 2,
+    "testsSkipped": 42,
+    "log": "/tmp/perabyte-I01-combined-followup-review-verification.txt",
+    "logSHA256": "286671890e8691a838ae90392759ba5452c34325d2469482aaf2142250765760",
+    "logScope": "Raw tool output contains read-only queue ordering search followed by the targeted test output.",
+    "diffCheck": {
+      "argv": [
+        "git",
+        "diff",
+        "--check",
+        "72ab962cd8bbd5e084eca8740e171f44ce338255",
+        "bb43a01f2a42f1889bc30ecd8da79771a0a2c17d"
+      ],
+      "exitCode": 0
+    }
+  },
+  "sourceEdits": false,
+  "paidNetworkCalls": 0,
+  "fullI01Accepted": false,
+  "unverified": [
+    "Integrator combined queue/worker/service verification and typecheck remain pending.",
+    "No broader suite, build, new coverage, live producers, paid calls or real-film release reviewed."
+  ],
+  "frozenAfterReport": true
+}

@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "task_id": "C06-PRE-S",
+  "status": "accepted_integrated_feature_with_known_existing_timing_limitation",
+  "code_sha": "e36f84359ede5895d69ef712807e9884ab003dbe",
+  "source_sha": "c6c143063ebfc6f4adc13f020dd7ca667971a5bb",
+  "review": "docs/production/reports/C06-PRE-S-review.json",
+  "evidence": [
+    {
+      "path": "evidence/integration/c06-pre-s/root-focused.txt",
+      "exit_code": 1,
+      "sha256": "32519eb6f37f00a221b48739bd33f76bb2c954e105f1b19dcf10cd2511d017da"
+    },
+    {
+      "path": "evidence/integration/c06-pre-s/root-migration-focused.txt",
+      "exit_code": 0,
+      "sha256": "70b32f6863ef80782baf9c481699d651516b29197f86f530baa00b3be8ee80b0"
+    },
+    {
+      "path": "evidence/integration/c06-pre-s/root-typecheck.txt",
+      "exit_code": 0,
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    },
+    {
+      "path": "evidence/integration/c06-pre-s/root-health3.txt",
+      "exit_code": 0,
+      "sha256": "a147a17be03c38504fbd31147a28774e85a73014f8521bdf428cfa58d5e411fd"
+    }
+  ],
+  "verification": {
+    "root_affected_two_files": {
+      "passed": 49,
+      "failed": 1,
+      "failure": "Existing exclusive WAL lock test measured2036ms versus2000ms; unchanged WAL retry source; actualraw retained."
+    },
+    "root_new_migration_test": {
+      "passed": 1,
+      "skipped": 26,
+      "exit_code": 0
+    },
+    "typecheck": 0,
+    "actual_GET_health": {
+      "status": 200,
+      "schemaVersion": 3,
+      "storage": "ready",
+      "temporary_store": true
+    }
+  },
+  "unverified": [
+    "Existing WAL retry wall-clock assertion intermittently fails; timing/process startup hardening deferred, not claimed passing.",
+    "Full suite/build deferred per feature-first rule; full C06/I01 and paid flow unfinished."
+  ],
+  "paid_calls": []
+}

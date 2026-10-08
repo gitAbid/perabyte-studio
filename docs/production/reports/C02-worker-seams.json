@@ -1,0 +1,24 @@
+{
+  "task_id": "C02",
+  "scope": "Reviewed shared worker lease/cancellation prerequisites only; full C02 unaccepted",
+  "worker_commit": "f1c7ca20ad6307056c9f27301313d215c0af044a",
+  "integration_commit": "2be798b13f8df68f73c6372a878a99ff2d4c103d",
+  "independent_review": {
+    "agent": "/root/core_review",
+    "model": "gpt-6.1-sol",
+    "result": "No material blocker for this subset; monotonic heartbeat hardening pending"
+  },
+  "focused_tests": 12,
+  "typecheck_exit_code": 0,
+  "evidence": [
+    {
+      "path": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/worker-seams-tests.txt",
+      "sha256": "059a790052d780b477e678ef9d59da6a54d5238120f06e08df1ea6819ff6c866"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/worker-seams-typecheck.txt",
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    }
+  ],
+  "paid_calls": []
+}

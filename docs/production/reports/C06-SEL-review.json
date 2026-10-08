@@ -1,0 +1,119 @@
+{
+  "task_id": "C06-SEL",
+  "reviewed_sha": "ac114aa75a42595f042ebb1180308de1ddc2928b",
+  "base_sha": "5364ac11442f05a956af870787e6a383133dffe1",
+  "worktree": "/Users/abid/.codex/worktrees/production-take-selection/perabyte-studio",
+  "verdict": "accept",
+  "findings": [],
+  "ownership": {
+    "changed_source_paths": [
+      "app/api/production/shots/[shotId]/selection/route.ts",
+      "lib/services/production/takes.test.ts",
+      "lib/services/production/takes.ts"
+    ],
+    "source_hashes": {
+      "app/api/production/shots/[shotId]/selection/route.ts": "8335c83b154f7c70b4f7bcff7633fb6c9ea1e28ca9cf15d74432c512f64a0a8b",
+      "lib/services/production/takes.test.ts": "409c320f415276e16dcebedec01b6519ea6d5bb8322b7e90f2fd9505fdcd367f",
+      "lib/services/production/takes.ts": "835cd6fab9fc8c1da7eee8289a9172e6c3a06299d1e8bc843ea483c1bbc5de95"
+    },
+    "source_matches_frozen_commit": true,
+    "tracked_worktree_source_clean": true,
+    "untracked_evidence_preserved": true
+  },
+  "normative_boundary": {
+    "path": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/docs/production/reports/C06-selection-boundary.json",
+    "sha256": "4376ed313261743f02cf70c4285d964fd4513a59ed2725d5e3b909c15c8d2268"
+  },
+  "acceptance": [
+    {
+      "rule": "Completed immutable take provenance, exact result/asset/receipt, current take and anchor/story/animatic approvals",
+      "status": "inspected",
+      "evidence": "takes.ts94-145 validates candidate identity, video measured frames, completed job/result pins, request hash/target, quote/job/receipt relationship, exact ordered honored inputs, latest computeTakeApprovalHash/anchor approvals and existing eligibility helper."
+    },
+    {
+      "rule": "Muted provider audio",
+      "status": "inspected",
+      "evidence": "takes.ts113 requires snapshot.parameters.providerAudioPolicy muted."
+    },
+    {
+      "rule": "Exact async current eligibility and approval context",
+      "status": "pass",
+      "evidence": "takes.ts130-140 captures eligibility, take hash/latest approval IDs and provenance; takes.ts413 compares initial/current inside TX after vault verification. Focused drift test returns409 and preserves pointer/history."
+    },
+    {
+      "rule": "Project-global expectedSelectionVersion including unchanged pointer",
+      "status": "pass",
+      "evidence": "getTakeSelection uses Project.takeSelectionVersion (sqlite.ts219); takes.ts390/395/410 check it before no-op or CAS. Focused switch/stale/no-op fixture passes."
+    },
+    {
+      "rule": "Reversible historical clear; retain siblings and approvals/jobs",
+      "status": "pass_with_inspected_historical_path",
+      "evidence": "takes.ts391-399 clear path checks ownership/version but requires no current selection eligibility. It only calls existing pointer CAS. Focused switch/clear/reselect fixture retains both takes; historical superseded shot path inspected only."
+    },
+    {
+      "rule": "No billing/provider dependency or automatic selection",
+      "status": "pass",
+      "evidence": "Selection factory fixture omits billing resolver; selectTake uses only local reads, byte verification and CAS. It creates no job/approval/provider request."
+    },
+    {
+      "rule": "Strict bounded HTTP and safe response",
+      "status": "inspected_and_minimal_HTTP_pass",
+      "evidence": "takes.ts443 same-origin guard, existing strict SelectTakeCommandSchema, max64KiB, no-store and sanitized mapper; source route exports POST only. Focused fixture selects via Request/Response."
+    }
+  ],
+  "commands": [
+    {
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "lib/services/production/takes.test.ts",
+        "-t",
+        "selects approved|rejects take-approval drift"
+      ],
+      "cwd": "/Users/abid/.codex/worktrees/production-take-selection/perabyte-studio",
+      "exit_code": 0,
+      "result": "1 file passed; 2 tests passed, 4 skipped",
+      "output_file": "/tmp/perabyte-C06-SEL-review-ac114aa-focused-20261004-1.log",
+      "output_sha256": "13bc6b89d23b3bd0d102ebfaf28ab3e43c48da54e676042fcc9f77349abea1e0"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check",
+        "5364ac11442f05a956af870787e6a383133dffe1",
+        "ac114aa75a42595f042ebb1180308de1ddc2928b"
+      ],
+      "cwd": "/Users/abid/.codex/worktrees/production-take-selection/perabyte-studio",
+      "exit_code": 0,
+      "result": "No whitespace errors",
+      "output_file": null
+    }
+  ],
+  "worker_evidence_inspected": [
+    {
+      "path": "/Users/abid/.codex/worktrees/production-take-selection/perabyte-studio/evidence/C06-SEL-T06-SEL-GREEN-20261004-03.txt",
+      "sha256": "ed965e6157983f7888ae4ab81a092ce02d211e3fb7064017fb37e8799e9cb669"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-take-selection/perabyte-studio/evidence/C06-SEL-TYPECHECK-20261004-03.txt",
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-take-selection/perabyte-studio/evidence/C06-SEL-DIFFCHECK-20261004-03.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "limitations": [
+    "Only two requested selection tests independently run; six-case worker GREEN and typecheck logs read/hash-recorded, not independently rerun.",
+    "No full suite, build, coverage, added fault matrix or external HTTP server run.",
+    "Cross-shot global-version no-op, superseded historical clear, wrong-project/route, strict extras/body/origin rejection and broader corrupted-provenance scenarios inspected in source; not separately exercised in bounded fixture run.",
+    "No completed human films, full C06 or release acceptance implied.",
+    "Worker final report was not yet available in this tree during review; reviewed exact source, boundary and existing final command logs."
+  ],
+  "source_edits": [],
+  "network_calls": [],
+  "paid_calls": [],
+  "frozen_after_review": true
+}

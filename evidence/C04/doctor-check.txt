@@ -1,0 +1,3 @@
+{"node":{"ready":true,"version":"26.10.0"},"storage":{"ready":true,"schemaVersion":1},"provider":{"ready":false,"providerId":"sogni","action":"Set SOGNI_API_KEY in the server environment to enable provider discovery and worker polling."}}
+
+EXIT=0

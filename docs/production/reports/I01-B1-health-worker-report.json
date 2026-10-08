@@ -1,0 +1,77 @@
+{
+  "task_id": "I01-B1-health-compat",
+  "status": "implemented_slice",
+  "packet_status": "I01-incomplete",
+  "base_sha": "ff8d24277edef612ae366edf3319b0e41d75ff3b",
+  "head_sha": "8c7babbaa630fe86d9e0a2aba603c4772530f0a2",
+  "commit_sha": "8c7babbaa630fe86d9e0a2aba603c4772530f0a2",
+  "worktree": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio",
+  "branch": "codex/production-budget",
+  "changed_files": [
+    "lib/production/contracts.ts",
+    "lib/production/contracts.test.ts"
+  ],
+  "file_sha256": {
+    "lib/production/contracts.ts": "0ca381aaeaaf587cded51cbb8157139a78d2be5cb4a4b547619b9f926950793b",
+    "lib/production/contracts.test.ts": "d04b6009c148aff9898a1bc088e80a6717aa8ae63a5e315cdc9e39a1e934853d"
+  },
+  "change": "HealthResponseSchema now accepts exactly storage schema versions 1 and 2 through SupportedStorageSchemaVersionSchema. SchemaVersionSchema and other v1 record DTOs remain unchanged; the health handler was not edited.",
+  "testcases": [
+    {
+      "id": "I01-B1-HEALTH-001",
+      "result": "pass",
+      "command": ["npm", "test", "--", "lib/production/contracts.test.ts"],
+      "exit_code": 0,
+      "output_file": "evidence/I01-B1/health-compat-green.txt",
+      "output_sha256": "aec0ded3ef546554d96247702ec1b180fd076268a7981a5ca095b953e83359a4",
+      "assertion": "Health response accepts schema versions 1 and 2 and rejects 3."
+    }
+  ],
+  "evidence": [
+    {
+      "kind": "red",
+      "command": ["npm", "test", "--", "lib/production/contracts.test.ts"],
+      "exit_code": 1,
+      "output_file": "evidence/I01-B1/health-compat-red.txt",
+      "output_sha256": "10a6d792bcd40955a36f1d8f336d586f547b816d1ff7ed5f6cdd17869cd7a871",
+      "assertion": "Version 2 was rejected by the current health schema; 1 test failed and 22 passed."
+    },
+    {
+      "kind": "green",
+      "command": ["npm", "test", "--", "lib/production/contracts.test.ts"],
+      "exit_code": 0,
+      "output_file": "evidence/I01-B1/health-compat-green.txt",
+      "output_sha256": "aec0ded3ef546554d96247702ec1b180fd076268a7981a5ca095b953e83359a4",
+      "assertion": "1 test file and 23 tests passed."
+    },
+    {
+      "kind": "typecheck",
+      "command": ["npm", "run", "typecheck"],
+      "exit_code": 0,
+      "output_file": "evidence/I01-B1/health-compat-typecheck.txt",
+      "output_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    },
+    {
+      "kind": "diff-check",
+      "command": ["git", "diff", "HEAD^", "HEAD", "--check"],
+      "exit_code": 0,
+      "output_file": "evidence/I01-B1/health-compat-committed-diff-check.txt",
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "review": {
+    "findings": [],
+    "ownership_check": "pass: exactly contracts.ts and contracts.test.ts changed in commit 8c7babbaa630fe86d9e0a2aba603c4772530f0a2",
+    "diff_check": "pass"
+  },
+  "unverified": [
+    "The integrated stale-heartbeat HTTP route test was not rerun in this isolated contracts worktree; only its health DTO compatibility was verified here.",
+    "No integrated full suite or production build was run for this narrow compatibility patch.",
+    "I01 storage/service/atomic worker boundaries remain outside this slice and I01 remains incomplete."
+  ],
+  "paid_calls": [],
+  "network_calls": [],
+  "credentials_accessed": false,
+  "authorization": {"reference": null, "scope": null, "cap": null, "currency": null},
+  "spend": {"actual": null, "currency": null, "status": "none", "receipt_refs": []}
+}

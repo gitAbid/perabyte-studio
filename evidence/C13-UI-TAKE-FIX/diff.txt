@@ -1,0 +1,19 @@
+diff --git a/components/production/storyboard.tsx b/components/production/storyboard.tsx
+index 49258b3..c60e653 100644
+--- a/components/production/storyboard.tsx
++++ b/components/production/storyboard.tsx
+@@ -1051,7 +1051,13 @@ function TakeSubmitForm({ projectId, shot, gate, approvedAnchor }: {
+     try {
+       const quoteCall = await postJson("/api/production/media-quotes", {
+         kind: "take",
+-        command: { projectId, shotRevisionId: shot.shotRevision.id, motionSettings },
++        command: {
++          projectId,
++          shotRevisionId: shot.shotRevision.id,
++          anchorId: approvedAnchor.anchor.id,
++          approvalId: approvedAnchor.latestDecision.id,
++          motionSettings,
++        },
+       });
+       const quotePayload = quoteCall.networkFailed ? null : await responsePayload(quoteCall.response);
+       if (quoteCall.networkFailed || !quoteCall.response.ok) {

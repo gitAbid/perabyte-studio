@@ -1,0 +1,82 @@
+{
+  "task_id": "C05",
+  "status": "integrated",
+  "base_sha": "9a5454471a9b4a4d84728813a20f9823105832c1",
+  "head_sha": "d416302d78204d7243538348d9ef7d9306bf7a2c",
+  "commits": [
+    "02707ad7700f02c04026ee6e7e0218766eac46fa",
+    "d416302d78204d7243538348d9ef7d9306bf7a2c"
+  ],
+  "worktree": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio",
+  "evidence": [
+    {
+      "kind": "red",
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "lib/services/production/shot-plan.test.ts"
+      ],
+      "exit_code": 1,
+      "output_file": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/red-review-findings.txt",
+      "output_sha256": "16f9ff242602ff1410fb7cc9b63f66039bed0d665f09c90cdf6478e04559b21d"
+    },
+    {
+      "kind": "green",
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "lib/production/shot-plan.test.ts",
+        "lib/production/animatic.test.ts",
+        "lib/services/production/shot-plan.test.ts"
+      ],
+      "exit_code": 0,
+      "output_file": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/green-review-fixes.txt",
+      "output_sha256": "8c83e777c1e48121e44993fb773b7a1cda87eac0c90d2d89ca14c9ece78f5279"
+    },
+    {
+      "kind": "typecheck",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exit_code": 0,
+      "output_file": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/typecheck-review-fixes.txt",
+      "output_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    },
+    {
+      "kind": "diff-check",
+      "command": [
+        "git",
+        "diff",
+        "--cached",
+        "--check"
+      ],
+      "exit_code": 0,
+      "output_file": "/Users/abid/.codex/worktrees/production-shot-plan/perabyte-studio/evidence/C05/cached-diff-check-review-fixes.txt",
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "focused_tests": 34,
+  "test_files": 3,
+  "root_reproduced": true,
+  "paid_calls": [],
+  "unverified": [
+    "Actual SQLite service integration awaits C01 acceptance",
+    "Historical download behavior belongs to C12 and is not verified by this packet",
+    "Full integration suite/typecheck/build pending"
+  ],
+  "report_correction": {
+    "reason": "Worker transcribed red-error-dependencies.txt hash incorrectly; authoritative raw log hash computed below",
+    "actual_sha256": "55b32f8f6a1b87f5020d5181bf401d5401876dcc27660fe9f9d3a5e3371cc078"
+  },
+  "integrated_head": "95f0570",
+  "review": {
+    "disposition": "approved",
+    "reviewer": "/root/planner_review",
+    "model": "gpt-6.1-sol",
+    "unresolved_findings": []
+  }
+}

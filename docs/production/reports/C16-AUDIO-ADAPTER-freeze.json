@@ -1,0 +1,31 @@
+{
+  "packet": "C16-AUDIO-ADAPTER",
+  "created": "2026-10-06",
+  "status": "frozen",
+  "orchestrator": "zcode orchestration (GLM-5.3)",
+  "context": {
+    "root_branch": "zcode/production-core",
+    "base_contains": ["768ec28 (C13-LIVE-FIX-4)"],
+    "context": "TASK_PACKETS C16 (optional, 'later amendment scopes the provider call'): add a REPLACEABLE Sogni speech/music generation adapter after the local upload path — contract-first, offline. The reviewed policy installed for the pilot covers ONLY anchor/take operations; BudgetOperationSchema already includes 'speech' and 'music'. Gate per packet: SDK version/API contract tests, supported language/voice capability fixture, text coverage/timing, failure recovery, explicit per-request spend authorization. NO paid smoke in this packet (audio models are not in the installed policy — generation must BLOCK, by design).",
+    "prior_art": "Provider transport patterns: lib/providers/production/sogni-provider.ts (proof transport, capability discovery); the story-side Sogni client (lib/providers/sogni/client.ts) exposes chat/LLM surfaces; Sogni docs: music = Ace-Step models, speech/LLM = Sogni Intelligence /v1/chat/completions (TTS-style audio is NOT a verified SDK surface — the adapter must define its transport seam and gate on discovered capability, not assume endpoints)."
+  },
+  "owns": {
+    "audio-adapter": {
+      "files": ["lib/providers/production/sogni-audio.ts", "lib/providers/production/sogni-audio.test.ts", "lib/services/production/audio-generation.ts", "lib/services/production/audio-generation.test.ts"],
+      "change": "1) lib/providers/production/sogni-audio.ts: a production audio-generation provider CONTRACT with an injected transport seam (same shape philosophy as the proof provider): `createSogniAudioProvider(options)` returning {providerId:'sogni', discoverAudioCapabilities(kind:'speech'|'music'), generateAudio(request, authorization)} where request = {kind, modelId, text/notation, durationOrCoverage, outputFormat:'wav', sampleRate:48000} and authorization = an EXPLICIT per-request spend authorization token validated against the reviewed policy (billingModeByModel/priceByModel entries with operations containing 'speech'/'music') AND a project budget authorization — absent either => ProductionApplicationError BUDGET_BLOCKED (fail-closed; never infer). Include: transport seam interface (so tests fake it and a future amendment wires the real SDK endpoint), capability discovery that maps discovered models to speech/music kinds by a declared fixture table, deterministic text-coverage/timing estimation (characters->duration bounds for speech; bar/beat math for music) returned as a coverage receipt, retryable-vs-terminal failure classification, and an explicit 'do not state persistent voice training' comment (per-request cloning only). 2) lib/services/production/audio-generation.ts: the service layer that (a) loads the reviewed policy (ReviewedQuotePolicyConfig), (b) resolves the model's billing mode + price entry for operation speech/music, (c) checks a BudgetAuthorization-like input for the project (allowedOperations must include the audio operation; within cap check against the budget read model totals), (d) reserves nothing (no atomic reservation — the out-of-band amendment will connect it), but RETURNS a draft authorization proof + the generation request for the caller; blocks with actionable codes otherwise. 3) Tests (both files): SDK/API contract fixtures (fake transport asserting request/response shapes, version stamp), language/voice capability fixture, timing/coverage math (property-ish cases: empty text blocked, long text -> bounded duration), failure recovery (retryable transport error -> classified retry; terminal -> not), authorization gates (no policy -> BUDGET_BLOCKED; policy without speech/music entries -> BUDGET_BLOCKED; authorization missing/over cap -> BUDGET_BLOCKED; happy path -> draft proof with hashes). All offline, no network.",
+      "tests": [
+        "RED first on the sharpest gate (generation without policy coverage must BUDGET_BLOCK) — record, then implement.",
+        "`npm test -- lib/providers/production/sogni-audio.test.ts lib/services/production/audio-generation.test.ts` green; `npm run typecheck`; `git diff --check`."
+      ]
+    }
+  },
+  "constraints": [
+    "One commit on branch zcode/c16-audio-adapter from base 768ec28; only the four owned files.",
+    "No changes to the budget composer, store, worker, routes, or the installed policy. No network calls in tests. Never print SOGNI_API_KEY.",
+    "The adapter must NOT be wired into any route/page — it is a seam for a later amendment."
+  ],
+  "acceptance": [
+    "RED->GREEN pair present; both test files green; typecheck + diff-check clean.",
+    "Integrator: review + root checks; paid smoke explicitly NOT run (policy does not cover audio operations — blocking is the correct live behavior, verifiable by inspection)."
+  ]
+}

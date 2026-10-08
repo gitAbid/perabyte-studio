@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "packet": "C06-SEL",
+  "status": "frozen_pending_accepted_PRE_A_R",
+  "purpose": "Finish manual take choice and reversible retakes using accepted immutable candidates; no UI redesign or paid calls.",
+  "dependencies": [
+    "Accepted C06-PRE-A including context followup",
+    "Accepted C06-PRE-R including clock/context followup"
+  ],
+  "owned_files": [
+    "lib/services/production/takes.ts",
+    "lib/services/production/takes.test.ts",
+    "app/api/production/shots/[shotId]/selection/route.ts"
+  ],
+  "consumes": {
+    "DTO": "existing SelectTakeCommandSchema unchanged",
+    "hash": "computeTakeApprovalHash from accepted lib/production/approval.ts",
+    "approval": "existing latestMatchingApproval",
+    "context": "existing productionSubmissionEligibilityFingerprint, validated completed take snapshot",
+    "storage": "existing getTakeSelection/getSelectedTake/compareAndSetSelectedTake(projectId,shotId,takeId,expectedVersion), no new ports/migration"
+  },
+  "factory": "Add selectTake(command:SelectTakeCommand, routeShotId?:string):Promise<{selection:TakeSelection,changed:boolean}> to existing createProductionTakeService, add selectionPOST to createMediaRouteHandlers; route.ts exports POST only.",
+  "rules": [
+    "No trusted billing resolver or provider request is needed to select/clear local media.",
+    "Validate project and immutable command shot ownership/stable route shotId before any action.",
+    "nonnull take must match exact current compatible selected shot, completed job/result/asset/receipt pins and muted provider-audio policy; require latest genuine take approval for computeTakeApprovalHash, plus existing current anchor/story/animatic eligibility.",
+    "Verify selected take asset bytes outside TX. Capture exact relevant current eligibility fingerprint and latest take approval IDs/hash before await, reread/compare in TX. Drift rejects409/no pointer change.",
+    "Require expectedSelectionVersion equal current project-global takeSelectionVersion; any stale expected version409, even if pointer happens to match.",
+    "If requested pointer already equals current and expected version current, return unchanged selection changed:false. Else existing compareAndSetSelectedTake atomic CAS, then return updated selection changed:true.",
+    "null clears only the mutable pointer, preserving all take/anchor/approval/job history. Clearing a project-owned historical shot is allowed even if no longer current; never erase history.",
+    "No automatic selection upon approval/generation, no new job/approval/model calls, no resetting existing takes.",
+    "Same-origin strict bounded64KiB selection POST200/no-store, sanitized existing error envelopes."
+  ],
+  "minimal_checks": [
+    "One real temporary SQLite/vault flow: select approved candidate, retake sibling retained, manually switch, stale CAS rejects without change, null clear and reselect retained original.",
+    "One existing fixture variation or minimal HTTP flow proving missing/rejected/stale approval or async context drift never changes pointer; preserve old media/history.",
+    "Focused owned takes test/typecheck/diffcheck only; comprehensive coverage/build deferred."
+  ],
+  "paid_calls": []
+}

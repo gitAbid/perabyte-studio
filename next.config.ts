@@ -2,6 +2,14 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  experimental: {
+    // Next 16 defaults this to true: every route's modules are loaded into
+    // memory at server start. Loading lazily keeps the dev footprint small.
+    preloadEntriesOnStart: false,
+    // Webpack-only knob (active under `next dev --webpack`); Turbopack ignores
+    // it and has no memory-limit option in Next 16 — it self-manages memory.
+    webpackMemoryOptimizations: true,
+  },
   // History was absorbed by the studio libraries: old links land on Images.
   async redirects() {
     return [{ source: "/history", destination: "/images", permanent: true }];

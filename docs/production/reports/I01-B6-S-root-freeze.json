@@ -1,0 +1,244 @@
+{
+  "schemaVersion": 1,
+  "packet": "I01-B6-S",
+  "status": "ROOT_FROZEN_approved_for_bounded_storage_preflight",
+  "scope": "Schemas/storage only; unapproved, no implementation. Recipe extraction/draft and reviewed policy are deferred to C; default policy null.",
+  "owns": [
+    "lib/production/provider-proof.ts",
+    "lib/production/contracts.ts",
+    "lib/production/contracts.test.ts",
+    "lib/repositories/production/ports.ts",
+    "lib/repositories/production/sqlite.ts",
+    "lib/repositories/production/sqlite.test.ts",
+    "lib/repositories/production/migrations/004-provider-proof.sql"
+  ],
+  "excludes": [
+    "takes.ts and selection sources",
+    "media-recipe.ts",
+    "media-quote.ts",
+    "composer/provider/runtime/worker/route changes",
+    "B1 financial DTOs and migrations001-003"
+  ],
+  "sourceBasis": {
+    "schema": "001 records PRIMARY KEY(kind,id), UNIQUE records(id);002 immutable financial tables;003 accepted approval commands. SupportedStorageSchemaVersionSchema currently literals1|2|3; S adds4 and rejects5.",
+    "sdk": "Installed5.49.0 account.me.walletAddress and subscription fields inspected only. No live account/model/pricing facts are claimed.",
+    "rootLatest": "Parent reports accepted SEL546636e/root metadata2937ae8; no active SEL source inspected. S source dependencies remain accepted001-003/contracts/ports/sqlite."
+  },
+  "schemaFreeze": {
+    "common": "Named envelopes/nested known DTOs are strict; required nullable fields never optional. Reuse existing contracts and BudgetUtcMillisSchema. Canonical recipe/projection/config text is intentionally opaque bounded archival bytes: strict outer fields do NOT make its content trusted. C MUST parse exact authoritative schemas before any quote/admission. Archive never grants admission. No raw SDK objects/secrets/profilePII; accountId opaque authenticated identity, derivation P/C-owned.",
+    "primitives": {
+      "Utc": "Reuse existing BudgetUtcMillisSchema/MAX_BUDGET_UTC_MILLIS (Date.UTC(9999,11,31,23,59,59,999)); finite four-digit UTC consistent with finance. SQL upper bound 253402300799999.",
+      "Revision": "z.number().int().safe().min(1)",
+      "VersionText": "z.string().min(1).max(80)",
+      "Hash": "existing lowercase Sha256Schema",
+      "Session": "IdSchema; opaque LOCAL correlation only, never SDK auth/session token",
+      "CanonicalText": "z.string().max(262144); additionally Buffer.byteLength(value,'utf8')<=262144; valid JSON object, canonicalJson(JSON.parse(value))===value; NFC via existing canonicalJson",
+      "ReviewCapture": "z.string().min(1).max(65536); UTF8<=65536; vetted public text only"
+    },
+    "ProviderCredentialGenerationSchema": {
+      "schemaVersion": "z.literal(1)",
+      "providerId": "IdSchema",
+      "revision": "Revision",
+      "generationId": "IdSchema",
+      "accountId": "IdSchema",
+      "credentialFingerprint": "Hash (SHA256 of high-entropy captured key computed elsewhere; never raw credentials)",
+      "changedAt": "Utc"
+    },
+    "ProviderSessionSchema": {
+      "sessionId": "Session",
+      "role": "z.enum(['web','worker','probe'])",
+      "sdkVersion": "VersionText",
+      "sdkSourceHash": "Hash",
+      "adapterVersion": "VersionText"
+    },
+    "SubscriptionObservationSchema": {
+      "active": "z.boolean()",
+      "status": "z.string().min(1).max(80); preserve exact returned status including future values",
+      "tier": "z.string().min(1).max(80).nullable(); preserve returned value",
+      "currentPeriodEnd": "Utc.nullable()",
+      "providerVersion": "z.number().int().safe().nonnegative().nullable()",
+      "note": "No assumed REST version. Never map unfamiliar status/tier to active/covered. C allows only separately reviewed exact values; future status can be archived but cannot authorize by inference."
+    },
+    "ProducerEvidenceSchema": {
+      "producerId": "IdSchema",
+      "producerVersion": "VersionText",
+      "sourceHash": "Hash"
+    },
+    "payloads": [
+      {
+        "kind": "account_session",
+        "fields": {
+          "schemaVersion": "z.literal(1)",
+          "kind": "z.literal('account_session')",
+          "producer": "ProducerEvidenceSchema",
+          "generation": "ProviderCredentialGenerationSchema",
+          "session": "ProviderSessionSchema",
+          "subscription": "SubscriptionObservationSchema.nullable()",
+          "observedAt": "Utc",
+          "expiresAt": "Utc"
+        },
+        "refinements": "expiresAt>observedAt; generation.changedAt<expiresAt. Adoption may occur after the authenticated observation; do not require observedAt>=changedAt. No username/email/raw response/key/header/cookie/SDK backup."
+      },
+      {
+        "kind": "reviewed_policy",
+        "fields": {
+          "schemaVersion": "z.literal(1)",
+          "kind": "z.literal('reviewed_policy')",
+          "producer": "ProducerEvidenceSchema",
+          "providerId": "IdSchema",
+          "reviewVersion": "VersionText",
+          "sourceUrl": "z.string().url().max(2048); HTTPS only",
+          "sourceCapture": "ReviewCapture",
+          "sourceCaptureSha256": "Hash",
+          "reviewedConfigCanonicalJson": "CanonicalText (max65536 UTF8)",
+          "reviewedConfigHash": "Hash",
+          "capturedAt": "Utc",
+          "expiresAt": "Utc"
+        },
+        "refinements": "expiresAt>capturedAt. SHA256 UTF8 capture=sourceCaptureSha256; canonical config hash=reviewedConfigHash. Opaque archival bytes only: C MUST parse its separately frozen exact policy schema; default reviewed policy remains null."
+      },
+      {
+        "kind": "media_quote",
+        "fields": {
+          "schemaVersion": "z.literal(1)",
+          "kind": "z.literal('media_quote')",
+          "producer": "ProducerEvidenceSchema",
+          "mediaQuote": "QuoteSchema",
+          "budgetQuote": "BudgetQuoteSchema",
+          "binding": "QuoteAccountBindingSchema",
+          "accountEvidence": "AccountEvidenceSchema",
+          "accountProofHash": "Hash",
+          "policyProofHash": "Hash",
+          "canonicalRecipeJson": "CanonicalText",
+          "recipeHash": "Hash",
+          "canonicalQuoteProjectionJson": "CanonicalText",
+          "quoteProjectionHash": "Hash",
+          "executionSemanticHash": "Hash",
+          "capability": "CapabilityReceiptSchema",
+          "session": "ProviderSessionSchema",
+          "createdAt": "Utc",
+          "expiresAt": "Utc"
+        },
+        "refinements": "Financial snapshots/IDs/provider/model/operation/project/inputHash/currency/unit/account/generation agree; projectionHash=media/budget inputHash; binding semanticHash=executionSemanticHash. Canonical text hashes verified. expiresAt>createdAt; quote/account/binding observation<=createdAt; expiry<=both quotes/account/capability expiry. Capability exact provider/model/live_catalog/non-null expiry valid at creation. C alone validates canonical recipe/projection against authoritative schema/helper; S duplicates no recipe formula."
+      },
+      {
+        "kind": "execution_session",
+        "fields": {
+          "schemaVersion": "z.literal(1)",
+          "kind": "z.literal('execution_session')",
+          "producer": "ProducerEvidenceSchema",
+          "execution": "BudgetExecutionSchema",
+          "mediaQuoteId": "IdSchema",
+          "budgetQuoteId": "IdSchema",
+          "quoteBindingId": "IdSchema",
+          "accountEvidenceId": "IdSchema",
+          "quoteProofHash": "Hash",
+          "accountProofHash": "Hash",
+          "generation": "ProviderCredentialGenerationSchema",
+          "session": "ProviderSessionSchema",
+          "capability": "CapabilityReceiptSchema",
+          "observedAt": "Utc",
+          "expiresAt": "Utc"
+        },
+        "refinements": "execution.kind=media_job; operation anchor|take only. session.role=worker; expiresAt>observedAt; generation.changedAt<expiresAt. Exact capability provider/model/live_catalog/non-null expiry valid at observedAt; expiresAt<=capability.expiresAt. The current role session/account proof is additional to pinned quote-time AccountEvidence; never overwrite quote binding."
+      }
+    ],
+    "ProviderProofPayloadSchema": "z.discriminatedUnion('kind',[strict version1 account_session,reviewed_policy,media_quote,execution_session]). Unknown fields/kinds/versions reject; schemaVersion1 is proof format, distinct from storage schema4.",
+    "ProofArtifactSchema": {
+      "schemaVersion": "z.literal(1)",
+      "hash": "Hash (bare64hex)",
+      "canonicalPayload": "CanonicalText parsed with ProviderProofPayloadSchema",
+      "createdAt": "Utc"
+    },
+    "ProofArtifactRefinements": "Strict parse payload; canonicalJson(parsed)===canonicalPayload; hashCanonicalJson(parsed)===hash; artifact.createdAt>=payload observation/capture/creation time and generation.changedAt. Historical reads ignore current clock. Canonical nested text/hash integrity verified. Sanitized errors.",
+    "QuoteProofLinkSchema": {
+      "schemaVersion": "z.literal(1)",
+      "mediaQuoteId": "IdSchema",
+      "budgetQuoteId": "IdSchema",
+      "artifactHash": "Hash"
+    },
+    "ExecutionProofLinkSchema": {
+      "schemaVersion": "z.literal(1)",
+      "executionId": "IdSchema",
+      "reservationId": "IdSchema",
+      "artifactHash": "Hash"
+    },
+    "bounds": "256KiB UTF8/artifact;64KiB capture/config. C owns1MiB draft aggregate. Local defensive bounds; no vendor guarantee.",
+    "hashAlgorithm": "Use existing canonicalJson/hashCanonicalJson unchanged: lowercase SHA256 over UTF8 canonical JSON. sourceCaptureSha256 uses SHA256 UTF8 exact stored capture bytes; credentialFingerprint is externally supplied non-secret SHA256 only. No new semantic-hash algorithm."
+  },
+  "sql004": [
+    "CREATE TABLE provider_proof_artifacts(hash TEXT PRIMARY KEY CHECK(length(hash)=64 AND hash NOT GLOB '*[^0-9a-f]*'),kind TEXT NOT NULL CHECK(kind IN ('account_session','reviewed_policy','media_quote','execution_session')),canonical_payload TEXT NOT NULL CHECK(json_valid(canonical_payload) AND length(CAST(canonical_payload AS BLOB))<=262144),created_at INTEGER NOT NULL CHECK(typeof(created_at)='integer' AND created_at BETWEEN 0 AND 253402300799999),CHECK(json_extract(canonical_payload,'$.schemaVersion') IS 1 AND json_extract(canonical_payload,'$.kind') IS kind));",
+    "CREATE TABLE provider_credential_generations(provider_id TEXT NOT NULL,revision INTEGER NOT NULL CHECK(typeof(revision)='integer' AND revision BETWEEN 1 AND 9007199254740991),generation_id TEXT NOT NULL UNIQUE,account_id TEXT NOT NULL,credential_fingerprint TEXT NOT NULL CHECK(length(credential_fingerprint)=64 AND credential_fingerprint NOT GLOB '*[^0-9a-f]*'),changed_at INTEGER NOT NULL CHECK(typeof(changed_at)='integer' AND changed_at BETWEEN 0 AND 253402300799999),PRIMARY KEY(provider_id,revision),UNIQUE(provider_id,revision,generation_id));",
+    "CREATE TABLE provider_credential_heads(provider_id TEXT PRIMARY KEY,revision INTEGER NOT NULL,generation_id TEXT NOT NULL UNIQUE,FOREIGN KEY(provider_id,revision,generation_id) REFERENCES provider_credential_generations(provider_id,revision,generation_id) ON DELETE RESTRICT);",
+    "CREATE TABLE provider_quote_proofs(budget_quote_id TEXT PRIMARY KEY REFERENCES budget_quotes(id) ON DELETE RESTRICT,media_quote_kind TEXT NOT NULL DEFAULT 'quote' CHECK(media_quote_kind='quote'),media_quote_id TEXT NOT NULL UNIQUE,artifact_hash TEXT NOT NULL UNIQUE REFERENCES provider_proof_artifacts(hash) ON DELETE RESTRICT,FOREIGN KEY(media_quote_kind,media_quote_id) REFERENCES records(kind,id) ON DELETE RESTRICT);",
+    "CREATE TABLE provider_execution_proofs(execution_id TEXT PRIMARY KEY REFERENCES budget_executions(execution_id) ON DELETE RESTRICT,reservation_id TEXT NOT NULL UNIQUE REFERENCES budget_reservations(id) ON DELETE RESTRICT,artifact_hash TEXT NOT NULL UNIQUE REFERENCES provider_proof_artifacts(hash) ON DELETE RESTRICT);",
+    "For each table provider_proof_artifacts/provider_credential_generations/provider_quote_proofs/provider_execution_proofs create BEFORE UPDATE and BEFORE DELETE triggers that RAISE(ABORT,'immutable provider proof'). Heads have BEFORE DELETE reject; BEFORE INSERT require revision1; BEFORE UPDATE require same provider_id, NEW.revision=OLD.revision+1, new generation_id distinct, new history.changed_at>=old history.changed_at and changed account_id OR credential_fingerprint. All comparisons use referenced history rows.",
+    "BEFORE INSERT provider_quote_proofs require artifact kind media_quote and budget_quotes.media_quote_id=NEW.media_quote_id with an existing budget_quote_binding; BEFORE INSERT provider_execution_proofs require artifact kind execution_session and budget_reservations.execution_id=NEW.execution_id. RAISE on mismatch. Application link validation below supplies full payload equality and provenance integrity beyond these FKs.",
+    "No updates to001/002/003. Register migration004 next in sqlite.ts. SupportedStorageSchemaVersionSchema adds literal4; financial record version1/project schema2 unchanged."
+  ],
+  "ports": [
+    "getProofArtifact(hash:string):ProofArtifact|null",
+    "getProviderCredentialGeneration(providerId:string):ProviderCredentialGeneration|null",
+    "getQuoteProof(budgetQuoteId:string):QuoteProofLink|null",
+    "getExecutionProof(executionId:string):ExecutionProofLink|null",
+    "insertProofArtifact(record:ProofArtifact):InsertOutcome<ProofArtifact>",
+    "compareAndSetProviderCredentialGeneration(record:ProviderCredentialGeneration,expectedRevision:number|null):boolean",
+    "insertQuoteProof(record:QuoteProofLink):InsertOutcome<QuoteProofLink>",
+    "insertExecutionProof(record:ExecutionProofLink):InsertOutcome<ExecutionProofLink>"
+  ],
+  "methodSemantics": {
+    "reads": "Validate schema/hash on every artifact load; generation joins head/history. Absent link=>null; malformed present link=>sanitized integrity error. Validate link associations below on insert/read; historical reads ignore current head/clock.",
+    "append": "Exact validated immutable replay=>original,created:false; conflicting same ID or unique association=>throw. Validate before insert using atomic/savepoint pattern; propagate errors to outer transaction.",
+    "CAS": "Absent head: expected null/candidate revision1. Current n: expected n/new revision n+1/new generation ID/account or fingerprint changed/changedAt nondecreasing. Exact installed candidate replay returns true only with original expected revision (null for1,otherwise revision-1). Stale expectation=>false/no writes. Fresh success atomically appends immutable history then updates head. Same binding is reused via read. UNIQUE historical generation ID prevents ABA resurrection.",
+    "quoteLink": "Require media_quote artifact snapshots canonical-equal existing mediaQuote,BudgetQuote,binding,AccountEvidence; all link/relation IDs match. Evidence reference=sha256:accountProofHash. Referenced account_session provider/account/generation/session/time exactly matches pinned evidence/binding/quote session. Reviewed_policy same provider, quote created/expiry within account/policy/capability limits. Missing/wrong-kind/mismatched data reject before link insert. Storage grants no spend permission.",
+    "executionLink": "Require execution_session and exact registered execution/reservation/job; requestHash=job.requestHash=hash(job.snapshot),execution.executionSemanticHash=job.requestSnapshot.resultTarget.inputsHash. Quote/binding/evidence IDs equal reservation; quoteProofHash equals quote link artifact; generation/provider/account match pinned quote/reservation. Referenced worker account_session matches generation/session,role worker,time validity. SDK/adapter/capability provider/model and quote/policy expiry agree. C/P still check authoritative semantics/current state/actual client.",
+    "atomicAggregate": "C outer quote TX inserts media once+artifacts+AccountEvidence+BudgetQuote/binding+QuoteProofLink; admission TX inserts execution/reservation+artifact/link. Errors propagate and roll back ALL new records. S methods never create media/authorization/reservation; S owns no draft.",
+    "rationale": "Immutable generation history+CAS head retains IDs and prevents ABA without a map/second ledger."
+  },
+  "twoAcceptanceTests": [
+    {
+      "name": "I01-B6-S preserves real v3 and proof integrity across reopen",
+      "file": "lib/repositories/production/sqlite.test.ts",
+      "steps": [
+        "Populate real v3 via exact001+002+003 and existing approved-take/finance fixture; open adapter=>4/reopen preserves rows/refs; foreign_key_check empty; supported4 accepts/future5 rejects.",
+        "Valid artifacts and generation CAS/replay survive reopen. Extra/version/noncanonical/hash/size/UTC invalid inputs reject; raw hash-corrupt fixture read fails safely. Stale CAS changes nothing; A->B->A needs fresh ID. Immutable update/delete and head delete reject."
+      ]
+    },
+    {
+      "name": "I01-B6-S atomically validates bound quote and execution proof links",
+      "file": "lib/repositories/production/sqlite.test.ts",
+      "steps": [
+        "One outer TX stores valid media/account/policy/quote artifacts+AccountEvidence+BudgetQuote/binding+quote link; exact replay/reopen resolve. Existing admission stores execution/reservation+worker artifact/link once; no provider call.",
+        "Mismatched quote account/projection association and mismatched execution/reservation/worker association each propagate outer failure: zero new companion/artifact/link/finance/job writes. Missing/wrong-kind/FK/unique conflicts reject."
+      ]
+    }
+  ],
+  "verification": "npm test -- lib/repositories/production/sqlite.test.ts -t 'I01-B6-S' (2 tests); npm run typecheck; git diff --check. No full suite/build.",
+  "rootDecisions": [
+    "Approve schemas/tables/links/CAS and256KiB/64KiB local archival bounds; all UTC reuse existing BudgetUtcMillisSchema/MAX_BUDGET_UTC_MILLIS.",
+    "Approve minimal immutable generation-history+CAS-head pair.",
+    "C must freeze authoritative recipe/policy parsing and aggregate draft shape before consumers; S cannot enable known quotes or paid admission."
+  ],
+  "implementationPerformed": false,
+  "paidCalls": [],
+  "authenticatedCalls": [],
+  "networkCalls": [],
+  "proposalVerification": {
+    "jsonParse": "pass",
+    "exactlyTwoAcceptanceTests": true,
+    "eightPorts": true,
+    "sourceEdits": false,
+    "testsRun": false
+  },
+  "rootReview": {
+    "approved": "Strict immutable proof archive/generation CAS/association storage only. No provider/composer/draft/recipe changes or paid admission.",
+    "clarifications": [
+      "Use actual execution.executionSemanticHash and binding.executionSemanticHash; do not add new semantic hash formula.",
+      "Archive validates snapshots/associations; opaque canonical recipe/config requires separately frozen C authoritative parsing before any trust.",
+      "Schema strict errors sanitized by storage existing patterns, no interpolation of raw proof/canonical text.",
+      "Minimal exactly2 functional tests and typecheck; defer exhaustive schema boundary/fault matrices.",
+      "Before writing source report actual getters/DTO types and SQL relation preflight; missing seams stop/requestroot."
+    ],
+    "sourceProposalSha256": "1e2334d7c75058356c1c80136e0e85dd72526a88134b8dcccb6d327fef13bf4c"
+  }
+}

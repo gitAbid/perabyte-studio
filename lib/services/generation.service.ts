@@ -10,6 +10,7 @@ import {
   type ResolutionKey,
 } from "@/lib/constants";
 import { durationToSeconds, type FrameImage, type ModelDescriptor, type NormalizedGenerationRequest } from "@/lib/domain/models";
+import { validateReferenceCapabilities, type ReferencePolicy } from "@/lib/domain/reference-policy";
 import { getStudioEnv } from "@/lib/config/env";
 import type { Logger } from "@/lib/logging/logger";
 import { logger as rootLogger } from "@/lib/logging/logger";
@@ -86,6 +87,8 @@ export interface ValidatedRequest {
   enhance: boolean;
   safe: boolean;
   modelId: string | null;
+  /** Optional so serialized jobs created before this policy remain readable. */
+  referencePolicy?: ReferencePolicy;
   startImageRef: string | null;
   endImageRef: string | null;
   /** Extra identity/location refs for context-capable (edit-class) models. */
@@ -97,8 +100,15 @@ export interface ValidatedRequest {
 function validateFrameRef(
   value: unknown,
   field: "startImage" | "endImage" | "referenceImage",
+  strict = false,
 ): string | null {
-  if (typeof value !== "string" || value === "") return null;
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "string" || value === "") {
+    if (strict) {
+      throw new GenerationServiceError("That continuity frame reference is not valid.", { field });
+    }
+    return null;
+  }
   if (!isValidMediaRef(value) || value.endsWith(".mp4")) {
     throw new GenerationServiceError("That continuity frame reference is not valid.", { field });
   }
@@ -106,6 +116,15 @@ function validateFrameRef(
 }
 
 export function validateGenerationRequest(body: Record<string, unknown>): ValidatedRequest {
+  let referencePolicy: ReferencePolicy | undefined;
+  if (body.referencePolicy !== undefined) {
+    if (body.referencePolicy !== "strict" && body.referencePolicy !== "best-effort") {
+      throw new GenerationServiceError("That reference policy is not supported.", {
+        field: "referencePolicy",
+      });
+    }
+    referencePolicy = body.referencePolicy;
+  }
   const kind = body.kind === "video" ? "video" : "image";
   const prompt = typeof body.prompt === "string" ? body.prompt.trim() : "";
 
@@ -185,9 +204,10 @@ export function validateGenerationRequest(body: Record<string, unknown>): Valida
     // Uncensored Mode sends safe:false explicitly; everything else stays safe.
     safe: body.safe !== false,
     modelId,
-    startImageRef: validateFrameRef(body.startImageRef, "startImage"),
-    endImageRef: validateFrameRef(body.endImageRef, "endImage"),
-    referenceImageRefs: validateReferenceImageRefs(body.referenceImageRefs),
+    startImageRef: validateFrameRef(body.startImageRef, "startImage", referencePolicy === "strict"),
+    endImageRef: validateFrameRef(body.endImageRef, "endImage", referencePolicy === "strict"),
+    referenceImageRefs: validateReferenceImageRefs(body.referenceImageRefs, referencePolicy === "strict"),
+    ...(referencePolicy ? { referencePolicy } : {}),
     loras: validateLoras(body.loras),
   };
 }
@@ -202,10 +222,31 @@ const MAX_REFERENCE_IMAGE_REFS = 16;
  * start/end — a malformed ref is a 400, not a silent drop; non-string or
  * empty entries are skipped so stale client state can't kill the render.
  */
-function validateReferenceImageRefs(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
+function validateReferenceImageRefs(value: unknown, strict = false): string[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) {
+    if (strict) {
+      throw new GenerationServiceError(
+        "Context references must be an array of cached image references.",
+        { field: "referenceImage" },
+      );
+    }
+    return [];
+  }
+  if (strict && value.length > MAX_REFERENCE_IMAGE_REFS) {
+    throw new GenerationServiceError(
+      `At most ${MAX_REFERENCE_IMAGE_REFS} context references are allowed.`,
+      { field: "referenceImage" },
+    );
+  }
   const refs: string[] = [];
-  for (const entry of value.slice(0, MAX_REFERENCE_IMAGE_REFS)) {
+  for (const entry of strict ? value : value.slice(0, MAX_REFERENCE_IMAGE_REFS)) {
+    if (strict && (typeof entry !== "string" || entry === "")) {
+      throw new GenerationServiceError(
+        "Each context reference must be a cached image reference.",
+        { field: "referenceImage" },
+      );
+    }
     if (typeof entry !== "string" || entry === "") continue;
     const ref = validateFrameRef(entry, "referenceImage");
     if (ref) refs.push(ref);
@@ -434,7 +475,32 @@ export interface PreparedGeneration {
   swapped: boolean;
   framesActive: boolean;
   hadStartImage: boolean;
+  hadEndImage: boolean;
+  referencePolicy?: ReferencePolicy;
   log: Logger;
+}
+
+/** Reject an explicit provider signal that requested frame conditioning was dropped. */
+export function assertStrictFrameOutputHonored(
+  policy: ReferencePolicy | undefined,
+  hadStartImage: boolean,
+  hadEndImage: boolean,
+  artifacts: GeneratedArtifact[],
+): void {
+  if (
+    policy !== "strict" ||
+    (!hadStartImage && !hadEndImage) ||
+    !artifacts.some((item) => item.frameDropped)
+  ) {
+    return;
+  }
+  const field = hadStartImage ? "startImage" : "endImage";
+  const label = field === "startImage" ? "start" : "end";
+  throw new GenerationServiceError(`The provider could not apply the requested ${label} frame.`, {
+    field,
+    status: 502,
+    retryable: false,
+  });
 }
 
 /**
@@ -481,6 +547,40 @@ export async function prepareGeneration(
   });
   log.info("generation started", { count: request.count, aspect: request.aspect });
 
+  // Strict requests preflight capabilities against the effective model before
+  // any cache reads or provider work. Keep the existing swap/drop behavior
+  // below unchanged for legacy best-effort callers.
+  let strictEffective: typeof resolved | undefined;
+  let strictSwapped = false;
+  if (request.referencePolicy === "strict") {
+    strictEffective = resolved;
+    if (request.startImageRef && !resolved.model.frameInput?.start) {
+      const swappedModel = resolved.model.i2vModelId ? registry.resolve(resolved.model.i2vModelId) : null;
+      if (swappedModel?.model.frameInput?.start) {
+        strictEffective = swappedModel;
+        strictSwapped = true;
+      }
+    }
+    if (strictEffective.model.kind !== request.kind) {
+      throw new GenerationServiceError("The selected model does not support this render type.", { field: "model" });
+    }
+    if (!strictEffective.provider.isConfigured()) {
+      throw new GenerationServiceError("The frame-capable model is not configured.", { field: "model" });
+    }
+    const violation = validateReferenceCapabilities(strictEffective.model, {
+      start: Boolean(request.startImageRef),
+      end: Boolean(request.endImageRef),
+      contextCount: request.referenceImageRefs.length,
+    })[0];
+    if (violation) throw new GenerationServiceError(violation.message, { field: violation.field });
+  } else if (request.referencePolicy !== undefined && request.referencePolicy !== "best-effort") {
+    // Durable jobs bypass validateGenerationRequest when they are recovered
+    // from disk, so reject corrupted or future policy values here as well.
+    throw new GenerationServiceError("That reference policy is not supported.", {
+      field: "referencePolicy",
+    });
+  }
+
   // Continuity frames: load refs first so a missing frame fails before any
   // provider call, then swap to a frame-capable model when needed.
   const startImage = request.startImageRef
@@ -490,9 +590,9 @@ export async function prepareGeneration(
     ? await loadFrame(request.endImageRef, "endImage")
     : undefined;
 
-  let effective = resolved;
-  let swapped = false;
-  if (startImage && !resolved.model.frameInput?.start) {
+  let effective = strictEffective ?? resolved;
+  let swapped = strictSwapped;
+  if (request.referencePolicy !== "strict" && startImage && !resolved.model.frameInput?.start) {
     const swapId = resolved.model.i2vModelId;
     const swappedModel = swapId ? registry.resolve(swapId) : null;
     if (swappedModel?.model.frameInput?.start) {
@@ -530,10 +630,17 @@ export async function prepareGeneration(
         try {
           referenceImages.push(await loadFrame(ref, "referenceImage"));
         } catch (error) {
+          if (request.referencePolicy === "strict") throw error;
           log.warn("reference image could not be loaded — skipping", { ref, error });
         }
       }
       if (referenceImages.length > contextMax) {
+        if (request.referencePolicy === "strict") {
+          throw new GenerationServiceError(
+            "The selected model cannot accept every requested context reference.",
+            { field: "referenceImage" },
+          );
+        }
         log.warn("reference images dropped — model takes N", {
           model: effective.model.id,
           max: contextMax,
@@ -581,6 +688,8 @@ export async function prepareGeneration(
     swapped,
     framesActive,
     hadStartImage: Boolean(startImage),
+    hadEndImage: Boolean(endImageRaw),
+    referencePolicy: request.referencePolicy,
     log,
   };
 }
@@ -624,6 +733,8 @@ export async function runGeneration(
             effectiveModel,
             { logger: log, signal: renderSignal, onProgress: options.onProgress, clientTag },
           );
+
+    assertStrictFrameOutputHonored(request.referencePolicy, hadStartImage, prepared.hadEndImage, artifacts);
 
     options.onProgress?.({
       stage: "downloading",

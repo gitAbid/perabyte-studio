@@ -1,0 +1,248 @@
+{
+  "schemaVersion": 1,
+  "packet": "I01-B6",
+  "status": "UNAPPROVED revised boundary; root review/freeze required",
+  "scope": "Offline injected composition only; no shared edits, active SEL reads, network/auth/credential/paid calls, UI or public identity. Parent I01/C06 remain unfinished.",
+  "baseline": {
+    "workspace": "/Users/abid/.codex/worktrees/production-core/perabyte-studio",
+    "branch": "codex/production-core",
+    "acceptedRecipeCode": "7e29b314cf37c1ec3f684dcf26e811b72ce5caa0",
+    "observedHead": "936a3a0a9e0dc8ca714200695ff1ea95edf2920c",
+    "sourceHashes": {
+      "AGENTS.md": "06307b0d5a1220d80dba279b910dfed639c94bd03fb17319822b6a12b7c73e46",
+      "docs/production/HANDOVER.md": "19d39114454b373f9ebebbc43651082de956de40bb02a63dfa87ba8289976a8c",
+      "docs/production/reports/I01-B6-composer-proposal.json": "86319840a0f5e74a49b3c01ea23e311a81276ccd649fbbe9acf40967760e8f79",
+      "docs/production/reports/C06-PRE-root-freeze.json": "ccf34a0060b31bcdf684a2d56296b5015efdb5c81d725ed5ba64d218ddff92b5",
+      "lib/services/production/takes.ts": "961f3ae613d0342bf0e53881fc52401e40364bac0abd29d3f74e1821a3bdb9f2",
+      "lib/services/production/budget.ts": "7514e7e9a7aee071a22a2a1056ea841058fc123ee6ec19e4705a08fae8cc04b6",
+      "lib/production/budget.ts": "e036436ca2ee6c921caea3a8c867da4090eaece277fa0d98617695d8d5db3ae2",
+      "lib/production/contracts.ts": "6ccc81ed9105ae32dc7dc025b90e2c9d3c356768bbb8cc12d3e7a3275dd7f8e4",
+      "lib/production/runtime.ts": "74c5d000c09f032510d1a116492b509e15ab20e87daba082841ce10668fb3659",
+      "lib/repositories/production/ports.ts": "e35d4d3f61de7ca83ba1562299d6681bd4fe2517b181f196a9b4ec5bed90d006",
+      "lib/repositories/production/sqlite.ts": "b57db118c53f01477b14e7130a620e30d9a95d87f214c0ce250952bfb3271f24",
+      "lib/repositories/production/migrations/003-approval-commands.sql": "f7fb9a9448a7ae6288085a30d8146d6a3feee9df2ad2b624dd5c034be199b6ff",
+      "lib/providers/production/sogni-provider.ts": "06b9c771b4132501d06ec7593347257b7440a9a91a81dde90cef3472cd619871",
+      "lib/providers/production/http-routes.ts": "f1f62b5af3798fc53196d7d20b502cf029a9d16320179a92f94fdb1d623779a9",
+      "lib/jobs/production/queue.ts": "015cb8bdc2940674af83d325a01fe7adc7ee32e162c0d9956257c6214142c93a",
+      "lib/jobs/production/worker.ts": "da3f5df7fca311f07504658501337b87a755d1d00f9f45a40d0ad7f5acfb96ba",
+      "scripts/production-worker.mjs": "a7f4fc1984bce3600f72a1fd73292966a3c3c4d57f30dc9b7f96a38727635be0",
+      "node_modules/@sogni-ai/sogni-client/package.json": "1d7b374ec79aa5ce116a327a8411a553ae0e2f49b0064d6d79e9ee39260eb5c8",
+      "node_modules/@sogni-ai/sogni-client/src/Account/index.ts": "780f1e0356132f580524370f0720536fdff7b07e72e58817063b309a521f0e10",
+      "node_modules/@sogni-ai/sogni-client/src/Account/subscription.types.ts": "59133016f44593c50a0c981d78a73dc8b43f1c61ebb15ccdb52e97115ed67cc0",
+      "node_modules/@sogni-ai/sogni-client/src/Projects/index.ts": "12418d984e2bdcd101947f49a2ad9015d157531620e8d6c7bd6735cee53a28d3",
+      "node_modules/@sogni-ai/sogni-client/src/Projects/types/index.ts": "187f4d1cdf3527d26f2fcad23d0f2e1e48e62c84fa329f4cb16cea9847c915da",
+      "docs/production/reports/I01-subscription-evidence-architecture.json": "e5af19af08d327fa9b8f6a6a2610668061b98f73282d528c8151fcca7f21c65d"
+    },
+    "sourceScope": "Accepted root files only; no active production-take-selection source read. Hashes identify inspected bytes, not accepted implementation of this proposal.",
+    "acceptedSourceUnchangedAtHashCapture": "git diff --name-only 7e29b31 HEAD over takes/contracts/queue/budget/provider/ports/sqlite returned empty; intervening HEAD936a3a0 is root metadata/cleanup."
+  },
+  "facts": [
+    "Accepted takes.ts: quoteRecipe returns ProductionQuote; quote() captures recipe+eligibility fingerprint, awaits asset/producer work, rechecks exact context/recipe/request in transaction, then alone inserts media Quote. Preserve this authority.",
+    "B3 already exposes identity/evidence/current-binding callbacks and synchronous reserveInTransaction. B4 prepare callback returns a plain structural context; queue passes that same context to reserve without strict parsing. B3 strict parsing requires extracting its original fields.",
+    "Sogni transport caches one clientPromise per role; roles have different persisted app IDs. Account proof and submit must use that same client. Changed env alone neither rebinds nor invalidates an existing cached client.",
+    "SDK5.49.0 account.me() returns authenticated walletAddress. getSubscriptionStatus() returns account-level active/status/tier/period/capabilities; it can return a fresher socket-applied snapshot. REST version is currently absent; retain an optional validated observed version, never invent one.",
+    "SDK estimateCost/estimateVideoCost return token/usd/spark/sogni decimal strings, no billingMode, quote ID, expiry or guaranteed upper bound. Explicit subscription requires coverage; auto may fall back. Existing provider.quote() always unknown.",
+    "Migration003 is accepted human approval storage. Next proof migration is004. Existing B1 financial DTOs/001/002/003 remain unchanged."
+  ],
+  "decision": {
+    "preferred": "Typed prepared media quote draft plus synchronous companion commit in takes-owned transaction; typed structural execution-proof draft on B4 prepared context plus B6 reserve wrapper. Same SQLite archive; no global maps, setters, second recipe/ledger formula or duplicated media insert.",
+    "dependencyOrder": [
+      "Root freeze after SEL integrates and owner is idle",
+      "S schema/storage004 and quote draft DTO",
+      "P provider observation/final submit guard",
+      "C composer and accepted takes transaction seam",
+      "W composition/routes/worker wiring"
+    ],
+    "parallelism": "Root integrates S first, P/C after frozen ports, W after reviewed P+C. C/W wait for SEL accepted and idle. This proposal authorizes no dispatch."
+  },
+  "dtoAndPorts": {
+    "owner": "Root freezes names/signatures. S owns neutral proof/draft DTOs, accepted recipe type-only extraction and storage version/ports. P owns lib/providers/production/proof-port.ts plus SDK adapter. C removes original recipe type declarations and reexports the identical neutral types from takes.ts, and owns PreparedSubmissionContext in budget-composer.ts (not the pure domain module).",
+    "neutralTypes": [
+      "ProofArtifact = Readonly<{schemaVersion:1;hash:string;canonicalPayload:string;createdAt:number}>",
+      "ProviderCredentialGeneration = Readonly<{schemaVersion:1;providerId:string;revision:number;generationId:string;accountId:string;credentialFingerprint:string;changedAt:number}>",
+      "QuoteProofLink = Readonly<{schemaVersion:1;mediaQuoteId:string;budgetQuoteId:string;artifactHash:string}>",
+      "ExecutionProofLink = Readonly<{schemaVersion:1;executionId:string;reservationId:string;artifactHash:string}>",
+      "PreparedMediaQuoteDraft = Readonly<{kind:'unknown';mediaQuote:ProductionQuote}> | Readonly<{kind:'bound';mediaQuote:ProductionQuote;budgetQuote:BudgetQuote;binding:QuoteAccountBinding;accountEvidence:AccountEvidence;artifacts:readonly ProofArtifact[];quoteProof:QuoteProofLink;expectedGeneration:ProviderCredentialGeneration}>",
+      "PreparedSubmissionContext = PreparedBudgetContext & Readonly<{providerProofDraft:Readonly<{artifact:ProofArtifact;expectedGeneration:ProviderCredentialGeneration}>}>"
+    ],
+    "takeSeam": [
+      "TakeServiceOptions.quoteRecipe?: (input:Readonly<{recipe:ValidatedMediaRecipe;request:ProviderQuoteRequest}>)=>Promise<PreparedMediaQuoteDraft>",
+      "TakeServiceOptions.commitPreparedQuote?: (tx:ProductionWritePort,draft:PreparedMediaQuoteDraft,context:Readonly<{recipe:ValidatedMediaRecipe;request:ProviderQuoteRequest;at:number}>)=>void",
+      "Default is kind unknown (unknown entitlement/null amounts/unknown cap). Bound draft without commit hook fails before writes.",
+      "quoteFor validates draft.mediaQuote. After existing exact context recheck, quote() alone inserts mediaQuote, invokes synchronous companion hook and returns mediaQuote; hook failure rolls back everything."
+    ],
+    "repositoryMethods": [
+      "getProofArtifact(hash:string):ProofArtifact|null",
+      "getProviderCredentialGeneration(providerId:string):ProviderCredentialGeneration|null",
+      "getQuoteProof(budgetQuoteId:string):QuoteProofLink|null",
+      "getExecutionProof(executionId:string):ExecutionProofLink|null",
+      "insertProofArtifact(record:ProofArtifact):InsertOutcome<ProofArtifact>",
+      "compareAndSetProviderCredentialGeneration(record:ProviderCredentialGeneration,expectedRevision:number|null):boolean",
+      "insertQuoteProof(record:QuoteProofLink):InsertOutcome<QuoteProofLink>",
+      "insertExecutionProof(record:ExecutionProofLink):InsertOutcome<ExecutionProofLink>"
+    ],
+    "providerPort": [
+      "ProductionProofProvider extends ProviderPort with observeAccount():Promise<ProviderAccountObservation> and currentSession():CapturedProviderSession|null; optional observeQuote(input:{recipe:ValidatedMediaRecipe;request:ProviderQuoteRequest}):Promise<ProviderQuoteObservation>.",
+      "CapturedProviderSession={sessionId,role,sdkVersion,adapterVersion,credentialFingerprint,accountId}; local opaque sessionId is correlation, not authentication. accountId is null until same-client account.me() succeeds. No raw key/token/header, SDK backup or account email/username persisted.",
+      "ProviderAccountObservation={session:CapturedProviderSession,observedAt,subscription:{active,status,tier|null,currentPeriodEnd|null,version|null,capabilities:Record<string,boolean>,fairUseState|null}}. Whitelist bounded concrete returned facts; unavailable/invalid fields remain unknown. me/status must come from the same cached client.",
+      "ProviderQuoteObservation={session,observedAt,exactModel:{id,workflowType|null,assets:Record<string,string>|null,capabilityReceipt},executionParameters:JsonValue,estimateParameters:JsonValue|null,estimate:{usd:string,spark:string,sogni:string,token:string}|null}. Source/version evidence records only inspected concrete SDK facts. No invented IDs/settings/prices.",
+      "SogniFactoryOptions.submissionProofResolver?: (snapshot:ProviderRequestSnapshot,session:CapturedProviderSession,at:number)=>void. Synchronous read-only resolver is injected at construction; missing resolver closes actual SDK create. No bind/setter API."
+    ],
+    "composerFactory": [
+      "createProductionBudgetComposer({store,provider:ProductionProofProvider,reviewedPolicy:ReviewedQuotePolicy|null,now?,idFactory?}) returns {resolveBillingMode,prepareMediaQuote,commitPreparedQuote,resolveAccountIdentity,prepareExecutionEvidence,currentCredentialBindingId,prepareWorkerBudgetContext,reserveSubmission,assertSubmissionProof}.",
+      "prepareMediaQuote/commitPreparedQuote match take seam. Identity and trusted evidence callbacks match existing BudgetServiceOptions exactly. prepareWorkerBudgetContext matches worker callback structurally and returns PreparedSubmissionContext; reserveSubmission matches existing ReserveSubmission.",
+      "prepareWorkerBudgetContext obtains a fresh worker account/status/model-policy observation and calls an existing B3 service instance whose prepareExecutionEvidence closure returns only the standard trusted evidence for this exact call. Returns accepted base context plus typed proof draft; no invocation maps.",
+      "reserveSubmission validates richer context, extracts exactly the eight accepted B3 fields, constructs BudgetExecution from currentJob and its schema-valid snapshot using existing computeProductionInputsHash, calls B3 reserveInTransaction, then inserts artifact+ExecutionProofLink in the SAME beginSubmission transaction. No B3/B4 schemas/source edits required.",
+      "assertSubmissionProof resolves execution link by snapshot.jobId, reservation and artifact; checks exact requestHash/semantic hash/quote/account/generation/session/model-policy/expiry. It is passed into provider constructor and evaluated immediately before projects.create after all async asset/account/client work."
+    ],
+    "typeDependencyRule": "lib/production/media-recipe.ts contains only the accepted BillingModeIntent/TrustedBillingModeResolver/ValidatedMediaRecipe type declarations, using existing contracts types. No recipe builder/projection/hash formula moves or duplicates. MediaPreparation/parser remain takes-owned. provider-proof.ts/media-quote.ts import neutral contracts only; provider proof port imports neutral recipe types and existing repository ProviderPort; services depend on that port. composition imports implementations; runtime.ts never imports composition."
+  },
+  "archive": {
+    "migration": "lib/repositories/production/migrations/004-provider-proof.sql",
+    "tables": [
+      "provider_proof_artifacts(hash PRIMARY KEY,canonical_payload,created_at): immutable update/delete rejection.",
+      "provider_credential_generations(provider_id PRIMARY KEY,revision,generation_id UNIQUE,account_id,credential_fingerprint,changed_at): CAS current head. Every adopted generation also exists inside an immutable account proof artifact, retaining history.",
+      "provider_quote_proofs(budget_quote_id PRIMARY KEY REFERENCES budget_quotes,media_quote_id UNIQUE,artifact_hash REFERENCES provider_proof_artifacts): verify media quote exists and exactly matches companion using repository validation; immutable links.",
+      "provider_execution_proofs(execution_id PRIMARY KEY REFERENCES budget_executions,reservation_id UNIQUE REFERENCES budget_reservations,artifact_hash REFERENCES provider_proof_artifacts): immutable link created only with reservation in admission TX."
+    ],
+    "validation": "Strict version1 discriminated payload kinds account/policy/media_quote/execution_session; canonicalJson + hashCanonicalJson verified on insert AND load. Reject noncanonical payload, wrong hash/version, nonfinite or unsafe UTC, future observations, invalid/expired bounds. Max256KiB each artifact; max1MiB aggregate draft. Equal exact inserts replay, conflicting IDs/content fail. No arbitrary path/URL reads or runtime evidence-directory dependence.",
+    "payloads": {
+      "account": "Producer/SDK/adapter versions, authenticated provider+wallet-derived stable accountId, credential generation, local role/session correlation, exact observed/expiry times, sanitized subscription whitelist; raw authentication secrets and PII excluded. AccountEvidence.source identifies versioned producer; reference is sha256:<account-artifact-hash>.",
+      "policy": "Reviewed bounded source capture/hash/URL, capturedAt/expiresAt/reviewVersion; explicit exact model ID->family/workflow/allowed-operation/settings registry and applicable coverage/estimate policy. Generic family/prefix matching cannot authorize.",
+      "media_quote": "Exact accepted ValidatedMediaRecipe + toMediaQuoteRequest projection, recipe/resultTarget.inputsHash, mediaQuote/BudgetQuote/binding IDs, account/policy artifact hashes, exact model/capability/adapter evidence and liability interpretation. Never reconstruct recipe.",
+      "execution_session": "Exact BudgetExecution/requestHash/quote proof reference, fresh worker role/session observation, generation/account identity, current exact model/policy evidence and finite expiry. Quote-time immutable AccountEvidence/binding remain pinned; worker session proof is additional evidence."
+    },
+    "atomicity": "Producer performs no persistence. Following takes exact recheck, one TX inserts media quote once, proof artifacts/AccountEvidence, BudgetQuote+binding and QuoteProofLink. Any failure rolls all back. Standalone identity/generation observation for budget policy never asserts a quote, authorization or reservation."
+  },
+  "generationAndSubmit": {
+    "stable": "CredentialBindingId = durable generationId, shared across roles when authenticated accountId and SHA256 fingerprint of captured high-entropy API key equal current head. Session/appId/role are excluded. Fingerprint computed only from credential actually captured for cached SDK construction; never logged or exposed in routes. Same current account+fingerprint reuses generation. Any change CAS-increments revision and generates new opaque generationId; A->B->A cannot resurrect A's old binding.",
+    "compare": "Synchronous currentCredentialBindingId checks proven cached session account/fingerprint against durable current head; returns null before authentication, after mismatch/close, or unknown state. Same-client observeAccount refreshes finite session evidence; role restart requires fresh observation but can reuse current generation.",
+    "lastGuard": "Transport.submit awaits getClient then invokes constructor proof resolver using that exact client's captured session immediately before projects.create, with no await between check and SDK invocation. Composer checks current durable generation as well as archived execution-session proof/reservation. Rotation or cache close after admission cannot submit under a new session using old proof.",
+    "raceLimit": "Remote acceptance is outside SQLite atomicity. Existing conservative submission_unknown/no resubmit remains after any submit-stage exception; never auto-release reservation without genuine billing/nonacceptance evidence."
+  },
+  "quoteAndLegacy": {
+    "cap": "withinAuthorizedCap yes is a quote-time verified standing-policy/authorization/cap observation only. Composer uses accepted fold/summarize/validateReservationEligibility helpers for the exact model/operation/mode and rechecks current heads/totals in commit hook; it creates no reservation. Actual B3/B4 admission independently pins/rechecks revisions, totals and reserves atomically. Missing policy/cap stays unknown/no known admission quote.",
+    "subscription": "Only an explicit reviewed exact-model/config coverage registry, fresh authenticated same-generation active paid status (exclude trial/grace/unknown), fresh exact live capability evidence and enforced subscription mode can produce expected incremental job debit0: media0USD/BudgetQuote unit minor_currency,currencyUSD,estimate0,entitlement subscription. Expiry is minimum local account/session/policy/capability/period limit. Account active flag or token estimator alone cannot prove zero. Published research is guidance; no reviewed enabled registry is invented here.",
+    "token": "Known tokens quote requires exact submitted settings projection plus reviewed USD integer conversion and explicit local upper-estimate policy/TTL. SDK estimate is a point estimate, not vendor max. No default margin or Spark smallest-unit conversion; incomplete settings or missing reviewed unit/bound policy => unknown.",
+    "legacy": "POST /quotes retains strict legacy CreateQuoteCommand/ProductionQuote response and its media-only storage for compatibility, but always normalizes output to unknown/null amounts/null currency/withinAuthorizedCap unknown and creates NO B6 companion/proof/binding. Its incomplete browser input is never fed to composer. B6 execution evidence refuses every quote lacking a valid exact-recipe QuoteProofLink, including older legacy known quotes; legacy cannot authorize paid recipe blindly. /media-quotes alone uses canonical recipe path.",
+    "settlement": "Quote0/media completion do not settle actual0. B6 installs no automatic billing reconciliation; actual/nonacceptance evidence is required. Unknown stays unsettled; no fallback."
+  },
+  "runtime": {
+    "newPath": "lib/production/composition.ts",
+    "factory": "withProductionComposition<T>(work:(composition:ProductionComposition)=>Promise<T>,options:{role:'web'|'worker';store?:ProductionStore;reviewedPolicy?:ReviewedQuotePolicy|null;providerFactory?;runtimeOptions?}):Promise<T>. Create store when absent, lazy same-role provider, composer and B3 service; close only owned resources in finally. Existing runtime.ts remains store/data-dir only to avoid provider/service circular imports.",
+    "routeSeam": "Add optional generic withService callback to createMediaRouteHandlers and createBudgetRouteHandlers; existing closed defaults remain. composition exports createComposedMediaRouteHandlers/createComposedBudgetRouteHandlers injecting per-store services and lifecycle. API media-quotes/anchor/take/budget route files switch to composed wrappers after SEL integrates. Selection stays with SEL and is not expanded.",
+    "worker": "scripts/production-worker.mjs constructs worker provider+composer with same open store/vault and passes both prepareBudgetContext and reserveSubmission. Inject proof resolver in provider constructor. Original worker ownership/recovery unchanged. Null/unreviewed policy yields missing billing intent/unknown evidence and zero SDK create; mere SOGNI_API_KEY presence never enables quotes or paid submit.",
+    "config": "Trusted ReviewedQuotePolicy constructor input or root-frozen validated local loader, null by default; no guessed intent/TTL/unit policy or browser account/proof/billing fields."
+  },
+  "packets": [
+    {
+      "id": "I01-B6-S",
+      "dependsOn": [
+        "root DTO freeze",
+        "accepted003"
+      ],
+      "owns": [
+        "lib/production/provider-proof.ts",
+        "lib/production/media-quote.ts",
+        "lib/production/media-recipe.ts",
+        "lib/production/provider-proof.test.ts",
+        "lib/production/contracts.ts",
+        "lib/production/contracts.test.ts",
+        "lib/repositories/production/ports.ts",
+        "lib/repositories/production/sqlite.ts",
+        "lib/repositories/production/sqlite.test.ts",
+        "lib/repositories/production/migrations/004-provider-proof.sql"
+      ],
+      "acceptance": [
+        "Real v3->4 migration/reopen preserves current approvals/takes/finance; accepts schema4 rejects5.",
+        "Artifact hash/schema bounds and exact replay/CAS; linked quote/exec association rejects mismatches; rollback leaves no partial links."
+      ]
+    },
+    {
+      "id": "I01-B6-P",
+      "dependsOn": [
+        "reviewed S",
+        "root provider API freeze"
+      ],
+      "owns": [
+        "lib/providers/production/proof-port.ts",
+        "lib/providers/production/sogni-provider.ts",
+        "lib/providers/production/sogni-provider.test.ts"
+      ],
+      "acceptance": [
+        "Injected SDK only: account/status/model observation and submit share one client; same account different roles can share generation.",
+        "Fresh proof allows exactly one fake projects.create; expired/mismatched/cached rotated session blocks immediately at SDK invocation."
+      ]
+    },
+    {
+      "id": "I01-B6-C",
+      "dependsOn": [
+        "reviewed S",
+        "accepted+idle SEL",
+        "root draft seam freeze"
+      ],
+      "owns": [
+        "lib/services/production/budget-composer.ts",
+        "lib/services/production/budget-composer.test.ts",
+        "lib/services/production/takes.ts",
+        "lib/services/production/takes.test.ts"
+      ],
+      "acceptance": [
+        "Real store canonical known recipe quote atomically persists media+budget+binding+archive; stale context after injected await and failing commit leave zero bound writes.",
+        "Offline reviewed exact subscription fixture yields0; absent/unlisted/stale/trial/mode mismatch remains unknown/blocked.",
+        "Structural prepared context + reserve wrapper persists proof link with existing one reservation; B3 strict schema receives exact original fields."
+      ]
+    },
+    {
+      "id": "I01-B6-W",
+      "dependsOn": [
+        "reviewed P+C",
+        "accepted+idle SEL"
+      ],
+      "owns": [
+        "lib/production/composition.ts",
+        "lib/production/composition.test.ts",
+        "lib/providers/production/http-routes.ts",
+        "lib/providers/production/http-routes.test.ts",
+        "lib/services/production/budget.ts",
+        "lib/services/production/budget.test.ts",
+        "scripts/production-worker.mjs",
+        "app/api/production/media-quotes/route.ts",
+        "app/api/production/shots/[shotId]/anchors/route.ts",
+        "app/api/production/shots/[shotId]/takes/route.ts",
+        "app/api/production/projects/[projectId]/budget/route.ts"
+      ],
+      "acceptance": [
+        "Injected restart/new worker session same generation: canonical quote->enqueue->admission produces one durable reservation/proof and one fake SDK create.",
+        "No reviewed config and legacy /quotes have zero admission/provider creates; sanitized responses and resource cleanup."
+      ]
+    }
+  ],
+  "verification": "Only focused functional acceptance selectors, typecheck and diff-check per packet; root repeats one minimal combined offline flow. No broad suite/build/fault/mutation campaign. Freeze exact selectors in packets; preserve raw outputs separately.",
+  "unresolvedRootDecisions": [
+    "Approve typed quote draft and structural prepared-context wrapper; SEL must integrate and be idle before C/W; refreeze source hashes.",
+    "Approve004 archive/CAS/strict bounds and supported schema4.",
+    "Freeze reviewed config loader and finite account/session/policy TTLs; null remains closed.",
+    "Review exact model/config coverage registry/source capture before real zero quote; none is fabricated here.",
+    "Freeze token USD rounding/local upper bound and exact SDK parameter mapping before anchor/token enablement; Spark/SOGNI integer unit remains unknown.",
+    "Approve legacy unknown normalization and refusal of older media-only known quotes for B6 admission."
+  ],
+  "deferred": [
+    "Comprehensive/fault/mutation suites",
+    "live authentication/status/estimate/submit",
+    "token financial-unit policy research/enablement",
+    "automatic actual-billing reconciliation",
+    "full I01/C06 acceptance",
+    "UI/pilots/release"
+  ],
+  "paidCalls": [],
+  "authenticatedCalls": [],
+  "networkCalls": [],
+  "implementationPerformed": false,
+  "proposalVerification": {
+    "jsonParse": "pass",
+    "packetOwnershipDisjoint": "pass",
+    "sourceHashesComputedFromBytes": 23,
+    "codeOrTestCommandsRun": []
+  }
+}

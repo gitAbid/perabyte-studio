@@ -1,0 +1,199 @@
+{
+  "review_kind": "independent_read_only_idle_shutdown_followup_review",
+  "packet": "C04",
+  "actualSHA": "b09ddb103abd340bb41c24a0be90ea1dc21033a9",
+  "actualParentSHA": "c7eb4d2e2664453b597abc8376cb276f6af3c0a3",
+  "status": "accepted_runtime_shutdown_slice_only",
+  "changed_files": [
+    "lib/jobs/production/worker.test.ts",
+    "lib/jobs/production/worker.ts"
+  ],
+  "ownership_check": "pass: worker.ts and worker.test.ts only; aggregate ten runtime paths match report and previous review",
+  "findings": [],
+  "closure": {
+    "id": "C04-IDLE-SHUTDOWN",
+    "status": "closed",
+    "implementation": "run idle backoff uses existing waitOwned abort-aware wrapper. Abort errors suppressed only when signal.aborted, other wait failures still propagate.",
+    "verification": "Real direct Node worker subprocess receives SIGTERM during empty-queue idle wait; strengthened existing lifecycle test asserts exit0 and removal of both heartbeat and owner files. Previous source RED saved expected1 to0 failure. Same fixture retains alias/live-owner/concurrent-restart/SIGKILL assertions."
+  },
+  "worker_report_sha256": "907fcd43426efcb9aee7543fe94d7c0136c540e41f34708473e2dc2e030e09e7",
+  "worker_report_check": "Strict report exact b09ddb1 aggregate ownership, ten T04 entries and previous doctor hash correction inspected; full packet still marked incomplete.",
+  "evidence_hash_checks": [
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/idle-sigterm-focused-green.txt",
+      "reported_sha256": "3755153ab025365c42db84793c91f6be34b96e950acd2bde9e71d7c28ea7a959",
+      "actual_sha256": "3755153ab025365c42db84793c91f6be34b96e950acd2bde9e71d7c28ea7a959",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/idle-sigterm-focused-green.txt",
+      "reported_sha256": "3755153ab025365c42db84793c91f6be34b96e950acd2bde9e71d7c28ea7a959",
+      "actual_sha256": "3755153ab025365c42db84793c91f6be34b96e950acd2bde9e71d7c28ea7a959",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/idle-sigterm-focused-green.txt",
+      "reported_sha256": "3755153ab025365c42db84793c91f6be34b96e950acd2bde9e71d7c28ea7a959",
+      "actual_sha256": "3755153ab025365c42db84793c91f6be34b96e950acd2bde9e71d7c28ea7a959",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/idle-sigterm-focused-green.txt",
+      "reported_sha256": "3755153ab025365c42db84793c91f6be34b96e950acd2bde9e71d7c28ea7a959",
+      "actual_sha256": "3755153ab025365c42db84793c91f6be34b96e950acd2bde9e71d7c28ea7a959",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/idle-sigterm-focused-green.txt",
+      "reported_sha256": "3755153ab025365c42db84793c91f6be34b96e950acd2bde9e71d7c28ea7a959",
+      "actual_sha256": "3755153ab025365c42db84793c91f6be34b96e950acd2bde9e71d7c28ea7a959",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/idle-sigterm-focused-green.txt",
+      "reported_sha256": "3755153ab025365c42db84793c91f6be34b96e950acd2bde9e71d7c28ea7a959",
+      "actual_sha256": "3755153ab025365c42db84793c91f6be34b96e950acd2bde9e71d7c28ea7a959",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/idle-sigterm-focused-green.txt",
+      "reported_sha256": "3755153ab025365c42db84793c91f6be34b96e950acd2bde9e71d7c28ea7a959",
+      "actual_sha256": "3755153ab025365c42db84793c91f6be34b96e950acd2bde9e71d7c28ea7a959",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/idle-sigterm-focused-green.txt",
+      "reported_sha256": "3755153ab025365c42db84793c91f6be34b96e950acd2bde9e71d7c28ea7a959",
+      "actual_sha256": "3755153ab025365c42db84793c91f6be34b96e950acd2bde9e71d7c28ea7a959",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/idle-sigterm-focused-green.txt",
+      "reported_sha256": "3755153ab025365c42db84793c91f6be34b96e950acd2bde9e71d7c28ea7a959",
+      "actual_sha256": "3755153ab025365c42db84793c91f6be34b96e950acd2bde9e71d7c28ea7a959",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/idle-sigterm-focused-green.txt",
+      "reported_sha256": "3755153ab025365c42db84793c91f6be34b96e950acd2bde9e71d7c28ea7a959",
+      "actual_sha256": "3755153ab025365c42db84793c91f6be34b96e950acd2bde9e71d7c28ea7a959",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/outbox-recovery-red.txt",
+      "reported_sha256": "fcc385e2a087c274ecbf0c72a6bb713cd9934e5742eb7942ab5871e086a8e847",
+      "actual_sha256": "fcc385e2a087c274ecbf0c72a6bb713cd9934e5742eb7942ab5871e086a8e847",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/slow-abort-red.txt",
+      "reported_sha256": "f8f86b1fa6fc0f0ebbf6caab9ef981b384be305625d8e0482d3f230f6ee28155",
+      "actual_sha256": "f8f86b1fa6fc0f0ebbf6caab9ef981b384be305625d8e0482d3f230f6ee28155",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/followup-runtime-red.txt",
+      "reported_sha256": "9049f8f44185b8f90fa09f3417875c9b3f4dcac9114be051166752eec274578a",
+      "actual_sha256": "9049f8f44185b8f90fa09f3417875c9b3f4dcac9114be051166752eec274578a",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/followup-focused-green.txt",
+      "reported_sha256": "6002588205fd067b67008238627ee52c8b3758689c6d4aa55c41128a84dbb07f",
+      "actual_sha256": "6002588205fd067b67008238627ee52c8b3758689c6d4aa55c41128a84dbb07f",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/followup-worker-green.txt",
+      "reported_sha256": "72425a9574e3ed1cf267b9d39356c45f35f9aff74af186798dea44641897d004",
+      "actual_sha256": "72425a9574e3ed1cf267b9d39356c45f35f9aff74af186798dea44641897d004",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/followup-typecheck.txt",
+      "reported_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "actual_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/followup-diff-check.txt",
+      "reported_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actual_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/doctor-no-worker.json",
+      "reported_sha256": "5543b6e6132e54cba9fe47236974931387a795d57efb9263bd73ae606c55ccaa",
+      "actual_sha256": "5543b6e6132e54cba9fe47236974931387a795d57efb9263bd73ae606c55ccaa",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/idle-sigterm-red.txt",
+      "reported_sha256": "80dd1d07dfec31668c3cd5f6182eeac4412ca60fd1f6e51e74b387bf3ecd1be4",
+      "actual_sha256": "80dd1d07dfec31668c3cd5f6182eeac4412ca60fd1f6e51e74b387bf3ecd1be4",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/idle-sigterm-green.txt",
+      "reported_sha256": "acff70870c950c39cf5d0f8fab973710291c2bfa3d4dcf0f7457234d53da9c89",
+      "actual_sha256": "acff70870c950c39cf5d0f8fab973710291c2bfa3d4dcf0f7457234d53da9c89",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/idle-sigterm-focused-green.txt",
+      "reported_sha256": "3755153ab025365c42db84793c91f6be34b96e950acd2bde9e71d7c28ea7a959",
+      "actual_sha256": "3755153ab025365c42db84793c91f6be34b96e950acd2bde9e71d7c28ea7a959",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/idle-sigterm-typecheck.txt",
+      "reported_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "actual_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/idle-sigterm-diff-check.txt",
+      "reported_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actual_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    }
+  ],
+  "reproduction": {
+    "command": [
+      "npm",
+      "test",
+      "--",
+      "lib/jobs/production/worker.test.ts",
+      "lib/jobs/production/queue.test.ts",
+      "lib/media/production/vault.test.ts"
+    ],
+    "exit_code": 0,
+    "tests_passed": 49,
+    "output_file": "/tmp/perabyte-C04-runtime-shutdown-review-tests.txt",
+    "output_sha256": "00f16d27896b2046344395b3657d346e64965c6e7c1518897f23dcefabf402a7"
+  },
+  "commit_diff_check": {
+    "command": [
+      "git",
+      "diff",
+      "--check",
+      "c7eb4d2e2664453b597abc8376cb276f6af3c0a3",
+      "b09ddb103abd340bb41c24a0be90ea1dc21033a9"
+    ],
+    "exit_code": 0,
+    "output": ""
+  },
+  "remaining_material_source_gaps": [],
+  "nonblocking_limits": [
+    "Prior acknowledged conservative orphan retention and deterministic local port collision limits remain.",
+    "Node20 direct execution unrun; observed direct subprocess uses installed Node26/macOS."
+  ],
+  "unverified": [
+    "Combined provider/runtime integration full repository tests/typecheck/build/built HTTP and CLI gates.",
+    "Reviewer typecheck not repeated; strict worker evidence hash verified."
+  ],
+  "paid_calls": [],
+  "network_calls": [],
+  "credentials_accessed": false,
+  "decision": "Accept b09ddb1 runtime followup; no remaining material source finding within reviewed runtime scope. Full C04 acceptance remains pending integrator combined gates."
+}

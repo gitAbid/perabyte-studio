@@ -1,0 +1,10 @@
+[c15] source=/Users/abid/Projects/perabyte-studio/.worktrees/zcode-production-core/.studio work=/tmp/c15-drill-integration jobs=500
+[c15] source counts: {"schemaMigrations":4,"records":513,"projects":15,"jobs":44,"jobEvents":172,"jobLeases":44,"outbox":0,"assets":57,"exports":2,"budgetReservations":42,"budgetExecutions":42,"providerProofArtifacts":261}
+[c15] drill A: backup the live store (read-only) and restore into an isolated dir
+[c15] drill B: seed a copy, spawn a worker, kill -9 mid-stream, restart, verify lease recovery
+[c15] worker-1 (pid 52913) killed by SIGKILL mid-stream: {"terminal":1,"inFlight":1,"queued":498}
+[c15] backup/restore: PASS (countsMatch=true hashesMatch=true integrity=true fk=true sourceUntouched=true)
+[c15] orphan media: PASS (files=57 referenced=56 orphans=1 missingReferenced=0)
+[c15] export hashes: PASS (2/2 verified)
+[c15] kill -9 restart: PASS (jobs=500 terminal=true attempts<=2=true submissionEvents=0 outboxRemaining=0 maxIntentsPerJob=1)
+[c15] report: /Users/abid/Projects/perabyte-studio/.worktrees/zcode-production-core/evidence/integration/C15-RECOVERY/recovery-report.json

@@ -14,7 +14,7 @@ import { deriveEndFrameRefServerSide } from "@/lib/media/frame-server";
 import {
   advanceSceneAfterKeyframe,
   advanceStoryChain,
-  storyCast,
+  storySceneCast,
 } from "@/lib/story/server-runner";
 import { sceneCast } from "@/lib/story/compose-shot";
 import { buildGateExpectations } from "@/lib/story/keyframe";
@@ -27,6 +27,7 @@ import { titleFromPrompt } from "@/lib/constants";
 import type { Asset, GenerationSettings, SceneScore } from "@/lib/types";
 import {
   GenerationServiceError,
+  assertStrictFrameOutputHonored,
   persistArtifacts,
   prepareGeneration,
 } from "@/lib/services/generation.service";
@@ -363,6 +364,12 @@ export class JobExecutor {
     log: Logger,
   ): Promise<void> {
     try {
+      assertStrictFrameOutputHonored(
+        prepared.referencePolicy,
+        prepared.hadStartImage,
+        prepared.hadEndImage,
+        artifacts,
+      );
       const media = await this.persist(
         artifacts,
         prepared.normalized.aspect,
@@ -513,10 +520,11 @@ export class JobExecutor {
     // Gate: the same expectations the keyframe strategy was built from,
     // recomputed here from the live record. No expectations (no cast, no
     // location) means nothing to score — the keyframe is accepted as-is.
-    const cast = sceneCast(scene.state, { characters: storyCast(story) });
-    const location = getLocationsRepository(
-      scene.state?.locationId ?? story.world?.locationIds?.[0] ?? "",
-    );
+    const cast = sceneCast(scene.state, { characters: storySceneCast(story, scene) });
+    const locationId =
+      scene.state?.locationId ??
+      (scene.state?.locationText?.trim() ? undefined : story.world?.locationIds?.[0]);
+    const location = locationId ? getLocationsRepository(locationId) : undefined;
     const expectations = buildGateExpectations(scene, cast, location);
     let verdict: (SceneScore & { passed: boolean }) | null = null;
     if (expectations) {

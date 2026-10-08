@@ -1,0 +1,68 @@
+{
+  "review_kind": "independent_read_only_core_audit",
+  "packet": "C04",
+  "actualSHA": "ff6d3df93425e7f876d58162b96152eab2cf7ef9",
+  "status": "changes_required",
+  "source_policy": "All implementation inspected via git show at actualSHA; no mutable source reviewed as committed source.",
+  "findings": [
+    {
+      "id": "C04-CORE-001",
+      "priority": 1,
+      "file": "lib/jobs/production/queue.ts",
+      "line": 114,
+      "title": "Existing recovery intent makes trusted unknown-submission recovery roll back",
+      "trigger": "A submission_unknown job still has its original outbox intent after a crash or expired acknowledgement. resolveSubmissionUnknown receives a valid complete ProviderSubmissionAck after the job lease expires.",
+      "actual_behavior": "ensureOutbox returns false when an intent already exists (sqlite.ts:189-199), which is treated as an exception. The surrounding transaction rolls back the new receipt, provider reference and running state.",
+      "expected_behavior": "Persist the trusted reference and receipt while preserving an existing intent and claim; ensureOutbox must create only if missing. Existing recovery intent is not a failure.",
+      "reproduction_steps": [
+        "Enqueue and claim an eligible job, transition submitting then submission_unknown without finishOutbox (simulate crash after transition).",
+        "Advance store time beyond job and outbox lease expiration.",
+        "Call resolveSubmissionUnknown with the exact job full honored-input receipt and known provider reference.",
+        "Observe exception A reconciliation outbox intent already exists and unchanged submission_unknown job with no receipt/reference committed.",
+        "Regression should show running state, persisted receipt, unchanged existing intent identity/claim and resumed polling with zero submit calls."
+      ],
+      "validation": "Static deterministic transaction-path audit; reviewer did not execute this regression."
+    },
+    {
+      "id": "C04-CORE-002",
+      "priority": 2,
+      "file": "lib/jobs/production/worker.ts",
+      "line": 26,
+      "title": "Stop provider work when heartbeat or job ownership is lost",
+      "trigger": "An in-flight poll outlives its lease, heartbeat returns false, and another worker claims the job.",
+      "actual_behavior": "The heartbeat result is discarded; poll loop checks only cancel_requested status (lines 84-90), never leaseToken or deadline. Old worker can keep polling indefinitely, download/store results, and call provider.cancel if the new owner sees cancellation. Database CAS blocks old commits but does not stop stale provider/filesystem work.",
+      "expected_behavior": "Record heartbeat failure and terminate owned processing. Recheck live token/status before subsequent provider poll/cancel/download work, so only current job owner performs side effects.",
+      "reproduction_steps": [
+        "Seed running job with provider reference and outbox, then start worker A with deferred/running provider poll.",
+        "Expire its injected clock beyond lease deadline before heartbeat; let worker B claim same job.",
+        "Release A poll as running and its wait; observe A issues another poll despite changed job leaseToken.",
+        "Request cancellation; observe stale A may call provider.cancel for a job owned by B.",
+        "Regression should assert no further A poll/cancel/download after ownership loss and unchanged B-owned job."
+      ],
+      "validation": "Static state-machine audit; reviewer did not execute fault-injection regression."
+    }
+  ],
+  "verified_areas": [
+    "immutable semantic input fingerprint and active story/plan/animatic membership with current latest approvals",
+    "historical anchor approval pin retained by completion without latest-decision revalidation",
+    "Asset plus AnchorCandidate/Take plus completed job persisted in one store transaction",
+    "ordered honored input comparison",
+    "thin jobs.sqlite compatibility facade uses primary store",
+    "HTTP capability/quote handlers use lazy injected provider factory, same-origin mutation helper and accepted runtime"
+  ],
+  "known_gaps_not_duplicated": [
+    "historical Take regression coverage",
+    "transaction rollback fault-injection coverage",
+    "full acknowledgement regression coverage",
+    "CLI/vault/import/provider result shape work assigned elsewhere"
+  ],
+  "tests_run": false,
+  "paid_calls": [],
+  "network_calls": [],
+  "credentials_accessed": false,
+  "unverified": [
+    "Fault-injection reproductions in findings were described but not executed.",
+    "I01 atomic budget authorization, release gates and integrated build outside audit scope."
+  ],
+  "decision": "C04 remains incomplete; no acceptance granted."
+}

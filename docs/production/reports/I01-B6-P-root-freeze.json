@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "packet": "I01-B6-P",
+  "status": "ROOT_FROZEN implementation authorized after accepted S",
+  "scope": "Only proof-port.ts, sogni-provider.ts and its existing tests. No composer/finance/shared contracts/S-live sqlite/model catalog/pricing changes. observeQuote deferred; provider.quote stays unknown; reviewed policy stays null.",
+  "owns": [
+    "lib/providers/production/proof-port.ts",
+    "lib/providers/production/sogni-provider.ts",
+    "lib/providers/production/sogni-provider.test.ts"
+  ],
+  "dependency": "Accepted S root5de5ead; branch from78426b7. Root freeze path must be read from integration tree; metadata files may not be in worker checkout.",
+  "imports": {
+    "proofPort": "type ProviderPort/ProviderRequestSnapshot from ../../repositories/production/ports; ProviderSessionSchema, ProviderAccountSessionPayloadSchema and type ProviderSession/ProviderProofPayload from ../../production/provider-proof; IdSchema/Sha256Schema/BudgetUtcMillisSchema from ../../production/contracts; z from zod. No service/composer dependency.",
+    "sogniProvider": "Existing imports plus proof-port types/schemas, hashCanonicalJson/canonicalJson, readFileSync. Node crypto existing createHash/randomUUID. No S ports/shared edits."
+  },
+  "types": [
+    "SogniProofMetadata = Readonly<{sdkVersion:string;sdkSourceHash:string;adapterVersion:string}>",
+    "CapturedProviderSession = Readonly<{session:ProviderSession;credentialFingerprint:string;accountId:string|null}>",
+    "AuthenticatedProviderSession = Readonly<{session:ProviderSession;credentialFingerprint:string;accountId:string}>",
+    "SubscriptionObservation = Extract<ProviderProofPayload,{kind:'account_session'}>['subscription']",
+    "ProviderAccountObservation = Readonly<{providerId:string;captured:AuthenticatedProviderSession;subscription:SubscriptionObservation;observedAt:number}>",
+    "SubmissionProofResolver = (snapshot:Readonly<ProviderRequestSnapshot>,captured:AuthenticatedProviderSession,at:number)=>boolean",
+    "ProductionProofProvider extends ProviderPort {observeAccount():Promise<ProviderAccountObservation>;currentSession():CapturedProviderSession|null}"
+  ],
+  "schemas": "Local proof-port schemas strictObject: metadata fields version text1..80/hash64; captured {session:ProviderSessionSchema,credentialFingerprint:Sha256Schema,accountId:IdSchema.nullable()}; authenticated override accountId:IdSchema; observation {providerId:IdSchema,captured:authenticated,subscription:ProviderAccountSessionPayloadSchema.shape.subscription,observedAt:BudgetUtcMillisSchema}. Reuse S subscription shape/type, no duplicate status taxonomy. Deep-frozen/copy return values; never expose mutable private client.",
+  "constructor": {
+    "factory": "SogniFactoryOptions adds proofMetadata?:SogniProofMetadata and submissionProofResolver?:SubmissionProofResolver. Return type ProductionProofProvider & {close():Promise<void>}. Pass both into default createSogniSdkTransport.",
+    "transport": "SogniSdkTransportOptions adds same proofMetadata/resolver and now?:()=>number. SogniProviderTransport retains existing SDK methods; optional observeAccount?():Promise<ProviderAccountObservation>,currentSession?():CapturedProviderSession|null preserves existing fake transport shape. Built-in transport implements both.",
+    "closed": "No metadata or no synchronous resolver => BUDGET_BLOCKED before actual projects.create. Metadata absent observeAccount also fails closed before getClient/auth. Discover/poll/cancel remain existing behavior. No setters/global registry/SDK client public access.",
+    "injectionCompatibility": "Existing bare injected transport mocks may keep offline submit mapping tests without observation methods; provider.observeAccount rejects BUDGET_BLOCKED/currentSession null. They are trusted test doubles, not a guarded real transport. Real/default SDK transport always enforces guard; no flag disables it. Future runtime constructs guarded SDK transport explicitly, never wraps an unguarded arbitrary transport.",
+    "internalSdkType": "Extend private SogniSdkClient with optional account?:{me():Promise<{walletAddress?:unknown}>;getSubscriptionStatus():Promise<unknown>}; actual installed SDK exposes both. Optional preserves existing injected poll/discovery fixtures; missing methods => sanitized BUDGET_BLOCKED when observeAccount is requested."
+  },
+  "metadata": {
+    "helper": "Export readInstalledSogniProofMetadata():SogniProofMetadata from sogni-provider.ts; synchronous OFFLINE public package-file reads only. Explicit constructor metadata is required for proof path; helper supplies it to future runtime. No credential read or client initialization.",
+    "sdkVersion": "Read actual resolved @sogni-ai/sogni-client/package.json version; currently5.49.0 inspected. No assumed/fallback SDK version allowed for proof. Reject missing files, malformed version or supplied version/hash differing from installed evidence with BUDGET_BLOCKED. Custom injected SDK tests explicitly use trusted fixture metadata corresponding to installed evidence.",
+    "adapterVersion": "Local new contract literal 'sogni-production-proof-v1'; this is app adapter version, not a vendor/model version. Both roles receive identical value; later semantic adapter changes require new value/review.",
+    "sourceHash": "sdkSourceHash=hashCanonicalJson({schemaVersion:1,packageName:'@sogni-ai/sogni-client',sdkVersion,files:[{path,sha256},...]}) with paths sorted lexically and SHA256 exact UTF8/file bytes. Fixed files only: package.json,src/index.ts,src/Account/index.ts,src/Account/subscription.types.ts,src/Projects/index.ts,src/Projects/types/index.ts,dist-esm/index.js,dist-esm/Account/index.js,dist-esm/Projects/index.js,dist/index.js,dist/Account/index.js,dist/Projects/index.js. No appId/role/local file path in manifest hash. Includes actual ESM/CJS code plus inspected SDK source so web/worker share evidence. Missing/changed package files closes proof.",
+    "comparison": "At proof-capable client initialization validate supplied metadata against helper result. Final guard receives those exact immutable metadata through ProviderSession. Future C resolver must match session SDK version/source hash/adapterVersion to quote and worker archives; P never substitutes a quote's metadata."
+  },
+  "captureProtocol": [
+    "getClient attempt captures trimmed env.SOGNI_API_KEY ONCE, exactly the string passed to createInstance. Private credentialFingerprint=SHA256 UTF8 captured trimmed key. No env re-read as proof, key logging/serialization, auth backup or fingerprint route exposure.",
+    "Allocate fresh local sessionId='sogni-session:'+randomUUID() per successfully initialized cached client attempt; role is existing web/worker/probe; per-role appId existing persistence remains distinct. appId is not account identity and need not be archived.",
+    "currentSession() is synchronous/no I/O. null before successful proof-capable initialization, after close/failure, or while invalidated. After initialization may return accountId:null; after successful me returns opaque account ID. It never returns generationId: durable generation belongs to C/S.",
+    "observeAccount requires validated metadata; await getClient, record the attempt/epoch and call that client's account.me(), then same client's account.getSubscriptionStatus(). Await neither a second account client nor automatic quote/catalog estimator.",
+    "Validate server walletAddress as exactly /^0x[0-9a-fA-F]{40}$/; normalize lowercase. accountId='sogni-account:'+hashCanonicalJson({schemaVersion:1,providerId:'sogni',walletAddress:normalizedAddress}). Raw address exists only transiently; not returned/archived/logged. Supporting non-EVM identifiers requires separate reviewed derivation.",
+    "Whitelist subscription {active,status,tier,currentPeriodEnd,providerVersion}. Require active boolean/status nonempty<=80 UTF8; optional tier absent->null or bounded text; unknown returned status/tier preserved literally, never interpreted. currentPeriodEnd absent->null; present requires real ISO UTC ending Z and round-trip-valid date within BudgetUtcMillisSchema. providerVersion absent->null or safe nonnegative integer; never synthesize REST version. Ignore other SDK fields without dumping them. Date parser accepts exactly YYYY-MM-DDTHH:mm:ss[.1..3digits]Z, canonicalizes missing/padded milliseconds then compares ISO roundtrip; invalid dates/overflow make subscription:null.",
+    "A status request failure or malformed whitelisted status yields subscription:null; authenticated me failure/malformed wallet clears accountId and rejects sanitized BUDGET_BLOCKED. No active/subscription/zero-price inference. Successful current-account observation is not entitlement or authorization.",
+    "After awaits require same live epoch/client/session. Sample observedAt from injected now AFTER observations with BudgetUtcMillisSchema; return strict observation. No P TTL/default expiry: C must set finite reviewed expiry when composing S account_session proof."
+  ],
+  "finalSubmitProtocol": [
+    "Factory keeps existing capability/request/role mapping and awaits every readAsset; built-in transport.submit then awaits getClient. After this final await require current live client/epoch and authenticated captured session; missing account observation/metadata/resolver => BUDGET_BLOCKED.",
+    "Sample at=BudgetUtcMillisSchema.parse(now()); call constructor resolver(snapshot,captured,at). Only literal true passes. false/undefined/Promise/throw => sanitized BUDGET_BLOCKED; no await/resolution of an async return.",
+    "After resolver returns true, synchronously recheck unchanged epoch/client/session (resolver can synchronously trigger close). Immediately invoke that exact client's projects.create(submission.parameters), no await/yield between guard and invocation. Existing explicit billingMode stays subscription/tokens; no fallback.",
+    "Resolver future C checks durable current generation, pinned account/fingerprint/session, exact archived execution/request hash, proof expiry and matching SDK/source/adapter metadata. P supplies actual captured client facts, not current env assumptions. Changed environment alone does not change cached session/fingerprint; durable generation mismatch still denies.",
+    "Actual provider acceptance remains external; P does not reserve/release/settle money. Existing worker submit catch conservatively yields submission_unknown; no worker change or automatic retry is introduced."
+  ],
+  "resetClose": [
+    "close increments epoch and clears exposed session/account/clientPromise synchronously, then disposes old client/releases ownership. getClient awaits per-instance closePromise before starting any replacement attempt; this prevents old cleanup releasing a new attempt's locks. Idempotent close; later reinit captures current key/new session.",
+    "Any old pending init/observation resolving after epoch change cannot publish session/account state or submit; dispose stale newly created client and reject BUDGET_BLOCKED. Failed init clears only its own attempt, not a newer attempt; preserve existing ownership-release behavior.",
+    "An account observation detecting a different account on same client must invalidate old session and reject; require close/recreate/new session before further proof. An unavailable subscription alone keeps authenticated identity but returns null subscription. No auth mutation/reset method is exposed.",
+    "Session metadata/account/fingerprint are immutable for lifetime of one authenticated session; raw SDK client never escapes. Cached env mutation does not rebind client. close/recreate or init retry changes session, invalidating old worker proof."
+  ],
+  "minimalTests": [
+    {
+      "name": "I01-B6-P observes bounded account facts from the actual cached SDK client",
+      "file": "lib/providers/production/sogni-provider.test.ts",
+      "checks": "Injected SDK only and fixture env: one createInstance, same client me/status; capture fingerprint from exact configured key; opaque wallet hash; whitelisted future status preserved; raw extra/email/key absent. Two roles same key/wallet share account/fingerprint/metadata, different session/app IDs. Missing/malformed status=>null; missing metadata/me failure blocks. close/recreate uses new session; no real SDK/network."
+    },
+    {
+      "name": "I01-B6-P runs the synchronous proof guard after asset awaits immediately before SDK create",
+      "file": "lib/providers/production/sogni-provider.test.ts",
+      "checks": "Deferred injected readAsset advances clock/invalidates session after initial validation. Resolver false from expired proof or wrong session=>BUDGET_BLOCKED and projects.create0; missing resolver and Promise return also deny. Valid authenticated matching fake proof=>guard directly followed by create once; exact same captured client/fingerprint/metadata supplied. close during deferred observation/submit blocks stale attempt; no fallback/resubmit."
+    }
+  ],
+  "verification": "Only2 new behavioral tests via npm test -- lib/providers/production/sogni-provider.test.ts -t 'I01-B6-P'; preserve existing tests and run smallest affected legacy mock selector if required; npm run typecheck; git diff --check. No broad suite/build/live calls.",
+  "decisions": [
+    "Root approved boolean synchronous resolver rather than void: runtime literal true prevents accidental async callback admission.",
+    "Root approved fixed SDK source/runtime manifest and local adapter-v1 identifier; missing evidence remains closed.",
+    "Root approved EVM wallet-only opaque identity derivation; C/S generation maps this opaque ID without raw PII.",
+    "Root confirmed bare injected legacy transports are offline fixtures; real composition must use proof-capable constructor path."
+  ],
+  "implementationPerformed": false,
+  "testsRun": [],
+  "networkCalls": [],
+  "authenticatedCalls": [],
+  "paidCalls": [],
+  "inspectedMetadata": {
+    "sdkVersion": "5.49.0",
+    "sdkSourceHash": "5c8d291a5fa677190e7853c7983d77109e3a86299aa8fcd0d3e4fc55af47b983",
+    "adapterVersion": "sogni-production-proof-v1",
+    "meaning": "Installed package/source/runtime manifest evidence; not live account/model/pricing proof or runtime cryptographic attestation."
+  },
+  "sourceHashes": {
+    "/Users/abid/.codex/worktrees/production-core/perabyte-studio/lib/providers/production/sogni-provider.ts": "06b9c771b4132501d06ec7593347257b7440a9a91a81dde90cef3472cd619871",
+    "/Users/abid/.codex/worktrees/production-core/perabyte-studio/lib/providers/production/sogni-provider.test.ts": "ae27616e3ec91055f04d2c4f247368e7abbebeb0bb681896b6b7f7fc9f6e8dff",
+    "/Users/abid/.codex/worktrees/production-core/perabyte-studio/lib/production/errors.ts": "0b54e5a3f8e1e81411dbbfbb88b89489789abb704e3163e7753f4db8a3e0ef8a",
+    "/Users/abid/.codex/worktrees/production-core/perabyte-studio/docs/production/reports/I01-B6-S-root-freeze.json": "235e08351f3b9ca89b1acabe5c62173aaa685084c9eedb520674fb1064460379",
+    "/Users/abid/.codex/worktrees/production-core/perabyte-studio/docs/production/reports/I01-B6-current-boundary-proposal.json": "c362f7f1593f3d6a9210c9b14d32cfccbf717a6f79ec7ab780f3e5f9de1cf796",
+    "/Users/abid/.codex/worktrees/production-provider-proof/perabyte-studio/lib/production/provider-proof.ts": "7708c1ce0db816fd39f5b66651ca8b4366ecb4ef61a72378c7f5e4670410d999"
+  },
+  "proposalVerification": {
+    "jsonParse": "pass",
+    "ownedPaths": 3,
+    "behavioralTests": 2,
+    "stableDTOOnlyReadInS": true,
+    "activeSqliteOrTestsInspected": false,
+    "implementationOrTestsRun": false
+  },
+  "root_review": "Root accepts synchronous literal-true resolver, immutable same-client capture, epoch/close gate, opaque EVM identity and explicit installed metadata. Does not grant live calls or entitlement. S integrated at5de5ead; combined functional/typecheck pass."
+}

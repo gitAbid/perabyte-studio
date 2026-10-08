@@ -22,6 +22,9 @@ export interface CharacterRow {
   identity?: CharacterIdentity;
   /** Lineage: set when this record was saved as a variation of another. */
   parentId?: string;
+  /** Character-level canon approval (prompt-only characters without a saved
+   * sheet version). Same convention as sheet-asset meta (C8). */
+  approval?: { approvedAt?: number; recommendedAt?: number };
   favorite?: boolean;
   tags?: string[];
   createdAt: number;

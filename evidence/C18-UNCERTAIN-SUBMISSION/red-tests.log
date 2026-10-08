@@ -1,0 +1,93 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.0 /Users/abid/Projects/perabyte-studio/.worktrees/zcode-production-core/.worktrees/c18-uncertain-submission
+
+ ❯ lib/providers/production/submission-errors.test.ts (0 test)
+ ❯ lib/jobs/production/worker.test.ts (48 tests | 1 failed) 2684ms
+   ✓ production worker recovery (42)
+     ✓ does not poll or cancel again from an old cancellation owner after lease transfer 34ms
+     ✓ recovers a full unknown-submission acknowledgment after SQLite reopen and polls without another submit 17ms
+     ✓ stops the old poller after its lease is reclaimed and resumes the same provider reference without submit 15ms
+     ✓ completes a SQLite take against its exact historical anchor approval after a later rejection 23ms
+     ✓ keeps one scheduler owner, preserves its heartbeat on a second start, and recovers after SIGKILL 1082ms
+     ✓ streams imported media with required source and rights provenance and ignores client paths 277ms
+     ✓ rejects missing provenance and MIME lies before creating an asset record 40ms
+     ✓ awaits staged-file abort cleanup when a slow multipart request is canceled 37ms
+     ✓ returns promptly on an early streamed decoder failure and rejects invalid rights input without publishing bytes 98ms
+     ✓ reports a stale worker heartbeat as unavailable without exposing local paths 19ms
+     ✓ cancels a queued job without calling the provider 15ms
+     ✓ retains an acknowledgement that races cancellation, then cancels that exact provider reference 23ms
+     ✓ archives verified late media without completing or selecting a canceled job 13ms
+     ✓ dead-letters after the configured transient retry limit with an inspectable cause 14ms
+     ✓ backs off provider polling from two to ten seconds with bounded jitter 228ms
+     ✓ keeps an accepted-but-unreferenced submission unknown and never submits it twice 48ms
+     ✓ blocks paid submit by default when no server authorization guard is connected 12ms
+     ✓ requires both asynchronous proof preparation and a synchronous reservation callback 26ms
+     ✓ rejects policy revocation and credential rotation discovered before admission 26ms
+     ✓ denies account evidence that expires while asynchronous preparation is in progress 12ms
+     ✓ rolls back a durable reservation when a later admission event write fails 15ms
+     ✓ admits only one of two SQLite projects competing for the same account cap 28ms
+     ✓ rejects a stale outbox claim before reservation 19ms
+     ✓ rejects foreign lease ownership acquired during asynchronous preparation 61ms
+     ✓ rejects mismatched quote-input and execution-semantic pins before reserve 26ms
+     ✓ rejects incompatible media and budget quote facts before reserving or submitting 71ms
+     ✓ never readmits a queued job with an existing reservation or submitting history 18ms
+     ✓ rejects a foreign result target before any provider discovery or paid call 11ms
+     ✓ blocks duplicate continuation end-frame roles before provider submission 12ms
+     ✓ blocks a swapped continuation end-frame before provider submission 15ms
+     ✓ blocks submission before provider I/O when the latest active story decision is rejection 13ms
+     ✓ denies approval revocation during asynchronous preparation before reserving 17ms
+     ✓ keeps a committed admission when approval changes afterward 15ms
+     ✓ accepts a provider acknowledgement after the worker atomically heartbeats job and outbox 24ms
+     ✓ uses the fresh live capability observation time after discovery awaits 16ms
+     ✓ blocks when capability evidence expires before submission 13ms
+     ✓ blocks when the quote expires during asynchronous authorization 15ms
+     ✓ persists a valid submit acknowledgement during shutdown and resumes polling without resubmission 37ms
+     ✓ only marks completed after vault bytes, asset record and receipt are durable 18ms
+     ✓ atomically commits a durable anchor result record with media, receipt and the leased completed job 18ms
+     ✓ rolls back the inserted asset when a real SQLite result-record trigger aborts completion 21ms
+     ✓ rolls back asset and result creation when the durable receipt includes an unrequested input 20ms
+   ✓ real combined production budget admission (2)
+     ✓ races, retains unknown actual, then admits on final folded actual 47ms
+     ✓ rolls back execution and reservation with a submitting-event trigger failure 15ms
+   ❯ uncertain submission classification (C18-UNCERTAIN-SUBMISSION) (4)
+     ✓ lands a mid-submit ECONNRESET fetch failure in submission unknown and never resubmits it 15ms
+     × holds a deterministic 400-style provider rejection in the same fail-safe unknown outcome without auto-retry 17ms
+     ✓ keeps user cancellation terminal when the provider would abort after a pre-submission cancel 11ms
+     ✓ treats an abort raised during the provider submit as uncertain rather than canceled 18ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lib/providers/production/submission-errors.test.ts [ lib/providers/production/submission-errors.test.ts ]
+Error: Cannot find module './submission-errors' imported from /Users/abid/Projects/perabyte-studio/.worktrees/zcode-production-core/.worktrees/c18-uncertain-submission/lib/providers/production/submission-errors.test.ts
+ ❯ lib/providers/production/submission-errors.test.ts:3:1
+      1| import { describe, expect, it } from "vitest";
+      2| import { ProductionApplicationError } from "../../production/errors";
+      3| import { isUncertainSubmissionError } from "./submission-errors";
+       | ^
+      4|
+      5| const CONNECTION_CODES=["ECONNRESET","ECONNREFUSED","ECONNABORTED","ET…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lib/jobs/production/worker.test.ts > uncertain submission classification (C18-UNCERTAIN-SUBMISSION) > holds a deterministic 400-style provider rejection in the same fail-safe unknown outcome without auto-retry
+AssertionError: expected 'Provider submission outcome is uncert…' to contain 'non-network failure'
+
+Expected: "non-network failure"
+Received: "Provider submission outcome is uncertain; automatic resubmission is disabled."
+
+ ❯ lib/jobs/production/worker.test.ts:181:791
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  1 failed | 47 passed (48)
+   Start at  12:27:08
+   Duration  3.21s (tests 88%, transform 6%, import 5%)

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "packet": "I01-B6-W-LOCK",
+  "status": "ROOT_FROZEN implementation authorized NOW (parallel with I01-B6-C and all Wave-1 packets)",
+  "frozenBy": "software-architect 2026-10-05; accepted by zcode orchestrator",
+  "scope": "Only the mandatory close/init worker-lock race fix in sogni-provider.ts plus coverage tests. No composer, wiring, routes, scripts, or contract changes.",
+  "owns": [
+    "lib/providers/production/sogni-provider.ts",
+    "lib/providers/production/sogni-provider.test.ts"
+  ],
+  "dependency": "Base 21e1e7a (zcode/production-core). Disjoint from I01-B6-C owns (verified). Source of the mandate: reports/I01-B6-P-integrated.json mandatoryFollowup.",
+  "defect": "getClient attempt catch (sogni-provider.ts:181) runs releaseOwnership() only when epoch===attemptEpoch. Sequence: worker-role attempt A starts (epoch 0) and pauses before lock acquisition; close() bumps epoch to 1 and its cleanup releases (no-op) and finishes; A resumes, acquires lockServer+lockHandle, createInstance resolves, epoch check fails, A disposes its client and throws WITHOUT releasing — the just-acquired worker socket/pid lock is orphaned until process exit; next worker init fails 'Another local worker owns the Sogni worker app ID'.",
+  "fixProtocol": [
+    "Track ownership per attempt: add a transport-scoped lockOwnerEpoch (number|null, initially null). The worker-role branch sets lockOwnerEpoch=attemptEpoch immediately after BOTH acquireWorkerSocket and acquireWorkerPidFile succeed. releaseOwnership() clears it to null when it releases.",
+    "In the attempt catch, release when this attempt still owns the locks regardless of epoch: if lockOwnerEpoch===attemptEpoch => await releaseOwnership() (which sets null), in addition to the existing epoch===attemptEpoch cleanup. A newer live attempt's locks are never released by a stale attempt (their epochs differ).",
+    "close()'s cleanup releaseOwnership() must be a no-op when lockOwnerEpoch===null (another owner/no owner) so a post-close racing attempt that acquires later keeps its own cleanup responsibility.",
+    "Do not change: post-close submit denial (the ERR_INVALID_STATE fix), observeAccount/subscription whitelist, guard ordering, app-ID persistence, or any test fixture semantics. Behavior-preserving refactor only within createSogniSdkTransport."
+  ],
+  "minimalTests": [
+    { "name": "I01-B6-W-LOCK stale init attempt after close never orphans the worker lock", "file": "lib/providers/production/sogni-provider.test.ts", "checks": "Real temp dataDir, role 'worker', deferred injected importSdk: start discover([]) (triggers getClient), call close() while the import is pending, then resolve the fake SDK => attempt rejects BUDGET_BLOCKED; a SECOND transport on the same dataDir (role worker) then successfully initializes (locks acquirable — fails today with EADDRINUSE). Also: close() during a post-close re-init attempt leaves the new attempt's locks intact." },
+    { "name": "I01-B6-W-LOCK observeAccount me()-rejection denies and invalidates (P coverageNit)", "file": "lib/providers/production/sogni-provider.test.ts", "checks": "Injected SDK account.me() rejecting => observeAccount rejects sanitized BUDGET_BLOCKED, session cleared, no lock orphan; complements the existing malformed-me-response case." }
+  ],
+  "verification": "npm test -- lib/providers/production/sogni-provider.test.ts; npm run typecheck; git diff --check. Offline only; no SDK/network/key.",
+  "decisions": [
+    "W split into W-LOCK (now) and W-WIRE (after C) because W-WIRE imports C's composer API and cannot typecheck before C is accepted.",
+    "Per-attempt lock ownership (lockOwnerEpoch) chosen over epoch-check removal: stale attempts must never release a NEWER live attempt's locks."
+  ]
+}

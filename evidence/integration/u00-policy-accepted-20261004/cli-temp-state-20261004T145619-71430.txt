@@ -1,0 +1,22 @@
+{
+  "state": "valid",
+  "usage": {
+    "decision": "continue",
+    "minimumRemainingPercent": 1.5,
+    "reasons": [],
+    "windows": [
+      {
+        "limitId": "synthetic",
+        "window": "primary",
+        "remainingPercent": 1.5,
+        "resetAt": null
+      },
+      {
+        "limitId": "synthetic",
+        "window": "secondary",
+        "remainingPercent": 80,
+        "resetAt": null
+      }
+    ]
+  }
+}

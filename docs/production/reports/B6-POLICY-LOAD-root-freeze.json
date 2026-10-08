@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "packet": "B6-POLICY-LOAD",
+  "status": "BOUNDARY_FROZEN implementation authorized (user unblock 2026-10-06: reviewed policy capture + standing budget authorization granted for paid Sogni renders; C13 pilot authorized)",
+  "frozenBy": "zcode orchestrator; base 2be828f",
+  "scope": "Load the installed reviewed pricing/coverage policy into the composition. W-WIRE deliberately shipped reviewedPolicy:null with no loader ('the user/root installs a reviewed policy capture later'); this packet adds exactly that loader, env-gated and fail-closed. No composer/takes/provider changes.",
+  "owns": [
+    "lib/production/composition.ts",
+    "lib/production/composition.test.ts"
+  ],
+  "protocol": [
+    "withProductionComposition gains: options.reviewedPolicy ?? loadReviewedPolicyFromPath(env.PERABYTE_STUDIO_REVIEWED_POLICY_PATH). Resolution happens INSIDE withProductionComposition (per-composition, before the composer is built), never at import time.",
+    "loadReviewedPolicyFromPath(path: string|undefined): ReviewedPolicyInput|null \u2014 undefined path => null (today's behavior byte-for-byte); path set => readFileSync utf8, JSON.parse, parseReviewedQuotePolicy (the accepted strict parser in lib/production/proof-policy.ts). ANY failure (missing file, unreadable, malformed JSON, schema violation, hash mismatch, expired) => throw sanitized BUDGET_BLOCKED 'reviewed policy could not be loaded' \u2014 fail loud, never silently fall back to null when the operator asked for a policy.",
+    "No caching across compositions (fresh read per composition; the file is the operator's install act). No env reads at import time. No other behavior changes: provider factory, composer wiring, store lifecycle byte-identical.",
+    "Tests: (a) no env var => reviewedPolicy null (existing tests unchanged); (b) valid policy file => composer receives it and a bound quote composes end-to-end with the existing fixtures (reuse budget-composer test fixtures via the fake provider); (c) malformed file => BUDGET_BLOCKED with sanitized message, no partial composition; (d) file with tampered configCanonicalJson hash => BUDGET_BLOCKED; (e) expired policy file => BUDGET_BLOCKED."
+  ],
+  "verification": "npm test -- lib/production/composition.test.ts lib/services/production/budget-composer.test.ts; npm run typecheck; git diff --check.",
+  "collisionCheck": "owns only composition.ts + its test \u2014 disjoint from the C13-PILOT-SCRIPT packet (scripts/pilot-short-portrait.mjs + docs/production/pilots/short-portrait.md) and from everything accepted (composition.ts is W-WIRE-owned, same parent I01 lane; no other packet touches it)."
+}

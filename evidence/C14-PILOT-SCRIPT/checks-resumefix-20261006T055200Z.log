@@ -1,0 +1,52 @@
+# C14-RESUME-FIX checks transcript — 2026-10-06T05:49:38Z
+# worktree: /Users/abid/Projects/perabyte-studio/.worktrees/c14-pilot-script  branch: zcode/c14-pilot-script  head: 507dd5c
+
+$ node --check scripts/pilot-long-landscape.mjs
+OK (exit 0)
+
+$ npm run typecheck
+
+> perabyte-studio@0.1.0 typecheck
+> tsc --noEmit
+
+OK (exit 0, no output = no type errors)
+
+$ node /tmp/c14-fix-drill/regression-harness.mjs scripts/pilot-long-landscape.mjs  (unit-style shape test against the REAL saveBatchState/loadBatchState, extracted verbatim into a vm sandbox)
+PASS 1 saveBatchState(fresh-run server shape) -> shotPlanRevisionId=planrev_fresh_shape, animaticRevisionId=animrev_fresh_shape
+PASS 2 loadBatchState(saved state) -> id validation passes, ids round-trip
+PASS 3 loadBatchState(pre-fix state without ids) -> precise PilotStop refusal
+PASS 4 saveBatchState(id-less plan shape) -> fail-closed guard refuses
+PASS 5 saveBatchState(string-form plan shape) -> ids preserved
+REGRESSION HARNESS: 5/5 assertions passed against the real extracted functions
+
+$ drill spend audit (must all be zero — no quotes, no enqueues, no [paid] ledger entries, no shot-loop entries)
+drill-batch1.log: [paid]=0 shot-loop=0 quote=0 exit=1
+drill-resume.log: [paid]=0 shot-loop=0 quote=0 exit=1
+drill-resume-tamperedid.log: [paid]=0 shot-loop=0 quote=0 exit=1
+
+$ env-gate proof (final mode with SOGNI_API_KEY / PERABYTE_STUDIO_REVIEWED_POLICY_PATH unset)
+exit=1
+missing-var lines: 2
+
+$ drill-batch1.log decisive lines
+[2] seeded project 05d70b64-9701-412d-a7b7-c6d70988cfdf; long plan asserted: 4 pages of 6 shots, order stable across independent reads
+[1] budget scope unit=spark_token: unavailable (POLICY_MISSING, AUTHORIZATION_MISSING)
+[1] budget scope unit=minor_currency&currency=USD: unavailable (AUTHORIZATION_MISSING)
+PILOT STOPPED: Budget identity did not resolve on the seeded project 05d70b64-9701-412d-a7b7-c6d70988cfdf (immediate stop per --budget-wait-seconds 0) (stop before any enqueue). authorize this project now via the budget routes (POST http://127.0.0.1:3100/api/production/projects/05d70b64-9701-412d-a7b7-c6d70988cfdf/budget) — see docs/production/pilots/long-landscape.md section 4; also install the reviewed policy (B6-POLICY-LOAD) and start the server/worker with SOGNI_API_KEY so live account observation works. See docs/production/pilots/long-landscape.md.
+
+$ drill-resume.log decisive lines
+RESUME of batch run c14resumefix1: project 05d70b64-9701-412d-a7b7-c6d70988cfdf, 1/24 shots complete; continuing from shot 2
+PILOT STOPPED: Completed shot shot_01 now selects nothing, but the batch state recorded take drill-placeholder-take-not-rendered; refusing to resume over a changed selection.
+  (the run reached verifyCompletedShots, which executes strictly AFTER the fixed
+   story/plan/animatic id verification at scripts/pilot-long-landscape.mjs:1348-1350 —
+   the pre-fix always-firing "no longer runs the batch's story/plan/animatic" refusal did NOT fire;
+   the budget gate itself sits AFTER that completed-shot check, see deviation note in the packet report)
+
+$ drill-resume-tamperedid.log decisive lines (control: the check must still discriminate)
+PILOT STOPPED: Project 05d70b64-9701-412d-a7b7-c6d70988cfdf no longer runs the batch's story/plan/animatic (active story 1acccd17-0de4-415e-84c4-a861dd014d30, plan cfe720a9-a360-49df-862e-94807ab9900c); refusing to resume.
+
+$ git diff --check (unstaged; --cached --check captured after staging in the commit step)
+OK (no whitespace errors)
+
+$ git diff --cached --check (after staging)
+FAILED (rc=2)

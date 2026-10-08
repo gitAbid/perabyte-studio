@@ -1,0 +1,83 @@
+{
+  "kind": "architectural_boundary_review",
+  "packet": "I01-B1",
+  "status": "proposal_for_integrator_approval_before_code",
+  "scope": [
+    "lib/production/contracts.ts",
+    "lib/production/contracts.test.ts",
+    "lib/production/budget.ts",
+    "lib/production/budget.test.ts"
+  ],
+  "decision": "Approve only with refinements below; no ports/SQL/services/provider code in B1.",
+  "common_types": {
+    "BudgetOperation": "anchor | take | speech | music | text_proposal; render is too coarse and forbidden.",
+    "BudgetUnit": "minor_currency | spark_token; integer amount always refers to explicit unit, never implicit conversion.",
+    "MoneyScope": "{providerId, accountId, currency: ISO4217-or-null, unit}; minor_currency requires currency, spark_token requires currency:null. Unit/entitlement relationship must come from evidence, not inference.",
+    "Versioning": "All records schemaVersion:1. Logical policyId/authorizationId are stable; immutable revisionId and revision positive safe integer identify append-only history. Latest pointers/CAS belong persistence later, never mutable history edits.",
+    "SafeAmount": "Nonnegative safe integer. Null only for facts genuinely unknown; positive cap is required to authorize (zero cap may be valid explicit block)."
+  },
+  "dtos": {
+    "AccountBudgetPolicy": "{schemaVersion, revisionId, policyId, revision, providerId, accountId, currency, unit, dailyCap:number|null, expiresAt:number|null, revoked:boolean, actorId, createdAt}. Logical policy identity scope never changes.",
+    "BudgetAuthorization": "{schemaVersion, revisionId, authorizationId, revision, projectId, policyId, policyRevisionIdAtAuthorization, projectCap:number|null, allowedModelIds:bounded unique nonempty ids[], allowedOperations:unique BudgetOperation[], entitlementModes:subscription|spark[], expiresAt:number|null, revoked, actorId, createdAt}. No persisted expectedPolicyVersion; expected versions belong commands.",
+    "AuthorizeBudgetCommand": "Strict {expectedAuthorizationRevision:number|null, expectedPolicyRevision:number, policyId, projectCap, allowedModelIds, allowedOperations, entitlementModes, expiresAt, actorId}. Project ID from route. No caller accountId/evidence/actual/refund. Account-policy editing uses separate discriminated command with expectedPolicyRevision; server resolves account evidence.",
+    "AccountEvidence": "{schemaVersion,id,providerId,accountId,source,reference,observedAt,expiresAt,credentialBindingId}. Required bounded nonempty source/reference; expiresAt>observedAt. Binding is opaque server-produced connection/credential generation identity, no raw secrets/key suffix/display name.",
+    "BudgetQuote": "First-class strict {schemaVersion,id,projectId,providerId,modelId,operation:BudgetOperation,inputHash,estimateMin:number|null,estimateMax:number|null,currency,unit,entitlement,createdAt,expiresAt,mediaQuoteId:string|null}. Preserve existing ProductionQuote untouched; media adapter creates companion BudgetQuote with mediaQuoteId, text creates BudgetQuote directly. Validate min<=max if known; unknown amount/unit/account/mode blocks reserve. Advisory withinAuthorizedCap cannot authorize.",
+    "QuoteAccountBinding": "{schemaVersion,id,budgetQuoteId,accountEvidenceId,providerId,accountId,credentialBindingId,currency,unit,executionSemanticHash,quotedAt}. Exact BudgetQuote.inputHash represents explicit normalized quoted input; executionSemanticHash separately binds actual server execution recipe. Binding is trusted, append-only; identical evidence/account/unit required at reserve.",
+    "BudgetExecution": "Discriminated {kind:media_job,executionId:jobId,operation:anchor|take|speech|music} or {kind:text_proposal,executionId:serverRequestId,operation:text_proposal}; plus projectId,idempotencyKey,requestHash,executionSemanticHash,providerId,modelId. Browser cannot invent billing execution identity.",
+    "BudgetReservation": "{schemaVersion,id,execution,authorizationRevisionId,policyRevisionId,budgetQuoteId,quoteBindingId,accountEvidenceId,providerId,accountId,credentialBindingId,currency,unit,upperEstimate,reservedAt,utcDay}. UTC day YYYY-MM-DD derived from reservedAt. Natural uniqueness executionId and project/idempotency; immutable pins, no new reserve on uncertain replay.",
+    "ReconciliationEvidence": "Strict discriminated actual {cumulativeActual:number|null,final:boolean}, nonbilling {confirmedNonacceptanceOrNonbilling:true}, refund {amount:positiveSafeInteger}. Common {schemaVersion,eventKey,reservationId,providerId,accountId,currency,unit,observedAt,source,reference,provenance}. Provenance provider:{producerId} or manual:{actorId,decision,reason}; explicit human reason/reference mandatory. Actual null implies final:false. Media status/cancel/error are not evidence variants."
+  },
+  "policy_revision_semantics": [
+    "One stable policyId per evidenced provider/account/currency/unit; projects reference it, never competing daily policies.",
+    "Authorization retains policyRevisionIdAtAuthorization as history. Standing authorization follows latest policy revision for current daily cap/expiry/revocation, while project cap/model/operation/mode scope comes from latest authorization. Thus policy cap reduction blocks immediately; legitimate explicit human policy increase does not invalidate all standing project authorizations.",
+    "Reserve pins the exact current policy and authorization revision in one CAS-protected transaction. A pending worker expected-version mismatch reloads/revalidates, never silently submits.",
+    "Policy renewal/cap change/revocation and authorization version changes never reset existing liability. Historical reservations always count by stable project/account scope, not only current revision IDs."
+  ],
+  "pure_functions": [
+    {
+      "signature": "checkedAdd(left:number,right:number):number; checkedSubtract(left:number,right:number):number",
+      "semantics": "Reject unsafe/negative inputs, overflow or underflow; never clamp financial totals."
+    },
+    {
+      "signature": "utcBudgetDay(timestamp:number):string",
+      "semantics": "Validate nonnegative safe timestamp and representable Date; derive UTC, never local timezone."
+    },
+    {
+      "signature": "foldReservation(reservation:BudgetReservation, evidence:readonly ReconciliationEvidence[]):ReservationAccounting",
+      "semantics": "Consume append order, deduplicate by scoped eventKey with canonical semantic payload equality. Identical replay no-op; conflict throws. Validate reservation/provider/account/currency/unit equality. Output {knownGrossActual:number|null,refundTotal,netKnownActual:number|null,settled:boolean,released:boolean,unresolvedLiability:number,totalLiability:number,overrun:boolean,reconciliationConflict:boolean}."
+    },
+    {
+      "signature": "summarizeBudget(reservations:readonly ReservationAccountingWithPins[], scope:{projectId?:string;providerId;accountId;currency;unit;utcDay?:string}):{knownNetActual:number;unresolvedLiability:number;totalLiability:number}",
+      "semantics": "Project scope counts all days; account daily scope counts original reservation utcDay. Sum total once, reject mixed scope/unit and overflow. Known actual plus unresolved top-up equals totalLiability; do not double count estimate plus actual."
+    },
+    {
+      "signature": "validateReservationEligibility(context:BudgetEligibilityContext):BudgetDecision",
+      "semantics": "Pure decision with explicit now/latest revisions/evidence/quote/binding/execution/current totals; returns allowed or typed blocking reason. Does not reserve, update job, trust advisory cap flag, or authorize production by itself."
+    }
+  ],
+  "event_fold_rules": [
+    "No actual evidence: totalLiability=upperEstimate; unknown actual retains it. Pending cumulative known actual: totalLiability=max(upperEstimate,netKnownActual), unresolvedLiability=totalLiability-netKnownActual. This records overruns without prematurely releasing estimate.",
+    "Final numeric cumulative actual replaces estimate: totalLiability=netKnownActual, unresolvedLiability=0. Subsequent final cumulative upward corrections are allowed and persisted; decreases require explicit refund, never replace actual with lower value. Pending/unknown events cannot downgrade finality.",
+    "Actual evidence is cumulative, monotonic gross across distinct events, never additive per-report. Equal cumulative with distinct key is harmless evidence; final flag may upgrade once.",
+    "Refunds are distinct positive events, sum once, bounded by knownGrossActual. Until final/nonbilling resolution, pending estimate remains conservatively retained even after refund. Final net known spend=max gross-refunds with checked subtraction.",
+    "Affirmative nonbilling releases only when no positive gross actual is known. If later authoritative actual contradicts earlier release, persist actual, restore appropriate liability and flag reconciliationConflict; never discard a real charge to defend prior zero. Conflicting nonbilling after positive actual rejects.",
+    "Every actual overestimate persists regardless cap; overrun is grossActual>upperEstimate. New reserve checks current net liabilities against current project/daily cap.",
+    "Timeout, submit_unknown, requested cancellation, provider generic failure and media completion never settle/release."
+  ],
+  "minimum_B1_tests": [
+    "Strict scopes anchor/take/speech/music/text; media Quote remains compatible; text BudgetQuote without mediaQuoteId.",
+    "Standing expiry null allowed, null cap/unknown quote rejected, expiry/observed clock bounds, min>max and unsafe sums.",
+    "Latest policy reduction/increase/renewal keeps stable authorization identity and accumulated totals; same scope across revisions.",
+    "Duplicate identical event no-op; conflicting scoped event key rejects; cumulative pending vs final math; unknown retention; repeated final; upward correction/overrun.",
+    "Refund once/bounded/underflow, no pending estimate release; actual after confirmed nonbilling restores liability/conflict; no media-driven settlement.",
+    "Project outstanding across midnight vs original account daily bucket; mixed currency/unit/provider/account rejection; manual provenance mandatory and forged command fields rejected."
+  ],
+  "remaining_B2_prerequisites": [
+    "Persistence unique keys/CAS/latest pointers and append ordering must enforce these pure assumptions; pure fold is not concurrency safety.",
+    "Atomic reserve plus submitting remains queue/service transaction amendment, including current lease/approval and live account binding; do not implement in B1."
+  ],
+  "paid_calls": [],
+  "network_calls": [],
+  "tests_run": false,
+  "code_written": false
+}

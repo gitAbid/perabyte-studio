@@ -1,0 +1,174 @@
+{
+  "review_kind": "independent_read_only_runtime_final_review",
+  "packet": "C04",
+  "actualSHA": "c7eb4d2e2664453b597abc8376cb276f6af3c0a3",
+  "actualParentSHA": "8cf556bc3a2d14d9b1dae7cddba9b6bc9bf1971b",
+  "actualBaseSHA": "ff6d3df93425e7f876d58162b96152eab2cf7ef9",
+  "status": "accepted_runtime_slice_only",
+  "changed_files": [
+    "app/api/production/assets/import/route.ts",
+    "app/api/production/health/route.ts",
+    "lib/jobs/production/queue.test.ts",
+    "lib/jobs/production/queue.ts",
+    "lib/jobs/production/worker.test.ts",
+    "lib/jobs/production/worker.ts",
+    "lib/media/production/vault.test.ts",
+    "lib/media/production/vault.ts",
+    "scripts/production-doctor.mjs",
+    "scripts/production-worker.mjs"
+  ],
+  "followup_changed_files": [
+    "lib/jobs/production/worker.test.ts",
+    "lib/jobs/production/worker.ts"
+  ],
+  "ownership_check": "pass: aggregate10 assigned runtime files; followup2 worker files only; tracked source exact HEAD during test reproduction",
+  "findings": [],
+  "prior_findings": [
+    {
+      "id": "C04-CORE-001",
+      "status": "closed",
+      "evidence": "Retained expired outbox accepted by insert-if-absent recovery; real SQLite reopen + full receipt/ref polls same request without submit."
+    },
+    {
+      "id": "C04-CORE-002",
+      "status": "closed",
+      "evidence": "Lost heartbeat aborts processing; token/deadline checks bracket async provider effects. Two live stores prove old poll/cancel owner stops after reclaim."
+    },
+    {
+      "id": "C04-RUNTIME-ACK-001",
+      "status": "closed",
+      "evidence": "Returned ACK commits under live owned lease even when shutdown aborted; deferred submit fixture persists ref/receipt, skips cancel/poll, and next worker polls same reference with no resubmit."
+    },
+    {
+      "id": "ROOT-C04-CAPABILITY-TIME",
+      "status": "closed",
+      "evidence": "Post-discovery canSatisfy uses this.now(); immediate pre-submit checks current quote expiry and capability freshness after async authorization. Clock-advance tests cover later observedAt and both expiry races."
+    }
+  ],
+  "verified_areas": [
+    "Canonical-directory TCP scheduler exclusion before opening store; simultaneous restart/SIGKILL and alias owner fixture pass.",
+    "Owner-matched PID/heartbeat readiness and conservative cleanup.",
+    "Staged import actual decode and provenance validation before publication; slow aborted multipart stream destroys active file and awaits cleanup.",
+    "Historical Take exact approved pin retained after later rejection; real result-insert trigger rolls back inserted Asset/result/job updates across reopen while receipt retained.",
+    "Unrequested ordered-receipt regression restored alongside real rollback fault injection."
+  ],
+  "code_quality": "Changes stay within explicit queue/store/provider/vault boundaries. No secondary job database, global composition setter or paid authorization bypass; I01 atomic reserve boundary remains explicit future prerequisite.",
+  "nonblocking_limitations": [
+    "Conservative orphan blob retention after publish/DB failure avoids unsafe deletion of shared content-addressed data; C15 inventory/recovery remains responsible.",
+    "Deterministic scheduler TCP port collision with unrelated service or another hash collision fails closed; bounded actionable startup error, no stealing.",
+    "Shutdown acknowledgement fixture resumes another worker on same store rather than explicitly reopening that exact scenario. Other full-ack/recovery/rollback cases reopen SQLite and durability uses accepted store transaction; no demonstrated defect.",
+    "Node20 execution was not exercised; worker reports Node26/macOS coverage."
+  ],
+  "worker_reports": [
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/C04-continuation-report.json",
+      "sha256": "db6250ee4ed347451f8f09bda74437fd1cf0d3ecc86fc6172b45f3247ccf8a3a"
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/C04-followup-report.json",
+      "sha256": "d17ea6ae43e3152c80c3e52a8be72d27efa0254289432e8c427c1c69b3649f66"
+    }
+  ],
+  "evidence_hash_checks": [
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/doctor-no-worker.json",
+      "reported_sha256": "5543b6e6132e54cba9fe47236974931387a795d57efb9269bd73ae606c55ccaa",
+      "actual_sha256": "5543b6e6132e54cba9fe47236974931387a795d57efb9263bd73ae606c55ccaa",
+      "match": false
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/outbox-recovery-red.txt",
+      "reported_sha256": "fcc385e2a087c274ecbf0c72a6bb713cd9934e5742eb7942ab5871e086a8e847",
+      "actual_sha256": "fcc385e2a087c274ecbf0c72a6bb713cd9934e5742eb7942ab5871e086a8e847",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/slow-abort-red.txt",
+      "reported_sha256": "f8f86b1fa6fc0f0ebbf6caab9ef981b384be305625d8e0482d3f230f6ee28155",
+      "actual_sha256": "f8f86b1fa6fc0f0ebbf6caab9ef981b384be305625d8e0482d3f230f6ee28155",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/focused-green.txt",
+      "reported_sha256": "b65922b14e20dddf2262f60e9d51f49c677265dae441a5b43d59c2725d270acc",
+      "actual_sha256": "b65922b14e20dddf2262f60e9d51f49c677265dae441a5b43d59c2725d270acc",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/typecheck.txt",
+      "reported_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "actual_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/diff-check.txt",
+      "reported_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actual_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/doctor-no-worker.json",
+      "reported_sha256": "5543b6e6132e54cba9fe47236974931387a795d57efb9269bd73ae606c55ccaa",
+      "actual_sha256": "5543b6e6132e54cba9fe47236974931387a795d57efb9263bd73ae606c55ccaa",
+      "match": false
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/followup-runtime-red.txt",
+      "reported_sha256": "9049f8f44185b8f90fa09f3417875c9b3f4dcac9114be051166752eec274578a",
+      "actual_sha256": "9049f8f44185b8f90fa09f3417875c9b3f4dcac9114be051166752eec274578a",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/followup-focused-green.txt",
+      "reported_sha256": "6002588205fd067b67008238627ee52c8b3758689c6d4aa55c41128a84dbb07f",
+      "actual_sha256": "6002588205fd067b67008238627ee52c8b3758689c6d4aa55c41128a84dbb07f",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/followup-typecheck.txt",
+      "reported_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "actual_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/runtime-takeover/followup-diff-check.txt",
+      "reported_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actual_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    }
+  ],
+  "reproduction": {
+    "command": [
+      "npm",
+      "test",
+      "--",
+      "lib/jobs/production/worker.test.ts",
+      "lib/jobs/production/queue.test.ts",
+      "lib/media/production/vault.test.ts"
+    ],
+    "exit_code": 0,
+    "tests_passed": 49,
+    "output_file": "/tmp/perabyte-C04-runtime-c7eb4d2-review-tests.txt",
+    "output_sha256": "d09330ad3d25da1337ddde39e2df24c813a0047460697a576a868bafe2d03d67"
+  },
+  "commit_diff_check": {
+    "command": [
+      "git",
+      "diff",
+      "--check",
+      "ff6d3df93425e7f876d58162b96152eab2cf7ef9",
+      "c7eb4d2e2664453b597abc8376cb276f6af3c0a3"
+    ],
+    "exit_code": 0
+  },
+  "unverified": [
+    "Reviewer typecheck not rerun; both worker typecheck evidence hashes confirmed.",
+    "Combined provider99f7a3d/runtime integration full suite, production build and built HTTP checks remain required.",
+    "Paid pipeline remains fail-closed until accepted I01; no pilot/release acceptance from these fixtures.",
+    "Final strict runtime report pending; prior continuation doctor hash has one transcribed character mismatch (actual recorded in evidence_hash_checks), requires evidence-only correction before packet acceptance."
+  ],
+  "paid_calls": [],
+  "network_calls": [],
+  "credentials_accessed": false,
+  "decision": "Accept runtime source slice atc7eb4d2; no remaining material source finding. Full C04 acceptance requires final strict report with corrected doctor hash and combined integration gates."
+}

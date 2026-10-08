@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "task_id": "I01",
+  "slice": "B4 real combined accounting gate",
+  "actualSHA": "72ab962cd8bbd5e084eca8740e171f44ce338255",
+  "baseSHA": "00c1991a4abc94935099c89c126309e2546b445f",
+  "worktree": "/Users/abid/.codex/worktrees/production-admission/perabyte-studio",
+  "decision": "accepted_for_integration",
+  "findings": [],
+  "metadataFindings": [],
+  "changedFiles": [
+    "lib/jobs/production/worker.test.ts"
+  ],
+  "sourceReview": [
+    "Adapter calls real service.prepareBudgetContext and synchronous service.reserveInTransaction using the current job identity and shared computeProductionInputsHash, checked again across the admission boundary.",
+    "Two separate connections use the same production.sqlite and common account/day cap. Promise.all interleaves independent worker preparations; synchronous SQLite immediate transactions serialize the actual competing admissions.",
+    "Injected ports provide only deterministic offline evidence, credential binding and fake provider acknowledgements. No fixture replacement of eligibility, reservation accounting or reconciliation storage is used in the new gate.",
+    "Reconciliation goes through real service.reconcile. Scope pins and provider provenance are validated; unknown and final actual have distinct event keys and references.",
+    "Fresh project fixtures preserve actual story and animatic human approvals and use unique project/job/idempotency/quote/evidence/binding/authorization IDs.",
+    "First scenario verifies one reservation/submission at cap300 for two200 contenders, unknown actual retains200 and denies a fresh200 job, final actual50 leaves original upper estimate200 unchanged and admits a fresh200 at folded250 with two cumulative submits.",
+    "Second scenario uses a direct SQLite submitting-event trigger, observes the real reservation callback, then verifies transaction rollback removes execution/reservation/submitting event and prevents provider submit."
+  ],
+  "workerReportSHA256": "42c9f23153676611426e3a04f3ba44229eaba69cbf46c05213b16d1284444bb3",
+  "expectedWorkerReportSHA256": "42c9f23153676611426e3a04f3ba44229eaba69cbf46c05213b16d1284444bb3",
+  "workerEvidenceAudit": [
+    {
+      "path": "/Users/abid/.codex/worktrees/production-admission/perabyte-studio/evidence/I01-B4-combined/worker-focused-final.txt",
+      "expectedSHA256": "c5caf44a10a652d9305bc7f6584006d4c86ff3ca27e5b137b8083118e22b3125",
+      "actualSHA256": "c5caf44a10a652d9305bc7f6584006d4c86ff3ca27e5b137b8083118e22b3125",
+      "match": true,
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "lib/jobs/production/worker.test.ts"
+      ],
+      "reportedExitCode": 0
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-admission/perabyte-studio/evidence/I01-B4-combined/worker-focused-final.txt",
+      "expectedSHA256": "c5caf44a10a652d9305bc7f6584006d4c86ff3ca27e5b137b8083118e22b3125",
+      "actualSHA256": "c5caf44a10a652d9305bc7f6584006d4c86ff3ca27e5b137b8083118e22b3125",
+      "match": true,
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "lib/jobs/production/worker.test.ts"
+      ],
+      "reportedExitCode": 0
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-admission/perabyte-studio/evidence/I01-B4-combined/worker-focused-final.txt",
+      "expectedSHA256": "c5caf44a10a652d9305bc7f6584006d4c86ff3ca27e5b137b8083118e22b3125",
+      "actualSHA256": "c5caf44a10a652d9305bc7f6584006d4c86ff3ca27e5b137b8083118e22b3125",
+      "match": true,
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "lib/jobs/production/worker.test.ts"
+      ],
+      "reportedExitCode": 0
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-admission/perabyte-studio/evidence/I01-B4-combined/worker-focused-final.txt",
+      "expectedSHA256": "c5caf44a10a652d9305bc7f6584006d4c86ff3ca27e5b137b8083118e22b3125",
+      "actualSHA256": "c5caf44a10a652d9305bc7f6584006d4c86ff3ca27e5b137b8083118e22b3125",
+      "match": true,
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "lib/jobs/production/worker.test.ts"
+      ],
+      "reportedExitCode": 0
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-admission/perabyte-studio/evidence/I01-B4-combined/worker-focused-final.txt",
+      "expectedSHA256": "c5caf44a10a652d9305bc7f6584006d4c86ff3ca27e5b137b8083118e22b3125",
+      "actualSHA256": "c5caf44a10a652d9305bc7f6584006d4c86ff3ca27e5b137b8083118e22b3125",
+      "match": true,
+      "argv": [
+        "npm",
+        "test",
+        "--",
+        "lib/jobs/production/worker.test.ts"
+      ],
+      "reportedExitCode": 0
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-admission/perabyte-studio/evidence/I01-B4-combined/diff-check.txt",
+      "expectedSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "actualSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true,
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "reportedExitCode": 0
+    }
+  ],
+  "allWorkerEvidenceHashesMatch": true,
+  "workerArgvAudit": "Saved final log shows vitest run lib/jobs/production/worker.test.ts, 44 passed; matches all GREEN testcase/evidence argv. Empty diff-check log hash matches reported diff-check evidence. Initial syntax failure is explicitly excluded from behavioral RED.",
+  "independentVerification": {
+    "argv": [
+      "npm",
+      "test",
+      "--",
+      "lib/jobs/production/worker.test.ts",
+      "-t",
+      "real combined production budget admission"
+    ],
+    "exitCode": 0,
+    "testsPassed": 2,
+    "testsSkipped": 42,
+    "log": "/tmp/perabyte-I01-combined-review-test.txt",
+    "logSHA256": "e1896fa56238702cfd2126892a89f6e8063063f2e233e3d47c0f82d700fdaa1d",
+    "diffCheck": {
+      "argv": [
+        "git",
+        "diff",
+        "--check",
+        "00c1991a4abc94935099c89c126309e2546b445f",
+        "72ab962cd8bbd5e084eca8740e171f44ce338255"
+      ],
+      "exitCode": 0
+    }
+  },
+  "priorB4Review": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/docs/production/reports/I01-B4-rereview.json",
+  "sourceEdits": false,
+  "paidNetworkCalls": 0,
+  "fullI01Accepted": false,
+  "unverified": [
+    "Integrator focused queue/worker/service test run and typecheck remain pending after integration.",
+    "Full suite, build, live account/quote evidence, live pricing, paid provider submission and real-film release are outside this bounded review."
+  ]
+}

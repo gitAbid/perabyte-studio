@@ -99,10 +99,10 @@ export function resolveTextEngines(
   const preferUncensored = options.preferUncensored === true;
 
   const sogniEnabled =
-    config.providers.sogni?.enabled !== false &&
+    config.providers.sogni?.enabled &&
     !config.providers.sogni?.disabledModels?.includes(selectedModel ?? "");
   const pollinationsEnabled =
-    config.providers.pollinations?.enabled !== false &&
+    config.providers.pollinations?.enabled &&
     !config.providers.pollinations?.disabledModels?.includes(selectedModel ?? "");
 
   const sogniModels = SOGNI_TEXT_MODELS.map((m) => m.id);
@@ -137,15 +137,14 @@ export function resolveTextEngines(
   // the free built-ins first, then the user's keyed custom providers.
   // Uncensored Mode stays on Sogni's abliterated default — aligned engines
   // (Pollinations, custom Grok) rewrite adult prompts toward SFW.
-  if (config.providers.sogni?.enabled !== false && !engines.some((e) => e.providerId === "sogni")) {
+  if (config.providers.sogni?.enabled && !engines.some((e) => e.providerId === "sogni")) {
     engines.push({
       providerId: "sogni",
       complete: sogniTextComplete,
     });
   }
   if (
-    !preferUncensored &&
-    config.providers.pollinations?.enabled !== false &&
+    !preferUncensored && config.providers.pollinations?.enabled &&
     !engines.some((e) => e.providerId === "pollinations")
   ) {
     engines.push({
@@ -162,4 +161,71 @@ export function resolveTextEngines(
   }
 
   return engines;
+}
+
+/* ---------------- Selectable text-engine listing (C21-PROPOSAL-DROPDOWNS) ---------------- */
+
+/** One selectable text engine: ids and a display label only — never credentials. */
+export interface TextEngineOption {
+  providerId: string;
+  modelId: string;
+  label: string;
+}
+
+const BUILTIN_TEXT_PROVIDER_LABELS = {
+  sogni: "Sogni",
+  pollinations: "Pollinations",
+} as const;
+
+const BUILTIN_TEXT_CATALOGS = {
+  sogni: SOGNI_TEXT_MODELS,
+  pollinations: POLLINATIONS_TEXT_MODELS,
+} as const;
+
+/**
+ * Every validly configured text engine, in engine-chain priority order: the
+ * enabled built-ins (minus their disabledModels) first, then each enabled
+ * custom gateway's enabled text models. Applies the same provider gates as
+ * resolveTextEngines, so a listed option is exactly an engine the chain would
+ * run. The config is injectable so tests and the HTTP route can call this
+ * without touching Settings state; options pick explicit fields, so provider
+ * API keys and gateway base URLs can never leak into the payload. Never throws
+ * on config weirdness — returns whatever is validly configured, possibly [].
+ */
+export function listTextEngineOptions(
+  config: ReturnType<typeof getProviderConfig> = getProviderConfig(),
+): TextEngineOption[] {
+  const options: TextEngineOption[] = [];
+  const seen = new Set<string>();
+  const push = (providerId: string, modelId: string, providerLabel: string): void => {
+    const key = `${providerId}\n${modelId}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    options.push({ providerId, modelId, label: `${modelId} — ${providerLabel}` });
+  };
+
+  for (const providerId of ["sogni", "pollinations"] as const) {
+    const entry = config?.providers?.[providerId];
+    if (entry?.enabled === false) continue;
+    const disabledModels = Array.isArray(entry?.disabledModels) ? entry.disabledModels : [];
+    for (const model of BUILTIN_TEXT_CATALOGS[providerId]) {
+      if (!disabledModels.includes(model.id)) {
+        push(providerId, model.id, BUILTIN_TEXT_PROVIDER_LABELS[providerId]);
+      }
+    }
+  }
+
+  const customProviders = Array.isArray(config?.customProviders) ? config.customProviders : [];
+  for (const entry of customProviders) {
+    if (!entry || !entry.enabled) continue;
+    const providerLabel = typeof entry.label === "string" && entry.label ? entry.label : entry.id;
+    const models = Array.isArray(entry.models) ? entry.models : [];
+    for (const model of models) {
+      if (!model || model.kind !== "text" || !model.enabled) continue;
+      if (typeof model.model !== "string" || model.model.length === 0) continue;
+      push(entry.id, `${entry.id}:${model.model}`, providerLabel);
+    }
+  }
+
+  return options;
 }

@@ -1,0 +1,7 @@
+$ git diff --check
+(no output, exit 0)
+
+$ git diff --cached --check
+(no output, exit 0)
+
+Evidence log files were sanitized of trailing whitespace so the check stays clean; log content is otherwise verbatim command output.

@@ -1,0 +1,40 @@
+
+> perabyte-studio@0.1.0 test
+> vitest run lib/providers/production/sogni-provider.test.ts -t I01-B6-P
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.0 /Users/abid/.codex/worktrees/production-provider-session/perabyte-studio
+
+ ❯ lib/providers/production/sogni-provider.test.ts (23 tests | 1 failed | 21 skipped) 116ms
+   ❯ Sogni production provider composition (23)
+     × I01-B6-P runs the synchronous proof guard after asset awaits immediately before SDK create 42ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lib/providers/production/sogni-provider.test.ts > Sogni production provider composition > I01-B6-P runs the synchronous proof guard after asset awaits immediately before SDK create
+AssertionError: expected ProductionApplicationError: Provider inpu… { …(6) } to match object { code: 'BUDGET_BLOCKED' }
+(6 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "BUDGET_BLOCKED",
++ ProductionApplicationError {
++   "code": "MEDIA_UNAVAILABLE",
+  }
+
+ ❯ lib/providers/production/sogni-provider.test.ts:52:284
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 21 skipped (23)
+   Start at  21:13:33
+   Duration  508ms (transform 38%, tests 36%, import 26%, worker 1%)
+

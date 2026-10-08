@@ -1,0 +1,31 @@
+{
+  "packet": "C13-LIVE-FIX-3",
+  "created": "2026-10-06",
+  "status": "frozen",
+  "orchestrator": "zcode orchestration (GLM-5.3)",
+  "context": {
+    "root_branch": "zcode/production-core",
+    "base_contains": ["c00e9a4 (C13-LIVE-FIX-2)"],
+    "live_defect": "Live anchor submission was silently refused by Sogni and the worker polled a phantom project until retry exhaustion (job 8b20d350, providerRef 1834D73B, terminal MEDIA_UNAVAILABLE 'Project not found'). Exact refusal captured by a probe with SDK event listeners: WebSocket jobError 4007 'Unsupported size preset option: 1080p'. Root cause: buildSdkParameters' image branch forwards the render-settings resolution string verbatim as sizePreset; Sogni only accepts known preset ids. The proven story-side mapping (lib/providers/sogni/request-maps.ts toImageParams) uses sizePreset 'custom' + explicit width/height = aspect base (lib/constants.ts ASPECTS) x resolution scale (RESOLUTIONS.scale), snapped to multiples of 8. Note the SDK generates project ids client-side and resolves create() right after the socket send; refusals only surface as client.projects 'project' error events, which the production transport does not consume — polling then fails with 'Project not found' (retry exhaustion terminates the job cleanly today; a fail-fast listener is a worthwhile follow-up, NOT in this packet)."
+  },
+  "owns": {
+    "sdk-parameters-dimensions": {
+      "files": ["lib/providers/production/sogni-provider.ts", "lib/providers/production/sogni-provider.test.ts"],
+      "change": "In buildSdkParameters (lib/providers/production/sogni-provider.ts:151): (1) IMAGE branch — replace `sizePreset: resolution` with the story-proven shape: `sizePreset: 'custom'`, `width` and `height` computed from the shared aspect base and resolution scale — import { ASPECTS, RESOLUTIONS } from \"../../constants\"; width = snap8(ASPECTS[aspect].width * (RESOLUTIONS[resolution]?.scale ?? 1)), height likewise; snap8(v) = Math.max(8, Math.round(v / 8) * 8) (local helper, same semantics as request-maps). Unknown aspect falls back to the 16:9 base; unknown resolution falls back to scale 1. (2) VIDEO branch, H3 modes only (mode !== 'unknown') — add `width`/`height` via the existing verified helper minimaxH3Dimensions(aspect, resolution) imported from \"../sogni/video-limits\" (check the exact export signature before use) so H3 takes render on the requested 9:16 grid instead of the server default; non-H3 video branches stay unchanged. Keep every other field byte-identical.",
+      "tests": [
+        "Unit-test the parameter shape through the transport submit path with the fake importSdk client capturing the params passed to projects.create (the existing test file already drives submits with a fake transport client — extend, do not restructure): (a) image anchor (flux1-schnell-fp8, aspect 9:16, resolution 1080p) => expect sizePreset 'custom', width 720, height 1280, and NOT sizePreset '1080p'; (b) H3 take (minimax-h3-fl2va-fp8_i2v_turbo, 192 frames, 9:16, 1080p) => expect type video, ratio '9:16', frames 192, and width/height present, each divisible by 32; (c) existing submit tests stay green.",
+        "RED first: assert (a) against current code, record the failing log, then implement.",
+        "`npm run typecheck` and `git diff --check` clean."
+      ]
+    }
+  },
+  "constraints": [
+    "One commit on branch zcode/c13-live-fix-3 from base c00e9a4; only the two owned files.",
+    "No changes to transport poll/submit flow, worker, composer, or store files.",
+    "Never print SOGNI_API_KEY; noclobber evidence logs under evidence/C13-LIVE-FIX-3/."
+  ],
+  "acceptance": [
+    "RED->GREEN pair present; existing sogni-provider tests green; typecheck + diff-check clean.",
+    "Integrator live verification after integration: relaunch the pilot; the anchor job must progress past submission to a completed render (no 'Project not found')."
+  ]
+}

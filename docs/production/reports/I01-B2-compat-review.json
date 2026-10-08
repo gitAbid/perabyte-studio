@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "decision": "accepted_compatibility_slices",
+  "actualSHAs": {
+    "ledgerTest": "631b45262087ab9287b370df36e396ac73410276",
+    "ledgerParent": "9e726f07745390d10dd60174a90bb84ace6aad11",
+    "healthDTO": "8c7babbaa630fe86d9e0a2aba603c4772530f0a2",
+    "healthParent": "ff8d24277edef612ae366edf3319b0e41d75ff3b"
+  },
+  "findings": [],
+  "review": [
+    "Held exclusive DELETE lock now remains until child exits;10s watchdog is explicitly asserted not expired. Child measures own open duration, so parent scheduling delay no longer weakens contention assertion. Same bounded busy failure and postrelease reopen assertions retained.",
+    "Health compatibility accepts precisely storage schema1 and2, rejects3; record schemaVersion1 unchanged.",
+    "tsconfig excludes evidence archive from broad source include; normal app/lib/scripts and generated Next types remain included. No source imports of evidence were found. This clean compiler boundary avoids mutating archived probes. Compiler change was uncommitted when inspected; hash pins exact reviewed file."
+  ],
+  "checks": [
+    {
+      "command": "npm test -- lib/repositories/production/sqlite.test.ts",
+      "exitCode": 0,
+      "testsPassed": 26,
+      "log": "/tmp/perabyte-I01-B2-compat-ledger.txt"
+    },
+    {
+      "command": "npm test -- lib/production/contracts.test.ts",
+      "exitCode": 0,
+      "testsPassed": 23,
+      "log": "/tmp/perabyte-I01-B2-compat-health.txt"
+    }
+  ],
+  "evidenceHashes": {
+    "/tmp/perabyte-I01-B2-compat-ledger.txt": "9a9d0fd1c551b168fdc6a5fccaa8f22a63ba9d432083f0594e2d373dce11f10c",
+    "/tmp/perabyte-I01-B2-compat-health.txt": "47658b8e56f38ede16b198c5f91905cc73b2cb6a4a9f9b70ee785588eee773c0",
+    "/Users/abid/.codex/worktrees/production-core/perabyte-studio/tsconfig.json": "dfc29016d521fead76236aaa2e84f711a2b4e01663bdeb39074cf45d952f3030",
+    "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/i01-b2-typecheck-evidence-excluded.txt": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+    "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/report-health-compat.json": "f79b719d9e03074220831462caca440e29f92fd3410bbe2e83d5c96445ef92eb",
+    "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/startup-lock-followup-test-green.txt": "91dbf049dd39c42fd695e1f97162e9f44b5a0d53b18c24fb74e5e5931baba81f",
+    "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/startup-lock-followup-typecheck.txt": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+    "/Users/abid/.codex/worktrees/production-ledger/perabyte-studio/evidence/I01-B2/startup-lock-followup-diffcheck.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "healthReportHashMatchesSupplied": true,
+  "healthReportHashAudit": [
+    {
+      "path": "lib/production/contracts.ts",
+      "match": true
+    },
+    {
+      "path": "lib/production/contracts.test.ts",
+      "match": true
+    },
+    {
+      "path": "evidence/I01-B1/health-compat-red.txt",
+      "match": true
+    },
+    {
+      "path": "evidence/I01-B1/health-compat-green.txt",
+      "match": true
+    },
+    {
+      "path": "evidence/I01-B1/health-compat-typecheck.txt",
+      "match": true
+    },
+    {
+      "path": "evidence/I01-B1/health-compat-committed-diff-check.txt",
+      "match": true
+    }
+  ],
+  "allHealthHashesMatch": true,
+  "unverified": [
+    "Ledger test followup strict report was not present; durable test/type/diff logs hashed.",
+    "Integrated full suite, health HTTP route and production build are root followup gates, not reproduced by this bounded slice review.",
+    "Independent compiler typecheck not rerun; inspected root durable typecheck log only."
+  ],
+  "fullI01Accepted": false
+}

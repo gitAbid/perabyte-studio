@@ -1,0 +1,54 @@
+[2026-10-06T05:08:26.442Z] PREFLIGHT (offline RED walk) against http://127.0.0.1:3100; artifacts: /var/folders/6b/kpkrtysx23n_0zjbhw_llvqr0000gn/T/pilot-long-landscape-muw7x8zt5emt-cHWlm6
+[2026-10-06T05:08:26.468Z] [walk] OK health — storage ready, worker available true
+[2026-10-06T05:08:26.468Z] [BLOCKER] NARRATION_ASSETS_ABSENT at assets/import + audio mix: The final film requires creator-supplied narration (one file per narrated beat), music and at least one SFX file; none were provided to preflight.
+[2026-10-06T05:08:26.468Z]           hint: Prepare 48 kHz WAV/MP3 files and pass --narration/--music/--sfx (the C14 preflight accepts the C13 48 kHz placeholders).
+[2026-10-06T05:08:26.468Z] [seed] creating project "Long landscape pilot (preflight RED) muw7x8zt5emt" (profile storybook-long-v1, 16:9)
+[2026-10-06T05:08:26.482Z] [seed] canon character char_milo_long_pilot -> revision 787f32cf-f0da-468b-8bb5-5252005fc8db
+[2026-10-06T05:08:26.491Z] [seed] canon character char_pip_long_pilot -> revision f63effbd-5aef-4ecd-97b3-a89d8aaa437c
+[2026-10-06T05:08:26.498Z] [seed] canon location loc_meadow_long_pilot -> revision 7a74be6a-e7d0-489f-a2d8-46ae68219cb9
+[2026-10-06T05:08:26.505Z] [seed] canon style style_watercolor_long_pilot -> revision e0d41e34-25e3-4e79-ba3d-0b95e0d45352
+[2026-10-06T05:08:26.511Z] [seed] story revision 85417942-0014-46bc-8127-b8f8bf8d0a04 (24 beats)
+[2026-10-06T05:08:26.517Z] [seed] story approved
+[2026-10-06T05:08:26.528Z] [seed] LONG shot plan 652426d6-55e6-4e5b-b554-b3c91fa97f8b with 24 shot revisions (x 226 frames), animatic f27f5f9c-b1d8-468d-9124-c18ee3756b33 (totalFrames 5424)
+[2026-10-06T05:08:26.528Z] [seed] profile storybook-long-v1 targetFrames 5760 is the planning target; schema pins only the shot-sum 5424 (surveyed lib/production/contracts.ts + lib/services/production/shot-plan.ts)
+[2026-10-06T05:08:26.531Z] [seed] shotplan approved
+[2026-10-06T05:08:26.535Z] [seed] animatic approved
+[2026-10-06T05:08:26.535Z] [walk] OK seed:project/canon/story/approvals/LONG-shot-plan — project 85d0e07d-df41-4cce-9413-45a0c2be2c24, story 85417942-0014-46bc-8127-b8f8bf8d0a04, plan 652426d6-55e6-4e5b-b554-b3c91fa97f8b (24 shots x 226 frames)
+[2026-10-06T05:08:26.549Z] [walk] OK long-plan pagination/order stability — 4 pages of 6 across two independent reads; orderedShotRevisionIds match; animatic gapless; totalFrames 5424
+[2026-10-06T05:08:27.505Z] [BLOCKER] BUDGET_IDENTITY_UNAVAILABLE at budget?unit=spark_token: availability available; reasons: POLICY_MISSING, AUTHORIZATION_MISSING
+[2026-10-06T05:08:27.506Z]           hint: The standing policy authorization is PER-PROJECT: authorize this freshly seeded project via the budget routes (docs/production/pilots/long-landscape.md section 4) after starting the server with SOGNI_API_KEY and the reviewed policy (B6-POLICY-LOAD).
+[2026-10-06T05:08:28.060Z] [BLOCKER] BUDGET_IDENTITY_UNAVAILABLE at budget?unit=minor_currency&currency=USD: availability available; reasons: AUTHORIZATION_MISSING
+[2026-10-06T05:08:28.060Z]           hint: The standing policy authorization is PER-PROJECT: authorize this freshly seeded project via the budget routes (docs/production/pilots/long-landscape.md section 4) after starting the server with SOGNI_API_KEY and the reviewed policy (B6-POLICY-LOAD).
+[2026-10-06T05:08:29.461Z] [BLOCKER] QUOTE_NOT_BOUND at media-quotes (anchor): quote quote:783dfb3e-ba6f-4fee-8cec-b5e8a28b20ba is entitlement=subscription, withinAuthorizedCap=unknown; the paid path is closed.
+[2026-10-06T05:08:29.461Z]           hint: Install the reviewed policy (B6-POLICY-LOAD) and authorize the project; rerun preflight, then use --final.
+[2026-10-06T05:08:29.461Z] [BLOCKER] PAID_ENQUEUE_WITHHELD at anchors enqueue: Preflight never sends a paid enqueue by construction (48 anchors + 48 takes would be the long-film spend).
+[2026-10-06T05:08:29.461Z]           hint: Use --final with the env gate satisfied and a bound quote; the standing authorization is per-project.
+[2026-10-06T05:08:29.461Z] [BLOCKER] ANCHOR_APPROVAL_UNAVAILABLE at approvals (anchor): No anchor candidate can exist without a completed live render.
+[2026-10-06T05:08:29.461Z]           hint: Run --final after policy install and project authorization.
+[2026-10-06T05:08:29.461Z] [BLOCKER] TAKE_CHAIN_UNAVAILABLE at media-quotes/enqueue/approve (take): Takes require an approved anchor and live provider capacity.
+[2026-10-06T05:08:29.461Z]           hint: Run --final after policy install and project authorization.
+[2026-10-06T05:08:29.461Z] [BLOCKER] SELECTION_UNAVAILABLE at shots/[shotId]/selection: No approved take exists to select.
+[2026-10-06T05:08:29.461Z]           hint: Run --final after policy install and project authorization.
+[2026-10-06T05:08:29.461Z] [BLOCKER] AUDIO_APPROVAL_UNAVAILABLE at approvals (audio): No audio mix revision can exist without imported creator audio.
+[2026-10-06T05:08:29.461Z]           hint: Run --final after policy install with the audio files.
+[2026-10-06T05:08:29.461Z] [BLOCKER] MANIFEST_EXPORT_QC_UNAVAILABLE at manifests/exports/run_qc: Manifest compilation requires selected approved takes; export/QC require the rendered artifact.
+[2026-10-06T05:08:29.461Z]           hint: Run --final after policy install.
+[2026-10-06T05:08:29.461Z] [BLOCKER] FINAL_REVIEW_UNAVAILABLE at final review + download: The human G09 review and checksum-bound download require an approved export.
+[2026-10-06T05:08:29.461Z]           hint: Run --final, then perform the step-8 creator review.
+
+=== PREFLIGHT RED REPORT (exit 0) ===
+offline walk: 3 ok / 3 steps
+long plan: 24 shots x 226 frames = 5424 frames (226s) on storybook-long-v1; pagination stable across 4 pages x 2 reads
+blockers: 11
+  - [NARRATION_ASSETS_ABSENT] assets/import + audio mix: The final film requires creator-supplied narration (one file per narrated beat), music and at least one SFX file; none were provided to preflight.
+  - [BUDGET_IDENTITY_UNAVAILABLE] budget?unit=spark_token: availability available; reasons: POLICY_MISSING, AUTHORIZATION_MISSING
+  - [BUDGET_IDENTITY_UNAVAILABLE] budget?unit=minor_currency&currency=USD: availability available; reasons: AUTHORIZATION_MISSING
+  - [QUOTE_NOT_BOUND] media-quotes (anchor): quote quote:783dfb3e-ba6f-4fee-8cec-b5e8a28b20ba is entitlement=subscription, withinAuthorizedCap=unknown; the paid path is closed.
+  - [PAID_ENQUEUE_WITHHELD] anchors enqueue: Preflight never sends a paid enqueue by construction (48 anchors + 48 takes would be the long-film spend).
+  - [ANCHOR_APPROVAL_UNAVAILABLE] approvals (anchor): No anchor candidate can exist without a completed live render.
+  - [TAKE_CHAIN_UNAVAILABLE] media-quotes/enqueue/approve (take): Takes require an approved anchor and live provider capacity.
+  - [SELECTION_UNAVAILABLE] shots/[shotId]/selection: No approved take exists to select.
+  - [AUDIO_APPROVAL_UNAVAILABLE] approvals (audio): No audio mix revision can exist without imported creator audio.
+  - [MANIFEST_EXPORT_QC_UNAVAILABLE] manifests/exports/run_qc: Manifest compilation requires selected approved takes; export/QC require the rendered artifact.
+  - [FINAL_REVIEW_UNAVAILABLE] final review + download: The human G09 review and checksum-bound download require an approved export.
+report: /var/folders/6b/kpkrtysx23n_0zjbhw_llvqr0000gn/T/pilot-long-landscape-muw7x8zt5emt-cHWlm6/preflight-report.json

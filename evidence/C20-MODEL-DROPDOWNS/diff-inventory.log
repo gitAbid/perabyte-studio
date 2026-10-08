@@ -1,0 +1,15 @@
+ components/production/storyboard.tsx    | 128 ++++++++++++++++++++++++++------
+ lib/providers/production/http-routes.ts |  52 +++++++++++++
+ lib/providers/production/sogni-h3.ts    |  55 ++++++++++++++
+ 3 files changed, 212 insertions(+), 23 deletions(-)
+
+ M components/production/storyboard.tsx
+ M lib/providers/production/http-routes.ts
+ M lib/providers/production/sogni-h3.ts
+?? .studio-smoke20/
+?? app/api/production/models/
+?? evidence/C20-MODEL-DROPDOWNS/
+?? lib/production/storyboard-models.test.ts
+?? lib/providers/production/production-models.test.ts
+
+Scope: app/api/production/models/route.ts (new GET route), lib/providers/production/http-routes.ts (additive createProductionModelsHandler + schemas + catalog loader), lib/providers/production/sogni-h3.ts (additive baseline + pure filter/merge), components/production/storyboard.tsx (anchor/take generate-form Provider+Model dropdowns only), test files, evidence/. Unchanged: quote/enqueue bodies, approval workspaces, all other pages.

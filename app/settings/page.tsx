@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { AdvancedSection } from "@/components/settings/AdvancedSection";
+import { BudgetAuthorizationSection } from "@/components/settings/BudgetAuthorizationSection";
 import {
   CustomProvidersSection,
   type DiscoverInput,
@@ -142,7 +143,9 @@ export default function SettingsPage() {
             />
           ) : null}
 
-          {section !== "general" && !loadError ? (
+          {section === "budget" ? <BudgetAuthorizationSection /> : null}
+
+          {section !== "general" && section !== "budget" && !loadError ? (
             !data ? (
               <p className="text-[13px] text-muted">Loading settings…</p>
             ) : section === "providers" ? (

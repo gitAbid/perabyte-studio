@@ -1,0 +1,152 @@
+{
+  "task": "I01 follow-up research: supported H3 subscription route and estimation/billing evidence",
+  "observed_at": "2026-10-04",
+  "workspace": "/Users/abid/.codex/worktrees/c04-provider-recovery/perabyte-studio",
+  "baseline": {
+    "branch": "codex/c04-provider-recovery",
+    "head": "27dc9f742e3771fa5f850188bbec4945f86617cf",
+    "sdk": "@sogni-ai/sogni-client 5.49.0",
+    "c04_status_correction": "C04 was accepted/integrated at b48c9ee; I01 is not yet accepted."
+  },
+  "scope": "Source/docs research only. No credentials, authenticated calls, live estimate calls, paid calls, code changes, or SDK upgrade.",
+  "conclusion": {
+    "supported_route": "Official current Sogni plan documentation lists MiniMax H3 and H3 Turbo as included on both Unlimited and Unlimited Pro (unlimited-plan-details lines 96-107). For an existing subscriber, initialize with credentials/API key belonging to that same Sogni account, read GET /v1/subscriptions/status via account.getSubscriptionStatus(), require an active state, and submit the exact supported H3 model with billingMode:'subscription'. The documented SDK contract says subscription mode requires coverage and fails when unavailable; the public docs identify NOT_ENTITLED, QUEUE_CAP, and GRACE_RETRY errors. This explicit mode prevents token fallback. It does not bypass current queue/concurrency/fair-use enforcement or guarantee the server accepts a job.",
+    "no_zero_cost_claim": "Covered jobs do not deduct per-job Spark or SOGNI, but the subscription is a paid plan subject to its published/current terms. Do not describe H3 as costless or infer an individual account's eligibility solely from an active flag.",
+    "unresolved_vendor_fact": "Installed SDK 5.49.0 exposes account-level subscription status/usage, not a read-only account+model H3 eligibility check. The public plan model table is authoritative published coverage evidence, while actual account state and job admission remain server-enforced. There is no documented model-specific subscription quote or preflight eligibility endpoint in the inspected SDK/docs.",
+    "safe_interpretation": "Account status plus public plan coverage supports offering an explicit subscription-billing request as the supported route. Treat the server's acceptance/rejection as authoritative for that exact request. If the project cannot prevent resubmitting or falling back after an ambiguous timeout, fail closed and reconcile; do not silently switch to Spark/SOGNI."
+  },
+  "sources": [
+    {
+      "kind": "official Sogni Learn",
+      "title": "Sogni Unlimited Plans",
+      "url": "https://docs.sogni.ai/pricing/unlimited-plan-details/",
+      "access_date": "2026-10-04",
+      "evidence": [
+        "Lines 26-37: Unlimited covers supported open-weight models subject to exclusions, queue/concurrency/fair-use limits.",
+        "Lines 63-69: server checks entitlement and tier limits before dispatch; covered jobs do not deduct Spark/SOGNI.",
+        "Lines 96-107: MiniMax H3 and H3 Turbo are Yes on Unlimited and Unlimited Pro; tiers differ in throughput/queue/fair-use.",
+        "Lines 120-122, 188-193: SDK/API access included; API keys for subscribed accounts gain coverage for eligible models.",
+        "Lines 141-150, 159-168: concurrency/queue/fair-use can constrain covered H3; thresholds are dynamic.",
+        "Lines 264-271: verify active subscription; API key from another account does not inherit coverage."
+      ]
+    },
+    {
+      "kind": "official Sogni Client SDK documentation",
+      "title": "Sogni-AI/sogni-client",
+      "url": "https://github.com/Sogni-AI/sogni-client",
+      "access_date": "2026-10-04",
+      "evidence": [
+        "README lines 389-398: explicit subscription mode requires coverage and fails with NOT_ENTITLED, QUEUE_CAP, or GRACE_RETRY; it is distinct from token billing."
+      ]
+    },
+    {
+      "kind": "official Sogni Learn",
+      "title": "MiniMax H3 and H3 Turbo video",
+      "url": "https://docs.sogni.ai/models/minimax-h3/",
+      "access_date": "2026-10-04",
+      "evidence": [
+        "Lines 26-49 enumerate H3 workflows/model IDs.",
+        "Lines 78-96: Spark per delivered second varies by tier/resolution; two-stage surcharges, reference-video seconds, extra images, and keyframes matter; duration snaps to a frame grid.",
+        "Lines 80-81: FastH3 4 Spark/s; LightX2V Turbo 4/6; Balanced 6/10; Standard 10/16 at 480p/544-768p. Standard Spark render peg is $0.005."
+      ]
+    },
+    {
+      "kind": "official Sogni Learn",
+      "title": "Pricing Reference",
+      "url": "https://docs.sogni.ai/pricing/",
+      "access_date": "2026-10-04",
+      "evidence": [
+        "Lines 97-105: live job estimator gives Spark and USD render-value estimates from current socket pricing endpoints; it is pre-run estimation.",
+        "Lines 119-144: example prices concern pay-as-you-go/render value, not subscription eligibility."
+      ]
+    },
+    {
+      "kind": "official Sogni Learn",
+      "title": "Account Balances, Usage, and Earnings",
+      "url": "https://docs.sogni.ai/api-reference/account-and-usage/",
+      "access_date": "2026-10-04",
+      "evidence": [
+        "Lines 61-70: account balances use human-unit decimal strings, not wei; preserve decimal precision; a balance read is not reservation/authorization.",
+        "Lines 71-81: status and usage are account-level/aggregate, not H3-specific coverage."
+      ]
+    },
+    {
+      "kind": "official Sogni Learn",
+      "title": "SOGNI Token vs Spark Points",
+      "url": "https://docs.sogni.ai/run-a-worker/supernet/sogni-token-vs-spark-points/",
+      "access_date": "2026-10-04",
+      "evidence": [
+        "Lines 30-47: Spark is a point pegged to $0.005 render value; SOGNI cost varies with market price. No canonical smallest integer unit for either is specified."
+      ]
+    },
+    {
+      "kind": "official Sogni Learn",
+      "title": "Cancellation, Refund, and Generation Credit Policy",
+      "url": "https://docs.sogni.ai/pricing/cancellation-and-refund-policy/",
+      "access_date": "2026-10-04",
+      "evidence": [
+        "Lines 51-63: failed pay-as-you-go jobs are normally credited; covered Unlimited jobs have no per-generation balance charge; completed jobs are normally charged, with objectively unusable technical failures reviewed case-by-case.",
+        "This is not a synchronous machine-readable per-job refund/nonacceptance API."
+      ]
+    }
+  ],
+  "installed_sdk_5_49_source": [
+    {
+      "path": "node_modules/@sogni-ai/sogni-client/src/Account/index.ts",
+      "lines": "893-915",
+      "method": "getSubscriptionStatus()",
+      "findings": "Read-only GET /v1/subscriptions/status returns current account snapshot (active/status/tier); account-level."
+    },
+    {
+      "path": "node_modules/@sogni-ai/sogni-client/src/Account/subscription.types.ts",
+      "lines": "86-148",
+      "findings": "Account snapshot has active/status/tier, generic capabilities, fairUse, and frontierDiscountBps; no typed H3 model-eligibility field."
+    },
+    {
+      "path": "node_modules/@sogni-ai/sogni-client/src/Account/index.ts",
+      "lines": "939-945",
+      "method": "getSubscriptionUsage()",
+      "findings": "Read-only GET /v1/subscriptions/usage returns aggregate periodRenderSpark/periodJobs; not per-model entitlement or a quote."
+    },
+    {
+      "path": "node_modules/@sogni-ai/sogni-client/src/Projects/index.ts",
+      "lines": "2363-2425",
+      "method": "estimateCost()",
+      "findings": "Image estimator uses server estimate endpoint and returns token/usd/spark/sogni decimal strings plus optional timing benchmarks."
+    },
+    {
+      "path": "node_modules/@sogni-ai/sogni-client/src/Projects/index.ts",
+      "lines": "2467-2533",
+      "method": "estimateVideoCost()",
+      "findings": "Video estimator sends tokenType/model/dimensions/frames/FPS/steps/count and reference inputs; returns token/usd/spark/sogni strings and optional timing. No billingMode, subscription liability, guaranteed maximum, expiry, or quote ID."
+    },
+    {
+      "path": "node_modules/@sogni-ai/sogni-client/src/Projects/types/index.ts",
+      "lines": "1195-1220",
+      "findings": "CostEstimation currency values are decimal strings. Timings are benchmarks, not billing limits."
+    },
+    {
+      "path": "node_modules/@sogni-ai/sogni-client/src/Projects/types/index.ts",
+      "lines": "116-126",
+      "findings": "billingMode documents auto (covered subscription else token), subscription (requires coverage; fail if unavailable), tokens (Spark/SOGNI). For safe reuse of subscription this request must choose subscription explicitly; active snapshot by itself does not prevent fallback when billingMode is auto."
+    },
+    {
+      "path": "node_modules/@sogni-ai/sogni-client/src/Account/index.ts",
+      "lines": "635-675",
+      "findings": "transactionHistory maps a completed-status-filtered list and returns amount as JS number plus billingMode/paymentModel/subscriptionTier. It is not a complete typed refund/failed/nonacceptance record; do not use absence as proof of no charge."
+    }
+  ],
+  "estimate_and_reservation_guidance": {
+    "estimator": "Use estimateVideoCost only as a current server point estimate for the exact H3 model/settings/reference counts. Docs explicitly state H3 billable duration may snap to a frame grid and keyframe/reference extras change cost; validate estimator parameters against the exact workflow. The estimator has no billingMode, so its Spark/USD/SOGNI amount describes token/render-value pricing, not an extra per-job charge under an accepted covered subscription.",
+    "upper_bound": "SDK/docs do not call estimates a guaranteed maximum. An I01 local authorization limit may add a locally selected margin, but that remains app policy, not a vendor cap. Convert only with a defined unit: parse USD decimal strings and ceil to cents; preserve Spark/SOGNI decimals until a smallest-unit contract exists. Reject malformed, negative, exponent, or overflow values; never use a fixed Spark-to-SOGNI conversion.",
+    "units": "Official material calls Spark a 'point' and states its $0.005 render-value peg; fractional Spark estimates are published (e.g. 20.67). SOGNI varies with token market price. No documented smallest Spark or SOGNI integer unit suitable for I01 integer reservation was found. SDK estimate and account balance shapes use decimal strings; SDK transaction history exposes amount:number, which is not precise financial evidence.",
+    "subscription_debit": "For a covered H3 job accepted under subscription mode, published policy says no per-job Spark/SOGNI deduction. Actual subscription period payment is separate and account/plan-level. For token billing, failed-job credit restoration is normally automatic but completed outputs are ordinarily charged; refund policy is adjudicated and does not give a real-time nonacceptance/refund receipt.",
+    "i01_fit": "A locally budgeted job needs a caller-approved billing mode. For a subscriber selecting subscription, require account binding to the same Sogni identity, status active, a published included H3 variant, then send billingMode:'subscription' so the server enforces exact entitlement and limits. Do not automatically fallback. On accepted subscription jobs reserve no invented Spark/USD amount; still persist the intent and reconcile accepted/terminal state. For token-mode jobs use a current estimate as policy input only; no provider-guaranteed upper bound means any local cap is an explicit app budget with overrun handling."
+  },
+  "limitations": [
+    "Public Sogni docs are mutable; reviewed 2026-10-04. Checkout/current terms and server enforcement remain authoritative.",
+    "No authenticated status/estimate endpoint was called; no user subscription, key binding, live quote, fair use, or debit was inspected.",
+    "No account+model eligibility API was found in installed SDK; product docs publish family-level H3/H3 Turbo coverage for both tiers.",
+    "No overall C04/I01 completion claim: C04 accepted at b48c9ee; I01 remains outstanding."
+  ]
+}

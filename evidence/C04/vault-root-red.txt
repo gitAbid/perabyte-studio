@@ -1,0 +1,64 @@
+
+> perabyte-studio@0.1.0 test
+> vitest run lib/media/production/vault.test.ts
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.0 /Users/abid/.codex/worktrees/production-worker/perabyte-studio
+
+ ❯ lib/media/production/vault.test.ts (3 tests | 1 failed) 54ms
+   ❯ durable media vault (3)
+     × refuses to use a symlink as the configured vault root 15ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lib/media/production/vault.test.ts > durable media vault > refuses to use a symlink as the configured vault root
+AssertionError: promise resolved "{ asset: { version: 1, …(14) }, …(2) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "asset": {
++     "audioSamples": null,
++     "byteSize": 6,
++     "createdAt": 1791025999338,
++     "fps": null,
++     "frames": null,
++     "height": null,
++     "id": "15f8b8ff-bd2e-4503-baa1-e274749f50f7",
++     "mime": "text/plain",
++     "rightsStatus": "unknown",
++     "sha256": "629e3fc948fb5ca55eb9f2cc1cd815703841a4f6be23b038925fbe56bdc19c24",
++     "sourceJobId": null,
++     "sourceKind": "upload",
++     "vaultRef": "sha256-629e3fc948fb5ca55eb9f2cc1cd815703841a4f6be23b038925fbe56bdc19c24",
++     "version": 1,
++     "width": null,
++   },
++   "checksumVerified": true,
++   "verifiedAt": 1791025999338,
+  }
+
+ ❯ lib/media/production/vault.test.ts:34:97
+     32|     const rootLink = join(dir, "root-link"); await symlink(outside, ro…
+     33|     const vault = new LocalMediaVault({ root: rootLink, maxBytes: 64 }…
+     34|     await expect(vault.put(Buffer.from("unsafe"), { mime: "text/plain"…
+       |                                                                                                 ^
+     35|   });
+     36| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  17:13:19
+   Duration  291ms (import 38%, tests 38%, transform 22%, worker 1%)
+
+
+EXIT=1

@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "id": "shotplan-short-v1",
+  "projectId": "project-short",
+  "storyRevisionId": "story-short-v1",
+  "orderedShotRevisionIds": [
+    "short-shot-01-revision-1",
+    "short-shot-02-revision-1",
+    "short-shot-03-revision-1",
+    "short-shot-04-revision-1",
+    "short-shot-05-revision-1",
+    "short-shot-06-revision-1"
+  ],
+  "beatCoverage": [
+    {
+      "beatId": "opening",
+      "shotRevisionIds": [
+        "short-shot-01-revision-1"
+      ]
+    },
+    {
+      "beatId": "discovery",
+      "shotRevisionIds": [
+        "short-shot-02-revision-1"
+      ]
+    },
+    {
+      "beatId": "wonder",
+      "shotRevisionIds": [
+        "short-shot-03-revision-1"
+      ]
+    },
+    {
+      "beatId": "journey",
+      "shotRevisionIds": [
+        "short-shot-04-revision-1"
+      ]
+    },
+    {
+      "beatId": "return",
+      "shotRevisionIds": [
+        "short-shot-05-revision-1"
+      ]
+    },
+    {
+      "beatId": "ending",
+      "shotRevisionIds": [
+        "short-shot-06-revision-1"
+      ]
+    }
+  ],
+  "contentHash": "ffe48262f2d24551aeabdcdd0cb03e1480b8b7d0dd96d14766a83b162eaaa7b9",
+  "createdAt": 1790985600000
+}

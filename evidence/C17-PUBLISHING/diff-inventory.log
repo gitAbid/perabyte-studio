@@ -1,0 +1,14 @@
+# C17-PUBLISHING diff/file inventory (git diff --cached --stat; equals the commit stat for this all-new-files commit)
+
+ evidence/C17-PUBLISHING/adjacent-suites.log |  24 ++
+ evidence/C17-PUBLISHING/git-diff-check.log  |   8 +
+ evidence/C17-PUBLISHING/green-tests.log     |  17 ++
+ evidence/C17-PUBLISHING/red-tests.log       |  44 ++++
+ evidence/C17-PUBLISHING/typecheck.log       |   3 +
+ lib/production/publishing.test.ts           | 274 ++++++++++++++++++++
+ lib/production/publishing.ts                | 371 ++++++++++++++++++++++++++++
+ lib/services/production/publishing.test.ts  | 168 +++++++++++++
+ lib/services/production/publishing.ts       |  53 ++++
+ 9 files changed, 962 insertions(+)
+
+Exact scope: the four owned lib files plus evidence/C17-PUBLISHING/. No app/, components/, docs/, scripts/, routes, or existing lib files modified.

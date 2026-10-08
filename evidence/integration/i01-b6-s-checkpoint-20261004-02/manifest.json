@@ -1,0 +1,57 @@
+{
+  "status": "final_functional_checks_passed_but_independent_review_not_run;unaccepted_unmerged",
+  "base_sha": "2ded8389b71788001dc25b28b46d671f9ef4731e",
+  "branch": "codex/production-provider-proof",
+  "files": [
+    {
+      "path": "lib/production/contracts.ts",
+      "sha256": "cf6cb44a3d41a48f6a4743ab8172e95307eb04a36e283d6e370dd922f5001881"
+    },
+    {
+      "path": "lib/production/contracts.test.ts",
+      "sha256": "52ca32bf72102097c94305cf617b4fbe1db8791da28ee9d39628b06e6d3c5d25"
+    },
+    {
+      "path": "lib/production/provider-proof.ts",
+      "sha256": "7708c1ce0db816fd39f5b66651ca8b4366ecb4ef61a72378c7f5e4670410d999"
+    },
+    {
+      "path": "lib/repositories/production/ports.ts",
+      "sha256": "b29f34cf626ea41009bd5a7cf5adbdabf92cc395cdc8133d56cb03889ea71353"
+    },
+    {
+      "path": "lib/repositories/production/sqlite.ts",
+      "sha256": "730a8ec66f5ad0e8114d0408a504a6fb6e853cc0d00f8293ba91c83dbd5ee674"
+    },
+    {
+      "path": "lib/repositories/production/sqlite.test.ts",
+      "sha256": "877a797321dfde1f42f18d07e330c483ac638d816d83a752af549fbe487438df"
+    },
+    {
+      "path": "lib/repositories/production/migrations/004-provider-proof.sql",
+      "sha256": "56e62c5497ca48cbe614c911a0c44a2e632555b8593f03ff35ad8b270d06ec8c"
+    }
+  ],
+  "patch_sha256": "f1144161a919e96a8256512948640cebd5d1d3274c5dc3035a4199e627bb615b",
+  "worker_report_sha256": "552cdc4dde472e7ec8d3aec2d3efd615beabe1e71afd65adf2bcd8adac93219d",
+  "final_logs": [
+    {
+      "path": "focused-final-20261004T142400Z-50d10c.txt",
+      "sha256": "96b5e4f7b78aa06da4fa21c0e6f9ddc190bb0c75f88356f5574b0929ce98521f"
+    },
+    {
+      "path": "typecheck-final-20261004T142500Z-995c4e.txt",
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    },
+    {
+      "path": "diff-check-final-20261004T142600Z-d74467.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "next": [
+    "Check live usage; no implementation/review if <=2, no dispatch/review if <=5.",
+    "After sufficient usage resumes, confirm owner idle and review exact seven source files at base.",
+    "No changes needed if review accepts; source is already typechecked and focused tests pass. If edits, rerun minimal three checks with fresh evidence.",
+    "Independent review then integrator may commit/integrate only on acceptance."
+  ]
+}

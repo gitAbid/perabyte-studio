@@ -1,0 +1,107 @@
+{
+  "task_id": "I01-B6-S",
+  "status": "incomplete",
+  "checkpoint_reason": "Parent hard stop at 2% short-window remaining on 2026-10-04T14:11:05Z. Source is implemented and final focused checks passed, but no independent review, commit, or integration occurred.",
+  "base_sha": "2ded8389b71788001dc25b28b46d671f9ef4731e",
+  "head_sha": "2ded8389b71788001dc25b28b46d671f9ef4731e",
+  "commit_sha": null,
+  "branch": "codex/production-provider-proof",
+  "worktree": "/Users/abid/.codex/worktrees/production-provider-proof/perabyte-studio",
+  "root_freeze_sha256": "235e08351f3b9ca89b1acabe5c62173aaa685084c9eedb520674fb1064460379",
+  "source_paths": [
+    "lib/production/contracts.ts",
+    "lib/production/contracts.test.ts",
+    "lib/production/provider-proof.ts",
+    "lib/repositories/production/ports.ts",
+    "lib/repositories/production/sqlite.ts",
+    "lib/repositories/production/sqlite.test.ts",
+    "lib/repositories/production/migrations/004-provider-proof.sql"
+  ],
+  "other_dirty_path": "evidence/I01-B6-S/",
+  "implemented_subset": [
+    "Strict provider account-session, reviewed-policy, media-quote, execution-session and proof-artifact schemas with bounded canonical archival text and existing shared canonical hashing.",
+    "Immutable proof artifact and credential generation history tables, CAS head, quote/execution proof associations, triggers and migration 004.",
+    "Eight provider proof read/write port methods, with immutable replay, sanitized proof errors and association checks against finance DTOs, quote records, job snapshot and reservation.",
+    "Supported storage version 4; existing migration-version assertions updated.",
+    "Exactly two focused SQLite acceptance tests for real v3 upgrade/reopen/CAS/integrity and atomic quote/execution association rollback/replay."
+  ],
+  "final_verification": [
+    {
+      "kind": "green",
+      "command": ["npm", "test", "--", "lib/repositories/production/sqlite.test.ts", "-t", "I01-B6-S"],
+      "exit_code": 0,
+      "result": "2 targeted tests passed; 27 tests skipped.",
+      "output_file": "evidence/I01-B6-S/focused-final-20261004T142400Z-50d10c.txt",
+      "output_sha256": "96b5e4f7b78aa06da4fa21c0e6f9ddc190bb0c75f88356f5574b0929ce98521f"
+    },
+    {
+      "kind": "typecheck",
+      "command": ["npm", "run", "typecheck"],
+      "exit_code": 0,
+      "output_file": "evidence/I01-B6-S/typecheck-final-20261004T142500Z-995c4e.txt",
+      "output_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    },
+    {
+      "kind": "diff-check",
+      "command": ["git", "diff", "--check"],
+      "exit_code": 0,
+      "output_file": "evidence/I01-B6-S/diff-check-final-20261004T142600Z-d74467.txt",
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "preserved_prior_attempts": [
+    {
+      "command": ["npm", "test", "--", "lib/repositories/production/sqlite.test.ts", "-t", "I01-B6-S"],
+      "exit_code": null,
+      "output_file": "evidence/I01-B6-S/focused-attempt-20261004T140300Z-a7c42f.txt",
+      "output_sha256": "baa54e0bce4d9754e09a97c334eb1b1e580fdee30275b74a43c83c0343dd4c73",
+      "result": "Vitest output showed 2 failures. The zsh wrapper then failed to capture the exit status because `status` is read-only; actual command exit metadata was not captured."
+    },
+    {
+      "command": ["npm", "test", "--", "lib/repositories/production/sqlite.test.ts", "-t", "I01-B6-S"],
+      "exit_code": 1,
+      "output_file": "evidence/I01-B6-S/focused-attempt-20261004T141000Z-c8bd19.txt",
+      "output_sha256": "24ab998c7edcdca8bb9f6c2cbd86fc6837359a0fbcd8f6211e0928b6c41aad3b",
+      "result": "1 targeted test passed and 1 failed due to invalid quote proof fixture artifact."
+    },
+    {
+      "command": ["npm", "test", "--", "lib/repositories/production/sqlite.test.ts", "-t", "I01-B6-S"],
+      "exit_code": 1,
+      "output_file": "evidence/I01-B6-S/focused-attempt-20261004T141600Z-f2d9c0.txt",
+      "output_sha256": "f6e54271018b2a1c23535c0f2e4c05c114224b891dc028bbb2173c4a6e0843c6",
+      "result": "1 targeted test passed and 1 failed because the proof capture timestamp preceded the binding observation; fixture was corrected."
+    },
+    {
+      "command": ["npm", "run", "typecheck"],
+      "exit_code": 0,
+      "output_file": "evidence/I01-B6-S/typecheck-20261004T142100Z-751abc.txt",
+      "output_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "result": "Passed before final SQLite error-sanitization/CAS-rowcount hardening; final typecheck above ran after those changes."
+    },
+    {
+      "command": ["git", "diff", "--check"],
+      "exit_code": 0,
+      "output_file": "evidence/I01-B6-S/diff-check-20261004T142200Z-39be20.txt",
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "result": "Passed before final SQLite error-sanitization/CAS-rowcount hardening; final diff check above ran after those changes."
+    }
+  ],
+  "source_review_changes": [
+    "Changed exact installed generation replay to require the original expected revision (null for revision 1, previous revision thereafter).",
+    "Sanitized proof-specific schema parse errors and verified the SQLite credential-head update affects exactly one row.",
+    "Kept quote schema diagnostic limited to static invariant labels; no proof text or field values are emitted."
+  ],
+  "unverified": [
+    "Independent source review and root integration.",
+    "No full test suite, build, expanded schema matrix or exhaustive fault matrix was run, per frozen minimal verification scope."
+  ],
+  "paid_calls": [],
+  "authenticated_calls": [],
+  "network_calls": [],
+  "next_steps": [
+    "After a future authorized continuation and live usage check, inspect actual status/diff at the recorded base and ask root to perform the required independent review.",
+    "If root review accepts without source changes, commit only the seven frozen source paths with an `I01-B6-S:` prefix; keep evidence separately and send commit SHA/base/report path to root.",
+    "If any source changes are made, rerun only the frozen focused selector, typecheck and diff check with new no-clobber logs and hashes.",
+    "Root alone decides integration; do not mark this slice accepted before review and integration."
+  ]
+}

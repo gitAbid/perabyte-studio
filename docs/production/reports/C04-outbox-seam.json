@@ -1,0 +1,39 @@
+{
+  "scope": "C04 ensureOutbox prerequisite only; full C04 incomplete",
+  "worker_commit": "e65f57168ae61dfe612a44bb2fdb5cc26fd68f84",
+  "integration_commit": "893e98787c18190bea338346ebf7abd69e495081",
+  "independent_review": {
+    "sha": "e65f57168ae61dfe612a44bb2fdb5cc26fd68f84",
+    "base_sha": "845a7e8c6ba14862bfe1b90609326463be8a10a6",
+    "decision": "approved",
+    "findings": [],
+    "verification": {
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "lib/repositories/production/sqlite.test.ts"
+      ],
+      "exit_code": 0,
+      "tests_passed": 15,
+      "execution": "Independent archive with exact committed source overlays outside active worktrees",
+      "report": "evidence/SHARED-CONTRACT-HTTP/ensure-outbox-report.json",
+      "all_evidence_and_testcase_hashes_match": true
+    },
+    "scope": "Narrow repository seam only; trusted caller must persist recovered reference/receipt and check leased update in the same transaction. Worker integration and no-paid-resubmit behavior still pending C04 review.",
+    "paid_calls": []
+  },
+  "tests": 15,
+  "typecheck_exit_code": 0,
+  "evidence": [
+    {
+      "path": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/ensure-outbox-tests.txt",
+      "sha256": "4da28acea4b8bd3a16cf7057f15c830d44e0337f85e66f5de621d95d61a5c456"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/ensure-outbox-typecheck.txt",
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    }
+  ],
+  "paid_calls": []
+}

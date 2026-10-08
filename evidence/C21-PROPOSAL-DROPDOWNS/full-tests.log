@@ -1,0 +1,1047 @@
+
+> perabyte-studio@0.1.0 test
+> vitest run
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.0 /Users/abid/Projects/perabyte-studio/.worktrees/c21-proposal-dropdowns
+
+ ✓ lib/services/production/budget.test.ts (24 tests) 829ms
+ ✓ lib/services/production/takes.test.ts (6 tests) 1398ms
+   ✓ production media recipe service (6)
+     ✓ selects approved completed takes and preserves retake history across switch, stale CAS, clear, and reselect 581ms
+     ✓ rejects take-approval drift during vault verification without changing selection 464ms
+stdout | lib/media/production/assembly.test.ts > C11-FULL fixture render (REQUIRED evidence) > renders a 2-shot all-cut manifest with narration into a playable MP4 of the pinned shape
+[c11-fixture-render] inputsHash=dacb87aa34bf7874149837108b597d30d1963608472ca402f0ce4bf58167f8e3 sha256=36d6534b00df50ad57867db78e1e70ec698146e1d41280c49da8becff08f25bd rerunSha256=36d6534b00df50ad57867db78e1e70ec698146e1d41280c49da8becff08f25bd
+[c11-fixture-render] ffmpeg "-nostdin" "-v" "error" "-xerror" "-y" "-i" "/var/folders/6b/kpkrtysx23n_0zjbhw_llvqr0000gn/T/perabyte-assembly-render-B7YZXY/staging-wWP65a/asset-shot-0.staged" "-i" "/var/folders/6b/kpkrtysx23n_0zjbhw_llvqr0000gn/T/perabyte-assembly-render-B7YZXY/staging-wWP65a/asset-shot-1.staged" "-i" "/var/folders/6b/kpkrtysx23n_0zjbhw_llvqr0000gn/T/perabyte-assembly-render-B7YZXY/staging-wWP65a/asset-narration.staged" "-filter_complex" "[0:v]trim=start_frame=0:end_frame=24,crop=w=16:h=16:x=0:y=0,scale=1920:1920,crop=w=1080:h=1920:x=420:y=0,fps=24,setpts=PTS-STARTPTS[v0];[1:v]trim=start_frame=0:end_frame=24,crop=w=16:h=16:x=0:y=0,scale=1920:1920,crop=w=1080:h=1920:x=420:y=0,fps=24,setpts=PTS-STARTPTS[v1];[v0][v1]concat=n=2:v=1:a=0[vout];[2:a]atrim=start_sample=0:end_sample=24000,asetpts=PTS-STARTPTS,volume=0dB,aresample=48000,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo,adelay=1000|1000[c0];[c0]amix=inputs=1:normalize=0:dropout_transition=0,loudnorm=I=-14:TP=-1:LRA=11,aresample=48000,aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo[aout]" "-map" "[vout]" "-map" "[aout]" "-c:v" "libx264" "-profile:v" "high" "-preset" "medium" "-crf" "18" "-pix_fmt" "yuv420p" "-color_primaries" "bt709" "-color_trc" "bt709" "-colorspace" "bt709" "-movflags" "+faststart" "-c:a" "aac" "-b:a" "192k" "-ar" "48000" "-ac" "2" "/var/folders/6b/kpkrtysx23n_0zjbhw_llvqr0000gn/T/perabyte-assembly-render-B7YZXY/export-dacb87aa34bf7874149837108b597d30d1963608472ca402f0ce4bf58167f8e3.mp4"
+
+stdout | lib/services/production/qc.test.ts > C12 QC service end-to-end on a real local render > runs QC on a passing render: ready_for_review, id-named qc-report file 0600, CAS sets the report id
+[c12-qc-happy] blockers=[] advisories=[] measured={"integratedLufs":-14,"truePeakDbtp":-11.7,"lraLu":0,"durationFrames":48,"expectedDurationFrames":48,"audioEndSample":72000,"expectedAudioEndSample":72000,"codec":"h264","container":"mov,mp4,m4a,3gp,3g2,mj2","width":1080,"height":1920,"fps":24,"pixFmt":"yuv420p"}
+
+ ✓ lib/providers/custom/http.test.ts (6 tests) 877ms
+   ✓ httpJson (6)
+     ✓ retries rate limits on POST and succeeds 858ms
+ ✓ lib/jobs/production/queue.test.ts (12 tests) 325ms
+ ✓ lib/jobs/production/worker.test.ts (48 tests) 2800ms
+   ✓ production worker recovery (42)
+     ✓ keeps one scheduler owner, preserves its heartbeat on a second start, and recovers after SIGKILL 1471ms
+ ✓ lib/media/production/vault.test.ts (6 tests) 866ms
+ ✓ lib/providers/sogni/catalog.test.ts (23 tests) 582ms
+   ✓ sogni catalog (12)
+     ✓ refreshes in the background and the provider serves the warmed list 559ms
+ ✓ lib/providers/production/sogni-provider.test.ts (29 tests) 591ms
+ ✓ lib/repositories/production/sqlite.test.ts (29 tests) 3929ms
+   ✓ SQLite production store (29)
+     ✓ opens one fresh database from two barrier-synchronized processes 394ms
+     ✓ upgrades one real v1 database from two barrier-synchronized processes 480ms
+     ✓ fails closed within the WAL retry bound while a database stays exclusively locked 2257ms
+ ✓ lib/media/production/assembly.test.ts (14 tests) 4010ms
+   ✓ C11-FULL fixture render (REQUIRED evidence) (3)
+     ✓ renders a 2-shot all-cut manifest with narration into a playable MP4 of the pinned shape 1939ms
+     ✓ renders the crossfade variant at the exact overlap total and honors the silent-draft shape 1213ms
+   ✓ C11-FULL export runner (6)
+     ✓ cancels an aborted render, kills the child, cleans temp dirs, and publishes no asset 581ms
+stdout | lib/services/moderation.service.test.ts > classifyMediaRef > classifies via the vision model and persists the verdict
+15:15:40.136 INFO  media classified app=perabyte surface=moderation ref=aaaaaaaaaaaa sensitive=true category=nudity confidence=0.85 uncertain=false reason=explicit nudity
+
+stdout | lib/services/moderation.service.test.ts > classifyMediaRef > serves a repeat classification from the cache without re-calling
+15:15:40.141 INFO  media classified app=perabyte surface=moderation ref=aaaaaaaaaaaa sensitive=false category=null confidence=0.9 uncertain=false reason=clothed portrait
+
+stdout | lib/services/moderation.service.test.ts > classifyMediaRef > joins an in-flight classification instead of double-calling
+15:15:40.146 INFO  media classified app=perabyte surface=moderation ref=aaaaaaaaaaaa sensitive=false category=null confidence=0.9 uncertain=false reason=clothed portrait
+
+stderr | lib/services/moderation.service.test.ts > classifyMediaRef > falls back to static for bad refs, mp4s, and missing bytes
+15:15:40.147 WARN  media bytes unavailable for classification — static mask policy app=perabyte surface=moderation ref=aaaaaaaaaaaa size=0
+
+stderr | lib/services/moderation.service.test.ts > classifyMediaRef > falls back to static when the provider errors or the reply is junk
+15:15:40.149 WARN  vision classification failed — static mask policy app=perabyte surface=moderation ref=aaaaaaaaaaaa message=The Sogni vision replied 503.
+
+stderr | lib/services/moderation.service.test.ts > classifyMediaRef > falls back to static when the provider errors or the reply is junk
+15:15:40.150 WARN  vision reply unparsable — static mask policy app=perabyte surface=moderation ref=ffffffffffff reply=I cannot classify that.
+
+stderr | lib/services/moderation.service.test.ts > classifyMediaRef > does not re-call the endpoint for a ref whose classification just failed
+15:15:40.152 WARN  vision classification failed — static mask policy app=perabyte surface=moderation ref=aaaaaaaaaaaa message=The Sogni vision replied 504.
+
+stderr | lib/services/moderation.service.test.ts > classifyMediaRef > opens the breaker after repeated endpoint failures and stops calling
+15:15:40.155 WARN  vision classification failed — static mask policy app=perabyte surface=moderation ref=aaaaaaaaaaaa message=The Sogni vision replied 524.
+
+stderr | lib/services/moderation.service.test.ts > classifyMediaRef > opens the breaker after repeated endpoint failures and stops calling
+15:15:40.155 WARN  vision classification failed — static mask policy app=perabyte surface=moderation ref=cccccccccccc message=The Sogni vision replied 524.
+
+stderr | lib/services/moderation.service.test.ts > classifyMediaRef > opens the breaker after repeated endpoint failures and stops calling
+15:15:40.156 WARN  vision classification failed — static mask policy app=perabyte surface=moderation ref=dddddddddddd message=The Sogni vision replied 524.
+15:15:40.157 WARN  vision endpoint failing — moderation breaker open app=perabyte surface=moderation ref=dddddddddddd openForMs=600000
+
+ ✓ lib/services/production/manifest.test.ts (15 tests) 457ms
+ ✓ lib/repositories/production/legacy-import.test.ts (6 tests) 354ms
+stdout | lib/services/moderation.service.test.ts > classifyMediaRef > classifies an oversized original after resizing below the inline cap
+15:15:40.573 INFO  media classified app=perabyte surface=moderation ref=aaaaaaaaaaaa sensitive=false category=null confidence=0.9 uncertain=false reason=clothed portrait
+
+stdout | lib/services/moderation.service.test.ts > classifyMediaRef > keeps verdicts below the confidence threshold but flags them uncertain
+15:15:40.579 INFO  media classified app=perabyte surface=moderation ref=aaaaaaaaaaaa sensitive=false category=null confidence=0.3 uncertain=true reason=unsure
+
+stdout | lib/services/moderation.service.test.ts > classifyMediaRef > downscales oversized images to the 1024px endpoint cap
+15:15:40.646 INFO  media classified app=perabyte surface=moderation ref=aaaaaaaaaaaa sensitive=false category=null confidence=0.9 uncertain=false reason=clothed portrait
+
+stdout | lib/services/moderation.service.test.ts > warmModeration > warms a cache-ref URL and ignores provider URLs / junk
+15:15:40.650 INFO  media classified app=perabyte surface=moderation ref=aaaaaaaaaaaa sensitive=false category=null confidence=0.9 uncertain=false reason=clothed portrait
+
+ ✓ lib/services/production/budget-composer.test.ts (7 tests) 440ms
+ ✓ lib/services/moderation.service.test.ts (12 tests) 611ms
+   ✓ classifyMediaRef (11)
+     ✓ classifies an oversized original after resizing below the inline cap 417ms
+ ✓ lib/services/production/publishing.test.ts (5 tests) 209ms
+ ✓ lib/production/composition.test.ts (3 tests) 359ms
+ ✓ lib/services/production/revisions.test.ts (10 tests) 162ms
+ffmpeg version 9.0.2 Copyright (c) 2000-2026 the FFmpeg developers
+  built with Apple clang version 21.0.0 (clang-2100.3.34.2)
+  configuration: --prefix=/opt/homebrew/Cellar/ffmpeg/9.0.2 --enable-shared --enable-pthreads --enable-version3 --cc=clang --host-cflags= --host-ldflags= --enable-ffplay --enable-gpl --enable-libsvtav1 --enable-libopus --enable-libx264 --enable-libmp3lame --enable-libdav1d --enable-libvmaf --enable-libvpx --enable-libx265 --enable-openssl --enable-videotoolbox --enable-audiotoolbox --enable-neon
+  libavutil      61.  1.102 / 61.  1.102
+  libavcodec     63.  1.102 / 63.  1.102
+  libavformat    63.  1.102 / 63.  1.102
+  libavdevice    63.  1.102 / 63.  1.102
+  libavfilter    12.  1.102 / 12.  1.102
+  libswscale     10.  1.102 / 10.  1.102
+  libswresample   7.  1.102 /  7.  1.102
+Input #0, lavfi, from 'color=c=blue:s=250x250:d=1':
+  Duration: N/A, start: 0.000000, bitrate: N/A
+  Stream #0:0: Video: wrapped_avframe, yuv420p, 250x250 [SAR 1:1 DAR 1:1], 25 fps, 25 tbr, 25 tbn
+Stream mapping:
+  Stream #0:0 -> #0:0 (wrapped_avframe (native) -> h264 (libx264))
+Press [q] to stop, [?] for help
+[libx264 @ 0x794e81ca80] using SAR=1/1
+[libx264 @ 0x794e81ca80] using cpu capabilities: ARMv8 NEON DotProd
+[libx264 @ 0x794e81ca80] profile High, level 1.3, 4:2:0, 8-bit
+[libx264 @ 0x794e81ca80] 264 - core 165 r3222 b35605a - H.264/MPEG-4 AVC codec - Copyleft 2003-2025 - http://www.videolan.org/x264.html - options: cabac=1 ref=3 deblock=1:0:0 analyse=0x3:0x113 me=hex subme=7 psy=1 psy_rd=1.00:0.00 mixed_ref=1 me_range=16 chroma_me=1 trellis=1 8x8dct=1 cqm=0 deadzone=21,11 fast_pskip=1 chroma_qp_offset=-2 threads=8 lookahead_threads=1 sliced_threads=0 nr=0 decimate=1 interlaced=0 bluray_compat=0 constrained_intra=0 bframes=3 b_pyramid=2 b_adapt=1 b_bias=0 direct=1 weightb=1 open_gop=0 weightp=2 keyint=250 keyint_min=25 scenecut=40 intra_refresh=0 rc_lookahead=40 rc=crf mbtree=1 crf=23.0 qcomp=0.60 qpmin=0 qpmax=69 qpstep=4 ip_ratio=1.40 aq=1:1.00
+Output #0, mp4, to '/var/folders/6b/kpkrtysx23n_0zjbhw_llvqr0000gn/T/frame-ffmpeg-X5IN3B/clip.mp4':
+  Metadata:
+    encoder         : Lavf63.1.102
+  Stream #0:0: Video: h264 (avc1 / 0x31637661), yuv420p(tv, progressive), 250x250 [SAR 1:1 DAR 1:1], q=2-31, 25 fps, 12800 tbn
+    Metadata:
+      encoder         : Lavc63.1.102 libx264
+    Side data:
+      CPB properties: bitrate max/min/avg: 0/0/0 buffer size: 0 vbv_delay: N/A
+[mp4 @ 0x794e814280] Starting second pass: moving the moov atom to the beginning of the file
+[out#0/mp4 @ 0x794f408480] video:1KiB audio:0KiB subtitle:0KiB other streams:0KiB global headers:0KiB muxing overhead: 104.440497%
+frame=   25 fps=0.0 q=-1.0 Lsize=       2KiB time=00:00:00.92 bitrate=  20.0kbits/s speed=56.4x elapsed=0:00:00.01
+[libx264 @ 0x794e81ca80] frame I:1     Avg QP: 9.00  size:    67
+[libx264 @ 0x794e81ca80] frame P:6     Avg QP:10.17  size:    21
+[libx264 @ 0x794e81ca80] frame B:18    Avg QP:12.67  size:    14
+[libx264 @ 0x794e81ca80] consecutive B-frames:  4.0%  0.0%  0.0% 96.0%
+[libx264 @ 0x794e81ca80] mb I  I16..4: 100.0%  0.0%  0.0%
+[libx264 @ 0x794e81ca80] mb P  I16..4:  0.0%  0.0%  0.0%  P16..4:  0.0%  0.0%  0.0%  0.0%  0.0%    skip:100.0%
+[libx264 @ 0x794e81ca80] mb B  I16..4:  0.0%  0.0%  0.0%  B16..8:  0.0%  0.0%  0.0%  direct: 0.0%  skip:100.0%
+[libx264 @ 0x794e81ca80] 8x8 transform intra:0.0%
+[libx264 @ 0x794e81ca80] coded y,uvDC,uvAC intra: 0.0% 0.4% 0.0% inter: 0.0% 0.0% 0.0%
+[libx264 @ 0x794e81ca80] i16 v,h,dc,p: 94%  0%  6%  0%
+[libx264 @ 0x794e81ca80] i8c dc,h,v,p: 100%  0%  0%  0%
+[libx264 @ 0x794e81ca80] Weighted P-Frames: Y:0.0% UV:0.0%
+[libx264 @ 0x794e81ca80] kb/s:3.50
+stderr | lib/media/frame-server.test.ts > deriveEndFrameRefServerSide > returns null for videos without an export when ffmpeg is missing
+15:15:41.124 WARN  server-side frame extraction failed — chaining prompt-only app=perabyte module=frame-server url=/api/media?f=video.mp4 error=media ref not cached: video.mp4
+
+ ✓ lib/media/frame-server.test.ts (7 tests) 182ms
+ ✓ lib/production/audio.test.ts (21 tests) 8ms
+ ✓ lib/services/production/audio.test.ts (8 tests) 151ms
+ ✓ lib/production/recovery.test.ts (6 tests) 170ms
+ ✓ lib/services/production/approval.test.ts (4 tests) 112ms
+ ✓ app/api/production/projects/[projectId]/budget/route.test.ts (3 tests) 103ms
+ ✓ lib/providers/production/http-routes.test.ts (2 tests) 64ms
+ ✓ lib/services/production/proposals.test.ts (15 tests) 57ms
+ ✓ lib/repositories/provider-config.repository.test.ts (21 tests) 43ms
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > strict policy rejects an unsupported start frame before provider invocation
+15:15:41.760 INFO  generation started app=perabyte requestId=req_muwtm6o0_kog3uk kind=video provider=sogni model=fake_t2v safe=true count=1 aspect=16:9
+
+stdout | lib/jobs/executor.test.ts > job executor > fails strict jobs when the provider reports the requested frame was dropped
+15:15:41.766 INFO  job queued app=perabyte module=job-executor jobId=strict_dropped lane=sogni:image
+
+stdout | lib/jobs/executor.test.ts > job executor > fails strict jobs when the provider reports the requested frame was dropped
+15:15:41.770 INFO  provider job submitted app=perabyte ref=ref_1
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > strict policy rejects an unconfigured frame-swapped provider before loading the render
+15:15:41.769 INFO  generation started app=perabyte requestId=req_muwtm6o9_rgcwrk kind=video provider=sogni model=fake_t2v safe=true count=1 aspect=16:9
+
+stdout | lib/story/server-runner.test.ts > server story runner > start resets failed/canceled scenes, composes prompts server-side, enqueues the first runnable
+15:15:41.767 INFO  story world seeded app=perabyte module=story-server-runner storyId=s1 baseSeed=165567
+15:15:41.771 INFO  story run started app=perabyte module=story-server-runner storyId=s1 scenes=2
+15:15:41.771 INFO  story scene enqueued app=perabyte module=story-server-runner storyId=s1 sceneId=sc2
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > strict policy uses a compatible and configured frame-swapped model
+15:15:41.773 INFO  generation started app=perabyte requestId=req_muwtm6od_0bl3tt kind=video provider=sogni model=fake_t2v safe=true count=1 aspect=16:9
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > strict policy uses a compatible and configured frame-swapped model
+15:15:41.775 INFO  url-only artifact cached server-side app=perabyte requestId=req_muwtm6od_0bl3tt kind=video provider=sogni model=fake_t2v safe=true size=71
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > strict policy uses a compatible and configured frame-swapped model
+15:15:41.776 INFO  generation completed app=perabyte requestId=req_muwtm6od_0bl3tt kind=video provider=sogni model=fake_t2v safe=true elapsedMs=3 variants=1 prewarmed=undefined
+
+stdout | lib/story/server-runner.test.ts > server story runner > composes an explicit scene cast when the legacy story has no declared cast
+15:15:41.777 INFO  story world seeded app=perabyte module=story-server-runner storyId=scene-only-cast baseSeed=787683
+15:15:41.777 INFO  story run started app=perabyte module=story-server-runner storyId=scene-only-cast scenes=1
+15:15:41.778 INFO  story scene enqueued app=perabyte module=story-server-runner storyId=scene-only-cast sceneId=one
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > strict policy rechecks context capability on the effective swapped model
+15:15:41.779 INFO  generation started app=perabyte requestId=req_muwtm6oj_ys3q57 kind=video provider=sogni model=fake_t2v safe=true count=1 aspect=16:9
+
+stdout | lib/story/server-runner.test.ts > server story runner > does not inject unrelated library characters into a legacy prose-only story
+15:15:41.779 INFO  story world seeded app=perabyte module=story-server-runner storyId=prose-only baseSeed=869359
+15:15:41.779 INFO  story run started app=perabyte module=story-server-runner storyId=prose-only scenes=1
+15:15:41.779 INFO  story scene enqueued app=perabyte module=story-server-runner storyId=prose-only sceneId=one
+
+stderr | lib/story/server-runner.test.ts > server story runner > halts advancement if a referenced entity disappears before enqueue
+15:15:41.780 WARN  story run halted by invalid canonical references app=perabyte module=story-server-runner storyId=stale-advance sceneId=one violations=[{"field":"meta.characterIds","id":"deleted-character","message":"Story cast character “deleted-character” no longer exists. Remove it or restore the character before generating."}]
+
+stdout | lib/story/server-runner.test.ts > server story runner > mints the world base seed once and keeps scene seeds stable across runs
+15:15:41.781 INFO  story world seeded app=perabyte module=story-server-runner storyId=s-seed baseSeed=782114
+15:15:41.781 INFO  story run started app=perabyte module=story-server-runner storyId=s-seed scenes=2
+15:15:41.781 INFO  story scene enqueued app=perabyte module=story-server-runner storyId=s-seed sceneId=sc1
+
+stdout | lib/story/server-runner.test.ts > server story runner > mints the world base seed once and keeps scene seeds stable across runs
+15:15:41.781 INFO  story run started app=perabyte module=story-server-runner storyId=s-seed scenes=2
+15:15:41.782 INFO  story scene enqueued app=perabyte module=story-server-runner storyId=s-seed sceneId=sc1
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > strict policy checks the requested render kind against the effective model
+15:15:41.782 INFO  generation started app=perabyte requestId=req_muwtm6om_pnjsp2 kind=video provider=sogni model=fake_edit safe=true count=1 aspect=16:9
+
+stdout | lib/story/server-runner.test.ts > server story runner > advance runs scenes one at a time and threads the chain ref
+15:15:41.784 INFO  story scene enqueued app=perabyte module=story-server-runner storyId=s2 sceneId=sc2
+
+stdout | lib/story/server-runner.test.ts > server story runner > canceled scenes are transparent; failed predecessors halt the run
+15:15:41.785 INFO  story scene enqueued app=perabyte module=story-server-runner storyId=s3 sceneId=sc3
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > strict policy rejects an unsupported end frame before provider invocation
+15:15:41.786 INFO  generation started app=perabyte requestId=req_muwtm6oq_o1o5k4 kind=video provider=sogni model=fake_startonly safe=true count=1 aspect=16:9
+
+stdout | lib/story/server-runner.test.ts > server story runner > cancel stops the run and parks generating scenes as queued
+15:15:41.789 INFO  story run canceled app=perabyte module=story-server-runner storyId=s5
+
+stdout | lib/story/server-runner.test.ts > server story runner > scene cancel + rerun follow the client runner's semantics
+15:15:41.797 INFO  story scene requeued app=perabyte module=story-server-runner storyId=s6 sceneId=sc2
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > strict policy rejects a provider-reported dropped start frame
+15:15:41.813 INFO  generation started app=perabyte requestId=req_muwtm6ph_4elabl kind=video provider=sogni model=fake_startonly safe=true count=1 aspect=16:9
+
+stdout | lib/story/server-runner.test.ts > server story runner > an enqueue failure fails the scene and halts the run
+15:15:41.815 INFO  story world seeded app=perabyte module=story-server-runner storyId=s7 baseSeed=94164
+15:15:41.815 INFO  story run started app=perabyte module=story-server-runner storyId=s7 scenes=1
+
+stderr | lib/story/server-runner.test.ts > server story runner > an enqueue failure fails the scene and halts the run
+15:15:41.816 WARN  story scene failed to enqueue app=perabyte module=story-server-runner storyId=s7 sceneId=sc1 message=provider not configured
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > attributes an output frame drop to the end frame when no start frame was requested
+15:15:41.819 INFO  generation started app=perabyte requestId=req_muwtm6pn_s2up6x kind=video provider=sogni model=fake_i2v safe=true count=1 aspect=16:9
+
+stdout | lib/jobs/executor.test.ts > job executor > serialized lanes run one job at a time, FIFO
+15:15:41.817 INFO  job queued app=perabyte module=job-executor jobId=a lane=sogni:image
+15:15:41.823 INFO  job queued app=perabyte module=job-executor jobId=b lane=sogni:image
+
+stdout | lib/jobs/executor.test.ts > job executor > serialized lanes run one job at a time, FIFO
+15:15:41.824 INFO  provider job submitted app=perabyte ref=ref_1
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > 400s when the start ref is missing from the cache
+15:15:41.824 INFO  generation started app=perabyte requestId=req_muwtm6ps_j48vws kind=video provider=sogni model=fake_t2v safe=true count=1 aspect=16:9
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > swaps to the i2v sibling and reports the effective model
+15:15:41.829 INFO  generation started app=perabyte requestId=req_muwtm6px_x81jhm kind=video provider=sogni model=fake_t2v safe=true count=1 aspect=16:9
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > swaps to the i2v sibling and reports the effective model
+15:15:41.832 INFO  frame capability swap app=perabyte requestId=req_muwtm6px_x81jhm kind=video provider=sogni model=fake_t2v safe=true from=sogni:fake_t2v to=sogni:fake_i2v
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > swaps to the i2v sibling and reports the effective model
+15:15:41.832 INFO  url-only artifact cached server-side app=perabyte requestId=req_muwtm6px_x81jhm kind=video provider=sogni model=fake_t2v safe=true size=71
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > swaps to the i2v sibling and reports the effective model
+15:15:41.833 INFO  generation completed app=perabyte requestId=req_muwtm6px_x81jhm kind=video provider=sogni model=fake_t2v safe=true elapsedMs=4 variants=1 prewarmed=undefined
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > keeps the model when it already takes frames
+15:15:41.835 INFO  generation started app=perabyte requestId=req_muwtm6q3_b7vzz7 kind=video provider=sogni model=fake_startonly safe=true count=1 aspect=16:9
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > keeps the model when it already takes frames
+15:15:41.835 INFO  url-only artifact cached server-side app=perabyte requestId=req_muwtm6q3_b7vzz7 kind=video provider=sogni model=fake_startonly safe=true size=71
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > keeps the model when it already takes frames
+15:15:41.836 INFO  generation completed app=perabyte requestId=req_muwtm6q3_b7vzz7 kind=video provider=sogni model=fake_startonly safe=true elapsedMs=1 variants=1 prewarmed=undefined
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > drops frames (frameUsed false) when no capable model exists
+15:15:41.837 INFO  generation started app=perabyte requestId=req_muwtm6q5_bm9nly kind=video provider=sogni model=fake_t2v safe=true count=1 aspect=16:9
+
+stdout | lib/story/server-runner.test.ts > keyframe substage > anchors a video scene with a k_ keyframe image job first
+15:15:41.837 INFO  story run started app=perabyte module=story-server-runner storyId=s_kf scenes=1
+15:15:41.837 INFO  story keyframe enqueued app=perabyte module=story-server-runner storyId=s_kf sceneId=sc1
+
+stderr | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > drops frames (frameUsed false) when no capable model exists
+15:15:41.837 WARN  start frame provided but no capable model available — dropping frames app=perabyte requestId=req_muwtm6q5_bm9nly kind=video provider=sogni model=sogni:fake_t2v safe=true
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > drops frames (frameUsed false) when no capable model exists
+15:15:41.837 INFO  url-only artifact cached server-side app=perabyte requestId=req_muwtm6q5_bm9nly kind=video provider=sogni model=fake_t2v safe=true size=71
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > drops frames (frameUsed false) when no capable model exists
+15:15:41.838 INFO  generation completed app=perabyte requestId=req_muwtm6q5_bm9nly kind=video provider=sogni model=fake_t2v safe=true elapsedMs=1 variants=1 prewarmed=undefined
+
+stdout | lib/story/server-runner.test.ts > keyframe substage > uses an explicit scene-local cast for keyframe references without a story cast
+15:15:41.838 INFO  story world seeded app=perabyte module=story-server-runner storyId=local-keyframe baseSeed=670821
+15:15:41.838 INFO  story run started app=perabyte module=story-server-runner storyId=local-keyframe scenes=1
+15:15:41.838 INFO  story keyframe enqueued app=perabyte module=story-server-runner storyId=local-keyframe sceneId=sc1
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > drops the end frame when the model cannot condition on it
+15:15:41.840 INFO  generation started app=perabyte requestId=req_muwtm6q8_tr1y5s kind=video provider=sogni model=fake_startonly safe=true count=1 aspect=16:9
+
+stderr | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > drops the end frame when the model cannot condition on it
+15:15:41.840 WARN  end frame dropped — model cannot condition on a final frame app=perabyte requestId=req_muwtm6q8_tr1y5s kind=video provider=sogni model=sogni:fake_startonly safe=true
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > drops the end frame when the model cannot condition on it
+15:15:41.840 INFO  url-only artifact cached server-side app=perabyte requestId=req_muwtm6q8_tr1y5s kind=video provider=sogni model=fake_startonly safe=true size=71
+
+stdout | lib/story/server-runner.test.ts > keyframe substage > fails before video enqueue when canonical references exceed model capacity
+15:15:41.840 INFO  story run started app=perabyte module=story-server-runner storyId=capacity-fail scenes=1
+
+stderr | lib/story/server-runner.test.ts > keyframe substage > fails before video enqueue when canonical references exceed model capacity
+15:15:41.840 WARN  story scene failed to enqueue app=perabyte module=story-server-runner storyId=capacity-fail sceneId=sc1 message=required keyframe references exceed available model capacity
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > drops the end frame when the model cannot condition on it
+15:15:41.841 INFO  generation completed app=perabyte requestId=req_muwtm6q8_tr1y5s kind=video provider=sogni model=fake_startonly safe=true elapsedMs=1 variants=1 prewarmed=undefined
+
+stdout | lib/story/server-runner.test.ts > keyframe substage > animates from the keyframe ref once it is absorbed
+15:15:41.841 INFO  story run started app=perabyte module=story-server-runner storyId=s_kf scenes=1
+15:15:41.842 INFO  story keyframe enqueued app=perabyte module=story-server-runner storyId=s_kf sceneId=sc1
+
+stdout | lib/story/server-runner.test.ts > keyframe substage > animates from the keyframe ref once it is absorbed
+15:15:41.842 INFO  story scene enqueued after keyframe app=perabyte module=story-server-runner storyId=s_kf sceneId=sc1
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > passes both frames to an end-capable model
+15:15:41.842 INFO  generation started app=perabyte requestId=req_muwtm6qa_y75yuy kind=video provider=sogni model=fake_i2v safe=true count=1 aspect=16:9
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > passes both frames to an end-capable model
+15:15:41.842 INFO  url-only artifact cached server-side app=perabyte requestId=req_muwtm6qa_y75yuy kind=video provider=sogni model=fake_i2v safe=true size=71
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration continuity frames > passes both frames to an end-capable model
+15:15:41.843 INFO  generation completed app=perabyte requestId=req_muwtm6qa_y75yuy kind=video provider=sogni model=fake_i2v safe=true elapsedMs=1 variants=1 prewarmed=undefined
+
+stdout | lib/story/server-runner.test.ts > keyframe substage > halts post-keyframe submission if canonical references changed while rendering
+15:15:41.843 INFO  story run started app=perabyte module=story-server-runner storyId=s_kf scenes=1
+15:15:41.843 INFO  story keyframe enqueued app=perabyte module=story-server-runner storyId=s_kf sceneId=sc1
+
+stderr | lib/story/server-runner.test.ts > keyframe substage > halts post-keyframe submission if canonical references changed while rendering
+15:15:41.843 WARN  story run halted by invalid canonical references app=perabyte module=story-server-runner storyId=s_kf sceneId=sc1 violations=[{"field":"meta.characterIds","id":"ch_kf","message":"Story cast character “ch_kf” no longer exists. Remove it or restore the character before generating."}]
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration reference images > strict policy rejects unsupported and over-capacity context refs before provider invocation
+15:15:41.844 INFO  generation started app=perabyte requestId=req_muwtm6qc_gezs9l kind=video provider=sogni model=fake_t2v safe=true count=1 aspect=16:9
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration reference images > strict policy rejects unsupported and over-capacity context refs before provider invocation
+15:15:41.844 INFO  generation started app=perabyte requestId=req_muwtm6qc_e6kqio kind=image provider=sogni model=fake_edit safe=true count=1 aspect=16:9
+
+stdout | lib/story/server-runner.test.ts > keyframe substage > composes the canonical location description into story and keyframe prompts
+15:15:41.844 INFO  story run started app=perabyte module=story-server-runner storyId=s-location scenes=1
+15:15:41.844 INFO  story keyframe enqueued app=perabyte module=story-server-runner storyId=s-location sceneId=sc1
+
+stdout | lib/jobs/executor.test.ts > job executor > serialized lanes run one job at a time, FIFO
+15:15:41.844 INFO  job completed app=perabyte module=job-executor jobId=a media=1
+15:15:41.845 INFO  solo job absorbed into history app=perabyte module=job-executor jobId=a assetId=a_a
+
+stdout | lib/jobs/executor.test.ts > job executor > serialized lanes run one job at a time, FIFO
+15:15:41.846 INFO  provider job submitted app=perabyte ref=ref_2
+
+stdout | lib/story/server-runner.test.ts > keyframe substage > a manual start frame skips the keyframe entirely
+15:15:41.846 INFO  story run started app=perabyte module=story-server-runner storyId=s_kf scenes=1
+15:15:41.846 INFO  story scene enqueued app=perabyte module=story-server-runner storyId=s_kf sceneId=sc1
+
+stdout | lib/jobs/executor.test.ts > job executor > serialized lanes run one job at a time, FIFO
+15:15:41.846 INFO  job completed app=perabyte module=job-executor jobId=b media=1
+15:15:41.846 INFO  solo job absorbed into history app=perabyte module=job-executor jobId=b assetId=a_b
+
+stdout | lib/jobs/executor.test.ts > job executor > job path: submit persists the ref, completion persists media
+15:15:41.847 INFO  job queued app=perabyte module=job-executor jobId=j1 lane=sogni:image
+
+stdout | lib/jobs/executor.test.ts > job executor > job path: submit persists the ref, completion persists media
+15:15:41.848 INFO  provider job submitted app=perabyte ref=ref_1
+
+stdout | lib/story/server-runner.test.ts > keyframe substage > consistency OFF renders the video directly
+15:15:41.848 INFO  story run started app=perabyte module=story-server-runner storyId=s_kf scenes=1
+15:15:41.848 INFO  story scene enqueued app=perabyte module=story-server-runner storyId=s_kf sceneId=sc1
+
+stdout | lib/jobs/executor.test.ts > job executor > job path: submit persists the ref, completion persists media
+15:15:41.848 INFO  job completed app=perabyte module=job-executor jobId=j1 media=1
+15:15:41.848 INFO  solo job absorbed into history app=perabyte module=job-executor jobId=j1 assetId=a_j1
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration reference images > counts a supported start frame toward strict context-image capacity
+15:15:41.848 INFO  generation started app=perabyte requestId=req_muwtm6qg_519i2u kind=image provider=sogni model=fake_edit safe=true count=1 aspect=16:9
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration reference images > strict policy propagates unavailable cached context refs before provider invocation
+15:15:41.849 INFO  generation started app=perabyte requestId=req_muwtm6qh_r7d2sh kind=image provider=sogni model=fake_edit safe=true count=1 aspect=16:9
+
+stdout | lib/story/server-runner.test.ts > keyframe substage > image-kind scenes never keyframe
+15:15:41.849 INFO  story run started app=perabyte module=story-server-runner storyId=s_kf scenes=1
+15:15:41.850 INFO  story scene enqueued app=perabyte module=story-server-runner storyId=s_kf sceneId=sc1
+
+stdout | lib/story/server-runner.test.ts > keyframe substage > requeue drops the keyframe and gate attempts but keeps the seed
+15:15:41.851 INFO  story run started app=perabyte module=story-server-runner storyId=s_kf scenes=1
+15:15:41.851 INFO  story keyframe enqueued app=perabyte module=story-server-runner storyId=s_kf sceneId=sc1
+
+stdout | lib/story/server-runner.test.ts > keyframe substage > requeue drops the keyframe and gate attempts but keeps the seed
+15:15:41.852 INFO  story scene requeued app=perabyte module=story-server-runner storyId=s_kf sceneId=sc1
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration reference images > loads every reference ref from the media cache in order
+15:15:41.853 INFO  generation started app=perabyte requestId=req_muwtm6qk_pk0ec1 kind=video provider=sogni model=fake_edit safe=true count=1 aspect=16:9
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration reference images > loads every reference ref from the media cache in order
+15:15:41.853 INFO  url-only artifact cached server-side app=perabyte requestId=req_muwtm6qk_pk0ec1 kind=video provider=sogni model=fake_edit safe=true size=71
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration reference images > loads every reference ref from the media cache in order
+15:15:41.853 INFO  generation completed app=perabyte requestId=req_muwtm6qk_pk0ec1 kind=video provider=sogni model=fake_edit safe=true elapsedMs=1 variants=1 prewarmed=undefined
+
+stdout | lib/jobs/executor.test.ts > job executor > inline path: non-job providers run under the cap without refs
+15:15:41.854 INFO  job queued app=perabyte module=job-executor jobId=i1 lane=sogni:image
+
+stdout | lib/story/server-runner.test.ts > keyframe substage > free-text locations resolve against the world at run start
+15:15:41.854 INFO  scene locations resolved app=perabyte module=story-server-runner storyId=s_kf
+15:15:41.854 INFO  story run started app=perabyte module=story-server-runner storyId=s_kf scenes=1
+15:15:41.855 INFO  story keyframe enqueued app=perabyte module=story-server-runner storyId=s_kf sceneId=sc1
+
+stdout | lib/jobs/executor.test.ts > job executor > inline path: non-job providers run under the cap without refs
+15:15:41.854 INFO  job completed app=perabyte jobId=i1 media=1
+15:15:41.855 INFO  solo job absorbed into history app=perabyte jobId=i1 assetId=a_i1
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration reference images > caps references at the model's contextImages.max, keeping the first
+15:15:41.855 INFO  generation started app=perabyte requestId=req_muwtm6qn_kf5r86 kind=video provider=sogni model=fake_edit safe=true count=1 aspect=16:9
+
+ ✓ lib/story/server-runner.test.ts (37 tests) 91ms
+stderr | lib/services/generation.service.frames.test.ts > runGeneration reference images > caps references at the model's contextImages.max, keeping the first
+15:15:41.856 WARN  reference images dropped — model takes N app=perabyte requestId=req_muwtm6qn_kf5r86 kind=video provider=sogni model=sogni:fake_edit safe=true max=2 dropped=1
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration reference images > caps references at the model's contextImages.max, keeping the first
+15:15:41.856 INFO  url-only artifact cached server-side app=perabyte requestId=req_muwtm6qn_kf5r86 kind=video provider=sogni model=fake_edit safe=true size=71
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration reference images > caps references at the model's contextImages.max, keeping the first
+15:15:41.856 INFO  generation completed app=perabyte requestId=req_muwtm6qn_kf5r86 kind=video provider=sogni model=fake_edit safe=true elapsedMs=1 variants=1 prewarmed=undefined
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration reference images > drops reference images entirely for models without contextImages
+15:15:41.858 INFO  generation started app=perabyte requestId=req_muwtm6qq_9vt3ao kind=video provider=sogni model=fake_t2v safe=true count=1 aspect=16:9
+
+stderr | lib/services/generation.service.frames.test.ts > runGeneration reference images > drops reference images entirely for models without contextImages
+15:15:41.858 WARN  reference images dropped — model cannot take context references app=perabyte requestId=req_muwtm6qq_9vt3ao kind=video provider=sogni model=sogni:fake_t2v safe=true dropped=2
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration reference images > drops reference images entirely for models without contextImages
+15:15:41.858 INFO  url-only artifact cached server-side app=perabyte requestId=req_muwtm6qq_9vt3ao kind=video provider=sogni model=fake_t2v safe=true size=71
+
+stdout | lib/services/generation.service.frames.test.ts > runGeneration reference images > drops reference images entirely for models without contextImages
+15:15:41.860 INFO  generation completed app=perabyte requestId=req_muwtm6qq_9vt3ao kind=video provider=sogni model=fake_t2v safe=true elapsedMs=2 variants=1 prewarmed=undefined
+
+ ✓ lib/services/generation.service.frames.test.ts (27 tests) 110ms
+stdout | lib/jobs/executor.test.ts > job executor > cancelling a running job exits the loop and cancels the provider job
+15:15:41.862 INFO  job queued app=perabyte module=job-executor jobId=r1 lane=sogni:image
+
+stdout | lib/jobs/executor.test.ts > job executor > cancelling a running job exits the loop and cancels the provider job
+15:15:41.864 INFO  provider job submitted app=perabyte ref=ref_1
+
+stdout | lib/jobs/executor.test.ts > job executor > cancelling a running job exits the loop and cancels the provider job
+15:15:41.864 INFO  job loop exited app=perabyte module=job-executor jobId=r1 status=canceled
+
+stdout | lib/jobs/executor.test.ts > job executor > cancelling a queued job removes it from the lane untouched
+15:15:41.865 INFO  job queued app=perabyte module=job-executor jobId=q1 lane=sogni:image
+15:15:41.865 INFO  job queued app=perabyte module=job-executor jobId=q2 lane=sogni:image
+
+stdout | lib/jobs/executor.test.ts > job executor > cancelling a queued job removes it from the lane untouched
+15:15:41.865 INFO  provider job submitted app=perabyte ref=ref_1
+
+stdout | lib/jobs/executor.test.ts > job executor > cancelling a queued job removes it from the lane untouched
+15:15:41.865 INFO  job completed app=perabyte module=job-executor jobId=q1 media=1
+15:15:41.866 INFO  solo job absorbed into history app=perabyte module=job-executor jobId=q1 assetId=a_q1
+
+stdout | lib/jobs/executor.test.ts > job executor > provider-reported failure marks the job failed with the provider's retryability
+15:15:41.872 INFO  job queued app=perabyte module=job-executor jobId=f1 lane=sogni:image
+
+stdout | lib/jobs/executor.test.ts > job executor > provider-reported failure marks the job failed with the provider's retryability
+15:15:41.872 INFO  provider job submitted app=perabyte ref=ref_1
+
+stderr | lib/jobs/executor.test.ts > job executor > provider-reported failure marks the job failed with the provider's retryability
+15:15:41.872 WARN  job failed by provider app=perabyte module=job-executor jobId=f1 message=prompt rejected
+
+stdout | lib/jobs/executor.test.ts > job executor > repeated poll errors trip the staleness limit as retryable
+15:15:41.879 INFO  job queued app=perabyte module=job-executor jobId=s1 lane=sogni:image
+
+stdout | lib/jobs/executor.test.ts > job executor > repeated poll errors trip the staleness limit as retryable
+15:15:41.879 INFO  provider job submitted app=perabyte ref=ref_1
+
+stderr | lib/jobs/executor.test.ts > job executor > repeated poll errors trip the staleness limit as retryable
+15:15:41.879 WARN  poll errored — will retry app=perabyte module=job-executor jobId=s1 error=relay unreachable
+
+stderr | lib/jobs/executor.test.ts > job executor > repeated poll errors trip the staleness limit as retryable
+15:15:41.879 WARN  poll errored — will retry app=perabyte module=job-executor jobId=s1 error=relay unreachable
+
+stdout | lib/jobs/executor.test.ts > job executor > the absolute cap fires before staleness when configured wide
+15:15:41.887 INFO  job queued app=perabyte module=job-executor jobId=c1 lane=sogni:image
+
+stdout | lib/jobs/executor.test.ts > job executor > the absolute cap fires before staleness when configured wide
+15:15:41.887 INFO  provider job submitted app=perabyte ref=ref_1
+
+stderr | lib/jobs/executor.test.ts > job executor > the absolute cap fires before staleness when configured wide
+15:15:41.887 WARN  poll errored — will retry app=perabyte module=job-executor jobId=c1 error=relay unreachable
+
+stderr | lib/jobs/executor.test.ts > job executor > the absolute cap fires before staleness when configured wide
+15:15:41.887 WARN  poll errored — will retry app=perabyte module=job-executor jobId=c1 error=relay unreachable
+
+stderr | lib/jobs/executor.test.ts > job executor > the absolute cap fires before staleness when configured wide
+15:15:41.887 WARN  poll errored — will retry app=perabyte module=job-executor jobId=c1 error=relay unreachable
+
+stderr | lib/jobs/executor.test.ts > job executor > the absolute cap fires before staleness when configured wide
+15:15:41.887 WARN  poll errored — will retry app=perabyte module=job-executor jobId=c1 error=relay unreachable
+
+stdout | lib/jobs/executor.test.ts > job executor > recover re-enters queued jobs into lanes and finishes them
+15:15:41.894 INFO  recovering jobs after restart app=perabyte module=job-executor count=1
+
+stdout | lib/jobs/executor.test.ts > job executor > recover re-enters queued jobs into lanes and finishes them
+15:15:41.895 INFO  provider job submitted app=perabyte ref=ref_1
+
+stdout | lib/jobs/executor.test.ts > job executor > recover re-enters queued jobs into lanes and finishes them
+15:15:41.895 INFO  job completed app=perabyte module=job-executor jobId=rec1 media=1
+15:15:41.895 INFO  solo job absorbed into history app=perabyte module=job-executor jobId=rec1 assetId=a_rec1
+
+stdout | lib/jobs/executor.test.ts > job executor > recover re-attaches a running job from its persisted ref
+15:15:41.900 INFO  recovering jobs after restart app=perabyte module=job-executor count=1
+15:15:41.900 INFO  re-attaching running job from persisted ref app=perabyte module=job-executor jobId=rec2 ref=proj_restart
+
+stdout | lib/jobs/executor.test.ts > job executor > recover re-attaches a running job from its persisted ref
+15:15:41.900 INFO  job completed app=perabyte module=job-executor jobId=rec2 media=1
+15:15:41.901 INFO  solo job absorbed into history app=perabyte module=job-executor jobId=rec2 assetId=a_rec2
+
+stdout | lib/jobs/executor.test.ts > job executor > recover fails a running job that has no ref (unresumable)
+15:15:41.910 INFO  recovering jobs after restart app=perabyte module=job-executor count=1
+
+stdout | lib/jobs/executor.test.ts > job executor > a GenerationServiceError in prepare fails the job non-retryably
+15:15:41.911 INFO  job queued app=perabyte module=job-executor jobId=p1 lane=sogni:image
+
+ ✓ lib/jobs/executor.test.ts (13 tests) 154ms
+ ✓ lib/providers/production/capabilities.test.ts (11 tests) 76ms
+stdout | lib/providers/apikey-fan/apikey-fan.provider.test.ts > apikey-fan provider > pollJob downloads once every variation is done and seeds per index
+15:15:42.083 INFO  relay video jobs completed app=perabyte ref=job_1,job_2 count=2
+
+stdout | lib/providers/apikey-fan/apikey-fan.provider.test.ts > apikey-fan provider > generates one video per requested variation (count honoured)
+15:15:42.095 INFO  relay video jobs completed app=perabyte ref=job_1,job_2 count=2
+
+stdout | lib/providers/apikey-fan/apikey-fan.provider.test.ts > apikey-fan provider > resolves a relative content url and downloads it with the api key
+15:15:42.096 INFO  relay video jobs completed app=perabyte ref=job_rel count=1
+
+stderr | lib/providers/apikey-fan/apikey-fan.provider.test.ts > apikey-fan provider > re-fetches a placeholder download and fails loudly when it stays invalid
+15:15:42.097 WARN  downloaded video failed validation — re-fetching once app=perabyte size=64
+
+stderr | lib/providers/apikey-fan/apikey-fan.provider.test.ts > apikey-fan provider > re-fetches a placeholder download and fails loudly when it stays invalid
+15:15:47.097 ERROR video download unusable app=perabyte size=64
+
+stderr | lib/providers/apikey-fan/apikey-fan.provider.test.ts > continuity frame adaptive fallback > retries prompt-only when the relay rejects the video image field
+15:15:42.099 WARN  video create rejected the image field — retrying prompt-only app=perabyte provider=apikey-fan model=grok-imagine-video-1.5
+
+stdout | lib/providers/apikey-fan/apikey-fan.provider.test.ts > continuity frame adaptive fallback > retries prompt-only when the relay rejects the video image field
+15:15:42.100 INFO  relay video jobs completed app=perabyte ref=job_fb~f count=1
+
+stdout | lib/providers/apikey-fan/apikey-fan.provider.test.ts > continuity frame adaptive fallback > keeps frameDropped unset when the image field is accepted
+15:15:42.100 INFO  relay video jobs completed app=perabyte ref=job_ok count=1
+
+stderr | lib/providers/apikey-fan/apikey-fan.provider.test.ts > continuity frame adaptive fallback > falls back to plain generations when edits rejects the frame
+15:15:42.105 WARN  images/edits rejected the frame — retrying prompt-only app=perabyte
+
+ ✓ lib/providers/apikey-fan/apikey-fan.provider.test.ts (11 tests) 109ms
+ ✓ lib/providers/custom/formats/google.test.ts (8 tests) 27ms
+ ✓ lib/production/budget.test.ts (18 tests) 23ms
+stdout | lib/services/keyframe-gate.service.test.ts > scoreKeyframeRef > scores via the vision model and passes a matching keyframe
+15:15:42.197 INFO  keyframe scored app=perabyte surface=keyframe-gate ref=aaaaaaaaaaaa identity=0.9 outfit=0.85 location=0.95 passed=true notes=matches the brief
+
+stdout | lib/services/keyframe-gate.service.test.ts > scoreKeyframeRef > serves a repeat scoring from the cache without re-calling
+15:15:42.206 INFO  keyframe scored app=perabyte surface=keyframe-gate ref=aaaaaaaaaaaa identity=0.9 outfit=0.85 location=0.95 passed=true notes=matches the brief
+
+stdout | lib/services/keyframe-gate.service.test.ts > scoreKeyframeRef > treats different expectations as a different cache entry
+15:15:42.209 INFO  keyframe scored app=perabyte surface=keyframe-gate ref=aaaaaaaaaaaa identity=0.9 outfit=0.85 location=0.95 passed=true notes=matches the brief
+
+stdout | lib/services/keyframe-gate.service.test.ts > scoreKeyframeRef > treats different expectations as a different cache entry
+15:15:42.209 INFO  keyframe scored app=perabyte surface=keyframe-gate ref=aaaaaaaaaaaa identity=0.9 outfit=0.85 location=0.95 passed=true notes=matches the brief
+
+stdout | lib/services/keyframe-gate.service.test.ts > scoreKeyframeRef > marks a low-scoring keyframe failed but still returns a usable verdict
+15:15:42.211 INFO  keyframe scored app=perabyte surface=keyframe-gate ref=aaaaaaaaaaaa identity=0.4 outfit=0.3 location=0.5 passed=false notes=wrong hair color
+
+stderr | lib/services/keyframe-gate.service.test.ts > scoreKeyframeRef > is unavailable for bad refs, videos, and missing bytes
+15:15:42.212 WARN  media bytes unavailable for scoring — keyframe gate open app=perabyte surface=keyframe-gate ref=aaaaaaaaaaaa size=0
+
+stderr | lib/services/keyframe-gate.service.test.ts > scoreKeyframeRef > respects the cooldown when a reply is unparsable
+15:15:42.214 WARN  vision reply unparsable — keyframe gate open app=perabyte surface=keyframe-gate ref=aaaaaaaaaaaa reply=I cannot score that image.
+
+stderr | lib/services/keyframe-gate.service.test.ts > scoreKeyframeRef > opens the breaker after repeated endpoint failures and stops calling
+15:15:42.216 WARN  keyframe scoring failed — gate open app=perabyte surface=keyframe-gate ref=aaaaaaaaaaaa message=The Sogni vision replied 524.
+
+stderr | lib/services/keyframe-gate.service.test.ts > scoreKeyframeRef > opens the breaker after repeated endpoint failures and stops calling
+15:15:42.217 WARN  keyframe scoring failed — gate open app=perabyte surface=keyframe-gate ref=cccccccccccc message=The Sogni vision replied 524.
+
+stderr | lib/services/keyframe-gate.service.test.ts > scoreKeyframeRef > opens the breaker after repeated endpoint failures and stops calling
+15:15:42.218 WARN  keyframe scoring failed — gate open app=perabyte surface=keyframe-gate ref=dddddddddddd message=The Sogni vision replied 524.
+15:15:42.218 WARN  vision endpoint failing — keyframe gate breaker open app=perabyte surface=keyframe-gate ref=dddddddddddd openForMs=600000
+
+ ✓ lib/services/keyframe-gate.service.test.ts (8 tests) 42ms
+ ✓ lib/production/http.test.ts (7 tests) 30ms
+ ✓ lib/production/contracts.test.ts (23 tests) 46ms
+stdout | lib/services/writer.service.test.ts > writer service > writes a story through the engine chain
+15:15:42.461 INFO  story written app=perabyte surface=writer provider=sogni model=default elapsedMs=16
+
+stderr | lib/services/writer.service.test.ts > writer service > falls through to the next engine when the first fails
+15:15:42.465 WARN  writer engine failed — trying the next one app=perabyte surface=writer engine=sogni model=undefined message=The Sogni enhancer replied 503.
+
+stdout | lib/services/writer.service.test.ts > writer service > falls through to the next engine when the first fails
+15:15:42.466 INFO  story enhanced app=perabyte surface=writer provider=pollinations model=default elapsedMs=1
+
+stderr | lib/services/writer.service.test.ts > writer service > retries split once with a stricter instruction before failing
+15:15:42.466 WARN  split reply invalid app=perabyte surface=writer attempt=1 parseable=false scenes=undefined
+
+stdout | lib/services/writer.service.test.ts > writer service > retries split once with a stricter instruction before failing
+15:15:42.466 INFO  story split app=perabyte surface=writer provider=sogni model=default scenes=3 attempts=2 elapsedMs=0
+
+stderr | lib/services/writer.service.test.ts > writer service > retries an exact-count mismatch and accepts the requested count
+15:15:42.467 WARN  split reply invalid app=perabyte surface=writer attempt=1 parseable=true scenes=2
+
+stdout | lib/services/writer.service.test.ts > writer service > retries an exact-count mismatch and accepts the requested count
+15:15:42.467 INFO  story split app=perabyte surface=writer provider=sogni model=default scenes=3 attempts=2 elapsedMs=0
+
+stdout | lib/services/writer.service.test.ts > writer service > accepts an in-range Smart split and sends named cast with the instruction
+15:15:42.468 INFO  story split app=perabyte surface=writer provider=sogni model=default scenes=4 attempts=1 elapsedMs=0
+
+stdout | lib/services/writer.service.test.ts > writer service > requests a larger output budget for split than the 700-token default
+15:15:42.469 INFO  story split app=perabyte surface=writer provider=sogni model=default scenes=3 attempts=1 elapsedMs=1
+
+stdout | lib/services/writer.service.test.ts > writer service > sends the writer system prompt, not the enhancer's
+15:15:42.469 INFO  story written app=perabyte surface=writer provider=sogni model=default elapsedMs=0
+
+stdout | lib/services/writer.service.test.ts > writer service > folds the uncensored clause into writer enhance requests
+15:15:42.470 INFO  story enhanced app=perabyte surface=writer provider=sogni model=default elapsedMs=0
+
+stderr | lib/services/writer.service.test.ts > writer service > surfaces a retryable error when every engine fails
+15:15:42.472 WARN  writer engine failed — trying the next one app=perabyte surface=writer engine=sogni model=undefined message=The Sogni enhancer replied 503.
+
+stderr | lib/services/writer.service.test.ts > writer service > surfaces a retryable error when every engine fails
+15:15:42.472 WARN  writer engine failed — trying the next one app=perabyte surface=writer engine=pollinations model=undefined message=The prompt enhancer replied 503.
+
+stdout | lib/services/writer.service.test.ts > writer service > honours the tasks.writer pick (engine receives the model)
+15:15:42.474 INFO  story written app=perabyte surface=writer provider=pollinations model=default elapsedMs=0
+
+stdout | lib/services/writer.service.test.ts > writer service > the session model pill overrides the tasks.writer pick
+15:15:42.475 INFO  story written app=perabyte surface=writer provider=sogni model=qwen3.6-35b-a3b-gguf-iq4xs elapsedMs=0
+
+stdout | lib/services/writer.service.test.ts > writer service > an unknown session model id degrades to the chain instead of failing
+15:15:42.476 INFO  story written app=perabyte surface=writer provider=sogni model=default elapsedMs=0
+
+ ✓ lib/services/writer.service.test.ts (13 tests) 34ms
+ ✓ lib/production/project-canon.test.ts (28 tests) 31ms
+ ✓ lib/production/storyboard.test.ts (26 tests) 18ms
+ ✓ lib/production/publishing.test.ts (20 tests) 18ms
+stderr | lib/services/enhancement.service.test.ts > runPromptEnhancement > returns the AI rewrite on success
+15:15:42.622 WARN  enhancement engine failed — trying the next one app=perabyte surface=enhance kind=image engine=sogni model=undefined message=Sogni is not configured.
+
+stdout | lib/services/enhancement.service.test.ts > runPromptEnhancement > returns the AI rewrite on success
+15:15:42.636 INFO  prompt enhanced app=perabyte surface=enhance kind=image source=ai engine=pollinations model=undefined elapsedMs=15
+
+stderr | lib/services/enhancement.service.test.ts > runPromptEnhancement > falls back deterministically when the free pool is out of budget
+15:15:42.637 WARN  enhancement engine failed — trying the next one app=perabyte surface=enhance kind=image engine=sogni model=undefined message=Sogni is not configured.
+
+stderr | lib/services/enhancement.service.test.ts > runPromptEnhancement > falls back deterministically when the free pool is out of budget
+15:15:42.637 WARN  enhancement engine failed — trying the next one app=perabyte surface=enhance kind=image engine=pollinations model=undefined message=The prompt enhancer has no free capacity right now.
+15:15:42.637 WARN  ai enhancement unavailable — using deterministic fallback app=perabyte surface=enhance kind=image message=The prompt enhancer has no free capacity right now. elapsedMs=0
+
+stderr | lib/services/enhancement.service.test.ts > runPromptEnhancement > falls back when the network fails
+15:15:42.637 WARN  enhancement engine failed — trying the next one app=perabyte surface=enhance kind=image engine=sogni model=undefined message=Sogni is not configured.
+
+stderr | lib/services/enhancement.service.test.ts > runPromptEnhancement > falls back when the network fails
+15:15:42.637 WARN  enhancement engine failed — trying the next one app=perabyte surface=enhance kind=image engine=pollinations model=undefined message=The prompt enhancer is unreachable.
+15:15:42.638 WARN  ai enhancement unavailable — using deterministic fallback app=perabyte surface=enhance kind=image message=The prompt enhancer is unreachable. elapsedMs=0
+
+stderr | lib/services/enhancement.service.test.ts > runPromptEnhancement > reuses the cached AI reply for an identical request
+15:15:42.638 WARN  enhancement engine failed — trying the next one app=perabyte surface=enhance kind=image engine=sogni model=undefined message=Sogni is not configured.
+
+stdout | lib/services/enhancement.service.test.ts > runPromptEnhancement > reuses the cached AI reply for an identical request
+15:15:42.638 INFO  prompt enhanced app=perabyte surface=enhance kind=image source=ai engine=pollinations model=undefined elapsedMs=0
+
+stderr | lib/services/enhancement.service.test.ts > runPromptEnhancement > clamps an unknown style to no style context instead of failing
+15:15:42.640 WARN  enhancement engine failed — trying the next one app=perabyte surface=enhance kind=image engine=sogni model=undefined message=Sogni is not configured.
+
+stdout | lib/services/enhancement.service.test.ts > runPromptEnhancement > clamps an unknown style to no style context instead of failing
+15:15:42.640 INFO  prompt enhanced app=perabyte surface=enhance kind=image source=ai engine=pollinations model=undefined elapsedMs=0
+
+stderr | lib/services/enhancement.service.test.ts > runPromptEnhancement > lets a client abort propagate instead of falling back
+15:15:42.641 WARN  enhancement engine failed — trying the next one app=perabyte surface=enhance kind=image engine=sogni model=undefined message=Sogni is not configured.
+
+stdout | lib/services/enhancement.service.test.ts > runPromptEnhancement > prefers the Sogni engine when its key is configured
+15:15:42.642 INFO  prompt enhanced app=perabyte surface=enhance kind=image source=ai engine=sogni model=undefined elapsedMs=0
+
+stderr | lib/services/enhancement.service.test.ts > runPromptEnhancement > falls through Sogni to Pollinations on an empty reasoning reply
+15:15:42.643 WARN  enhancement engine failed — trying the next one app=perabyte surface=enhance kind=image engine=sogni model=undefined message=The Sogni enhancer returned an empty reply.
+
+stdout | lib/services/enhancement.service.test.ts > runPromptEnhancement > falls through Sogni to Pollinations on an empty reasoning reply
+15:15:42.643 INFO  prompt enhanced app=perabyte surface=enhance kind=image source=ai engine=pollinations model=undefined elapsedMs=1
+
+stdout | lib/services/enhancement.service.test.ts > runPromptEnhancement > asks the engine to keep adult content when uncensored is on
+15:15:42.643 INFO  prompt enhanced app=perabyte surface=enhance kind=image source=ai engine=sogni model=undefined elapsedMs=0
+
+stderr | lib/services/enhancement.service.test.ts > runPromptEnhancement > does not fall through to aligned engines after an uncensored refusal
+15:15:42.644 WARN  enhancement engine failed — trying the next one app=perabyte surface=enhance kind=image engine=sogni model=undefined message=The enhancer reply was unusable.
+15:15:42.644 WARN  ai enhancement unavailable — using deterministic fallback app=perabyte surface=enhance kind=image message=The enhancer reply was unusable. elapsedMs=0
+
+stdout | lib/services/enhancement.service.test.ts > runPromptEnhancement > honors configured task model over default priority order
+15:15:42.645 INFO  prompt enhanced app=perabyte surface=enhance kind=image source=ai engine=pollinations model=pollinations:default elapsedMs=1
+
+stdout | lib/services/enhancement.service.test.ts > runPromptEnhancement > skips disabled provider even when credentials exist
+15:15:42.646 INFO  prompt enhanced app=perabyte surface=enhance kind=image source=ai engine=pollinations model=undefined elapsedMs=0
+
+stderr | lib/services/enhancement.service.test.ts > runPromptEnhancement > does not collide cache across different configured enhance models
+15:15:42.647 WARN  enhancement engine failed — trying the next one app=perabyte surface=enhance kind=image engine=sogni model=undefined message=Sogni is not configured.
+
+stdout | lib/services/enhancement.service.test.ts > runPromptEnhancement > does not collide cache across different configured enhance models
+15:15:42.647 INFO  prompt enhanced app=perabyte surface=enhance kind=image source=ai engine=pollinations model=undefined elapsedMs=0
+
+stdout | lib/services/enhancement.service.test.ts > runPromptEnhancement > does not collide cache across different configured enhance models
+15:15:42.647 INFO  prompt enhanced app=perabyte surface=enhance kind=image source=ai engine=pollinations model=pollinations:default elapsedMs=0
+
+stdout | lib/services/enhancement.service.test.ts > custom provider enhancement engines > runs the selected custom engine through its wire format
+15:15:42.648 INFO  prompt enhanced app=perabyte surface=enhance kind=image source=ai engine=my-relay model=my-relay:grok-4.5 elapsedMs=0
+
+stderr | lib/services/enhancement.service.test.ts > custom provider enhancement engines > appends enabled custom providers to the fallback chain
+15:15:42.649 WARN  enhancement engine failed — trying the next one app=perabyte surface=enhance kind=image engine=sogni model=undefined message=Sogni is not configured.
+
+stderr | lib/services/enhancement.service.test.ts > custom provider enhancement engines > appends enabled custom providers to the fallback chain
+15:15:42.649 WARN  enhancement engine failed — trying the next one app=perabyte surface=enhance kind=image engine=pollinations model=undefined message=The prompt enhancer has no free capacity right now.
+
+stdout | lib/services/enhancement.service.test.ts > custom provider enhancement engines > appends enabled custom providers to the fallback chain
+15:15:42.649 INFO  prompt enhanced app=perabyte surface=enhance kind=image source=ai engine=my-relay model=my-relay:grok-4.5 elapsedMs=0
+
+stderr | lib/services/enhancement.service.test.ts > custom provider enhancement engines > skips disabled custom providers and disabled text models
+15:15:42.650 WARN  enhancement engine failed — trying the next one app=perabyte surface=enhance kind=image engine=sogni model=undefined message=Sogni is not configured.
+
+stderr | lib/services/enhancement.service.test.ts > custom provider enhancement engines > skips disabled custom providers and disabled text models
+15:15:42.650 WARN  enhancement engine failed — trying the next one app=perabyte surface=enhance kind=image engine=pollinations model=undefined message=The prompt enhancer replied 500.
+15:15:42.650 WARN  ai enhancement unavailable — using deterministic fallback app=perabyte surface=enhance kind=image message=The prompt enhancer replied 500. elapsedMs=0
+
+stderr | lib/services/enhancement.service.test.ts > custom provider enhancement engines > skips disabled custom providers and disabled text models
+15:15:42.650 WARN  enhancement engine failed — trying the next one app=perabyte surface=enhance kind=image engine=sogni model=undefined message=Sogni is not configured.
+
+stderr | lib/services/enhancement.service.test.ts > custom provider enhancement engines > skips disabled custom providers and disabled text models
+15:15:42.650 WARN  enhancement engine failed — trying the next one app=perabyte surface=enhance kind=image engine=pollinations model=undefined message=The prompt enhancer replied 500.
+15:15:42.650 WARN  ai enhancement unavailable — using deterministic fallback app=perabyte surface=enhance kind=image message=The prompt enhancer replied 500. elapsedMs=0
+
+ ✓ lib/services/enhancement.service.test.ts (17 tests) 34ms
+ ✓ lib/repositories/characters.repository.test.ts (10 tests) 27ms
+stdout | lib/providers/sogni/sogni.provider.test.ts > sogni provider > maps completed project URLs to artifacts
+15:15:42.817 INFO  sogni project completed app=perabyte ref=proj_0
+
+stdout | lib/providers/sogni/sogni.provider.test.ts > sogni provider > keeps the NSFW filter aligned with the safe flag
+15:15:42.820 INFO  sogni project completed app=perabyte ref=proj_0
+
+stdout | lib/providers/sogni/sogni.provider.test.ts > sogni provider > keeps the NSFW filter aligned with the safe flag
+15:15:42.821 INFO  sogni project completed app=perabyte ref=proj_1
+
+stdout | lib/providers/sogni/sogni.provider.test.ts > sogni provider > exposes submit/poll: ref on submit, artifacts on settle
+15:15:42.833 INFO  sogni project completed app=perabyte ref=proj_0
+
+stdout | lib/providers/sogni/sogni.provider.test.ts > sogni provider > re-attaches a project after a restart: mints urls from the raw record
+15:15:42.834 INFO  sogni project re-attached after restart app=perabyte ref=proj_lost urls=1
+
+stdout | lib/providers/sogni/sogni.provider.test.ts > sogni provider > maps video completions to mp4 artifacts
+15:15:42.837 INFO  sogni project completed app=perabyte ref=proj_0
+
+stdout | lib/providers/sogni/sogni.provider.test.ts > continuity frames + last frame export > sends referenceImage when a start frame is present
+15:15:42.838 INFO  sogni project completed app=perabyte ref=proj_0
+
+stdout | lib/providers/sogni/sogni.provider.test.ts > continuity frames + last frame export > sends both frames when start and end are present
+15:15:42.838 INFO  sogni project completed app=perabyte ref=proj_0
+
+stdout | lib/providers/sogni/sogni.provider.test.ts > continuity frames + last frame export > attaches the exported last frame to the first artifact
+15:15:42.839 INFO  sogni project completed app=perabyte ref=proj_0
+
+ ✓ lib/providers/sogni/sogni.provider.test.ts (16 tests) 32ms
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > stores the keyframe ref and advances to the scene render on a passing gate
+15:15:42.870 INFO  job queued app=perabyte module=job-executor jobId=job_kf lane=sogni:image
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > stores the keyframe ref and advances to the scene render on a passing gate
+15:15:42.877 INFO  provider job submitted app=perabyte ref=ref_1
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > stores the keyframe ref and advances to the scene render on a passing gate
+15:15:42.877 INFO  job completed app=perabyte module=job-executor jobId=job_kf media=1
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > stores the keyframe ref and advances to the scene render on a passing gate
+15:15:42.878 INFO  keyframe absorbed into story scene app=perabyte module=job-executor jobId=job_kf storyId=s_kf sceneId=sc1 ref=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1234.png
+
+ ✓ lib/providers/production/production-models.test.ts (8 tests) 11ms
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > uses explicit scene-local cast for QC when the legacy story has no declared cast
+15:15:42.880 INFO  job queued app=perabyte module=job-executor jobId=job_kf lane=sogni:image
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > uses explicit scene-local cast for QC when the legacy story has no declared cast
+15:15:42.881 INFO  provider job submitted app=perabyte ref=ref_1
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > uses explicit scene-local cast for QC when the legacy story has no declared cast
+15:15:42.881 INFO  job completed app=perabyte module=job-executor jobId=job_kf media=1
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > uses explicit scene-local cast for QC when the legacy story has no declared cast
+15:15:42.881 INFO  keyframe absorbed into story scene app=perabyte module=job-executor jobId=job_kf storyId=s_kf sceneId=sc1 ref=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1234.png
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > does not infer a character QC expectation from unrelated library entries
+15:15:42.882 INFO  job queued app=perabyte module=job-executor jobId=job_kf lane=sogni:image
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > does not infer a character QC expectation from unrelated library entries
+15:15:42.883 INFO  provider job submitted app=perabyte ref=ref_1
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > does not infer a character QC expectation from unrelated library entries
+15:15:42.883 INFO  job completed app=perabyte module=job-executor jobId=job_kf media=1
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > does not infer a character QC expectation from unrelated library entries
+15:15:42.883 INFO  keyframe absorbed into story scene app=perabyte module=job-executor jobId=job_kf storyId=s_kf sceneId=sc1 ref=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1234.png
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > does not score a world location when the scene supplies different free text
+15:15:42.884 INFO  job queued app=perabyte module=job-executor jobId=job_kf lane=sogni:image
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > does not score a world location when the scene supplies different free text
+15:15:42.885 INFO  provider job submitted app=perabyte ref=ref_1
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > does not score a world location when the scene supplies different free text
+15:15:42.885 INFO  job completed app=perabyte module=job-executor jobId=job_kf media=1
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > does not score a world location when the scene supplies different free text
+15:15:42.885 INFO  keyframe absorbed into story scene app=perabyte module=job-executor jobId=job_kf storyId=s_kf sceneId=sc1 ref=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1234.png
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > re-rolls on a failing gate: clears the ref, bumps attempts, re-advances
+15:15:42.886 INFO  job queued app=perabyte module=job-executor jobId=job_kf lane=sogni:image
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > re-rolls on a failing gate: clears the ref, bumps attempts, re-advances
+15:15:42.886 INFO  provider job submitted app=perabyte ref=ref_1
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > re-rolls on a failing gate: clears the ref, bumps attempts, re-advances
+15:15:42.887 INFO  job completed app=perabyte module=job-executor jobId=job_kf media=1
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > re-rolls on a failing gate: clears the ref, bumps attempts, re-advances
+15:15:42.887 INFO  keyframe absorbed into story scene app=perabyte module=job-executor jobId=job_kf storyId=s_kf sceneId=sc1 ref=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1234.png
+
+stderr | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > re-rolls on a failing gate: clears the ref, bumps attempts, re-advances
+15:15:42.887 WARN  keyframe failed the gate — re-rolling app=perabyte module=job-executor jobId=job_kf storyId=s_kf sceneId=sc1 attempt=1 score={"identity":0.2,"outfit":0.2,"location":0.3,"passed":false}
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > accepts a failing gate once attempts are exhausted (flags, animates anyway)
+15:15:42.890 INFO  job queued app=perabyte module=job-executor jobId=job_kf lane=sogni:image
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > accepts a failing gate once attempts are exhausted (flags, animates anyway)
+15:15:42.890 INFO  provider job submitted app=perabyte ref=ref_1
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > accepts a failing gate once attempts are exhausted (flags, animates anyway)
+15:15:42.890 INFO  job completed app=perabyte module=job-executor jobId=job_kf media=1
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > accepts a failing gate once attempts are exhausted (flags, animates anyway)
+15:15:42.890 INFO  keyframe absorbed into story scene app=perabyte module=job-executor jobId=job_kf storyId=s_kf sceneId=sc1 ref=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1234.png
+
+stderr | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > accepts a failing gate once attempts are exhausted (flags, animates anyway)
+15:15:42.890 WARN  keyframe failed the gate with attempts exhausted — animating anyway app=perabyte module=job-executor jobId=job_kf storyId=s_kf sceneId=sc1 score={"identity":0.2,"outfit":0.2,"location":0.3,"passed":false}
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > accepts without scoring when the gate is unavailable
+15:15:42.892 INFO  job queued app=perabyte module=job-executor jobId=job_kf lane=sogni:image
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > accepts without scoring when the gate is unavailable
+15:15:42.892 INFO  provider job submitted app=perabyte ref=ref_1
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > accepts without scoring when the gate is unavailable
+15:15:42.893 INFO  job completed app=perabyte module=job-executor jobId=job_kf media=1
+
+stdout | lib/jobs/executor.keyframe.test.ts > keyframe absorb (k_ tags) > accepts without scoring when the gate is unavailable
+15:15:42.893 INFO  keyframe absorbed into story scene app=perabyte module=job-executor jobId=job_kf storyId=s_kf sceneId=sc1 ref=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1234.png
+
+ ✓ lib/jobs/executor.keyframe.test.ts (7 tests) 29ms
+ ✓ lib/services/production/shot-plan.test.ts (19 tests) 29ms
+ ✓ lib/repositories/locations.repository.test.ts (10 tests) 53ms
+ ✓ lib/services/records.service.test.ts (8 tests) 9ms
+stderr | lib/providers/custom/formats/openai.test.ts > openai format — images > sends start frames to /images/edits and degrades on 400
+15:15:43.139 WARN  custom provider rejected the image inputs — retrying prompt-only app=perabyte
+
+stderr | lib/providers/custom/formats/openai.test.ts > openai format — images > degrades multi-reference edits to prompt-only on 400
+15:15:43.145 WARN  custom provider rejected the image inputs — retrying prompt-only app=perabyte
+
+stderr | lib/providers/custom/formats/openai.test.ts > openai format — images > retries without size when the payload is rejected
+15:15:43.145 WARN  custom provider rejected image payload fields — retrying plain app=perabyte
+
+ ✓ lib/providers/custom/formats/openai.test.ts (18 tests) 46ms
+ ✓ lib/providers/sogni/sogni.chat.test.ts (4 tests) 39ms
+ ✓ lib/services/provider-settings.service.test.ts (27 tests) 32ms
+ ✓ lib/production/plan-ui.test.ts (20 tests) 14ms
+ ✓ lib/story/records.test.ts (7 tests) 19ms
+ ✓ lib/providers/production/sogni-audio.test.ts (14 tests) 24ms
+ ✓ lib/production/proposals.test.ts (24 tests) 11ms
+ ✓ lib/services/production/audio-generation.test.ts (11 tests) 17ms
+ ✓ lib/providers/custom/formats/anthropic.test.ts (3 tests) 18ms
+stderr | lib/providers/sogni/lora-catalog.test.ts > fetchLoraCatalog > resolves null on HTTP failure with no cached copy
+15:15:43.608 WARN  lora catalog unavailable app=perabyte module=sogni/lora-catalog error=HTTP undefined
+
+stderr | lib/providers/sogni/lora-catalog.test.ts > fetchLoraCatalog > falls back to the last good copy when a refresh fails
+15:15:43.610 WARN  catalog refresh failed — serving stale app=perabyte module=sogni/lora-catalog error=network down
+
+ ✓ lib/providers/sogni/lora-catalog.test.ts (4 tests) 5ms
+ ✓ lib/services/text-engine-chain.test.ts (12 tests) 29ms
+stderr | lib/services/generation.service.test.ts > resolveLoras > strips nsfw adapters from a sensored request (safe:true)
+15:15:43.716 WARN  dropped unknown or model-incompatible lora selections app=perabyte model=krea2_turbo_fp8_scaled dropped=["krea2-mystic-x"] catalogAvailable=true
+
+stderr | lib/services/generation.service.test.ts > resolveLoras > strips adapters the model doesn't list regardless of the gate
+15:15:43.718 WARN  dropped unknown or model-incompatible lora selections app=perabyte model=krea2_turbo_fp8_scaled dropped=["h3-mystic-xxx-v4"] catalogAvailable=true
+
+stderr | lib/services/generation.service.test.ts > resolveLoras > strips everything when the catalog is unreachable
+15:15:43.718 WARN  lora catalog unavailable app=perabyte module=sogni/lora-catalog error=network down
+
+stderr | lib/services/generation.service.test.ts > resolveLoras > strips everything when the catalog is unreachable
+15:15:43.718 WARN  dropped unknown or model-incompatible lora selections app=perabyte model=krea2_turbo_fp8_scaled dropped=["krea2-realism"] catalogAvailable=false
+
+ ✓ lib/services/generation.service.test.ts (21 tests) 13ms
+ ✓ lib/production/runtime.test.ts (3 tests) 22ms
+ ✓ lib/providers/registry.test.ts (9 tests) 3ms
+ ✓ lib/production/manifest.test.ts (8 tests) 18ms
+ ✓ lib/character.test.ts (40 tests) 8ms
+ ✓ lib/domain/writer.test.ts (46 tests) 10ms
+ ✓ lib/production/proof-policy.test.ts (1 test) 16ms
+ ✓ lib/providers/apikey-fan/request-maps.test.ts (14 tests) 6ms
+ ✓ lib/repositories/stories.repository.test.ts (6 tests) 8ms
+ ✓ lib/production/qc.test.ts (17 tests) 11ms
+stdout | lib/services/generation.service.progress.test.ts > runGeneration progress forwarding > streams provider ticks plus the service's own stages
+15:15:44.250 INFO  generation started app=perabyte requestId=req_muwtm8l6_6pd1ns kind=image provider=fake model=progress safe=true count=1 aspect=16:9
+
+stdout | lib/services/generation.service.progress.test.ts > runGeneration progress forwarding > streams provider ticks plus the service's own stages
+15:15:44.253 INFO  generation completed app=perabyte requestId=req_muwtm8l6_6pd1ns kind=image provider=fake model=progress safe=true elapsedMs=4 variants=1 prewarmed=undefined
+
+stdout | lib/services/generation.service.progress.test.ts > runGeneration progress forwarding > works without a progress sink
+15:15:44.254 INFO  generation started app=perabyte requestId=req_muwtm8la_tcyaca kind=image provider=fake model=progress safe=true count=1 aspect=16:9
+
+stdout | lib/services/generation.service.progress.test.ts > runGeneration progress forwarding > works without a progress sink
+15:15:44.255 INFO  generation completed app=perabyte requestId=req_muwtm8la_tcyaca kind=image provider=fake model=progress safe=true elapsedMs=1 variants=1 prewarmed=undefined
+
+stdout | lib/services/generation.service.progress.test.ts > runGeneration progress forwarding > folds the style preset into the prompt for style-capable models
+15:15:44.256 INFO  generation started app=perabyte requestId=req_muwtm8lc_9b1sgz kind=image provider=fake model=progress safe=true count=1 aspect=16:9
+
+stdout | lib/services/generation.service.progress.test.ts > runGeneration progress forwarding > folds the style preset into the prompt for style-capable models
+15:15:44.256 INFO  generation completed app=perabyte requestId=req_muwtm8lc_9b1sgz kind=image provider=fake model=progress safe=true elapsedMs=0 variants=1 prewarmed=undefined
+
+stdout | lib/services/generation.service.progress.test.ts > runGeneration progress forwarding > sends the raw prompt when the model doesn't support styles
+15:15:44.257 INFO  generation started app=perabyte requestId=req_muwtm8ld_8j11zm kind=image provider=fake model=progress safe=true count=1 aspect=16:9
+
+stdout | lib/services/generation.service.progress.test.ts > runGeneration progress forwarding > sends the raw prompt when the model doesn't support styles
+15:15:44.258 INFO  generation completed app=perabyte requestId=req_muwtm8ld_8j11zm kind=image provider=fake model=progress safe=true elapsedMs=1 variants=1 prewarmed=undefined
+
+stdout | lib/services/generation.service.progress.test.ts > runGeneration progress forwarding > keeps sensored models safe even when uncensored mode is requested
+15:15:44.258 INFO  generation started app=perabyte requestId=req_muwtm8le_50s2pa kind=image provider=fake model=progress safe=false count=1 aspect=16:9
+
+stdout | lib/services/generation.service.progress.test.ts > runGeneration progress forwarding > keeps sensored models safe even when uncensored mode is requested
+15:15:44.259 INFO  generation completed app=perabyte requestId=req_muwtm8le_50s2pa kind=image provider=fake model=progress safe=false elapsedMs=1 variants=1 prewarmed=undefined
+
+stdout | lib/services/generation.service.progress.test.ts > runGeneration progress forwarding > keeps sensored models safe even when uncensored mode is requested
+15:15:44.259 INFO  generation started app=perabyte requestId=req_muwtm8lf_2ahqbd kind=image provider=fake model=progress safe=false count=1 aspect=16:9
+
+stdout | lib/services/generation.service.progress.test.ts > runGeneration progress forwarding > keeps sensored models safe even when uncensored mode is requested
+15:15:44.260 INFO  generation completed app=perabyte requestId=req_muwtm8lf_2ahqbd kind=image provider=fake model=progress safe=false elapsedMs=1 variants=1 prewarmed=undefined
+
+ ✓ lib/services/generation.service.progress.test.ts (5 tests) 13ms
+ ✓ lib/storage/bucket.test.ts (3 tests) 9ms
+ ✓ lib/repositories/media.repository.test.ts (5 tests) 8ms
+ ✓ lib/library-selectors.test.ts (10 tests) 12ms
+ ✓ lib/domain/enhancement.test.ts (24 tests) 6ms
+ ✓ lib/production/audio-ui.test.ts (22 tests) 12ms
+ ✓ lib/services/media.service.test.ts (4 tests) 9ms
+ ✓ lib/providers/custom/discovery.service.test.ts (7 tests) 11ms
+stdout | lib/services/generation.service.persist.test.ts > runGeneration persistence > downloads url-only artifacts from non-proxy hosts into the media cache
+15:15:44.628 INFO  generation started app=perabyte requestId=req_muwtm8vo_dh6ski kind=image provider=fake model=url-only safe=true count=1 aspect=16:9
+
+stdout | lib/services/generation.service.persist.test.ts > runGeneration persistence > downloads url-only artifacts from non-proxy hosts into the media cache
+15:15:44.632 INFO  url-only artifact cached server-side app=perabyte requestId=req_muwtm8vo_dh6ski kind=image provider=fake model=url-only safe=true size=12
+
+stdout | lib/services/generation.service.persist.test.ts > runGeneration persistence > downloads url-only artifacts from non-proxy hosts into the media cache
+15:15:44.634 INFO  generation completed app=perabyte requestId=req_muwtm8vo_dh6ski kind=image provider=fake model=url-only safe=true elapsedMs=7 variants=1 prewarmed=undefined
+
+stdout | lib/services/generation.service.persist.test.ts > runGeneration persistence > keeps pollinations URLs on the deterministic proxy path (no download)
+15:15:44.636 INFO  generation started app=perabyte requestId=req_muwtm8vw_6ztk3h kind=image provider=fake model=url-only safe=true count=1 aspect=16:9
+
+stdout | lib/services/generation.service.persist.test.ts > runGeneration persistence > keeps pollinations URLs on the deterministic proxy path (no download)
+15:15:44.636 INFO  generation completed app=perabyte requestId=req_muwtm8vw_6ztk3h kind=image provider=fake model=url-only safe=true elapsedMs=0 variants=1 prewarmed=undefined
+
+ ✓ lib/services/generation.service.persist.test.ts (2 tests) 11ms
+ ✓ lib/domain/models.test.ts (9 tests) 4ms
+ ✓ lib/providers/sogni/request-maps.test.ts (26 tests) 6ms
+ ✓ lib/story/keyframe-models.test.ts (4 tests) 5ms
+ ✓ lib/config/env.test.ts (11 tests) 8ms
+ ✓ lib/providers/registry.wiring.test.ts (5 tests) 8ms
+ ✓ lib/production/development-guard.test.ts (27 tests) 7ms
+ ✓ lib/lora-presets.test.ts (16 tests) 9ms
+ ✓ lib/providers/custom/custom-provider.factory.test.ts (11 tests) 8ms
+ ✓ lib/production/hash.test.ts (5 tests) 5ms
+ ✓ lib/domain/moderation.test.ts (10 tests) 4ms
+stderr | lib/story/consistency-hooks.test.ts > consistency hooks > swallows a throwing hook so it never propagates
+15:15:45.102 WARN  onScenePlan hook failed — ignored app=perabyte surface=consistency-hooks storyId=story-1 sceneId=scene-1 message=hook exploded
+
+stderr | lib/story/consistency-hooks.test.ts > consistency hooks > swallows a rejected async hook
+15:15:45.104 WARN  onKeyframeGate hook failed — ignored app=perabyte surface=consistency-hooks storyId=story-1 sceneId=scene-1 message=hook rejected
+
+ ✓ lib/story/consistency-hooks.test.ts (6 tests) 7ms
+ ✓ lib/production/export-ui.test.ts (11 tests) 6ms
+ ✓ lib/story/convert.test.ts (11 tests) 4ms
+ ✓ lib/repositories/assets.repository.test.ts (8 tests) 7ms
+ ✓ lib/story/seeds.test.ts (4 tests) 3ms
+ ✓ lib/character-store.test.ts (9 tests) 6ms
+ ✓ lib/production/shot-plan.test.ts (13 tests) 5ms
+ ✓ lib/providers/production/text-planner.test.ts (8 tests) 6ms
+ ✓ lib/story/scene-settings.test.ts (7 tests) 3ms
+ ✓ lib/production/animatic.test.ts (8 tests) 4ms
+ ✓ lib/domain/keyframe-gate.test.ts (9 tests) 3ms
+ ✓ lib/story/compose-shot.test.ts (9 tests) 4ms
+ ✓ lib/repositories/jobs.repository.test.ts (5 tests) 6ms
+ ✓ lib/lora-options.test.ts (11 tests) 4ms
+ ✓ lib/repositories/moderation.repository.test.ts (3 tests) 3ms
+ ✓ lib/providers/text-provider.test.ts (6 tests) 3ms
+ ✓ lib/story/chain.test.ts (12 tests) 3ms
+ ✓ lib/production/approval-policy.test.ts (2 tests) 2ms
+ ✓ lib/story/canon.test.ts (4 tests) 4ms
+ ✓ lib/providers/sogni/model-meta.test.ts (11 tests) 3ms
+ ✓ lib/production/proposal-dropdowns.test.ts (3 tests) 5ms
+ ✓ lib/story/keyframe.test.ts (12 tests) 4ms
+ ✓ lib/providers/production/sogni-h3.test.ts (9 tests) 5ms
+ ✓ lib/render-options.test.ts (7 tests) 3ms
+ ✓ lib/providers/production/submission-errors.test.ts (8 tests) 3ms
+ ✓ lib/production/profiles.test.ts (3 tests) 3ms
+ ✓ lib/production/storyboard-models.test.ts (3 tests) 5ms
+ ✓ lib/production/revisions.test.ts (6 tests) 3ms
+ ✓ lib/renderer.test.ts (5 tests) 2ms
+ ✓ lib/theme.test.ts (5 tests) 2ms
+ ✓ lib/store.test.ts (7 tests) 3ms
+ ✓ lib/providers/custom/formats/classify.test.ts (24 tests) 4ms
+ ✓ lib/repositories/settings.repository.test.ts (12 tests) 28ms
+ ✓ lib/writer-story.test.ts (2 tests) 4ms
+ ✓ lib/production/approval.test.ts (2 tests) 6ms
+ ✓ lib/demo-content.test.ts (4 tests) 2ms
+ ✓ lib/store-transport.test.ts (2 tests) 3ms
+ ✓ lib/repositories/location-row.test.ts (4 tests) 2ms
+ ✓ lib/repositories/character-row.test.ts (7 tests) 3ms
+ ✓ lib/model-picker-options.test.ts (4 tests) 2ms
+ ✓ lib/media/frame.test.ts (2 tests) 2ms
+ ✓ lib/media/mp4.test.ts (5 tests) 2ms
+ ✓ lib/domain/reference-policy.test.ts (3 tests) 2ms
+ ✓ lib/generation.test.ts (10 tests) 12062ms
+   ✓ requestGeneration (durable jobs) (7)
+     ✓ submits to /api/jobs and polls to completion 4043ms
+     ✓ sends LoRA selections in the submit body when set 2003ms
+     ✓ omits the loras field when no adapters are selected 2004ms
+     ✓ maps a failed job to a retryable GenerationError 2003ms
+     ✓ maps a canceled job to an AbortError 2003ms
+ ✓ lib/services/production/qc.test.ts (13 tests) 19018ms
+   ✓ C12 QC service end-to-end on a real local render (8)
+     ✓ runs QC on a passing render: ready_for_review, id-named qc-report file 0600, CAS sets the report id 1920ms
+     ✓ never clobbers the committed report under concurrent run_qc: the CAS winner's qcReportId always resolves 1889ms
+     ✓ sends mutated vault bytes to qc_failed with a checksum blocker 1382ms
+     ✓ writes a failed report naming the stage with redacted stderr when ffprobe is unavailable 1230ms
+     ✓ approves a final review in one transaction and unlocks the exact checksum 1680ms
+     ✓ marks a silent draft draftOnly, keeps it unapprovable, and still allows the draft download 1393ms
+     ✓ requires every advisory acknowledged before approval and accepts the acked review 1666ms
+     ✓ keeps a rejected review on ready_for_review with the decision recorded 1219ms
+   ✓ C12 download and draft route gating (5)
+     ✓ final download: 428 until approved, then 200 with exact headers and no path exposure 1206ms
+     ✓ final download returns 409 when the approved checksum no longer matches the current asset 1715ms
+     ✓ draft matrix: draft-eligible states serve labeled bytes, approved 409s to the final route, failed embeds the failure summary 1230ms
+     ✓ GET export detail includes the report and failure artifacts only when present, with the owning project scope 1253ms
+     ✓ run_qc and final_review POST commands flow through the item route 1232ms
+
+ Test Files  133 passed (133)
+      Tests  1521 passed (1521)
+   Start at  21:15:35
+   Duration  19.67s (tests 83%, import 10%, transform 7%, worker 1%)
+
+    Isolate  133 workers spawned · ~181ms startup each (spawn + environment, per file)
+             at least ~3.26s faster with isolate: false — reuses workers across files instead of one per file

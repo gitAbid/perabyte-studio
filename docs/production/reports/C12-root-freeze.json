@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "packet": "C12",
+  "status": "BOUNDARY_FROZEN implementation authorized (export QC + final-review/download UI over the accepted C11 export state machine)",
+  "frozenBy": "software-architect 2026-10-05; accepted by zcode orchestrator; base 352aaf9 (84deb1b + C11-WIRE integrated)",
+  "scope": "QC engine + service + export detail/download/draft routes + export UI: measured G08 verification of rendered output against the frozen render profile, named advisory warnings requiring human acknowledgment, checksum-bound G09 final review, strictly separated final vs draft download. Owns qc_pending onward. NO edits to C11 compiler/assembly, NO publishing, NO deletion of prior exports.",
+  "owns": [
+    "lib/production/qc.ts",
+    "lib/production/qc.test.ts",
+    "lib/services/production/qc.ts",
+    "lib/services/production/qc.test.ts",
+    "app/api/production/exports/[id]/route.ts",
+    "app/api/production/exports/[id]/download/route.ts",
+    "app/api/production/exports/[id]/draft/route.ts",
+    "app/production/[projectId]/export/page.tsx",
+    "components/production/export.tsx",
+    "lib/production/export-ui.test.ts",
+    "scripts/verify-production-export.mjs"
+  ],
+  "consumeReadOnly": [
+    "Export state machine: ExportStatusSchema ['queued','rendering','qc_pending','qc_failed','ready_for_review','approved','failed','canceled'], ExportSchema {manifestId, assetId, qcReportId, approvedSha256, finalApprovalId} with superRefine requiring checksum-bound approval+asset+QC report for 'approved' (contracts.ts:334-350). C12 owns transitions FROM qc_pending: qc_pending -> qc_failed|ready_for_review (QC verdict), ready_for_review -> approved (final review) via compareAndSetExport(ports.ts:191). C11 owns queued->rendering->qc_pending.",
+    "Export artifacts: 'export-asset-<sha256>' derived assets; failure.json {version,exportId,code,stage,shotRevisionId?,cueId?,redactedStderr,at} at dataDir/exports/<exportId>/failure.json (C12 READS it); lease.json is C11's, never touched",
+    "Frozen render profile/targets: manifest.profile (1080x1920|1920x1080, fps 24, h264/yuv420p, aac 48000), ASSEMBLY_LOUDNORM {integratedLufs:-14, truePeakDbtp:-1, lra:11} (profiles.ts:31-32 'measured enforcement is C12's gate'), ASSEMBLY_ENCODER_RECIPE, manifestInputsHash pin",
+    "Media bytes: LocalMediaVault.readVerified(vaultRef, sha256) checksum-enforced; vault root join(dataDir,'media') pattern",
+    "Accepted pure helpers (import allowed, edit forbidden): resolveMediaTools, redactStderr (assembly.ts), profiles constants",
+    "Ports: getExport/getManifest/getAsset/listProjectExports/appendApproval/compareAndSetExport/getProject; store txs synchronous except media/tool awaits outside tx",
+    "POST /projects/[projectId]/exports (C11, read-only) \u2014 Retry creates a NEW export with NEW idempotencyKey; prior exports never deleted",
+    "GET read model exports[] for the export list",
+    "ApprovalSchema permits targetKind 'final' (contracts.ts:222) \u2014 final review appends Approval{targetKind:'final', targetId:exportId, targetHash:<output sha256>} via appendApproval; the C06 approval-service 'final' case stays a QC_BLOCKED guard \u2014 C12 does NOT amend it",
+    "Route-handler + UI conventions from C07/C10/C11; NEVER edit contracts.ts ExportSchema (frozen), assembly.ts, manifest services/routes; never invoke a provider; never expose vaultRef/filesystem paths"
+  ],
+  "forbiddenEdits": [
+    "C11 files (manifest domain+service+tests, assembly, profiles, projects/[projectId]/{exports,manifests} routes)",
+    "C06 approval files",
+    "C02 contracts/read model/repositories (ports.ts, sqlite.ts, migrations/*)",
+    "lib/production/{http,errors,hash,runtime}.ts",
+    "components/ui/*",
+    "all other app/api/production/* routes",
+    "package.json/lockfiles",
+    "docs/production/* owned by others"
+  ],
+  "qcReportStorage": {
+    "frozenDecision": "FILESYSTEM ARTIFACT \u2014 no database amendment. QC report written as JSON to dataDir/exports/<exportId>/qc-report.json (0600) BEFORE the state CAS (mirrors accepted failure.json); qcReportId = 'qc-' + sha256(canonical report JSON) content-derived deterministic, recorded on the ExportRecord in the same compareAndSetExport. Write-then-CAS orphan files harmless.",
+    "flaggedAlternative": "DB amendment (QcReportSchema + ports + sqlite + migration) REQUIRES INTEGRATOR APPROVAL as a pre-slice; not requested. Revisit trigger: C15 backup wants QC reports inside the SQLite snapshot."
+  },
+  "domainModel": {
+    "lib/production/qc.ts": "Pure functions + schemas. Thresholds frozen from QUALITY_GATES.md:19,35-37: integrated loudness -14 LUFS \u00b11.0 (pass [-15.0,-13.0]); true peak <= -1.0 dBTP; expected duration within 1 frame at 24fps; audio end within 1 frame; black >= 6 frames outside approved fades; freeze >= 48 frames; unexplained silence >= 24000 samples inside a spoken cue \u2014 last three ADVISORIES (evidence to inspect, never autonomous acceptance) each carrying detector version + exact interval. Automated blockers (no waiver): decoder failure, wrong codec/container/dimensions/fps/pix_fmt, missing required audio stream when manifest has audio cues, nonfinite probe values, checksum failure, duration beyond 1-frame tolerance, hard clipping/truepeak violation, required spoken segment omitted from declared cues. Silent-draft profile (audioMixRevisionId null / audioCues empty): video/checksum/duration checks apply, audio-stream/loudness checks SKIPPED, report draftOnly:true, and draftOnly can NEVER become release-ready. Exports: parseEbur128Summary(ffmpeg ebur128 stderr), parseBlackFreezeSilence(blackdetect/freezedetect/silencedetect), evaluateQc -> {verdict passed|failed, blockers[], advisories[]}, buildQcReport -> schema {id 'qc-'+sha256, exportId, manifestId, manifestInputsHash, outputAssetId, outputSha256, measured{integratedLufs, truePeakDbtp, durationFrames, codec/container/dimensions/fps}, checklist expected/actual/evidence, advisory[], toolVersions{ffmpeg,ffprobe}, detectorThresholds, verdict, draftOnly, createdAt}. Deterministic given identical measurements.",
+    "lib/services/production/qc.ts": "createQcService({store, vault, dataDir, paths?, now?, signal?, timeoutMs?}): (a) runQc(exportId): require status qc_pending; read manifest; require export.assetId; read asset bytes via vault.readVerified (reverify, never trust the render); spawn ffprobe (-v error, bounded timeout, argument arrays) + ffmpeg ebur128 peak=true + blackdetect/freezedetect/silencedetect advisory pass + full-decode exit-0 + re-hash bytes; evaluate + build report; write qc-report.json 0600; single tx compareAndSetExport(qc_pending -> verdict state) with qcReportId set. Tool failure -> failed report naming stage + redacted stderr (redactStderr reuse), same CAS. (b) finalReview(exportId, command {idempotencyKey, decision, checklist, notes, advisoryAcknowledgements, expectedOutputSha256}): require ready_for_review AND report verdict passed AND draftOnly===false (silent draft CANNOT be approved \u2014 QC_BLOCKED envelope); require every report advisory code acknowledged with nonempty reason + complete binary checklist (frozen ids: narrative, visual, audio, captions); approved: expectedOutputSha256 must equal current asset sha256 (reencode => stale), then ONE tx: appendApproval(Approval{targetKind:'final', targetId:exportId, targetHash:asset.sha256, ...}) AND compareAndSetExport(ready_for_review -> approved {approvedSha256, finalApprovalId}); rejected: append the rejected approval, status REMAINS ready_for_review (frozen enum; decision history is the record; download stays blocked) \u2014 idempotency via approvalCommandId semantics. (c) Route handler factories with withStore/dataDir injection seams: createExportItemRouteHandlers (GET {export, manifestSummary{profile, shotCount, audioCueCount, inputsHash}, qcReport|null, failure|null, owningProjectId}; POST same-origin {kind:'run_qc'} | {kind:'final_review', ...}); createExportDownloadRouteHandlers; createExportDraftRouteHandlers."
+  },
+  "downloadSemantics": {
+    "finalRoute": "GET /api/production/exports/[id]/download?projectId=<owning>: validate id; export -> manifest -> owning project; projectId missing/mismatch -> INVALID_INPUT; unknown -> 404; status !== 'approved' -> 428 naming the blocking state + human G09 requirement (technical QC alone never unlocks); approvedSha256 !== current asset.sha256 -> 409 STALE_REVISION; else 200 body from vault.readVerified, headers content-type asset.mime, content-length, content-disposition attachment 'export-<first 12 sha>.mp4', etag '\"<sha256>\"', cache-control no-store, x-perabyte-final: 1. NO Range v1. No vaultRef/paths in any header/body.",
+    "draftRoute": "GET /api/production/exports/[id]/draft?projectId=...: allowed qc_pending|qc_failed|ready_for_review; 'approved' -> 409 pointing at final route; 'failed'/'canceled' (assetId null) -> 409 embedding failure.json code/stage/redactedStderr; bytes via readVerified with DRAFT-/QC-FAILED- disposition prefix + x-perabyte-draft: 1. A Draft/QC-failed artifact NEVER receives Ready-to-upload/final/release badge (UI AND route enforced).",
+    "retryRule": "Retry = POST exports with NEW idempotencyKey (new export id); prior exports remain listed; nothing deleted."
+  },
+  "uiModel": {
+    "dataSources": "components/production/export.tsx fetches GET read model + GET /api/production/exports/{id}?projectId= per selected export; pure deriveExportViewState/deriveDownloadGate/deriveFinalReviewReadiness exported for node tests.",
+    "stateRendering": "Status timeline queued->rendering->qc_pending->qc_failed|ready_for_review->approved (+failed/canceled) with per-state actionable copy; qc_pending shows Run technical QC (busy/disabled/retry); qc_failed/failed remain inspectable (report blockers or failure.json {code, stage, shotRevisionId?, cueId?, redactedStderr}) + Retry; ready_for_review shows full report (codec/container/dimensions/fps/duration from OUTPUT, measured LUFS/truePeak pass/fail vs -14\u00b11/-1dBTP, output sha256 + manifest inputs hash), every advisory as named warning requiring explicit acknowledgment (code + reason), complete final checklist, exact expectedOutputSha256 the approval binds; approved shows final badge + final download; draft button labeled Draft/QC-failed, visually distinct.",
+    "degradedStates": "No exports -> empty state naming prerequisites (approved takes + audio mix -> manifest -> export); missing report file -> honest 'report unavailable' + retry; network/tool failures -> envelope alerts, no fabricated QC outcomes; loading/error/retry everywhere; keyboard-only nav + role=alert/status per C07/C10."
+  },
+  "minimalTests": [
+    {
+      "name": "C12 QC measurement parsing and thresholds",
+      "file": "lib/production/qc.test.ts",
+      "checks": "ebur128 parse: I=-14.0/-13.0/-15.0 pass, -13.0+epsilon/-12.9 fail; TP -1.0 pass, -0.99 fail; black 5 frames no-flag / 6 flag; freeze 47/48; silence 23999/24000 only inside spoken cues; blockers fire for wrong codec/dimensions/fps/pix_fmt, duration >1 frame, missing audio stream when cues exist, nonfinite; draft profile skips audio + sets draftOnly; report id deterministic; report contains output sha256 AND manifestInputsHash."
+    },
+    {
+      "name": "C12 QC service end-to-end on a real local render",
+      "file": "lib/services/production/qc.test.ts",
+      "checks": "Fixture per assembly.test.ts precedent (real ffmpeg render in tmpdir, takes/assets/manifest/export via the store): runQc passing render -> ready_for_review + qc-report.json + CAS; mutated bytes -> qc_failed checksum blocker; ffprobe failure -> failed report redacted stderr + stage; finalReview approve happy path appends final Approval (targetHash = output sha) + CAS approved in one tx; reencode -> stale + download 409; rejected final review appends decision leaves ready_for_review; draftOnly finalReview -> QC_BLOCKED; missing advisory acknowledgment -> INVALID_INPUT."
+    },
+    {
+      "name": "C12 download and draft route gating",
+      "file": "lib/services/production/qc.test.ts",
+      "checks": "Handler factories injected withStore: final download 428 for qc_pending/qc_failed/ready_for_review, 200 only approved with exact content-type/length/etag and NO vaultRef/path; projectId scope mismatch rejected; unknown 404; draft matrix (qc_pending/qc_failed/ready_for_review 200 DRAFT/QC-FAILED disposition + x-perabyte-draft; approved 409 to final; failed 409 with failure summary); GET export detail includes report + failure only when present."
+    },
+    {
+      "name": "C12 export UI derivations",
+      "file": "lib/production/export-ui.test.ts",
+      "checks": "deriveExportViewState per status; deriveDownloadGate maps 428/409 to actionable text; final badge ONLY for approved + checksum match; draft artifacts never render Ready-to-upload; deriveFinalReviewReadiness requires every advisory acknowledged + complete checklist + exact expectedOutputSha256."
+    }
+  ],
+  "browserGreenProtocol": {
+    "script": "scripts/verify-production-export.mjs (playwright chromium; C10 conventions: health fail-fast, tmpdir screenshots, check() PASS/FAIL, exit 1 on FAIL/BLOCKED, non-local tripwire)",
+    "preconditions": "Server health only; NO ffmpeg requirement (nothing renders in the offline browser path); script never starts the server.",
+    "seeding": "HTTP-only offline: POST projects; POST stories (>=2 beats); POST approvals (story) \u2014 same minimal chain as C08. Exports cannot be created offline (disclosure), so the browser run verifies the empty-pipeline state and UI integrity only.",
+    "scenarios": [
+      "T12-empty: /production/{id}/export renders honest empty state naming prerequisites with no download controls and no success badges.",
+      "T12-nav-a11y: keyboard-only navigation; role/label checks; loading/error/retry via page.route abort of read-model GET.",
+      "T12-tripwire: zero non-local requests."
+    ],
+    "disclosure": "REDUCED BROWSER SET, FROZEN HONESTLY: no export record can exist over HTTP offline (compileManifest requires selected currently-approved take per plan shot; takes exist only via provider job completion; no HTTP route creates them). qc_pending/qc_failed/ready_for_review/approved states, 428/409 gating, real download bytes proven at SERVICE level against real local renders (handler factories with injected stores). First live browser proof belongs to C13 (paid, user-gated). The verify script must NOT seed directly or fabricate exports. INTEGRATOR NOTE: C13's imported-shot-clips implies a future take-import path that does not exist today; if approved as a pre-slice, extend this browser protocol then."
+  },
+  "verification": {
+    "red": "npm test -- lib/production/qc.test.ts lib/services/production/qc.test.ts lib/production/export-ui.test.ts (fails first)",
+    "green": [
+      "npm test -- lib/production/qc.test.ts lib/services/production/qc.test.ts lib/production/export-ui.test.ts",
+      "node scripts/verify-production-export.mjs http://127.0.0.1:3100",
+      "npm run typecheck",
+      "git diff --check",
+      "fixture render inspected locally with report/screenshot evidence paths in the packet report"
+    ],
+    "bounds": "Offline/localhost; real local ffmpeg in service tests only; no provider calls; no full-suite/build; no edits outside the 11 owned files."
+  },
+  "decisions": [
+    "Owns exactly the 11 registry files. Download/draft routes ARE in C12's owned list \u2014 frozen as the FIRST media byte-serving routes (scoped to export assets only; the C10 'no media byte-serving' finding remains true for anchor/take/audio assets).",
+    "QC trigger is C12's own POST {kind:'run_qc'} \u2014 deliberately NOT a hook in the C11 scheduler; CAS design makes either wiring safe.",
+    "QC report storage = filesystem artifact beside failure.json; DB amendment flagged, NOT requested.",
+    "Final review (G09) human-only in C12's service; the C06 approval-route 'final' case remains a QC_BLOCKED guard \u2014 never conflicts since only C12's service writes final approvals.",
+    "Human rejection maps to an Approval record, not an ExportStatus change (frozen enum) \u2014 rejected exports stay ready_for_review with decision history; downloads blocked.",
+    "Draft/QC-failed artifacts downloadable only via the labeled draft route; silent drafts (draftOnly) never reach approved \u2014 enforced in service, UI, and route layers.",
+    "Server validation never reimplemented in the UI; all other packets' files untouched."
+  ],
+  "collisionCheck": "All 11 owned files NEW at base \u2014 app/api/production/exports/[id]/** does not exist. Disjoint from C08 (storyboard files) and C11-WIRE (different route tree; lifecycle partitioned by state with compareAndSetExport CAS). Rebase on current root before starting."
+}

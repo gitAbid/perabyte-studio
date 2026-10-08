@@ -15,10 +15,12 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: "Make",
     items: [
+      { href: "/studio", label: "Studio Home", icon: "home" },
       { href: "/generate/image", label: "Image studio", icon: "image" },
       { href: "/generate/video", label: "Motion studio", icon: "video" },
       { href: "/writer", label: "Story writer", icon: "pen" },
       { href: "/story", label: "Scene studio", icon: "story" },
+      { href: "/production", label: "Production", icon: "play" },
     ],
   },
   {
@@ -26,13 +28,16 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     items: [
       { href: "/images", label: "Renders", icon: "grid" },
       { href: "/stories", label: "Stories", icon: "layers" },
+      { href: "/library", label: "Library", icon: "star" },
+      { href: "/voices", label: "Voices", icon: "volume" },
     ],
   },
   {
     label: "Build a world",
     items: [
+      { href: "/workspaces", label: "Workspaces", icon: "layers" },
       { href: "/character", label: "Characters", icon: "character" },
-      { href: "/locations", label: "Places", icon: "home" },
+      { href: "/environments", label: "Environments", icon: "home" },
     ],
   },
 ];

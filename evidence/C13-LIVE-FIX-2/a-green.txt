@@ -1,0 +1,13 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.0 /Users/abid/Projects/perabyte-studio/.worktrees/c13-live-fix-2
+
+ ✓ lib/services/production/budget-composer.test.ts (7 tests) 271ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  08:36:30
+   Duration  758ms (tests 46%, transform 31%, import 23%, worker 1%)
+

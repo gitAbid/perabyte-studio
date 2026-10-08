@@ -1,0 +1,90 @@
+{
+  "purpose": "Read-only evidence map for I01 account binding, entitlement, estimates and billing reconciliation.",
+  "environment": {
+    "sdk": "@sogni-ai/sogni-client 5.49.0 (installed node_modules package)",
+    "provider_worktree_head": "27dc9f742e3771fa5f850188bbec4945f86617cf",
+    "integration_source_head": "336e22b2cc60a38d78fc6862ec2401b4eb56243a",
+    "scope": "Local SDK/source inspection only. No secrets read, provider request, quote, network call, SDK upgrade or code change. Only this report is written."
+  },
+  "source_evidence": [
+    {
+      "path": "node_modules/@sogni-ai/sogni-client/src/index.ts",
+      "lines": "495-523, 559-576, 709-749",
+      "methods": "SogniClientConfig; SogniClient.createInstance(config)",
+      "proves": "apiKey selects ApiKey auth and the SDK auto-installs that key; API docs say API keys support socket jobs and most REST calls including balance/profile. appId is a stable installation/connection ID unique among simultaneous connections for the same account; second same-ID connection replaces the first. appSource and connection attribution are client-supplied labels.",
+      "does_not_prove": "The API key string exists/was installed is not an authenticated account identity or validation. appId/appSource are not account IDs. SDK source has no API credential ID/fingerprint or key-rotation event."
+    },
+    {
+      "path": "node_modules/@sogni-ai/sogni-client/src/Account/CurrentAccount.ts; src/Account/index.ts; src/Account/types.ts",
+      "lines": "CurrentAccount.ts:18-59, 102-145; Account/index.ts:325-345, 563-570; types.ts:40-50",
+      "methods": "account.currentAccount.walletAddress/username/networkStatus/isAuthenicated; account.me(): Promise<MeData>; socket authenticated handler",
+      "proves": "Provider-authenticated socket event supplies address and username; account.me() calls `/v1/account/me` and returns server MeData including `walletAddress`, updating the same current-account fields. This wallet address, namespaced by provider, is the strongest stable account identifier visible in SDK source. `isAuthenicated` means walletAddress exists; it differs from ApiKeyAuthManager.isAuthenticated.",
+      "does_not_prove": "username/email/display names or appId are stable spending identities. ApiKeyAuthManager.isAuthenticated only checks a local key string is set; it does not prove successful server authentication. SDK exposes no credential-to-wallet immutable binding ID or raw-key-free credential version."
+    },
+    {
+      "path": "node_modules/@sogni-ai/sogni-client/src/lib/AuthManager/ApiKeyAuthManager.ts; src/ApiClient/index.ts; lib/providers/production/sogni-provider.ts",
+      "lines": "ApiKeyAuthManager.ts:12-50; ApiClient/index.ts:62-75, 108-120; provider.ts:102-115",
+      "methods": "ApiKeyAuthManager.isAuthenticated/authenticateRequest/socketOptions; createSogniSdkTransport.getClient()",
+      "proves": "API key is sent as `api-key` on REST/socket. Current factory captures `SOGNI_API_KEY`, stable per-role appId and appSource, then caches one clientPromise; web/worker/probe roles use distinct app IDs, worker also locks ownership.",
+      "does_not_prove": "Presence, role appId and configured env value are not an account evidence record. Cached client means changed env credentials do not rebind an existing client until it is closed/recreated. SDK `backup()` can return raw key and must not be used for evidence/logging."
+    },
+    {
+      "path": "node_modules/@sogni-ai/sogni-client/src/Account/subscription.types.ts; src/Account/index.ts; src/Account/CurrentAccount.ts",
+      "lines": "subscription.types.ts:8-44, 80-149, 152-178; Account/index.ts:893-945; CurrentAccount.ts:156-170",
+      "methods": "account.getSubscriptionStatus(): Promise<SubscriptionEntitlementSnapshot>; getSubscriptionUsage(): Promise<SubscriptionUsage>; currentAccount.isUnlimited",
+      "proves": "`/v1/subscriptions/status` yields server-level active/status/tier/period/capabilities/fairUse facts; docs say `active` is authoritative (grace is inactive). `/v1/subscriptions/usage` reports billing-cycle render Spark/jobs and trial counters. `isUnlimited` is only account tier active-state convenience.",
+      "does_not_prove": "These snapshots do not bind eligibility to a requested Sogni model, settings, quote, or job; fairUse/usage are aggregate, not per-job price. Public plan prices are display-only; feature capabilities are generic booleans, no catalog model coverage relation. Snapshot freshness/version and connection/account binding must be recorded by caller."
+    },
+    {
+      "path": "node_modules/@sogni-ai/sogni-client/src/types/ErrorData.ts; src/Projects/types/index.ts",
+      "lines": "ErrorData.ts:3-55; Projects/types/index.ts:115-126",
+      "methods": "SUBSCRIPTION_ERROR_CODES; BaseProjectParams.billingMode/tokenType",
+      "proves": "A create request may explicitly choose billingMode `subscription` (require Unlimited coverage) or `tokens` (opt out); tokenType is `spark|sogni`, and omitted tokenType defaults to Sogni token. Typed errors distinguish NOT_ENTITLED (4078), queue cap (4079), grace retry (4080), and feature-plan gate (4081).",
+      "does_not_prove": "No read-only per-model entitlement preflight is exposed. A generic socket error, timeout or these type declarations alone do not prove nonacceptance/refund. Account-level active subscription is not model-specific entitlement. Current adapter sends billingMode but not tokenType (`lib/providers/production/sogni-provider.ts:89-98`), so `tokens` currently defaults to Sogni; I01 must not call this Spark without an explicit token selection."
+    },
+    {
+      "path": "node_modules/@sogni-ai/sogni-client/src/Projects/index.ts; src/Projects/types/index.ts; src/Projects/types/EstimationResponse.ts",
+      "lines": "Projects/index.ts:2360-2425, 2467-2533, 2547-2565; types/index.ts:1080-1185, 1195-1220; EstimationResponse.ts:1-40",
+      "methods": "projects.estimateCost(EstimateRequest); estimateVideoCost(VideoEstimateRequest); estimateAudioCost(AudioEstimateRequest) -> CostEstimation",
+      "proves": "Server quote endpoints accept request-relevant fields. Image estimate includes model, network, image/step/preview counts, geometry/size, control/reference count, sampler/guidance, quality/output format. Video estimate includes model, tokenType, width/height, duration or frames, fps, steps/media count, image/video reference counts and video-reference duration. Audio includes tokenType/model/duration/steps/media count. Returned decimal strings are `token`, `usd`, `spark`, `sogni`; SDK docs label USD and Spark points. Exact parameters must be passed from immutable snapshot, not browser projection.",
+      "does_not_prove": "These are estimates, not reservation, entitlement, or guaranteed upper bound. Response has no quote ID, echoed request fingerprint, validity expiry or min/max interval; separate local expiry/revalidation is needed. H3 audio reference pricing is not represented in VideoEstimateRequest. SDK docs specify no decimal scale for Spark/SOGNI fields; do not assume conversion or mix units."
+    },
+    {
+      "path": "node_modules/@sogni-ai/sogni-client/src/Projects/types/RawProject.ts; src/Account/types.ts; src/Account/index.ts",
+      "lines": "RawProject.ts:4-28, 63-145; Account/types.ts:83-139; Account/index.ts:635-675",
+      "methods": "projects.get(projectId) -> RawProject; account.transactionHistory({status:'completed', address, limit, offset?, provider?})",
+      "proves": "Completed project has server-returned model id, `costEstimate`, `costActual`, project txId, and completed/worker jobs; CostActual string fields are render seconds, USD and token. Transaction-history records expose stable entry id, address, completed status, role, numeric amount, project source/sourceSID, debit type, tokenType, billingMode/paymentModel/tier/trial/throttled facts. Match exact wallet + project sourceSID + project id + transaction id for corroborated debit evidence.",
+      "does_not_prove": "RawProject costActual is not itself a separately confirmed settlement/refund. Transaction `amount` is a JS number (possible decimal precision loss), history API is filtered to completed entries and has no typed nonacceptance/refund facts. `paymentModel` is open string; absent/ambiguous fields must remain unresolved. No SDK refund lookup or refund event evidence found."
+    },
+    {
+      "path": "lib/providers/production/sogni-provider.ts; lib/providers/production/http-routes.ts",
+      "lines": "provider.ts:15-27, 31-48, 89-115; http-routes.ts:9-51",
+      "methods": "SogniProviderTransport; createSogniProductionProvider; createSogniSdkTransport; createQuoteHandler/providerFactory",
+      "proves": "Production `SogniSdkClient` type currently exposes only Projects methods (not Account). `createSogniProductionProvider.quote()` always returns unknownProductionQuote. Quote handler checks persisted project, invokes factory, validates request echo/hash/expiry and persists quote. create factory takes role-only options; it does not accept user-supplied account IDs.",
+      "does_not_prove": "Current adapter can provide neither stable account evidence, current subscription/balance, model-specific eligibility, nor price/reconciliation. Current Sogni quotes intentionally stay entitlement/amount/cap unknown; this is correct fail-closed behavior."
+    },
+    {
+      "path": "docs/production/TASK_PACKETS.md (integration checkout 336e22b2cc60a38d78fc6862ec2401b4eb56243a)",
+      "lines": "380-408",
+      "methods": "I01-01..I01-06 normative contract",
+      "proves": "I01 requires account evidence bound to provider account/credential/connection; explicit currency/unit; exact fresh quote binding; durable reservations; actual/nonacceptance/refund evidence from trusted producer; unknown facts retain liability; no token/USD mixing or assumed zero.",
+      "does_not_prove": "SDK 5.49 supplies every required producer; current provider adapter lacks these methods, so separate narrow producer/composition ownership needs assignment after domain/contract work."
+    }
+  ],
+  "fail_closed_guidance": {
+    "account": "Use server-returned account.me().walletAddress or authenticated socket address, validate and canonicalize, namespaced by provider. Require connected/authenticated client plus successful identity read. Never trust supplied account id, display name, appId, env-key presence, or a balance alone. Pin a non-secret credential version/fingerprint and role appId; SDK exposes no credential ID, so local HMAC/OS-keychain keyed binding or explicit credential generation is needed. Rotate/invalidate pending quotes on credential/account mismatch.",
+    "entitlement": "Account getSubscriptionStatus active/tier is supporting account evidence only. Querying estimate cannot prove coverage. Current public API has no documented read-only per-model check; keep entitlement unknown unless a trusted request-bound provider result proves it. Never interpret `billingMode:'tokens'` as Spark: tokenType is separate and defaults Sogni.",
+    "money": "Prefer a declared USD-cent budget only if exact USD decimal estimate is available. Parse decimal strings without JS Number; reject exponent/negative/malformed values and overflow; round a positive USD estimate up to cents (never nearest/down). Point estimate is not a provider-guaranteed upper bound; do not relabel point as guaranteed max. Spark/SOGNI strings have no scale contract here, and transaction history amount is number: do not convert/mix without authoritative scale/precision contract. Missing actual retains original upper estimate liability.",
+    "settlement": "Candidate actual debit evidence is completed transaction-history entry matched to wallet/project ID and transaction id; store provider native unit/paymentModel and source/time. RawProject costActual is corroborating reported cost, not standalone proof of ledger settlement. Explicit accepted server pre-admission rejection could be a nonacceptance producer only after proving its API semantics and matching request/reference; generic socket errors/timeouts/cancel/media completion never release. SDK exposes no typed refund/nonacceptance reconciliation facts: keep reservation unresolved or require separate authenticated/manual append-only evidence per I01."
+  },
+  "smallest_seams_for_assignment": {
+    "provider_adapter": "Later bounded provider task: extend typed SDK transport narrowly with authenticated `readAccountEvidence`, `getSubscriptionStatus`, balance refresh, request-shaped `estimate`, and reconciliation lookup. Return normalized provider/account/unit fields with observedAt/evidence source. Do not expose raw credentials. Keep live model catalog separate from billing evidence.",
+    "composition": "Separate integrator-owned factory/quote-route work must bind adapter evidence to server-owned account scope and canonical request hash; after C04, current handler only checks project and provider quote response. Do not place provider-specific wallet/credential fields in browser command.",
+    "domain": "I01 B1 can define account/provider evidence, typed budget units, quote companion binding, reservations and trusted reconciliation ports. Keep provider-specific account identity and transaction parsers outside the neutral I01 domain; inject versioned evidence through ports. Expand scope only by integrator assignment."
+  },
+  "research_limits": [
+    "No web sources used: package source/type contract was locally installed at 5.49.0 and task explicitly requested source research.",
+    "No runtime integration calls were executed; method observations are source/type evidence only.",
+    "C04/I01 remain unaccepted until assigned provider composition and I01 implementation/review complete."
+  ]
+}

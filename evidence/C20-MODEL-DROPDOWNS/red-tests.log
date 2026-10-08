@@ -1,0 +1,167 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.0 /Users/abid/Projects/perabyte-studio/.worktrees/c20-model-dropdowns
+
+ ❯ lib/production/storyboard-models.test.ts (3 tests | 3 failed) 4ms
+   ❯ storyboard production model dropdown view model (3)
+     × falls back to exactly the production baseline options when the route is unavailable 2ms
+     × preselects the accepted defaults and keeps them first in the baseline 0ms
+     × parses a well-formed route payload and refuses anything else (caller falls back to baseline) 0ms
+ ❯ lib/providers/production/production-models.test.ts (8 tests | 8 failed) 6ms
+   ❯ production model baseline + pure filter/merge (4)
+     × pins the accepted pilot baselines and defaults 3ms
+     × classifies only FL2VA i2v / i2v_turbo ids as production takes 0ms
+     × anchors: keeps catalog entries, appends the baseline, dedupes by id with catalog labels winning 1ms
+     × takes: filters the catalog to i2v-only FL2VA entries with the friendly mode suffix 0ms
+   ❯ production models route handler (4)
+     × serves anchor models from the image catalog merged with the baseline 1ms
+     × serves take models filtered to production i2v entries from the video catalog 0ms
+     × falls back to the baseline-only response when the catalog service fails 0ms
+     × rejects invalid or missing kinds and unknown query parameters with INVALID_INPUT 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lib/production/storyboard-models.test.ts > storyboard production model dropdown view model > falls back to exactly the production baseline options when the route is unavailable
+TypeError: baselineProductionModelOptions is not a function
+ ❯ lib/production/storyboard-models.test.ts:10:12
+      8| describe("storyboard production model dropdown view model", () => {
+      9|   it("falls back to exactly the production baseline options when the r…
+     10|     expect(baselineProductionModelOptions("anchor")).toEqual(productio…
+       |            ^
+     11|     expect(baselineProductionModelOptions("take")).toEqual(productionM…
+     12|     expect(baselineProductionModelOptions("take").map((model) => model…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  lib/production/storyboard-models.test.ts > storyboard production model dropdown view model > preselects the accepted defaults and keeps them first in the baseline
+TypeError: Cannot read properties of undefined (reading 'anchor')
+ ❯ lib/production/storyboard-models.test.ts:21:14
+     19|   it("preselects the accepted defaults and keeps them first in the bas…
+     20|     for (const kind of ["anchor", "take"] as const) {
+     21|       expect(PRODUCTION_MODEL_DEFAULTS[kind]).toBe(baselineProductionM…
+       |              ^
+     22|     }
+     23|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  lib/production/storyboard-models.test.ts > storyboard production model dropdown view model > parses a well-formed route payload and refuses anything else (caller falls back to baseline)
+TypeError: parseProductionModelsPayload is not a function
+ ❯ lib/production/storyboard-models.test.ts:33:12
+     31|       ],
+     32|     };
+     33|     expect(parseProductionModelsPayload(payload)).toEqual<ProductionMo…
+       |            ^
+     34|
+     35|     for (const broken of [
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  lib/providers/production/production-models.test.ts > production model baseline + pure filter/merge > pins the accepted pilot baselines and defaults
+TypeError: Cannot read properties of undefined (reading 'anchor')
+ ❯ lib/providers/production/production-models.test.ts:10:38
+      8| describe("production model baseline + pure filter/merge", () => {
+      9|   it("pins the accepted pilot baselines and defaults", () => {
+     10|     expect(PRODUCTION_MODEL_BASELINE.anchor).toEqual(["flux1-schnell-f…
+       |                                      ^
+     11|     expect(PRODUCTION_MODEL_BASELINE.take).toEqual(["minimax-h3-fl2va-…
+     12|     expect(PRODUCTION_MODEL_DEFAULTS.anchor).toBe(PRODUCTION_MODEL_BAS…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  lib/providers/production/production-models.test.ts > production model baseline + pure filter/merge > classifies only FL2VA i2v / i2v_turbo ids as production takes
+TypeError: isProductionTakeModelId is not a function
+ ❯ lib/providers/production/production-models.test.ts:17:12
+     15|
+     16|   it("classifies only FL2VA i2v / i2v_turbo ids as production takes", …
+     17|     expect(isProductionTakeModelId("minimax-h3-fl2va-fp8_i2v")).toBe(t…
+       |            ^
+     18|     expect(isProductionTakeModelId("minimax-h3-fl2va-fp8_i2v_turbo")).…
+     19|     expect(isProductionTakeModelId("minimax-h3-fastvideo-int8_i2v_turb…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  lib/providers/production/production-models.test.ts > production model baseline + pure filter/merge > anchors: keeps catalog entries, appends the baseline, dedupes by id with catalog labels winning
+TypeError: productionModelOptions is not a function
+ ❯ lib/providers/production/production-models.test.ts:34:12
+     32|       { id: "krea2_turbo_fp8_scaled", label: "Krea 2 Turbo" },
+     33|     ];
+     34|     expect(productionModelOptions("anchor", catalog)).toEqual([
+       |            ^
+     35|       { id: "flux1-schnell-fp8", label: "FLUX.1 Schnell", mode: "image…
+     36|       { id: "krea2_turbo_fp8_scaled", label: "Krea 2 Turbo", mode: "im…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  lib/providers/production/production-models.test.ts > production model baseline + pure filter/merge > takes: filters the catalog to i2v-only FL2VA entries with the friendly mode suffix
+TypeError: productionModelOptions is not a function
+ ❯ lib/providers/production/production-models.test.ts:56:12
+     54|       { id: "flux1-schnell-fp8", label: "FLUX.1 Schnell" },
+     55|     ];
+     56|     expect(productionModelOptions("take", catalog)).toEqual([
+       |            ^
+     57|       { id: "minimax-h3-fl2va-fp8_i2v_turbo", label: "MiniMax H3 i2v T…
+     58|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  lib/providers/production/production-models.test.ts > production models route handler > serves anchor models from the image catalog merged with the baseline
+TypeError: createProductionModelsHandler is not a function
+ ❯ handler lib/providers/production/production-models.test.ts:75:39
+     73|
+     74| describe("production models route handler", () => {
+     75|   const handler = (loader: Loader) => createProductionModelsHandler(lo…
+       |                                       ^
+     76|
+     77|   it("serves anchor models from the image catalog merged with the base…
+ ❯ lib/providers/production/production-models.test.ts:81:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  lib/providers/production/production-models.test.ts > production models route handler > serves take models filtered to production i2v entries from the video catalog
+TypeError: createProductionModelsHandler is not a function
+ ❯ handler lib/providers/production/production-models.test.ts:75:39
+     73|
+     74| describe("production models route handler", () => {
+     75|   const handler = (loader: Loader) => createProductionModelsHandler(lo…
+       |                                       ^
+     76|
+     77|   it("serves anchor models from the image catalog merged with the base…
+ ❯ lib/providers/production/production-models.test.ts:99:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  lib/providers/production/production-models.test.ts > production models route handler > falls back to the baseline-only response when the catalog service fails
+TypeError: createProductionModelsHandler is not a function
+ ❯ handler lib/providers/production/production-models.test.ts:75:39
+     73|
+     74| describe("production models route handler", () => {
+     75|   const handler = (loader: Loader) => createProductionModelsHandler(lo…
+       |                                       ^
+     76|
+     77|   it("serves anchor models from the image catalog merged with the base…
+ ❯ lib/providers/production/production-models.test.ts:110:30
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  lib/providers/production/production-models.test.ts > production models route handler > rejects invalid or missing kinds and unknown query parameters with INVALID_INPUT
+TypeError: createProductionModelsHandler is not a function
+ ❯ handler lib/providers/production/production-models.test.ts:75:39
+     73|
+     74| describe("production models route handler", () => {
+     75|   const handler = (loader: Loader) => createProductionModelsHandler(lo…
+       |                                       ^
+     76|
+     77|   it("serves anchor models from the image catalog merged with the base…
+ ❯ lib/providers/production/production-models.test.ts:125:30
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  11 failed (11)
+   Start at  20:27:05
+   Duration  551ms (transform 60%, import 37%, tests 2%, worker 1%)
+

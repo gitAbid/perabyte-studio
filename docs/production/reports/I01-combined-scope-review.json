@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "decision": "approved_verification_scope_with_assertion_clarifications",
+  "artifact": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/docs/production/reports/I01-combined-verification-scope.json",
+  "artifactSHA256": "c179fb44433ed2200312b4015cfcc38cea1ab80a96ae71c806bfc216ee3bcb3b",
+  "findings": [],
+  "signatureCompatibility": {
+    "prepare": "Actual prepareBudgetContext(execution:BudgetExecution,budgetQuoteId:string):Promise<PreparedBudgetContext> matches scope. Inject prepareExecutionEvidence,currentCredentialBindingId and resolveAccountIdentity as needed, persisted evidence/binding actual IDs only.",
+    "reserve": "Actual reserveInTransaction(tx:ProductionWritePort,execution:BudgetExecution,now:number,context:PreparedBudgetContext):BudgetReservation matches queue callback adaptation. Build execution from callback currentJob each time; use resultTarget inputsHash and computeProductionInputsHash for semantic pin, not quote inputHash.",
+    "reconcile": "Actual reconcile(reservationId:string,reference:string):Promise<StoredEvidence>. Inject produceReconciliationEvidence returning exact reservation/account/provider/unit/currency/reference and provider provenance; no browser billing DTO."
+  },
+  "assertionClarifications": [
+    "Run cases01-03 as a coherent same-account/same-original-UTC-day sequence with fixed fake clock, or independently reconstruct equivalent200 baseline. No resetting loser jobs or reusing project/job/quote/evidence/binding/idempotency IDs; allocate fresh unique projects for case02 and03, every project with matching selected story/animatic approvals and projectCap>=200.",
+    "Case01 one submitting intent means exactly one durable submitting event/reservation/execution and fake submit, not current job.status necessarily submitting: valid fake ACK advances admitted job to running. Denied contender creates no budget execution/reservation.",
+    "Case02 unknown actual event must be appended via real service reconciliation with cumulativeActual:null,final:false; assert original fold totalLiability200, unsettled true and denied new job0submit/0reserve. Do not just assert raw upperEstimate.",
+    "Case03 append new stable event key cumulativeActual50,final:true through real service. Before new admission fold50; after fresh200 admission account total250, original upperEstimate remains200, exactly two cumulative submits from successful original and fresh jobs. Quote/provider snapshot helper-compatible known200 facts; same account money scope, no expiry/midnight change.",
+    "Case04 uses separate fresh database or isolated uniquejob on permitted scope. Trigger should target its submitting event only. Assert execution/reservation absent, no submitting event, fake submit0 after real service was called; blocked job outcome acceptable. Existing reservations from other cases must not be counted as rollback artifacts."
+  ],
+  "prerequisites": [
+    "Independently accepted corrected B3/B4 exact SHAs and shared helper. Reviewed frozen signatures; inspected current B3 exports read-only, not accepted through this scope review.",
+    "Record exact composition and source prerequisite hashes. Keep historical RED unavailable and prospective mutation proof separately labeled."
+  ],
+  "limits": [
+    "Design review only; no source changes, test execution, implementation dispatch or gate acceptance.",
+    "Four cases prove real-service accounting/admission composition, not live account/quote producers, provider pricing or fullI01 release."
+  ],
+  "fullI01Accepted": false
+}

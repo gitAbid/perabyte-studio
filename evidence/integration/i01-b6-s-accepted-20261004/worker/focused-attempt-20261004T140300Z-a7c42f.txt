@@ -1,0 +1,66 @@
+
+> perabyte-studio@0.1.0 test
+> vitest run lib/repositories/production/sqlite.test.ts -t I01-B6-S
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.0 /Users/abid/.codex/worktrees/production-provider-proof/perabyte-studio
+
+ ❯ lib/repositories/production/sqlite.test.ts (29 tests | 2 failed | 27 skipped) 107ms
+   ❯ SQLite production store (29)
+     × I01-B6-S preserves real v3 finance rows and immutable proof/CAS history across reopen 88ms
+     × I01-B6-S atomically validates and replays bound quote and execution proof links 18ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lib/repositories/production/sqlite.test.ts > SQLite production store > I01-B6-S preserves real v3 finance rows and immutable proof/CAS history across reopen
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ lib/repositories/production/sqlite.test.ts:560:99
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  lib/repositories/production/sqlite.test.ts > SQLite production store > I01-B6-S atomically validates and replays bound quote and execution proof links
+ZodError: [
+  {
+    "code": "custom",
+    "path": [
+      "canonicalPayload"
+    ],
+    "message": "Proof artifact integrity is invalid"
+  }
+]
+ ❯ lib/repositories/production/sqlite.ts:291:40
+    289|     ...read,
+    290|     insertProofArtifact: value => atomicBudgetWrite(() => {
+    291|       const record=ProofArtifactSchema.parse(value),payload=proofPaylo…
+       |                                        ^
+    292|       if(previous){if(canonicalJson(previous)!==canonicalJson(record))…
+    293|       db.prepare("INSERT INTO provider_proof_artifacts(hash,kind,canon…
+ ❯ atomicBudgetWrite lib/repositories/production/sqlite.ts:186:24
+ ❯ Object.insertProofArtifact lib/repositories/production/sqlite.ts:290:35
+ ❯ Proxy.guarded lib/repositories/production/sqlite.ts:613:26
+ ❯ putQuotePrerequisites lib/repositories/production/sqlite.test.ts:60:89
+ ❯ lib/repositories/production/sqlite.test.ts:581:28
+ ❯ sqliteTransaction.<anonymous> lib/repositories/production/sqlite.ts:620:22
+ ❯ sqliteTransaction ../../production-core/perabyte-studio/node_modules/.pnpm/better-sqlite3@13.0.3/node_modules/better-sqlite3/lib/methods/transaction.js:65:24
+ ❯ Object.transaction lib/repositories/production/sqlite.ts:632:81
+ ❯ lib/repositories/production/sqlite.test.ts:581:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 27 skipped (29)
+   Start at  20:05:18
+   Duration  495ms (transform 36%, tests 33%, import 30%, worker 1%)
+

@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 1,
+  "taskId": "I01-shared-media-budget-quote-helper",
+  "actualSHA": "b38712c569d2beb6901f9f057c86aa909b98189b",
+  "baseSHA": "8c7babbaa630fe86d9e0a2aba603c4772530f0a2",
+  "commits": [
+    "a7f03666b9ebe78ba3174746edb845baafa142df",
+    "b38712c569d2beb6901f9f057c86aa909b98189b"
+  ],
+  "decision": "accepted_helper_slice",
+  "findings": [],
+  "ownedFiles": [
+    "lib/production/budget.ts",
+    "lib/production/budget.test.ts"
+  ],
+  "sourceReview": [
+    "Strict schemas parse all three DTOs; exact media companion/snapshot identity and media operation/inputHash comparison. Snapshot requestHash and semantic inputsHash are deliberately not confused with quote inputHash.",
+    "Known identical entitlement determines billingMode independently of unit. Minor currency requires explicit equal currency and known equal safe min/max for subscription or Spark entitlement.",
+    "Spark token only allows Spark/tokens, known separate token estimates, null budget currency and null legacy media monetary facts; no conversion. Unknown scope or amounts reject.",
+    "Companion creation cannot precede media quote; expiry cannot extend it; valid BudgetQuote interval consequently prevents invalid enclosing media interval. Anchor/take exact result target kind required.",
+    "Helper intentionally has no current clock or evidence/account/policy/capability guards; callers must retain those. No source bypass or approved-boundary overrestriction found."
+  ],
+  "commands": [
+    {
+      "command": "npm test -- lib/production/budget.test.ts lib/production/contracts.test.ts",
+      "exitCode": 0,
+      "testsPassed": 41,
+      "log": "/tmp/perabyte-I01-helper-focused.txt"
+    },
+    {
+      "command": "git diff baseSHA actualSHA --check",
+      "exitCode": 0
+    }
+  ],
+  "hashAudit": [
+    {
+      "report": "report-media-quote.json",
+      "path": "lib/production/budget.ts",
+      "kind": "exactSource",
+      "match": true
+    },
+    {
+      "report": "report-media-quote.json",
+      "path": "lib/production/budget.test.ts",
+      "kind": "exactSource",
+      "match": true
+    },
+    {
+      "report": "report-media-quote.json",
+      "path": "evidence/I01-B1/media-quote-red.txt",
+      "kind": "log",
+      "match": true
+    },
+    {
+      "report": "report-media-quote.json",
+      "path": "evidence/I01-B1/media-quote-green.txt",
+      "kind": "log",
+      "match": true
+    },
+    {
+      "report": "report-media-quote.json",
+      "path": "evidence/I01-B1/media-quote-typecheck.txt",
+      "kind": "log",
+      "match": true
+    },
+    {
+      "report": "report-media-quote.json",
+      "path": "evidence/I01-B1/media-quote-committed-diff-check.txt",
+      "kind": "log",
+      "match": true
+    },
+    {
+      "report": "report-media-unit-followup.json",
+      "path": "lib/production/budget.ts",
+      "kind": "exactSource",
+      "match": true
+    },
+    {
+      "report": "report-media-unit-followup.json",
+      "path": "lib/production/budget.test.ts",
+      "kind": "exactSource",
+      "match": true
+    },
+    {
+      "report": "report-media-unit-followup.json",
+      "path": "evidence/I01-B1/media-unit-boundary-red.txt",
+      "kind": "log",
+      "match": true
+    },
+    {
+      "report": "report-media-unit-followup.json",
+      "path": "evidence/I01-B1/media-unit-boundary-green.txt",
+      "kind": "log",
+      "match": true
+    },
+    {
+      "report": "report-media-unit-followup.json",
+      "path": "evidence/I01-B1/media-unit-boundary-typecheck.txt",
+      "kind": "log",
+      "match": true
+    },
+    {
+      "report": "report-media-unit-followup.json",
+      "path": "evidence/I01-B1/media-unit-boundary-diff-check.txt",
+      "kind": "log",
+      "match": true
+    }
+  ],
+  "allHashesMatch": true,
+  "independentLogSHA256": "d1c205c48c4a65f0c7c8a94ba3af559da3ca0f5b91f275443caa12337b05cfb3",
+  "redEvidenceAssessment": {
+    "initial": "3 tests fail missing export; scaffold/interface RED only, not prior behavioral quote guard proof. Existing B3 real SQLite companion mismatch probe separately supplies behavioral motivation.",
+    "followup": "Actual behavioral RED: valid Spark entitlement with exact currency estimate returned false;18th regression fails while17pass. Followup green18 budget tests. Both logs inspected and hashes verified."
+  },
+  "unverified": [
+    "B3/B4 helper callsite correction, real service integration race/settlement and full suite/build remain required.",
+    "Live provider/subscription/Spark pricing evidence is not proven by compatibility helper."
+  ],
+  "fullI01Accepted": false,
+  "historicalBroaderPacketFieldsApproved": false,
+  "paidNetworkCalls": 0,
+  "consolidatedReportAudit": {
+    "file": "/Users/abid/.codex/worktrees/production-budget/perabyte-studio/evidence/I01-B1/report-media-helper-consolidated.json",
+    "sha256": "b8bc44685962b6c06c63c0831bec73fdaf4f9770088125a7b534599486e575eb",
+    "matchesSuppliedSHA256": true,
+    "headMatches": true,
+    "hashes": [
+      {
+        "path": "lib/production/budget.ts",
+        "match": true
+      },
+      {
+        "path": "lib/production/budget.test.ts",
+        "match": true
+      },
+      {
+        "path": "evidence/I01-B1/media-quote-red.txt",
+        "match": true
+      },
+      {
+        "path": "evidence/I01-B1/media-quote-green.txt",
+        "match": true
+      },
+      {
+        "path": "evidence/I01-B1/media-unit-boundary-red.txt",
+        "match": true
+      },
+      {
+        "path": "evidence/I01-B1/media-unit-boundary-green.txt",
+        "match": true
+      },
+      {
+        "path": "evidence/I01-B1/media-unit-boundary-typecheck.txt",
+        "match": true
+      },
+      {
+        "path": "evidence/I01-B1/media-unit-boundary-diff-check.txt",
+        "match": true
+      }
+    ],
+    "allMatch": true
+  }
+}

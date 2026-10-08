@@ -1,12 +1,10 @@
-import type { Metadata } from "next";
-import { LocationLibrary } from "@/components/locations/LocationLibrary";
+import { permanentRedirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Locations",
-  description:
-    "Your location library: saved places with reference plates, reused across scenes so every render anchors to the same world.",
-};
-
-export default function LocationsPage() {
-  return <LocationLibrary />;
+/**
+ * Legacy route: "Places" is now the Environment Studio. Every request is
+ * permanently redirected so old links and bookmarks keep working while the
+ * canonical route lives at /environments.
+ */
+export default function LocationsPage(): never {
+  permanentRedirect("/environments");
 }

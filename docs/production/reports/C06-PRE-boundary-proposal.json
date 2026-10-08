@@ -1,0 +1,483 @@
+{
+  "schemaVersion": 1,
+  "packet": "C06-PRE",
+  "status": "proposal_requires_root_review",
+  "purpose": "Small prerequisite slice after accepted/integrated B3/B4 kernel: human decisions, one server-resolved media recipe, two-phase quote/enqueue. No implementation, dispatch, UI or paid enablement.",
+  "worktree": "/Users/abid/.codex/worktrees/production-core/perabyte-studio",
+  "inspected_source": {
+    "assigned_head": "51c265b5a76fa8b9713aa0e921884bdca9907a89",
+    "observed_integration_head": "0ca86390b34cb5eb2e0a64d3262d27b8b522a7cf",
+    "accepted_code": "4997ecc322b24389c6cb84bb13c6ca967ddfbf4e",
+    "b4_candidate": "f0856bbebf2a54572c44fd4d24d1f3bb5455b8c1",
+    "b4_observed_head": "00c1991a4abc94935099c89c126309e2546b445f",
+    "b4_queue_sha256": "015cb8bdc2940674af83d325a01fe7adc7ee32e162c0d9956257c6214142c93a",
+    "note": "B4 candidate queue.ts bytes match observed tree. Integration advanced only during root work; no acceptance inferred from a SHA.",
+    "files": [
+      {
+        "path": "AGENTS.md",
+        "last_source_commit": "a1d5d1ca4b93b697e775e7df850439d1770b4a06",
+        "sha256": "06307b0d5a1220d80dba279b910dfed639c94bd03fb17319822b6a12b7c73e46"
+      },
+      {
+        "path": "docs/production/ARCHITECTURE.md",
+        "last_source_commit": "9057a18a7c76ffd63aaf96b49c7bf0e60cbf0498",
+        "sha256": "559a478bd00f7c2bcf0eab274e40d78c5a8b441874deb76e22d6359db83980fb"
+      },
+      {
+        "path": "docs/production/AGENT_PROTOCOL.md",
+        "last_source_commit": "68f612a74c56ab03156b99efc14a9ca774947ccc",
+        "sha256": "a01a1c19e47cdb507547fb047b67014ddb247dca484677516c5e34fd83a80ed8"
+      },
+      {
+        "path": "docs/production/TASK_PACKETS.md",
+        "last_source_commit": "9057a18a7c76ffd63aaf96b49c7bf0e60cbf0498",
+        "sha256": "48cc868891be6e07647be748f7473475b884d37221a65a3fe81e7735c08a0b19"
+      },
+      {
+        "path": "docs/production/QUALITY_GATES.md",
+        "last_source_commit": "2859a0557abca28caebd57c75a5e7165aaeca5e9",
+        "sha256": "0768bb7182a5d5e35efa0754d6e5fb4050467aae655c1b850c0963109a42cc21"
+      },
+      {
+        "path": "docs/production/reports/I01-B6-composer-proposal.json",
+        "last_source_commit": "9057a18a7c76ffd63aaf96b49c7bf0e60cbf0498",
+        "sha256": "86319840a0f5e74a49b3c01ea23e311a81276ccd649fbbe9acf40967760e8f79"
+      },
+      {
+        "path": "docs/production/reports/I01-B3-B4-frozen-boundary.json",
+        "last_source_commit": "0a8daf7afb2adb71ecd7e339349762bb379227d0",
+        "sha256": "f2a1f3cccaeb68847a5f25d25ba421bba6e89bb06eb193382cdce373bba49cbd"
+      },
+      {
+        "path": "lib/production/contracts.ts",
+        "last_source_commit": "e49f02cf4629b9a36c896ca861c0cfc123e2dfe7",
+        "sha256": "0ca381aaeaaf587cded51cbb8157139a78d2be5cb4a4b547619b9f926950793b"
+      },
+      {
+        "path": "lib/production/approval-policy.ts",
+        "last_source_commit": "126c2f9def20ebc3b83eefaa2aa557c1fd3f6247",
+        "sha256": "f13f912f74baa8cea8e69f01876d9b58855db8fe63cac29a17129129882b4e70"
+      },
+      {
+        "path": "lib/production/revisions.ts",
+        "last_source_commit": "db55badeaf1cb1ec4b9ecd895f64ed27a1ce8f91",
+        "sha256": "c7fa2d0b02a82b6e0680617d11b804370c57c6979f58f768e8b917deb9c32475"
+      },
+      {
+        "path": "lib/services/production/revisions.ts",
+        "last_source_commit": "7df818e181e3d71c7444cef48d3820c66c04ab3b",
+        "sha256": "0085e1c2d3fe24f4781508aefaeaed95189d400bf8d0a6e03a3257833239df54"
+      },
+      {
+        "path": "lib/jobs/production/queue.ts",
+        "last_source_commit": "62c304eecac49161c2188881be974a4c02490cba",
+        "sha256": "3a9ce2f6f4953041ac9e99e79fa5958ded1363b8ce4034b6d80774cea4f14280"
+      },
+      {
+        "path": "lib/repositories/production/ports.ts",
+        "last_source_commit": "ee3f6df6335510ce47ecc58b59bb7cdafc999eaf",
+        "sha256": "e35d4d3f61de7ca83ba1562299d6681bd4fe2517b181f196a9b4ec5bed90d006"
+      },
+      {
+        "path": "lib/repositories/production/sqlite.ts",
+        "last_source_commit": "834e80687ba724bc3901489d48b27c0588269fa5",
+        "sha256": "d42e1af4a060daa0ccfca4366ec5e258736c06649f767954d69689fea03505c0"
+      },
+      {
+        "path": "lib/repositories/production/migrations/001.sql",
+        "last_source_commit": "21c9cae15af38ea60ed7c50010f9cbe88c323509",
+        "sha256": "51e3c06b8bd91833a2fe7dd22ca3a18d0f3b9ce778fe459ab7f397e244ad4b44"
+      },
+      {
+        "path": "lib/providers/production/http-routes.ts",
+        "last_source_commit": "0f37032baf6ff4b3deb641687f06f3d2ebf7f96b",
+        "sha256": "f1f62b5af3798fc53196d7d20b502cf029a9d16320179a92f94fdb1d623779a9"
+      },
+      {
+        "path": "lib/providers/production/sogni-provider.ts",
+        "last_source_commit": "0863183bb2cb2bb756b697218ade65c86589f270",
+        "sha256": "06b9c771b4132501d06ec7593347257b7440a9a91a81dde90cef3472cd619871"
+      },
+      {
+        "path": "lib/providers/production/capabilities.ts",
+        "last_source_commit": "5260be9d25b47a22edf740fe078aff8c9ba8b469",
+        "sha256": "8be3f2babb752837222d63ebcdc23245575a185cb7f934fca09f4a713f681fa1"
+      },
+      {
+        "path": "lib/production/http.ts",
+        "last_source_commit": "4065b328fea59708ae16a7a56827116549e25164",
+        "sha256": "1cbc9a61d590c49fa3d451b11f96125aa07a2c59e4a9bc9ea83b4f92ea0feca3"
+      },
+      {
+        "path": "lib/media/production/vault.ts",
+        "last_source_commit": "62c304eecac49161c2188881be974a4c02490cba",
+        "sha256": "7e8beaeea933e1b39cc2eb49518dfac1927df25faf4aa14d67a59a02633f8868"
+      },
+      {
+        "path": "lib/production/runtime.ts",
+        "last_source_commit": "ee267efbe66aa684dfc424685ccbdeeb1762d38e",
+        "sha256": "74c5d000c09f032510d1a116492b509e15ab20e87daba082841ce10668fb3659"
+      }
+    ]
+  },
+  "sequencing": {
+    "start": "Root verifies B3/B4 independent review, real-service combined gate, integration and shared boundary freeze first.",
+    "parents_open": [
+      "full I01",
+      "full C06"
+    ],
+    "B6": "Consumes the exact C06-PRE recipe builder and quote projection. Its proof archive, credential generation, producer and migration remain proposals; none are prerequisites to implementing this offline slice."
+  },
+  "source_findings": [
+    {
+      "ref": "lib/production/contracts.ts:647 CreateQuoteCommandSchema; :534 QuoteSchema; lib/providers/production/http-routes.ts:30 createQuoteHandler",
+      "finding": "Browser quote projection has no prompt, input roles, billingMode or anchor approval. Persisted Quote has only inputHash, not inputSnapshot or recipe. Existing arbitrary quote endpoint cannot certify a complete media recipe."
+    },
+    {
+      "ref": "lib/jobs/production/queue.ts:184 computeProductionInputsHash; :201 computeAnchorApprovalHash; :210 productionSubmissionEligibilityFingerprint (accepted core line numbers)",
+      "finding": "Single authoritative semantic and anchor-approval formulas exist. Semantic excludes jobId/key/quoteId/target.inputsHash. Eligibility additionally binds active story/plan/animatic and current latest approvals. Keep these distinct from requestHash and quote.inputHash."
+    },
+    {
+      "ref": "lib/production/contracts.ts:720 CreateAnchorCommandSchema; :740 CreateTakeCommandSchema",
+      "finding": "Existing creator commands can reconstruct settings and take prompt; anchor prompt, asset roles and billing intent need server resolution. Browser approvalId is a selection request, never proof."
+    },
+    {
+      "ref": "lib/repositories/production/migrations/001.sql:9,15; lib/repositories/production/sqlite.ts:389 appendApproval",
+      "finding": "Both approvals semantic UNIQUE and records_global_natural_key with appendApproval semantic tuple prohibit approve->reject->approve for the same exact hash. This is a real storage limitation, requiring a narrow reviewed migration for useful human reversal."
+    },
+    {
+      "ref": "lib/production/approval-policy.ts latestMatchingApproval",
+      "finding": "Latest max-createdAt set must all approve; a tied rejection denies. New decisions need strictly later server timestamps to establish order, with bounded retry if clock has not advanced; never fabricate model approval or copy rows."
+    },
+    {
+      "ref": "lib/repositories/production/ports.ts ProductionReadPort; lib/media/production/vault.ts:37 readVerified; contracts.ts SupportedStorageSchemaVersionSchema",
+      "finding": "Existing read/write ports cover all media/dependencies. Inject readVerified for media checks outside transactions. No QC report read port exists, so PRE final approval stays QC_BLOCKED. Schema migration requires health schema allowlist increment."
+    }
+  ],
+  "consumes": [
+    {
+      "module": "lib/production/contracts.ts",
+      "symbols": [
+        "CreateApprovalCommandSchema",
+        "ApprovalSchema",
+        "CreateAnchorCommandSchema",
+        "CreateTakeCommandSchema",
+        "QuoteSchema",
+        "ProviderRequestSnapshotSchema",
+        "ProviderResultTargetSchema",
+        "JobSchema",
+        "AnchorRenderSettingsSchema",
+        "MotionSettingsSchema"
+      ]
+    },
+    {
+      "module": "lib/repositories/production/ports.ts",
+      "symbols": [
+        "ProductionStore",
+        "ProductionReadPort",
+        "ProductionWritePort",
+        "ProviderQuoteRequest",
+        "InsertOutcome",
+        "getProject/getShotRevision/getStoryRevision/getShotPlanRevision/getAnimaticRevision/getCanonRevision/getAsset/getAnchor/getTake/getAudioMixRevision/getExport",
+        "listApprovals/getApproval/getQuote/getJobByIdempotencyKey",
+        "insertQuote/insertJob/appendApproval"
+      ]
+    },
+    {
+      "module": "lib/jobs/production/queue.ts",
+      "symbols": [
+        "computeProductionInputsHash",
+        "computeAnchorApprovalHash",
+        "productionSubmissionEligibilityFingerprint"
+      ]
+    },
+    {
+      "module": "lib/production/approval-policy.ts",
+      "symbols": [
+        "latestMatchingApproval"
+      ]
+    },
+    {
+      "module": "lib/production/revisions.ts",
+      "symbols": [
+        "shotsCompatibleWithStory"
+      ]
+    },
+    {
+      "module": "lib/production/http.ts",
+      "symbols": [
+        "assertSameOriginMutation",
+        "readProductionJson",
+        "getRequestId",
+        "productionErrorResponse"
+      ]
+    },
+    {
+      "module": "lib/production/runtime.ts",
+      "symbols": [
+        "withProductionStore",
+        "resolveProductionDataDir"
+      ]
+    },
+    {
+      "module": "lib/media/production/vault.ts",
+      "symbols": [
+        "LocalMediaVault.readVerified"
+      ]
+    }
+  ],
+  "proposed_contracts": {
+    "creator_schemas_ts": "PrepareAnchorCommandSchema = CreateAnchorCommandSchema.omit({quoteId:true,idempotencyKey:true}); PrepareTakeCommandSchema = CreateTakeCommandSchema.omit({quoteId:true,idempotencyKey:true}); MediaQuoteCommandSchema = z.discriminatedUnion('kind',[z.strictObject({kind:z.literal('anchor'),command:PrepareAnchorCommandSchema}),z.strictObject({kind:z.literal('take'),command:PrepareTakeCommandSchema})]); ApprovalRouteCommandSchema = z.strictObject({projectId:IdSchema,idempotencyKey:IdSchema,command:CreateApprovalCommandSchema});",
+    "transport": "Keep existing CreateAnchorCommand/CreateTakeCommand unchanged for enqueue. Preparation retains creator selections/settings/prompt but has no quoteId or key. Approval envelope adds only project context and command key; expectedHash remains an optimistic compare token, recomputed server-side. No browser actorId/targetHash/resultTarget/billingMode/proof/hash/receipt/visionAssessment/approval outcome from a model.",
+    "recipe_ts": "type MediaPreparation = {kind:'anchor';command:PrepareAnchorCommand}|{kind:'take';command:PrepareTakeCommand}; type BillingModeIntent='subscription'|'tokens'; type ValidatedMediaRecipe = Readonly<{recipeVersion:1;operation:'anchor'|'take';projectId:string;providerId:string;modelId:string;shotRevisionId:string;prompt:string;inputs:ProviderRequestSnapshot['inputs'];parameters:Record<string,JsonValue>;billingMode:BillingModeIntent;resultTarget:ProviderResultTarget;selectionPins:{storyRevisionId:string;storyHash:string;storyApprovalIds:string[];shotPlanRevisionId:string;shotPlanHash:string;animaticRevisionId:string;animaticHash:string;animaticApprovalIds:string[]}}>; type TrustedBillingModeResolver=(input:Readonly<{projectId:string;providerId:string;modelId:string;operation:'anchor'|'take'}>)=>Promise<BillingModeIntent|null>;",
+    "hash_rule": "recipe.resultTarget.inputsHash is computed ONLY via existing computeProductionInputsHash(read,operation,temporary valid server snapshot). Use server-generated ephemeral transport IDs for helper schema validation; these are excluded by its established formula. No copied semantic formula. Quote projection includes the full validated recipe, including ordered roles/checksums-through-semantic-hash, prompt, parameters, explicit billing intent and immutable approval/selection pins. Request hash remains hashCanonicalJson(final ProviderRequestSnapshot) including transport IDs.",
+    "projection_ts": "function toMediaQuoteRequest(recipe:ValidatedMediaRecipe):ProviderQuoteRequest; returns {projectId,providerId,modelId,operation,inputSnapshot:{revisionIds:ordered used shot/canon plus current story/plan/animatic IDs,assetIds:ordered recipe input asset IDs,parameters:{...recipe.parameters,mediaRecipe:recipe}}}. quote.inputHash=hashCanonicalJson(request.inputSnapshot). Internal ProviderQuoteRequest supports Record<string,JsonValue>; this internal payload never passes the strict legacy browser CreateQuoteCommandSchema. Persist only existing ProductionQuote; do NOT claim full recipe payload is archived there. Future B6 composer signature must consume MediaPreparation/ValidatedMediaRecipe plus this internal ProviderQuoteRequest, not reconstruct from legacy browser CreateQuoteCommand; root owns that amendment.",
+    "factory_ts": "createProductionApprovalService({store,actorId,readAssetVerified:(asset:Asset)=>Promise<void>,now?,idFactory?}):{create(command:ApprovalRouteCommand):Promise<{approval:Approval;created:boolean}>}; createProductionTakeService({store,readAssetVerified:(asset:Asset)=>Promise<void>,resolveBillingMode?,quoteRecipe?,now?,idFactory?}):{prepare(command:MediaPreparation):Promise<ValidatedMediaRecipe>; quote(command:MediaPreparation):Promise<ProductionQuote>; enqueueAnchor(command:CreateAnchorCommand):Promise<{job:ProductionJob;created:boolean}>;enqueueTake(command:CreateTakeCommand):Promise<{job:ProductionJob;created:boolean}>}; buildValidatedMediaRecipe(read,command,billingMode):ValidatedMediaRecipe; toMediaQuoteRequest(recipe):ProviderQuoteRequest; materializeMediaSnapshot(recipe,{jobId,idempotencyKey,quoteId}):ProviderRequestSnapshot;",
+    "producer_ts": "quoteRecipe?: (input:Readonly<{recipe:ValidatedMediaRecipe;request:ProviderQuoteRequest}>)=>Promise<ProductionQuote>. Missing quoteRecipe creates a locally generated unknown ProductionQuote with null estimates/currency and withinAuthorizedCap unknown, exact projection hash, bounded finite expiry. No provider quote/auth endpoint is required. Future B6 producer consumes this exact recipe/request; it cannot recreate its own recipe.",
+    "billing_resolution": "Before quote, trusted server resolver selects an explicit requested billing mode intent. This is distinct from observed entitlement or financial permission. Missing/null resolver => BUDGET_BLOCKED; no guessed mode or immutable quote. Enqueue resolves again outside transaction, reconstructs exact recipe and matches quote.inputHash; changed intent rejects and requires fresh quote. Known entitlement must correspond (subscription->subscription,spark->tokens); unknown entitlement may store a valid queued intent when server mode intent exists, but B4 cannot admit it. Never choose mode from an unknown quote, browser field, after immutable quoting, or silently fallback. Default missing producers remains closed; fixtures inject explicit intent. Any production standing-mode policy is root-owned, not invented by PRE."
+  },
+  "recipe_resolution": {
+    "project": "Validate project, immutable shot ownership via originating story, active story/plan/animatic relationships and shot/slot membership. Resolve selected canon by ID; no replacement with library head. Require latest exact human story and animatic approval sets. No extra shotplan approval prerequisite; shotplan human decisions are independently supported. After resolving candidate records, invoke existing productionSubmissionEligibilityFingerprint on a temporary server-only job/snapshot with the concrete semantic target; the helper receives the entitlement selector corresponding to the explicit requested billing intent only to run its mode/selection/approval checks, not a claim of live entitlement or financial authorization. Missing actual quote/account proof remains unknown/blocked. Collect immutable selection/approval pins from the validated records; do not copy the eligibility hash (it includes temporary jobId) into semantic recipe or quote.",
+    "compatible_history": "For reused originating shot, consume shotsCompatibleWithStory with complete lineage, selected canon, exact shot candidate and explicit valid continuation. New story/plan/animatic approvals are never copied; successor without genuine current approval denies.",
+    "anchor": "Exact deterministic versioned local prompt template from shot visualIntent/framing and immutable ordered cast/location/props/style descriptions/wardrobe. Root freeze template literal/version before implementation. Resolve all canon referenceAssetIds in first-use order, deduplicate by asset ID, role context_image, required true. PRE accepts renderSettings.referenceAssetIds only when it equals this complete canonical ordered list; otherwise INVALID_INPUT with actionable mismatch. No arbitrary asset ownership guess or silently omitted required reference. Parameters exact requested aspect/resolution plus concrete seed (null resolves to documented constant 0), fixed workflow/SDK recipe version values where applicable. For continuation, append exact required end_frame of continuation.endFrameAssetId after canon contexts; include it in expected creator referenceAssetIds. This follows existing queue snapshotInputsMatchPinnedShot for both anchor/take, even when current image adapter capability cannot honor it; unsupported conditioning blocks rather than drops.",
+    "take": "Use supplied validated motionSettings.prompt as creator intent; require targetFrames equal exact shot targetFrames, aspect match project format. Resolve requested anchor and exact approvalId against latestMatchingApproval of computeAnchorApprovalHash, with same shot ownership and local checksum. Inputs begin exactly one required start_frame of anchor asset; append exact required end_frame only for explicit continuation. No inferred continuation or substitution of context images to bypass unsupported start_frame. All selected canon hashes remain in shared semantic formula even when take's conditioning comes from approved anchor. Parameters include frameCount, aspect, fixed concrete seed, explicit providerAudioPolicy='muted' and recipe controls; never silently change legal frame count.",
+    "assets": "readAssetVerified(assetId) loads only server-resolved vaultRef and sha256 outside transaction using LocalMediaVault.readVerified; fail missing/swapped bytes, wrong MIME and metadata. Reread immutable metadata/dependencies in synchronous quote/enqueue/approval commit. Provider worker revalidates bytes/conditioning before actual transport.",
+    "capability": "Do not invent model/workflow facts. Consume existing h3FrameCountLegal/h3ModeForModel/checkH3Request/canSatisfy when applicable, using stored accepted receipt; missing compatible required-role support can retain unavailable/blocked intent but never claim readiness. No network discovery/auth in builder or transaction.",
+    "anchor_prompt_literal_ts": "prompt = 'Production anchor recipe v1\\n' + canonicalJson({visualIntent:shot.visualIntent,framing:shot.framing,cast:shot.castBindings.map(binding=>({characterId:binding.characterId,wardrobe:binding.wardrobe,description:canon(binding.canonRevisionId).description,attributes:canon(binding.canonRevisionId).attributes})),location:{description:canon(shot.locationRevisionId).description,attributes:canon(shot.locationRevisionId).attributes},props:shot.propRevisionIds.map(id=>({description:canon(id).description,attributes:canon(id).attributes})),style:{description:canon(shot.styleRevisionId).description,attributes:canon(shot.styleRevisionId).attributes}}); reject derived prompt >100000 chars with INVALID_INPUT; no truncation, no text model or synthesized creative facts. This literal versioned recipe is proposed for root acceptance. Canon hash binding still uses the existing semantic helper."
+  },
+  "quote_enqueue": {
+    "quote": "Validate origin and strict command/project/shot before producers. Resolve explicit server mode and asset checks outside tx; build recipe and request. Optional producer outside tx. In one transaction resample clock/rebuild same recipe using fixed mode; compare full recipe/request hash, validate all quote identity/hash/times/known mode, insertQuote. Any dependency/approval change throws and inserts nothing. Persisted quote stores hash only. Repeated quote request may create fresh quote IDs; never reserve.",
+    "enqueue": "Validate strict existing command and route shotId equals read.getShotRevision(command.shotRevisionId).shotId. Reread quote/current selected dependencies and latest exact approvals in transaction; recompute full recipe using fixed trusted mode and compare quote.inputHash plus project/provider/model/operation/freshness. Unknown quote can yield queued job with explicit server mode but cannot authorize submit. Allocate server IDs only for a genuinely new key; insert Job+OutboxIntent in this same synchronous transaction via existing tx.insertJob. Do not call queue.enqueue after a separate validation transaction.",
+    "job_defaults": "JobSchema version1, operation anchor/take, status queued, immutable validated requestSnapshot, hashCanonicalJson(snapshot), provider/model/quote exact, providerRef/receiptId/resultId/lease fields/error null, resultAssetIds [], attempt0, server timestamps. No completion, automatic approval, selection or reservation.",
+    "replay": "Inside tx inspect getJobByIdempotencyKey first. Normalize stored snapshot back to same creator fields (concrete seed0 canonicalizes creator null) and transport IDs; same key+exact intended command/quote returns stored job even if now stale/completed, with created false and no new outbox/write/provider effect. Conflicting provider/model/shot/anchor/approval/prompt/settings/quote under same key => STALE_REVISION409. Do not compute equality by allocating a new jobId because requestHash includes jobId. Replays do not revalidate into new spend permission; B4 remains sole admission authority.",
+    "durability": "Existing configured .studio/production.sqlite and media vault, no second DB or recipe registry. Matching immutable content-addressed hashes proves reconstructed recipe identity; B6 may add reviewed durable source proof/archive later."
+  },
+  "approval": {
+    "supported_PRE": [
+      "canon",
+      "story",
+      "shotplan",
+      "animatic",
+      "anchor",
+      "take",
+      "audio"
+    ],
+    "final": "Target kind is final (not export). Accept existing enum shape but return QC_BLOCKED for final before any append in PRE; getExport exists but getQcReport does not. C12 owns verified exported-file/QC/final approval integration.",
+    "targets": "canon/story/shotplan/animatic/audio expectedHash compares immutable contentHash and exact project selection/context. Anchor expectedHash compares existing computeAnchorApprovalHash. Take requires new root-frozen computeTakeApprovalHash in pure approval.ts, analogous identity binding {recipeVersion:1,takeId,shotRevisionId,anchorId,approvalId,inputsHash,assetSha256}; only this one helper, expected hash server recomputed. The new helper is a proposed contract, not existing evidence. All media-bearing targets require readable/checksum-matching files; canon references need known source rights. Audio pins current mix/current story/cue assets; no generated audio admission. Take approval also resolves its original exact anchor approval/provenance, receipt and local measured frames/audio policy; no automatic selection. Superseded targets may be returned by exact command replay, but fresh approval requires current selected dependencies.",
+    "human": "actorId injected from configured local human profile, never browser or model; no authenticated multi-user claim. Approval has server ID/hash/time, creator supplied decision/checklist/notes/advisory reasons. Rejected needs nonblank notes or failed-item reason. Advisory vision warning/failed/unavailable/exhausted requires explicit acknowledgement code vision_<status> with nonblank reason; model assessment can never append or enqueue.",
+    "required_checklists": {
+      "canon": [
+        "identity",
+        "wardrobe",
+        "location",
+        "props",
+        "style",
+        "reference_rights"
+      ],
+      "story": [
+        "protagonist_goal",
+        "cause_consequence_order",
+        "earned_resolution",
+        "plot_fidelity",
+        "spoken_lines"
+      ],
+      "shotplan": [
+        "beat_coverage",
+        "spoken_lines",
+        "canon_bindings",
+        "duration_format",
+        "plot_fidelity"
+      ],
+      "animatic": [
+        "beat_coverage",
+        "spoken_lines",
+        "timing",
+        "duration_format",
+        "continuity"
+      ],
+      "anchor": [
+        "identity",
+        "wardrobe",
+        "location",
+        "props",
+        "framing"
+      ],
+      "take": [
+        "identity",
+        "wardrobe",
+        "location",
+        "props",
+        "intended_action",
+        "motion_camera",
+        "artifacts"
+      ],
+      "audio": [
+        "spoken_lines",
+        "intelligibility",
+        "voice_consistency",
+        "cue_timing",
+        "music_sfx_rights",
+        "no_truncation",
+        "balance"
+      ]
+    },
+    "checklist_rule": "Root-frozen IDs above are proposed exact mandatory dimensions derived from G01/G02/G03/G05/G06, not existing coded IDs. Strict unique IDs; exact applicable required set, no unknown/duplicate IDs; all mandatory passed true for approve; explicit passed true still required for nonapplicable dimension with a reason, no auto-checked defaults. Canon per-kind applicability map may reduce irrelevant dimensions only through root freeze; PRE worker cannot invent it.",
+    "order": "Consume latestMatchingApproval unchanged. Preferred bounded PRE rule: sample real UTC now inside transaction, require new createdAt > max existing target timestamps; if same/earlier, return STALE_REVISION with a retry action or await next real millisecond outside transaction and retry boundedly. This permits useful reversal on a later human command without future synthetic UTC times. Root may instead freeze max(now,last.createdAt+1) with explicit bounded-future policy, but that is not silently assumed. Existing same-time conflicting rows stay fail closed. Required acceptance exercises three genuine ascending timestamps, plus tied rejection denial.",
+    "transaction": "Async verify media before tx; tx resamples target/current project dependencies, hash and command replay, validates checklist/advisory/reject reason, then appendApproval via existing port. Drift/error returns no writes. No provider/generation calls.",
+    "idempotency": "Envelope key scoped by project. Server approvalId=\"approval:\"+hashCanonicalJson({schemaVersion:1,operation:\"human_approval\",projectId,idempotencyKey}); IDs exclude timestamps/actor/command payload, so changed payload under same key collides for conflict detection. Before target revalidation, existing getApproval(approvalId) compares all creator command fields including expectedHash against saved targetHash, and trusted actorId; exact replay returns exact historical row with created false and no writes, even if later rejected/stale. Conflict returns STALE_REVISION409. Fresh key permits approve->reject->approve same hash. No new read/write ports or command ledger."
+  },
+  "necessary_shared_amendment": {
+    "root_freeze": "Only after finance kernel accepted. One bounded shared contract/store owner serially integrates before independent approval and recipe workers. No change to 001/002 bytes or finance truth.",
+    "numbering": "Root assigns next ordered migration, currently 003-approval-commands.sql; reserve that number only upon acceptance. B6 provider-proof migration is unapproved and must be renumbered later, not collide.",
+    "schema": "Rebuild approvals without UNIQUE(target_kind,target_id,target_hash,decision), retaining every existing approval ID/target/hash/decision and FK integrity; preserve records/record_refs/takes. Existing historical natural keys remain. Change appendApproval new-record natural_key from semantic tuple to r.id; distinct deterministic command IDs permit new decisions, while existing getApproval handles replay. No approval_commands table or new ports. Migration name/number root-owned; 001/002 remain byte-identical.",
+    "health": "Add literal 3 to SupportedStorageSchemaVersionSchema and register migration version3/name in sqlite.ts. Root tests actual reopen/migrate from v2 and health3; doctor reports store.schemaVersion dynamically. Do not change financial schemaVersion1 or ProjectReadModel schemaVersion2.",
+    "owned_paths": [
+      "lib/production/contracts.ts",
+      "lib/production/contracts.test.ts",
+      "lib/repositories/production/ports.ts",
+      "lib/repositories/production/sqlite.ts",
+      "lib/repositories/production/sqlite.test.ts",
+      "lib/repositories/production/migrations/003-approval-commands.sql",
+      "lib/production/http.test.ts or existing health regression as needed"
+    ],
+    "no_extra_ports": [
+      "provider proof/archive",
+      "credential generation",
+      "QC producer",
+      "global provider setter",
+      "separate recipe database"
+    ],
+    "ports": "No new ports. ProductionReadPort.getApproval(id) + listApprovals(kind,id), ProductionWritePort.appendApproval(approval), and one store.transaction suffice. Replay identity is stable derived approval ID from project/key; service compares exact command/actor before append. Root-reviewed sqlite appendApproval changes natural_key only for future rows."
+  },
+  "routes": {
+    "approval": "POST /api/production/approvals strict ApprovalRouteCommandSchema; 201 created,200 replay -> {approval,created}; bounded 64KiB JSON, no-store.",
+    "anchor": "POST /api/production/shots/[shotId]/anchors unchanged CreateAnchorCommandSchema; 201/200 -> {job,created}; bounded64KiB JSON, no-store.",
+    "take": "POST /api/production/shots/[shotId]/takes unchanged CreateTakeCommandSchema; 201/200 -> {job,created}; bounded256KiB JSON accommodating existing prompt limit, no-store.",
+    "preparation": "POST /api/production/media-quotes strict MediaQuoteCommandSchema; bounded256KiB; returns existing sanitized ProductionQuote only. New scoped route leaves existing /quotes compatibility behavior unchanged. Existing arbitrary projection quotes cannot pass new full-recipe inputHash comparison.",
+    "factories": "Factories live in service files, route.ts exports only POST. createApprovalRouteHandlers({withStore?,serviceOptions?}); createMediaRouteHandlers({withStore?,serviceOptions?}) returns anchorPOST,takePOST,quotePOST. Default lazy withProductionStore, server-owned vault reader/local actor. Missing billing resolver stays closed. Root may compose explicit resolver later; no process-global setter.",
+    "errors": "Existing mapper: INVALID_INPUT400 (strict extras/route mismatch/checklist); UNKNOWN_REFERENCE404; STALE_REVISION409 (expected hash/key/quote/selection changed); APPROVAL_REQUIRED428; BUDGET_BLOCKED403 (missing server billing intent); CAPABILITY_MISMATCH422; MEDIA_UNAVAILABLE422; QC_BLOCKED422 for final; overflow413; sanitized INTERNAL_ERROR500. Origin and body guards run before any producer; no server paths/secrets/raw exceptions.",
+    "testing_path": "Prefer factory HTTP Request/Response tests inside owned lib/services/production/*.test.ts, which current vitest include discovers. Avoid runner-config expansion unless root chooses route.test.ts ownership."
+  },
+  "ownership": {
+    "root_first": "Freeze schemas/types/checklist IDs/prompt literal/billing intent semantics and approval storage amendment; integrate shared contracts/store before parallel work. B3/B4 writers must be idle.",
+    "approval_worker": [
+      "lib/production/approval.ts",
+      "lib/production/approval.test.ts",
+      "lib/services/production/approval.ts",
+      "lib/services/production/approval.test.ts",
+      "app/api/production/approvals/route.ts"
+    ],
+    "recipe_worker": [
+      "lib/services/production/takes.ts",
+      "lib/services/production/takes.test.ts",
+      "app/api/production/shots/[shotId]/anchors/route.ts",
+      "app/api/production/shots/[shotId]/takes/route.ts",
+      "app/api/production/media-quotes/route.ts"
+    ],
+    "root_docs": [
+      "docs/production/ARCHITECTURE.md",
+      "docs/production/TASK_PACKETS.md",
+      "docs/production/task-registry.json",
+      "docs/production/SESSION_STATE.json",
+      "docs/production/HANDOVER.md"
+    ],
+    "shared_helper": "Consume queue's existing exports unchanged; no worker edit to queue.ts/worker.ts/budget services/provider routes/runtime/legacy UI. Optional future helper relocation is root-owned and unnecessary for PRE.",
+    "after": "One minimal focused functional verification per owned slice, root combined focused regression + typecheck/build + actual built offline HTTP fixture; expanded coverage later per current user steering. Existing finance gate coverage preserved."
+  },
+  "minimal_acceptance": [
+    {
+      "id": "PRE-S01",
+      "case": "Real v2 SQLite migration/reopen preserves all prior approval/take refs and 001/002 checksums; fresh command keys permit approve->reject->approve same target hash; no synthesized keys for old rows; foreign_key_check and integrity pass; actual health returns3."
+    },
+    {
+      "id": "PRE-A01",
+      "case": "Required checklist, explicit human actor, reject reason/advisory acknowledgements and exact server target hash; missing/forged/failed checks/media deny append, fake generation count0. Include anchor and audio/shotplan hash bindings."
+    },
+    {
+      "id": "PRE-A02",
+      "case": "Same key/body returns exact row without append after reopen; same key/changed command conflicts; new key later timestamp reverses rejection; same-time conflicting decision remains fail closed."
+    },
+    {
+      "id": "PRE-R01",
+      "case": "Server builds full deterministic recipe from immutable selected pins and trusted mode; concrete seed; approved take start_frame/end_frame roles; quote projection hash differs from semantic and request hashes. No client hashes, paths or outcomes accepted."
+    },
+    {
+      "id": "PRE-R02",
+      "case": "Prepare quote then enqueue same command produces exact semantic recipe. Change prompt/reference ordering/role/seed/frames/model/anchor approval or trusted mode before enqueue rejects with zero jobs/outbox; revoke story/animatic or selected canon during async verify also rejects."
+    },
+    {
+      "id": "PRE-R03",
+      "case": "Same project/key command concurrently creates one job/outbox; same key replay after completion/staleness returns original ID and immutable snapshot; conflicting command409; trigger failure after insert rolls back both."
+    },
+    {
+      "id": "PRE-R04",
+      "case": "Approved canon-only successor with unchanged reused shot and new genuine story/animatic approvals works via shotsCompatibleWithStory; script/beat/foreign plan/unapproved successor deny; no approval copies or sibling selection mutation."
+    },
+    {
+      "id": "PRE-H01",
+      "case": "Actual offline factory/built routes enforce strict schemas/origin/body bounds/project+shot matching, safe no-store responses and error envelope; final returns QC_BLOCKED. Invalid input calls producer0."
+    },
+    {
+      "id": "PRE-H02",
+      "case": "Missing billing resolver fails before quote; explicit injected mode plus absent quote composer saves genuinely unknown quote and optionally queued job. Existing B4 worker missing prepare/reserve callbacks calls submit0 and creates no reservation. No paid transport."
+    }
+  ],
+  "verification": {
+    "tests_run": false,
+    "source_changed": false,
+    "source_trees_written": [],
+    "artifact_only": "/tmp/perabyte-C06-PRE-boundary-proposal.json",
+    "new_test_results": [],
+    "suggested_focused_commands": [
+      [
+        "npm",
+        "test",
+        "--",
+        "lib/production/approval.test.ts",
+        "lib/services/production/approval.test.ts",
+        "lib/services/production/takes.test.ts",
+        "lib/repositories/production/sqlite.test.ts"
+      ],
+      [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      [
+        "git",
+        "diff",
+        "--check"
+      ]
+    ],
+    "root_build": "npm run build and bounded offline built HTTP smoke after review; no live provider",
+    "concurrent_root_changes": "Final git status showed root-created cleanup report/evidence paths as well as preexisting evidence. Architect wrote only /tmp artifact; repository status changes are concurrent root work, not architect edits."
+  },
+  "deferred": [
+    "full C06 selection CAS route and richer retake controls",
+    "full I01 proof/account credential lifecycle/live quote composer",
+    "audio generation and text scheduling",
+    "final approval/QC export integration",
+    "UI redesign",
+    "paid submission enablement",
+    "creator film quality and release"
+  ],
+  "history_scope": "Repeated different enqueue keys append new jobs and C04 appends resulting AnchorCandidate/Take siblings without replacing/selecting. Existing getProjectReadModel already exposes histories; retain those queries, no new selection route or parent-done claim.",
+  "root_decisions": [
+    "Approve strict preparation DTO and new /media-quotes route; exact server-owned quote projection versus legacy browser CreateQuote.",
+    "Approve narrow approval migration removing tuple uniqueness and switching future natural_key to deterministic approval ID; preserve existing getApproval/appendApproval ports and 001/002 bytes, health3 and root-owned migration numbering.",
+    "Freeze literal prompt template + per-kind checklist applicability + new take approval hash helper.",
+    "Choose explicit trusted billing-mode intent policy/injection; absence stays closed. No invented authenticated entitlement proof.",
+    "Approve PRE final QC_BLOCKED deferral, minimal functional acceptance split and exact ownership before dispatch.",
+    "Freeze exact later-time decision ordering rule: prefer bounded wait/retry using real UTC rather than unreviewed future timestamp synthesis; tied latest rejection remains denial."
+  ],
+  "paid_calls": [],
+  "authenticated_calls": [],
+  "network_calls": [],
+  "credentials_accessed": false,
+  "unverified": [
+    "No implementation/test execution or proof of passing acceptance.",
+    "B3/B4 kernel acceptance remains root gate.",
+    "Proposed approval migration not implemented; FK-preserving table rebuild needs real migration test.",
+    "Existing receipts/vault durability do not establish cinematic quality, authenticated human identity, financial actual settlement or paid authorization."
+  ]
+}

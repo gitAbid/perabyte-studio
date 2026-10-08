@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "packet": "C06-SEL",
+  "status": "accepted_integrated",
+  "source_sha": "ac114aa75a42595f042ebb1180308de1ddc2928b",
+  "integration_sha": "546636eae09089dda1c46e3032a331c2c3d5b4da",
+  "review": "docs/production/reports/C06-SEL-review.json",
+  "worker_report": "evidence/integration/c06-sel/worker/C06-SEL/report.json",
+  "checks": {
+    "root_focused_tests": 12,
+    "root_test_files": 3,
+    "typecheck_exit_code": 0,
+    "independent_selection_tests": 2,
+    "independent_skipped": 4
+  },
+  "evidence": [
+    {
+      "path": "evidence/integration/c06-sel/integrated-functional-20261004-01.txt",
+      "sha256": "f71287006d080c82935a3f799134df6f4b4b5a4c97e571435ce38c489bc4986d"
+    },
+    {
+      "path": "evidence/integration/c06-sel/integrated-typecheck-20261004-01.txt",
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    },
+    {
+      "path": "evidence/integration/c06-sel/independent-focused-20261004-01.txt",
+      "sha256": "13bc6b89d23b3bd0d102ebfaf28ab3e43c48da54e676042fcc9f77349abea1e0"
+    }
+  ],
+  "unverified": [
+    "Expanded coverage/build deferred per user; strict malformed/body/origin and historical superseded-clear scenarios inspected, not separately exercised.",
+    "Full C06 depends on incomplete I01 live proof composition; no paid generation/film readiness."
+  ],
+  "paid_calls": []
+}

@@ -62,7 +62,7 @@ const editModel: ModelDescriptor = {
   contextImages: { min: 1, max: 2 },
 };
 
-function fakeVideoProvider(models: ModelDescriptor[]): ProviderRegistry {
+function fakeVideoProvider(models: ModelDescriptor[], options: { frameDropped?: boolean } = {}): ProviderRegistry {
   const provider: ImageProvider & VideoProvider = {
     id: "sogni",
     label: "Sogni",
@@ -74,7 +74,8 @@ function fakeVideoProvider(models: ModelDescriptor[]): ProviderRegistry {
     listVideoModels: () => models,
     async generateVideo(request: NormalizedGenerationRequest) {
       received.push(request);
-      return [{ bytes: null, url: "https://cdn.example/x.mp4", ext: "mp4", seed: 1 }];
+      return [{ bytes: null, url: "https://cdn.example/x.mp4", ext: "mp4", seed: 1,
+        ...(options.frameDropped ? { frameDropped: true } : {}) }];
     },
   };
   return {
@@ -133,6 +134,99 @@ async function putFrame(): Promise<string> {
 }
 
 describe("runGeneration continuity frames", () => {
+  it("strict policy rejects an unsupported start frame before provider invocation", async () => {
+    const provider = fakeVideoProvider([t2vModel]);
+    setRegistryForTests(provider);
+    const ref = await putFrame();
+
+    await expect(runGeneration(body({ startImageRef: ref, referencePolicy: "strict" })))
+      .rejects.toMatchObject({ field: "startImage" });
+    expect(received).toHaveLength(0);
+  });
+
+  it("strict policy rejects an unconfigured frame-swapped provider before loading the render", async () => {
+    const base = fakeVideoProvider([t2vModel, i2vModel]);
+    const resolve = base.resolve;
+    setRegistryForTests({
+      ...base,
+      resolve: (id) => {
+        const found = resolve(id);
+        return found?.model.id === i2vModel.id
+          ? { ...found, provider: { ...found.provider, isConfigured: () => false } }
+          : found;
+      },
+    });
+    const ref = await putFrame();
+
+    await expect(runGeneration(body({ startImageRef: ref, referencePolicy: "strict" })))
+      .rejects.toMatchObject({ field: "model", message: "The frame-capable model is not configured." });
+    expect(received).toHaveLength(0);
+  });
+
+  it("strict policy uses a compatible and configured frame-swapped model", async () => {
+    setRegistryForTests(fakeVideoProvider([t2vModel, i2vModel]));
+    const ref = await putFrame();
+
+    const response = await runGeneration(body({ startImageRef: ref, referencePolicy: "strict" }));
+
+    expect(response.effectiveModelId).toBe(i2vModel.id);
+    expect(received[0]?.startImage).toBeDefined();
+  });
+
+  it("strict policy rechecks context capability on the effective swapped model", async () => {
+    setRegistryForTests(fakeVideoProvider([t2vModel, i2vModel]));
+    const ref = await putFrame();
+
+    await expect(runGeneration(body({
+      startImageRef: ref,
+      referenceImageRefs: [ref],
+      referencePolicy: "strict",
+    })))
+      .rejects.toMatchObject({ field: "referenceImage" });
+    expect(received).toHaveLength(0);
+  });
+
+  it("strict policy rejects a malformed start-frame reference", async () => {
+    setRegistryForTests(fakeVideoProvider([t2vModel, i2vModel]));
+
+    await expect(runGeneration(body({ startImageRef: 42, referencePolicy: "strict" })))
+      .rejects.toMatchObject({ field: "startImage" });
+    expect(received).toHaveLength(0);
+  });
+
+  it("strict policy checks the requested render kind against the effective model", async () => {
+    setRegistryForTests(fakeVideoProvider([editModel]));
+
+    await expect(runGeneration(body({ kind: "video", referencePolicy: "strict" }, "sogni:fake_edit")))
+      .rejects.toMatchObject({ field: "model", message: "The selected model does not support this render type." });
+    expect(received).toHaveLength(0);
+  });
+
+  it("strict policy rejects an unsupported end frame before provider invocation", async () => {
+    setRegistryForTests(fakeVideoProvider([startOnlyModel]));
+    const ref = await putFrame();
+
+    await expect(runGeneration(body({ endImageRef: ref, referencePolicy: "strict" }, "sogni:fake_startonly")))
+      .rejects.toMatchObject({ field: "endImage" });
+    expect(received).toHaveLength(0);
+  });
+
+  it("strict policy rejects a provider-reported dropped start frame", async () => {
+    setRegistryForTests(fakeVideoProvider([startOnlyModel], { frameDropped: true }));
+    const ref = await putFrame();
+
+    await expect(runGeneration(body({ startImageRef: ref, referencePolicy: "strict" }, "sogni:fake_startonly")))
+      .rejects.toMatchObject({ field: "startImage", retryable: false });
+  });
+
+  it("attributes an output frame drop to the end frame when no start frame was requested", async () => {
+    setRegistryForTests(fakeVideoProvider([i2vModel], { frameDropped: true }));
+    const ref = await putFrame();
+
+    await expect(runGeneration(body({ endImageRef: ref, referencePolicy: "strict" }, "sogni:fake_i2v")))
+      .rejects.toMatchObject({ field: "endImage", retryable: false });
+  });
+
   it("rejects malformed frame refs", async () => {
     setRegistryForTests(fakeVideoProvider([t2vModel, i2vModel]));
     await expect(runGeneration(body({ startImageRef: "../escape.png" }))).rejects.toMatchObject({
@@ -224,6 +318,66 @@ describe("runGeneration continuity frames", () => {
 });
 
 describe("runGeneration reference images", () => {
+  it("strict policy rejects unsupported and over-capacity context refs before provider invocation", async () => {
+    setRegistryForTests(fakeVideoProvider([t2vModel, editModel]));
+    const ref = await putFrame();
+
+    await expect(runGeneration(body({ referencePolicy: "strict", referenceImageRefs: [ref] }, "sogni:fake_t2v")))
+      .rejects.toMatchObject({ field: "referenceImage" });
+    expect(received).toHaveLength(0);
+
+    await expect(runGeneration(body({ kind: "image", referencePolicy: "strict", referenceImageRefs: [ref, ref, ref] }, "sogni:fake_edit")))
+      .rejects.toMatchObject({ field: "referenceImage" });
+    expect(received).toHaveLength(0);
+  });
+
+  it("counts a supported start frame toward strict context-image capacity", async () => {
+    const startAndContextModel: ModelDescriptor = {
+      ...editModel,
+      frameInput: { start: true, end: false },
+    };
+    setRegistryForTests(fakeVideoProvider([startAndContextModel]));
+    const ref = await putFrame();
+
+    await expect(runGeneration(body({
+      kind: "image",
+      startImageRef: ref,
+      referenceImageRefs: [ref, ref],
+      referencePolicy: "strict",
+    }, "sogni:fake_edit")))
+      .rejects.toMatchObject({ field: "referenceImage" });
+    expect(received).toHaveLength(0);
+  });
+
+  it("strict policy propagates unavailable cached context refs before provider invocation", async () => {
+    setRegistryForTests(fakeVideoProvider([editModel]));
+    const missing = `${"a".repeat(64)}.png`;
+
+    await expect(runGeneration(body({ kind: "image", referencePolicy: "strict", referenceImageRefs: [missing] }, "sogni:fake_edit")))
+      .rejects.toMatchObject({ field: "referenceImage", message: "That reference image is no longer cached." });
+    expect(received).toHaveLength(0);
+  });
+
+  it("strict policy rejects malformed and over-limit context arrays", async () => {
+    setRegistryForTests(fakeVideoProvider([editModel]));
+    const ref = await putFrame();
+
+    await expect(runGeneration(body({ kind: "image", referencePolicy: "strict", referenceImageRefs: [ref, 42] }, "sogni:fake_edit")))
+      .rejects.toMatchObject({ field: "referenceImage" });
+    await expect(runGeneration(body({ referencePolicy: "strict", referenceImageRefs: "not-an-array" }, "sogni:fake_t2v")))
+      .rejects.toMatchObject({ field: "referenceImage" });
+    await expect(runGeneration(body({ kind: "image", referencePolicy: "strict", referenceImageRefs: Array(17).fill(ref) }, "sogni:fake_edit")))
+      .rejects.toMatchObject({ field: "referenceImage" });
+    expect(received).toHaveLength(0);
+  });
+
+  it("rejects an unknown reference policy", async () => {
+    setRegistryForTests(fakeVideoProvider([editModel]));
+    await expect(runGeneration(body({ referencePolicy: "ignore" }, "sogni:fake_edit")))
+      .rejects.toMatchObject({ field: "referencePolicy" });
+    expect(received).toHaveLength(0);
+  });
+
   it("rejects malformed reference refs", async () => {
     setRegistryForTests(fakeVideoProvider([editModel]));
     await expect(

@@ -1,6 +1,7 @@
 import { chainPredecessor } from "@/lib/story/chain";
 import { mergedSceneSettings } from "@/lib/story/scene-settings";
 import { composeShot, sceneCast } from "@/lib/story/compose-shot";
+import { validateStoryCanon, type StoryCanonViolation } from "@/lib/story/canon";
 import {
   keyframePrompt,
   resolveKeyframeStrategy,
@@ -24,6 +25,7 @@ import { createJob } from "@/lib/jobs/jobs.service";
 import { GenerationServiceError } from "@/lib/services/generation.service";
 import { logger as rootLogger, type Logger } from "@/lib/logging/logger";
 import type { GenerationKind } from "@/lib/constants";
+import type { CharacterRow } from "@/lib/repositories/character-row";
 import type { Asset, GenerationSettings, SceneState, StoryScene, StoryWorld } from "@/lib/types";
 
 /**
@@ -64,6 +66,16 @@ export function storyCast(story: Asset) {
   return rows.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
 }
 
+/** Effective canonical cast for a scene. An undeclared legacy story may use
+ * its explicit scene cast, but a prose-only scene never inherits the library. */
+export function storySceneCast(story: Asset, scene: StoryScene): CharacterRow[] {
+  if (Array.isArray(story.meta?.characterIds)) return storyCast(story);
+  const ids = scene.state?.characters?.map((entry) => entry.id) ?? [];
+  if (!ids.length) return [];
+  const byId = new Map(listCharactersRepository().map((character) => [character.id, character]));
+  return ids.map((id) => byId.get(id)).filter((row): row is CharacterRow => Boolean(row));
+}
+
 /** Mint the story's base seed once; every scene seed derives from it. */
 function ensureWorld(story: Asset): { world: StoryWorld; changed: boolean } {
   const existing = story.world;
@@ -84,8 +96,65 @@ function ensureBaseSeed(story: Asset): number {
 /** The scene's keyframe location row: its resolved location, else the
  * story world's first pick. Undefined when neither resolves. */
 function sceneLocation(story: Asset, scene: StoryScene) {
-  const id = scene.state?.locationId ?? story.world?.locationIds?.[0];
+  const id =
+    scene.state?.locationId ??
+    (scene.state?.locationText?.trim() ? undefined : story.world?.locationIds?.[0]);
   return id ? getLocationsRepository(id) : undefined;
+}
+
+function storyLocations() {
+  return listLocationsRepository();
+}
+
+function composedScenePrompt(story: Asset, scene: StoryScene): string {
+  const fallbackLocationId = scene.state?.locationText?.trim()
+    ? undefined
+    : story.world?.locationIds?.[0];
+  const composedScene =
+    !scene.state?.locationId && fallbackLocationId
+      ? { ...scene, state: { ...scene.state, locationId: fallbackLocationId } }
+      : scene;
+  return composeShot(story, composedScene, {
+    characters: storySceneCast(story, scene),
+    locations: storyLocations(),
+  });
+}
+
+function canonViolations(story: Asset): StoryCanonViolation[] {
+  return validateStoryCanon(story, listCharactersRepository(), storyLocations());
+}
+
+function canonMessage(violations: StoryCanonViolation[]): string {
+  return violations.map((violation) => violation.message).join(" ");
+}
+
+/** Stop an active run before it submits work against stale entity references. */
+function haltForCanon(story: Asset, sceneId?: string): Asset {
+  const violations = canonViolations(story);
+  if (!violations.length) return story;
+  const targetId =
+    sceneId ??
+    violations.find((violation) => violation.sceneId)?.sceneId ??
+    story.scenes?.find((scene) => scene.status === "queued")?.id;
+  const message = canonMessage(violations);
+  patchStoryRepository(story.id, {
+    ...(targetId
+      ? {
+          scenes: (story.scenes ?? []).map((scene) =>
+            scene.id === targetId
+              ? { ...scene, status: "failed" as const, error: message, progress: undefined }
+              : scene,
+          ),
+        }
+      : {}),
+    meta: { ...(story.meta ?? {}), running: false },
+  });
+  log().warn("story run halted by invalid canonical references", {
+    storyId: story.id,
+    sceneId: targetId,
+    violations,
+  });
+  return getStoriesRepository(story.id) as Asset;
 }
 
 /** Resolve each scene's free-text location once against the story's world
@@ -140,7 +209,7 @@ function keyframeRequestBody(
   const settings = mergedSceneSettings(story.settings as GenerationSettings, scene);
   return {
     kind: "image" as const,
-    prompt: keyframePrompt(composeShot(story, scene, { characters: storyCast(story) })),
+    prompt: keyframePrompt(composedScenePrompt(story, scene)),
     aspect: settings.aspect,
     resolution: settings.resolution,
     style: settings.style,
@@ -156,6 +225,7 @@ function keyframeRequestBody(
       ? { referenceImageRefs: strategy.refs }
       : { startImageRef: strategy.startRef }),
     clientTag: `k_${story.id}:${scene.id}`,
+    referencePolicy: "strict",
   };
 }
 
@@ -206,6 +276,7 @@ export function sceneRequestBody(story: Asset, scene: StoryScene): Record<string
     ...(startRef ? { startImageRef: startRef } : {}),
     ...(scene.endImageRef ? { endImageRef: scene.endImageRef } : {}),
     clientTag: `${story.id}:${scene.id}`,
+    ...((startRef || scene.endImageRef) ? { referencePolicy: "strict" } : {}),
   };
 }
 
@@ -225,6 +296,13 @@ export async function startStoryRun(storyId: string, input: StoryRunInput = {}):
       retryable: false,
     });
   }
+  const violations = canonViolations(story);
+  if (violations.length) {
+    throw new GenerationServiceError(canonMessage(violations), {
+      field: violations[0].field,
+      retryable: false,
+    });
+  }
 
   const settings: GenerationSettings = {
     ...(story.settings as GenerationSettings),
@@ -240,11 +318,9 @@ export async function startStoryRun(storyId: string, input: StoryRunInput = {}):
   // Free-text locations resolve once at run start so the keyframe strategy
   // sees the location plate, not just the prose.
   const { scenes: located, changed: locatedChanged } = resolveSceneLocations(seeded, world);
-  const cast = storyCast(story);
-  const ctx = { characters: cast };
   const withPrompts: StoryScene[] = located.map((scene) => ({
     ...scene,
-    runPrompt: composeShot({ ...story, settings }, scene, ctx),
+    runPrompt: composedScenePrompt({ ...story, settings }, scene),
   }));
   patchStoryRepository(storyId, {
     settings,
@@ -267,6 +343,7 @@ export async function startStoryRun(storyId: string, input: StoryRunInput = {}):
 export async function advanceStoryChain(storyId: string): Promise<Asset> {
   const story = getStoriesRepository(storyId);
   if (!story || !isStoryRunning(story)) return story as Asset;
+  if (canonViolations(story).length) return haltForCanon(story);
   const scenes = story.scenes ?? [];
   if (scenes.some((s) => s.status === "generating")) return story;
 
@@ -313,14 +390,26 @@ export async function advanceStoryChain(storyId: string): Promise<Asset> {
   const strategy = resolveKeyframeStrategy({
     story,
     scene: next,
-    cast: sceneCast(next.state, { characters: storyCast(story) }),
+    cast: sceneCast(next.state, { characters: storySceneCast(story, next) }),
     location: sceneLocation(story, next),
     predecessorEndRef:
       story.meta?.continuity !== false && predecessor?.status === "completed"
         ? predecessor.endFrameRef
         : undefined,
+    strictReferences: true,
     imageModels: listImageModelDescriptors(),
   });
+  if (
+    getProviderConfig().sceneConsistency !== false &&
+    next.kind === "video" &&
+    !next.startImageRef &&
+    !next.keyframeRef &&
+    strategy.rung === "none" &&
+    strategy.reason === "required keyframe references exceed available model capacity"
+  ) {
+    failSceneEnqueue(storyId, next.id, strategy.reason);
+    return getStoriesRepository(storyId) as Asset;
+  }
   if (keyframeNeeded(story, next, strategy) && strategy.rung !== "none") {
     flip({
       status: "generating",
@@ -382,6 +471,7 @@ export async function advanceSceneAfterKeyframe(
   const scene = story?.scenes?.find((s) => s.id === sceneId);
   if (!story || !scene || !isStoryRunning(story)) return story;
   if (scene.status !== "generating") return advanceStoryChain(storyId);
+  if (canonViolations(story).length) return haltForCanon(story, sceneId);
   try {
     createJob(sceneRequestBody(story, scene));
     log().info("story scene enqueued after keyframe", { storyId, sceneId });
@@ -593,7 +683,7 @@ export function mutateStoryScenes(
         if (clearState) delete next.state;
         // One prompt truth: recomposed server-side from the fresh prompt +
         // state with the live cast — the client never sends a runPrompt.
-        next.runPrompt = composeShot(story, next, { characters: storyCast(story) });
+        next.runPrompt = composedScenePrompt(story, next);
         return next;
       }),
     });

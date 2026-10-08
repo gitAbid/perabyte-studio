@@ -1,0 +1,106 @@
+{
+  "review_kind": "independent_read_only_provider_slice_review",
+  "packet": "C04",
+  "actualSHA": "1456b028dac0e94368727229325dd170e13f588b",
+  "actualBaseSHA": "ff6d3df93425e7f876d58162b96152eab2cf7ef9",
+  "changed_files": [
+    "lib/providers/production/sogni-provider.test.ts",
+    "lib/providers/production/sogni-provider.ts"
+  ],
+  "status": "changes_required",
+  "findings": [
+    {
+      "id": "C04-PROVIDER-001",
+      "priority": 1,
+      "file": "lib/providers/production/sogni-provider.ts",
+      "line": 137,
+      "title": "Pass explicit image content type to JPEG/WebP download URL",
+      "trigger": "Completed job reports jpg/jpeg/webp.",
+      "actual_behavior": "Returned MIME is image/jpeg or image/webp, but downloadUrl receives no contentType. Installed SDK documents that omitted contentType defaults API to PNG and passes mapped image contentType itself. The selected URL may therefore return PNG rather than claimed format; vault MIME validation rejects it or authentic non-PNG result is unavailable.",
+      "expected_behavior": "Extend SDK client downloadUrl shape to accept optional contentType and pass the verified image MIME. Preserve explicit PNG and reject unknown formats.",
+      "source_evidence": [
+        "installed SDK src/Projects/index.ts:285-296 (mapped MIME and API PNG default)",
+        "installed SDK src/Projects/index.ts:710-715 (downloadUrl with contentType)"
+      ],
+      "reproduction_steps": [
+        "Inject completed job result.outputFormat=webp and downloadUrl stub that returns format-specific URL only if contentType=image/webp, otherwise default PNG URL.",
+        "Poll and assert returned image/webp MIME currently accompanies PNG URL and downloadUrl arg lacks contentType.",
+        "Repeat PNG, JPG, JPEG, WebP with exact expected contentType and identifier assertion; run downloaded byte/MIME validation where practical."
+      ],
+      "validation": "Static direct-call inspection plus installed SDK contract; regression not executed by reviewer."
+    },
+    {
+      "id": "C04-PROVIDER-002",
+      "priority": 2,
+      "file": "lib/providers/production/sogni-provider.ts",
+      "line": 133,
+      "title": "Recover absent format only with affirmative image evidence",
+      "trigger": "Known image-model completed historical RawJob has neither outputFormat nor result.outputFormat (both are optional in installed SDK).",
+      "actual_behavior": "Poll rejects no supported media format for a legitimate default-PNG image result before requesting its URL. After bounded retries worker may fail an accepted anchor permanently. Existing tests cover unknown explicit avif, not absent image format.",
+      "expected_behavior": "Resolve sufficient trusted project/model or submitted provenance to prove image output and SDK default PNG, while leaving unknown model/format blocked and explicit unsupported format rejected. Do not infer all absent formats are PNG.",
+      "source_evidence": [
+        "installed SDK src/Projects/types/RawProject.d.ts:77 optional outputFormat and raw.model",
+        "installed SDK src/Projects/index.ts:285-296 default image PNG URL behavior"
+      ],
+      "reproduction_steps": [
+        "Inject projects.get returning model of an affirmatively known image type plus completed job id/status jobCompleted but no outputFormat.",
+        "Poll currently throws before downloadUrl.",
+        "Add known-image omitted-format recovery fixture and contrasting unknown/video/unsupported-format fixtures to preserve fail-closed safety."
+      ],
+      "validation": "Static SDK optional-field/branch inspection; no fixture run."
+    }
+  ],
+  "nonblockers": [
+    "RawProject jobCompleted status, imgID-or-id recovery, nested outputFormat and completed-only selection match installed SDK recovery source.",
+    "Unknown explicit formats and absent completed result correctly block downloads.",
+    "Two-file ownership matches exact committed diff.",
+    "All worker evidence files with declared non-null hashes match."
+  ],
+  "evidence_hash_checks": [
+    {
+      "file": "/Users/abid/.codex/worktrees/c04-provider-recovery/perabyte-studio/evidence/C04-provider-recovery/red-excerpt.txt",
+      "reported_sha256": "f7624238109bdde1a09b309e3a8af5a2cc9326e555bde6f6e6f4d80512cde261",
+      "actual_sha256": "f7624238109bdde1a09b309e3a8af5a2cc9326e555bde6f6e6f4d80512cde261",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/c04-provider-recovery/perabyte-studio/evidence/C04-provider-recovery/focused-green.txt",
+      "reported_sha256": "af60ba39114eb78418900362cab1dcfc6c0d56e34ca9f518b4809103044fd3ad",
+      "actual_sha256": "af60ba39114eb78418900362cab1dcfc6c0d56e34ca9f518b4809103044fd3ad",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/c04-provider-recovery/perabyte-studio/evidence/C04-provider-recovery/typecheck.txt",
+      "reported_sha256": "84a3ab4d745e1e696bd173d482b3f1cb87f3c34f28bfabc896bb32f986c60c44",
+      "actual_sha256": "84a3ab4d745e1e696bd173d482b3f1cb87f3c34f28bfabc896bb32f986c60c44",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/c04-provider-recovery/perabyte-studio/evidence/C04-provider-recovery/diff-check.txt",
+      "reported_sha256": "620be5739e840cf55cf884ddf34d19936c1f1cf9bd91afcc40555ecbbfec3805",
+      "actual_sha256": "620be5739e840cf55cf884ddf34d19936c1f1cf9bd91afcc40555ecbbfec3805",
+      "match": true
+    }
+  ],
+  "reproduction": {
+    "command": [
+      "npm",
+      "test",
+      "--",
+      "lib/providers/production/sogni-provider.test.ts"
+    ],
+    "exit_code": 0,
+    "tests_passed": 15,
+    "output_file": "/tmp/perabyte-C04-provider-review-tests.txt",
+    "output_sha256": "1cc57e9d5c5a459c221dc73655c5e195bb7e00de9492c0edc824a112c2df75b0"
+  },
+  "unrun": [
+    "New omitted-format and parameterized image contentType regressions.",
+    "Reviewer typecheck, full suite and build (worker typecheck hash inspected only).",
+    "Real provider network/result behavior."
+  ],
+  "paid_calls": [],
+  "network_calls": [],
+  "credentials_accessed": false,
+  "decision": "Provider slice requires image fidelity and evidence-bound default-image recovery before acceptance; full C04 remains incomplete."
+}

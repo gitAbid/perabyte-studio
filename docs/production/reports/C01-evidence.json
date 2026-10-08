@@ -1,0 +1,77 @@
+{
+  "task_id": "C01",
+  "status": "integrated",
+  "base_sha": "9a5454471a9b4a4d84728813a20f9823105832c1",
+  "head_sha": "9b0a3abc748cfed75103a799d80d7deb8c7e9e06",
+  "commits": [
+    "8aae9d8b5a286b55b031025a393d326ec535d885",
+    "39a6ff042f293f9c0311966b020ccf6a9f006fb5",
+    "9b0a3abc748cfed75103a799d80d7deb8c7e9e06"
+  ],
+  "integrated_head": "65ff9c1",
+  "worktree": "/Users/abid/.codex/worktrees/production-store/perabyte-studio",
+  "evidence": [
+    {
+      "kind": "red",
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "lib/repositories/production/sqlite.test.ts",
+        "lib/repositories/production/legacy-import.test.ts"
+      ],
+      "exit_code": 1,
+      "output_file": "/Users/abid/.codex/worktrees/production-store/perabyte-studio/evidence/C01/red-async-write-scope.txt",
+      "output_sha256": "df8298b015b9b011e89bceeb932ac2200c0884567e5dabd6ee35c059af5711f1"
+    },
+    {
+      "kind": "green",
+      "command": [
+        "npm",
+        "test",
+        "--",
+        "lib/repositories/production/sqlite.test.ts",
+        "lib/repositories/production/legacy-import.test.ts"
+      ],
+      "exit_code": 0,
+      "output_file": "/Users/abid/.codex/worktrees/production-store/perabyte-studio/evidence/C01/green-async-write-scope.txt",
+      "output_sha256": "efe39569bcf191b0c1a665726ee3f971f8422116498da11876d2950232b13402"
+    },
+    {
+      "kind": "typecheck",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exit_code": 0,
+      "output_file": "/Users/abid/.codex/worktrees/production-store/perabyte-studio/evidence/C01/typecheck-async-write-scope.txt",
+      "output_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    },
+    {
+      "kind": "diff-check",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "output_file": "/Users/abid/.codex/worktrees/production-store/perabyte-studio/evidence/C01/diff-check-async-write-scope.txt",
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "focused_tests": 15,
+  "test_files": 2,
+  "root_reproduced": true,
+  "review": {
+    "disposition": "approved",
+    "reviewer": "/root/planner_review",
+    "model": "gpt-6.1-sol",
+    "unresolved_findings": []
+  },
+  "paid_calls": [],
+  "unverified": [
+    "Actual user legacy records have not been imported",
+    "Full real-film output/release gates remain unverified"
+  ]
+}

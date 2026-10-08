@@ -1,0 +1,40 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.0 /Users/abid/Projects/perabyte-studio/.worktrees/c13-live-fix-2
+
+ ❯ lib/services/production/budget-composer.test.ts (7 tests | 1 failed) 340ms
+   ❯ production budget composer (7)
+     ✓ I01-B6-C composes a bound account_session quote atomically or not at all 59ms
+     ✓ I01-B6-C resolver admits only the exact durable pinned execution 154ms
+     ✓ I01-B6-C interleaved worker context preparations each capture their own observation 40ms
+     ✓ B6-C-FIX2 requotes under the same installed reviewed policy without conflicting on the policy artifact 24ms
+     ✓ C13-LIVE-FIX composes a bound live quote when the provider observes capabilities after the request clock 17ms
+     ✓ C13-LIVE-FIX still blocks capability receipts stamped ahead of the post-await clock 12ms
+     × C13-LIVE-FIX-2 pins the execution proof to the quote-time capability when the worker re-discovers 35ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lib/services/production/budget-composer.test.ts > production budget composer > C13-LIVE-FIX-2 pins the execution proof to the quote-time capability when the worker re-discovers
+Error: Provider execution proof does not match its quote, worker session, or capability
+ ❯ validateExecutionProof lib/repositories/production/sqlite.ts:157:1342
+
+ ❯ lib/repositories/production/sqlite.ts:318:20
+ ❯ atomicBudgetWrite lib/repositories/production/sqlite.ts:188:24
+ ❯ Object.insertExecutionProof lib/repositories/production/sqlite.ts:317:36
+ ❯ Proxy.guarded lib/repositories/production/sqlite.ts:617:26
+ ❯ Object.reserveSubmission lib/services/production/budget-composer.ts:393:8
+ ❯ lib/services/production/budget-composer.test.ts:393:62
+ ❯ sqliteTransaction.<anonymous> lib/repositories/production/sqlite.ts:624:22
+ ❯ sqliteTransaction node_modules/better-sqlite3/lib/methods/transaction.js:65:24
+ ❯ Object.transaction lib/repositories/production/sqlite.ts:636:81
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  08:35:42
+   Duration  970ms (tests 44%, transform 30%, import 26%)
+

@@ -1,0 +1,72 @@
+{
+  "task_id": "I01",
+  "slice": "I01-B2",
+  "status": "accepted_integrated_storage_slice",
+  "worker_shas": [
+    "4e97c5829fada681fe5ef37764961931956f9e8c",
+    "9e726f07745390d10dd60174a90bb84ace6aad11",
+    "631b45262087ab9287b370df36e396ac73410276"
+  ],
+  "integration_code_sha": "c7c1e73716c28233b6628b49f85eccac3dfc9b06",
+  "reviews": [
+    "I01-B2-review.json",
+    "I01-B2-startup-review.json",
+    "I01-B2-compat-review.json"
+  ],
+  "verification": {
+    "tests": 1091,
+    "test_files": 99,
+    "typecheck_exit_code": 0,
+    "build_exit_code": 0,
+    "built_health_status": 200,
+    "built_schema_version": 2
+  },
+  "evidence": [
+    {
+      "kind": "green",
+      "command": [
+        "npm",
+        "test"
+      ],
+      "exit_code": 0,
+      "output_file": "evidence/integration/i01-b2-full-tests-corrected.txt",
+      "output_sha256": "7a67425c28e38c453d1ff6e59629948fbd1cd5bd77df6b8ce9076e7ad79a2e69"
+    },
+    {
+      "kind": "typecheck",
+      "command": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exit_code": 0,
+      "output_file": "evidence/integration/i01-b2-typecheck-corrected.txt",
+      "output_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    },
+    {
+      "kind": "build",
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit_code": 0,
+      "output_file": "evidence/integration/i01-b2-build.txt",
+      "output_sha256": "e4502bd6f1e4ed3805e6a37ec2e886d97d62e41b1ec78a05a6571ee2f1335b3a"
+    },
+    {
+      "kind": "manual",
+      "command": [
+        "built HTTP GET",
+        "/api/production/health"
+      ],
+      "exit_code": 0,
+      "output_file": "evidence/integration/i01-b2-built-health.json",
+      "output_sha256": "c559f772592270d4256995d40249e1d2190f443de5c6cdadf1ec4ff0b5e3bda6"
+    }
+  ],
+  "unverified": [
+    "FullI01 B3/B4/liveproducerproofs unfinished. Audio execution mismatchrequiresadapteramendment; textschedulerI02 pending. Real films/release notverified."
+  ],
+  "paid_calls": []
+}

@@ -1,0 +1,55 @@
+{
+  "task_id": "C00",
+  "scope": "preserved worker RED/GREEN and CLI outputs; see checkpoint for observed acceptance",
+  "worker_head": "a16b95295f31d4ef07cf239a146fc1709414620e",
+  "outputs": [
+    {
+      "path": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00/green-quality-fixes.txt",
+      "sha256": "a9ba8c35926835cdebac505fca5103ceec8d7a0608362c68a3c5e5f58e165a8c"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00/green-quality-typecheck.txt",
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00/green-seams-tests.txt",
+      "sha256": "b1ae10b8ee1d7bd444bcc4d895f3f9c324c63bb271cf8c0638e79a8806a7d068"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00/green-seams-typecheck.txt",
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00/green-tests.txt",
+      "sha256": "637d66d1d0d5a87003f679e2dbf62c21b56ec4f3689dfac03859e58c6dab3629"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00/green-typecheck.txt",
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00/red-bootstrap.txt",
+      "sha256": "ce0b66c6e000155eca427db52fd377f8cc3303153f75557d50cc901427c8d221"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00/red-contracts.txt",
+      "sha256": "2c69552c399a773ae3394dac8cf7e2dd519e2b4fc512ec94285e93c0b0b2d26f"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00/red-hash.txt",
+      "sha256": "2dd7f9aa2e00987b86df2cbb28fdf945e48039bb552d5b7078bd5eb1270e8e3b"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00/red-quality-fixes.txt",
+      "sha256": "36b4e4a82ec1f3281a67e74e1d6188506ff4f42f35d3a40945fa7c3c06701812"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00/red-seams-tests.txt",
+      "sha256": "749026b3e92d6258eb3ed009e80891c2ab08a4128ca8f2b74a8e3d41cc4ff064"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-contracts/perabyte-studio/evidence/C00/red-seams-typecheck.txt",
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    }
+  ]
+}

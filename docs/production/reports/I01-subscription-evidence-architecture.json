@@ -1,0 +1,61 @@
+{
+  "kind": "subscription_evidence_architecture_addendum",
+  "packet": "I01",
+  "status": "viable_conditional_design_not_entitlement_or_spend_authorization",
+  "source_policy": "Reviewed public official plan page and installed SDK contract plus retained research report; no authenticated/account/provider execution calls.",
+  "sources": [
+    {
+      "url": "https://docs.sogni.ai/pricing/unlimited-plan-details/",
+      "observed_date": "2026-10-04",
+      "facts": "Covered subscription work does not debit Spark/SOGNI. Published table includes H3 and H3 Turbo on both tiers. Same-account API keys inherit covered entitlement. Admission/fair-use and terms remain server-controlled and mutable."
+    },
+    {
+      "local": "node_modules/@sogni-ai/sogni-client/src/Projects/types/index.ts:120-126",
+      "fact": "Explicit subscription requires coverage and fails if unavailable; auto may fall back to tokens."
+    },
+    {
+      "local": "evidence/I01-provider-evidence-research/followup.json",
+      "fact": "SDK5.49 has account subscription status, no inspected read-only account+model entitlement preflight; token estimator is render value rather than proof of subscription debit."
+    }
+  ],
+  "decision": "Yes: an evidence-backed zero incremental per-job liability quote is defensible for a narrowly covered subscription request. It is an application interpretation of published billing policy plus server-enforced mode, not a guaranteed entitlement/admission/zero-total-project-cost assertion. Never use token/render-value estimator as the subscription job debit.",
+  "required_quote_evidence": [
+    "Fresh authenticated stable account identity and active paid subscription status from the SAME credential/connection binding used to submit; do not authorize from active flag alone, account display name or configured key. Initially exclude trial/grace/ambiguous states unless separately researched and approved.",
+    "Pinned reviewed published coverage snapshot: source URL, capture/hash, provider policy version or app review version, capturedAt/expiresAt. Explicit finite TTL (local conservative policy, e.g.24h) and revalidation on provider terms/errors; do not call TTL a vendor guarantee.",
+    "Versioned explicit registry exact model ID -> documented H3/H3Turbo family/workflow and allowed operation/configuration. Require current live capability evidence for that exact ID. No prefix/fuzzy-name matching, unknown or excluded add-on/workflow support, or extrapolation to text/audio/image models.",
+    "Exact immutable request forces billingMode=subscription end to end; SDK transport must not emit auto/tokens or retry into another mode/model. Pin account evidence, quote, coverage registry version and credential binding before atomic reservation+submitting.",
+    "Standing human authorization permits subscription mode, exact model/operation and explicit project/account cap scope. I01 atomic ledger boundary independently accepted before any real job."
+  ],
+  "BudgetQuote_encoding": {
+    "operation": "exact covered media operation (initial H3 take only)",
+    "estimateMin": 0,
+    "estimateMax": 0,
+    "currency": "USD",
+    "unit": "minor_currency",
+    "entitlement": "subscription",
+    "liabilityMeaning": "Incremental provider job debit under enforced subscription mode; excludes already-paid/renewing subscription period payment. USD0 is zero money projection, not Spark/SOGNI conversion. User budget view must state this scope.",
+    "expiresAt": "minimum of account evidence/status TTL, reviewed coverage TTL, live quote-policy evidence expiry and any observed subscription-period limit. Recheck current clock/bindings at submission boundary.",
+    "unknown_rule": "Any required fact missing/stale/mismatched -> retain unknown quote or block binding/reserve. No presumptive subscription zero."
+  },
+  "persistent_provenance": "Keep B1 schemas unchanged if AccountEvidence source/reference and QuoteAccountBinding evidence IDs can resolve an immutable trusted attestation bundle containing account/status response hashes, exact-model registry mapping and coverage policy snapshot/version/TTL. Do not place those opaque references only in transient logs. If existing B1 fields cannot durably resolve the bundle, request one narrow provenance extension from integrator before composer work; never invent a second ledger.",
+  "settlement": [
+    "Zero estimate still produces durable reservation and unsettled accounting state; unresolved amount may be0, but acceptance/billing facts remain unknown. Media completion alone does not turn it into final actual0.",
+    "Final actual0 requires a trusted exact-job/account completed billing record affirming subscription mode/no incremental debit. Render-value/costActual USD can represent usage valuation; do not treat it as charged amount unless semantics prove charge. Absence from transaction history is not evidence.",
+    "If exact trusted billing mode/zero settlement record cannot be obtained, leave reservation unsettled/actual unknown and show that fact. Do not invent final zero merely from quote or success.",
+    "If trusted actual charge contradicts expected coverage, persist nonzero actual/overrun and evidence conflict, suspend further subscription-zero quotes for affected account/model/policy and surface operator action. Never drop charge to preserve quote0."
+  ],
+  "admission_and_recovery": "NOT_ENTITLED,QUEUE_CAP,GRACE_RETRY or unknown admission may visibly reject/block; no automatic mode/model fallback. Affirmative preacceptance/nonbilling proof may release reservation once; ambiguous timeout keeps submitting/unknown and must reconcile exact request before any new submit. This addendum does not assert an account-model preflight endpoint exists.",
+  "language": "Use expected incremental job charge:0 under verified subscription coverage; admission and actual billing remain provider-authoritative. Avoid free, guaranteed eligible, unlimited throughput or zero total production cost.",
+  "verification_before_real_use": [
+    "Fake same-account active+exact H3 coverage+live catalog+enforced mode succeeds with0 quote and durable reservation.",
+    "Changed credential/account, stale policy/status, unlisted exact ID, trial/grace, missing provenance or mode auto/tokens blocks.",
+    "Queue/entitlement rejection zero resubmit; ambiguous acceptance reservation retained; media completion without exact billing evidence remains unknown; trusted subscription billing settles0; contradiction stores actual overrun."
+  ],
+  "B1_changes_required": false,
+  "implementation_performed": false,
+  "authenticated_calls": [],
+  "paid_calls": [],
+  "public_document_fetches": [
+    "https://docs.sogni.ai/pricing/unlimited-plan-details/"
+  ]
+}

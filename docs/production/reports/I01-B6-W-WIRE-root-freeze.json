@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "packet": "I01-B6-W-WIRE",
+  "status": "ROOT_FROZEN; BLOCKED-ON I01-B6-C accepted SHA (and I01-B6-W-LOCK integrated)",
+  "frozenBy": "software-architect 2026-10-05; accepted by zcode orchestrator",
+  "scope": "Wire composed proof + resolver into runtime/worker/routes. Fail-closed preserved: absent reviewed policy => unknown quotes, ACCOUNT_IDENTITY_UNAVAILABLE read model, zero provider submits. No live/authenticated/paid calls in verification; no new migration; no contracts.ts edits.",
+  "owns": [
+    "lib/production/composition.ts",
+    "lib/production/composition.test.ts",
+    "lib/providers/production/http-routes.ts",
+    "lib/providers/production/http-routes.test.ts",
+    "scripts/production-worker.mjs",
+    "scripts/production-doctor.mjs",
+    "app/api/production/media-quotes/route.ts",
+    "app/api/production/shots/[shotId]/anchors/route.ts",
+    "app/api/production/shots/[shotId]/takes/route.ts",
+    "app/api/production/projects/[projectId]/budget/route.ts"
+  ],
+  "dependency": "Base = integrator-announced SHA containing accepted I01-B6-C + I01-B6-W-LOCK. Shared-file seam with C is exactly one import: composition.ts -> createProductionBudgetComposer/PreparedSubmissionContext from lib/services/production/budget-composer.ts; and route files -> createMediaRouteHandlers serviceOptions from takes.ts (signature-compatible by C's freeze).",
+  "compositionProtocol": [
+    "lib/production/composition.ts exports withProductionComposition<T>(work:(composition)=>Promise<T>, options:{role:'web'|'worker'; store?:SqliteProductionStore; reviewedPolicy?:ReviewedPolicyInput|null; providerFactory?:(o:SogniFactoryOptions)=>ProductionProofProvider&{close():Promise<void>}; runtimeOptions?:ProductionRuntimeOptions}):Promise<T>. Creates the store via withProductionStore conventions when absent; provider = (providerFactory??createSogniProductionProvider)({role, dataDir, proofMetadata:readInstalledSogniProofMetadata(), submissionProofResolver:composer.submissionProofResolver, readAsset: vault-backed}); composer = createProductionBudgetComposer({store,provider,reviewedPolicy:options.reviewedPolicy??null,now,idFactory}); budgetService = createProductionBudgetService({store,resolveAccountIdentity:composer.resolveAccountIdentity,prepareExecutionEvidence:composer.prepareExecutionEvidence,currentCredentialBindingId:composer.currentCredentialBindingId}); takeService = createProductionTakeService({store,resolveBillingMode:composer.resolveBillingMode,quoteRecipe:composer.prepareMediaQuoteDraft,commitPreparedQuote:composer.commitPreparedQuote,readAssetVerified:vault-backed}). finally closes ONLY resources it created (store if created, provider always). No import-time I/O; runtime.ts stays store-only (no circular import).",
+    "reviewedPolicy default null: NO file loader, NO env guesswork in this packet. The user/root installs a reviewed policy capture later; that act (plus standing budget authorization) is the only thing that can open a known-quote path.",
+    "scripts/production-worker.mjs: replace the bare provider construction with composition role 'worker' reusing the already-open store; pass prepareBudgetContext:(job,quote,capability)=>composer.prepareWorkerBudgetContext(job,quote,capability) and reserveSubmission:composer.reserveSubmission into ProductionWorker, plus submissionProofResolver already inside the provider factory. Keep scheduler lock/heartbeat/ownership code byte-equivalent. Fail-closed chain preserved: without reviewed policy, jobs fail BUDGET_BLOCKED with actionable message (worker.ts:65->67 path changes from 'missing callbacks' to 'preparation denied'), never a silent submit.",
+    "Routes: media-quotes/anchors/takes switch to composed handlers (createMediaRouteHandlers({serviceOptions: composed})); budget route GET/POST via composition (identity callbacks wired); legacy /quotes handler (http-routes.ts createQuoteHandler) stays media-only unknown-normalized and creates NO companions (per prior freeze, legacy cannot authorize B6 admission). http-routes.test.ts: factory Request/Response tests, origin/body guards, sanitized 403/404, no secrets/paths.",
+    "scripts/production-doctor.mjs: add one readiness line each for store schema (must report 4), worker lock files, provider metadata (readInstalledSogniProofMetadata ok/fail), reviewed policy presence (boolean only), budget identity availability (unavailable without key — never the key itself). No behavior gates added.",
+    "Forbidden: enabling any paid path, changing worker.ts/queue.ts/budget service semantics (their owners' files), editing sogni-provider.ts (W-LOCK owns it), editing takes.ts/budget-composer.ts/proof-policy.ts (C owns them). If a signature mismatch with C's frozen API is found, STOP and report to the integrator; do not patch C's files."
+  ],
+  "minimalTests": [
+    { "name": "I01-B6-W composition lifecycle and fail-closed defaults", "file": "lib/production/composition.test.ts", "checks": "Lazy store/provider (nothing opens on import, closes in finally even on throw); with reviewedPolicy null + fake provider: quote returns unknown (no companions), resolveBillingMode throws BUDGET_BLOCKED => route 403 sanitized; budget GET reports availability 'unavailable' reason ACCOUNT_IDENTITY_UNAVAILABLE." },
+    { "name": "I01-B6-W offline admission end-to-end through the worker", "file": "lib/production/composition.test.ts", "checks": "Fixture store (project/story/plan/animatic/approvals/anchor as in takes.test.ts fixtures) + fake provider (observeAccount + live_catalog capability + fake SDK transport): known quote -> enqueue -> ProductionWorker.runOnce with composer callbacks -> exactly ONE reservation, execution+quote proof links, ONE fake projects.create (resolver true); with expired reviewed policy -> zero creates, job blocked BUDGET_BLOCKED; restart (new composition, same store) resumes poll path without a second create." }
+  ],
+  "verification": "npm test -- lib/production/composition.test.ts lib/providers/production/http-routes.test.ts; npm test -- lib/services/production/takes.test.ts lib/jobs/production/worker.test.ts (consumer regression); npm run typecheck; git diff --check. Offline injected SDK only."
+}

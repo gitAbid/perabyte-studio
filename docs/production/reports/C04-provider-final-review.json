@@ -1,0 +1,91 @@
+{
+  "review_kind": "independent_read_only_provider_final_review",
+  "packet": "C04",
+  "actualSHA": "99f7a3d137f629785fc34d7902affbdf09622df6",
+  "actualBaseSHA": "1456b028dac0e94368727229325dd170e13f588b",
+  "status": "accepted_provider_slice_only",
+  "changed_files": [
+    "lib/providers/production/sogni-provider.test.ts",
+    "lib/providers/production/sogni-provider.ts"
+  ],
+  "ownership_check": "pass; exact two assigned provider files, tracked source clean; untracked evidence only",
+  "prior_findings": [
+    {
+      "id": "C04-PROVIDER-001",
+      "status": "closed",
+      "implementation": "sogni-provider.ts:143 forwards mapped image MIME as downloadUrl contentType; SDK client type accepts it.",
+      "verification": "Four parameterized PNG/JPG/JPEG/WebP fixtures assert exact contentType, correct URL, existing project/result IDs and no media endpoint."
+    },
+    {
+      "id": "C04-PROVIDER-002",
+      "status": "closed_against_installed_SDK_image_contract",
+      "implementation": "sogni-provider.ts:131-138 uses PNG fallback only for absent/null format plus exact recovered raw.model.id live catalog match with media=image. Explicit unsupported format remains rejected without catalog fallback.",
+      "verification": "Known exact image model fixture succeeds; mismatched model fixture blocks downloads; explicit avif on known image model still blocks without catalog discovery."
+    }
+  ],
+  "findings": [],
+  "nonblockers": [
+    "Fallback requires fresh discovery and exact model media; unknown or video media cannot satisfy branch. No arbitrary image MIME inference.",
+    "Completed job status/id/nested format logic from preceding slice preserved.",
+    "Worker remains fail-closed when provider facts insufficient; this slice does not add paid authorization."
+  ],
+  "evidence_hash_checks": [
+    {
+      "file": "/Users/abid/.codex/worktrees/c04-provider-recovery/perabyte-studio/evidence/C04-provider-recovery-followup/red-excerpt.txt",
+      "reported_sha256": "60698eee6688e9c85e49f0ae2a11fa22058920eb41cdb37a955803f3a2b05aec",
+      "actual_sha256": "60698eee6688e9c85e49f0ae2a11fa22058920eb41cdb37a955803f3a2b05aec",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/c04-provider-recovery/perabyte-studio/evidence/C04-provider-recovery-followup/focused-green.txt",
+      "reported_sha256": "5fdd85b954f963cb62ba6cef9da1edae0044830c5b1505155b3476b9ccda29d8",
+      "actual_sha256": "5fdd85b954f963cb62ba6cef9da1edae0044830c5b1505155b3476b9ccda29d8",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/c04-provider-recovery/perabyte-studio/evidence/C04-provider-recovery-followup/typecheck.txt",
+      "reported_sha256": "84a3ab4d745e1e696bd173d482b3f1cb87f3c34f28bfabc896bb32f986c60c44",
+      "actual_sha256": "84a3ab4d745e1e696bd173d482b3f1cb87f3c34f28bfabc896bb32f986c60c44",
+      "match": true
+    },
+    {
+      "file": "/Users/abid/.codex/worktrees/c04-provider-recovery/perabyte-studio/evidence/C04-provider-recovery-followup/diff-check.txt",
+      "reported_sha256": "620be5739e840cf55cf884ddf34d19936c1f1cf9bd91afcc40555ecbbfec3805",
+      "actual_sha256": "620be5739e840cf55cf884ddf34d19936c1f1cf9bd91afcc40555ecbbfec3805",
+      "match": true
+    }
+  ],
+  "commit_diff_check": {
+    "command": [
+      "git",
+      "diff",
+      "--check",
+      "1456b028dac0e94368727229325dd170e13f588b",
+      "99f7a3d137f629785fc34d7902affbdf09622df6"
+    ],
+    "exit_code": 0,
+    "output": ""
+  },
+  "reproduction": {
+    "command": [
+      "npm",
+      "test",
+      "--",
+      "lib/providers/production/sogni-provider.test.ts"
+    ],
+    "exit_code": 0,
+    "tests_passed": 21,
+    "output_file": "/tmp/perabyte-C04-provider-final-review-tests.txt",
+    "output_sha256": "9c527c7869ae048b45586a85da41961061c6498c08198dbf38909e905a659508"
+  },
+  "unrun": [
+    "Reviewer typecheck; worker typecheck evidence inspected and hash confirmed.",
+    "Full suite/build/integrated runtime changes and complete C04 acceptance.",
+    "Real provider calls or decoded remote-image byte fidelity."
+  ],
+  "report_precision_note": "Report says non-image evidence fixture; focused named fixture directly covers mismatched model ID. Same-model video exclusion is established by inspected exact media=image condition, not a separately executed fixture.",
+  "network_calls": [],
+  "paid_calls": [],
+  "credentials_accessed": false,
+  "decision": "Accept this provider-only slice and close both findings. Full C04 remains incomplete pending runtime owner and integrated review."
+}

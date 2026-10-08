@@ -1,0 +1,20 @@
+PASS  server health — http://127.0.0.1:3212 (empty-config mode)
+PASS  route /api/production/text-engines — {"engines":[]}
+PASS  route: honest empty engine list — providerIds= models=0
+PASS  project created — d995c981-f1ad-42e2-bcd7-7a591882541d
+SCREENSHOT 01-project-overview.png
+PASS  proposal provider control is a SELECT
+PASS  proposal model control is a SELECT
+PASS  no free-text proposal inputs remain
+PASS  empty state: provider select disabled
+PASS  empty state: model select disabled
+PASS  empty state: provider select shows the honest copy — No text engines configured — set up providers in Settings
+PASS  empty state: model select shows the honest copy — No text engines configured — set up providers in Settings
+PASS  empty state: Settings link present
+SCREENSHOT 03-proposal-empty-state.png
+PASS  provider hint copy verbatim
+PASS  model hint copy verbatim
+PASS  button fail-closed note verbatim
+PASS  request returns the by-design BUDGET_BLOCKED envelope — BUDGET_BLOCKED — Text proposal generation is not authorized: no reviewed text entitlement or standing budget authorization exists for text proposals. · What to do: Edit the script manually, or configure I01 text-charge coverage before propo
+SCREENSHOT 04-proposal-not-entitled.png
+PASS  zero media-quote/enqueue requests — 9 production API requests, all reads + the one blocked proposal POST

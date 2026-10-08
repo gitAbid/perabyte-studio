@@ -1,0 +1,37 @@
+
+> perabyte-studio@0.1.0 test
+> vitest run lib/repositories/production/sqlite.test.ts -t I01-B6-S
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (../../../../../../../Users/abid/.codex/worktrees/production-provider-proof/perabyte-studio/vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.0 /private/var/folders/6b/kpkrtysx23n_0zjbhw_llvqr0000gn/T/perabyte-I01-B6-S-review-variants-3u_fxiyy
+
+ ❯ lib/repositories/production/sqlite.test.ts (29 tests | 2 failed | 27 skipped) 444ms
+   ❯ SQLite production store (29)
+     × I01-B6-S preserves real v3 finance rows and immutable proof/CAS history across reopen 68ms
+     × I01-B6-S atomically validates and replays bound quote and execution proof links 375ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lib/repositories/production/sqlite.test.ts > SQLite production store > I01-B6-S preserves real v3 finance rows and immutable proof/CAS history across reopen
+AssertionError: expected [Function] to throw an error
+ ❯ lib/repositories/production/sqlite.test.ts:559:199
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  lib/repositories/production/sqlite.test.ts > SQLite production store > I01-B6-S atomically validates and replays bound quote and execution proof links
+AssertionError: expected [Function] to throw an error
+ ❯ lib/repositories/production/sqlite.test.ts:602:103
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 27 skipped (29)
+   Start at  20:33:11
+   Duration  853ms (tests 66%, transform 17%, import 16%)
+

@@ -1,0 +1,6 @@
+REFUSING TO RUN --final: the live pilot's fail-closed env gate is not satisfied.
+  missing: SOGNI_API_KEY (the Sogni credential the SERVER uses for live renders)
+  missing: PERABYTE_STUDIO_REVIEWED_POLICY_PATH (the reviewed pricing/coverage policy installed per B6-POLICY-LOAD)
+The server AND worker must be started in a shell that exports BOTH variables with the same values.
+No paid or mutating request was sent. For the offline RED walk use --preflight instead.
+exit=1

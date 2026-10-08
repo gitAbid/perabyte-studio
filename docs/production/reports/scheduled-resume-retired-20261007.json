@@ -1,0 +1,33 @@
+{
+  "observed_at": "2026-10-07T04:20:18.765594+00:00",
+  "automation_id": "resume-perabyte-core-build-after-usage-reset",
+  "automation_delete_status": "deleted_confirmed_by_app_tool",
+  "reason": "Authorized one-time packet already accepted; stale heartbeat repeatedly referenced archived B6-S. Current root moved to zcode/production-core with newer implementation and separate UI work.",
+  "live_usage": {
+    "five_hour_remaining_percent": 99,
+    "weekly_remaining_percent": 100,
+    "formula": "100-usedPercent"
+  },
+  "historical_codex_root_head": "a52a8fa671095b507a8acfee224a80fb597e959e",
+  "current_root": {
+    "branch": "zcode/production-core",
+    "head": "7570fd7d44075dc50a0ebefb72886bc341bfd762",
+    "worktree": "/Users/abid/Projects/perabyte-studio/.worktrees/zcode-production-core",
+    "tracked_dirty_paths": [
+      "docs/production/PROGRESS.md"
+    ]
+  },
+  "current_ui": {
+    "branch": "zcode/product-core-ui",
+    "head": "8a17fbad4148c9a84e3b4e7f24d5e7c68eb22fc6"
+  },
+  "source_changes": [],
+  "tests_run": [],
+  "agents_dispatched": [],
+  "paid_calls": [],
+  "limitations": [
+    "Current ZCode acceptance reports were read, not independently rerun/reviewed in this heartbeat.",
+    "Preserve dirty progress file and current worker ownership; no transfer, integration or cleanup performed."
+  ],
+  "next_action": "Follow current ZCode handover/registry when undertaking further work; do not restart superseded B6-S/P checkpoint."
+}

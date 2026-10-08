@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "taskId": "I01-B2-startup-correction-independent-review",
+  "actualSHA": "9e726f07745390d10dd60174a90bb84ace6aad11",
+  "baseSHA": "4e97c5829fada681fe5ef37764961931956f9e8c",
+  "decision": "accepted_storage_slice",
+  "findings": [],
+  "closedFindings": [
+    {
+      "priority": "P2",
+      "previousReview": "/tmp/perabyte-I01-B2-review.json",
+      "title": "Concurrent fresh database startup SQLITE_BUSY",
+      "closure": "Timeout configured before WAL setup; BUSY-only retry has finite attempts/backoff and monotonic deadline, shared with migration startup. Actual two-process fresh/v1 reproduction now passes. Sustained exclusive DELETE lock fails boundedly and recovers after release."
+    }
+  ],
+  "ownership": {
+    "changedFiles": [
+      "lib/repositories/production/sqlite.test.ts",
+      "lib/repositories/production/sqlite.ts"
+    ],
+    "pass": true,
+    "migration001Unchanged": true
+  },
+  "commands": [
+    {
+      "command": "npm test -- lib/repositories/production/sqlite.test.ts lib/repositories/production/legacy-import.test.ts",
+      "exitCode": 0,
+      "testsPassed": 32,
+      "log": "/tmp/perabyte-I01-B2-startup-focused.txt"
+    },
+    {
+      "command": "python3 /tmp/perabyte-b2-startup.py",
+      "exitCode": 0,
+      "log": "/tmp/perabyte-I01-B2-startup-processes.txt",
+      "assertions": "fresh and true001 v1 each two children exit0; exact001/002 migration history; integrity ok; no FK violations"
+    },
+    {
+      "command": "git diff 4e97c582 9e726f07 --check",
+      "exitCode": 0
+    }
+  ],
+  "codeReview": [
+    "Retry accepts SQLITE_BUSY family only, not SQLITE_LOCKED/schema/corruption/unknown-history errors. Existing malformed/gapped/future history tests remain passing.",
+    "Migration retries execute entire IMMEDIATE transaction: history reread and validation occur under lock; transaction wrapper rolls back failed attempts.",
+    "Connection close remains in startup catch, including exhausted BUSY retries; no migration schema or budget contract changes.",
+    "Deadline uses monotonic performance.now, with four fixed delays and at most five attempts. A final SQLite operation can add its bounded250ms timeout to remaining deadline; policy is bounded, not a strict1800ms real-time guarantee. Held-lock regression passed its under2000ms assertion."
+  ],
+  "hashAudit": {
+    "allMatch": true,
+    "entries": [
+      {
+        "report": "report.json",
+        "path": "lib/repositories/production/ports.ts",
+        "kind": "source",
+        "match": true
+      },
+      {
+        "report": "report.json",
+        "path": "lib/repositories/production/sqlite.ts",
+        "kind": "source",
+        "match": true
+      },
+      {
+        "report": "report.json",
+        "path": "lib/repositories/production/sqlite.test.ts",
+        "kind": "source",
+        "match": true
+      },
+      {
+        "report": "report.json",
+        "path": "lib/repositories/production/migrations/002-budget.sql",
+        "kind": "source",
+        "match": true
+      },
+      {
+        "report": "report.json",
+        "path": "evidence/I01-B2/red2.txt",
+        "kind": "evidence",
+        "match": true
+      },
+      {
+        "report": "report.json",
+        "path": "evidence/I01-B2/red-standing-auth.txt",
+        "kind": "evidence",
+        "match": true
+      },
+      {
+        "report": "report.json",
+        "path": "evidence/I01-B2/focus-accepted.txt",
+        "kind": "evidence",
+        "match": true
+      },
+      {
+        "report": "report.json",
+        "path": "evidence/I01-B2/legacy-accepted.txt",
+        "kind": "evidence",
+        "match": true
+      },
+      {
+        "report": "report.json",
+        "path": "evidence/I01-B2/typecheck-accepted.txt",
+        "kind": "evidence",
+        "match": true
+      },
+      {
+        "report": "report.json",
+        "path": "evidence/I01-B2/diff-check.txt",
+        "kind": "evidence",
+        "match": true
+      },
+      {
+        "report": "report-startup-followup.json",
+        "path": "lib/repositories/production/sqlite.ts",
+        "kind": "source",
+        "match": true
+      },
+      {
+        "report": "report-startup-followup.json",
+        "path": "lib/repositories/production/sqlite.test.ts",
+        "kind": "source",
+        "match": true
+      },
+      {
+        "report": "report-startup-followup.json",
+        "path": "evidence/I01-B2/startup-red.txt",
+        "kind": "evidence",
+        "match": true
+      },
+      {
+        "report": "report-startup-followup.json",
+        "path": "evidence/I01-B2/startup-test-red.txt",
+        "kind": "evidence",
+        "match": true
+      },
+      {
+        "report": "report-startup-followup.json",
+        "path": "evidence/I01-B2/startup-actual-green.txt",
+        "kind": "evidence",
+        "match": true
+      },
+      {
+        "report": "report-startup-followup.json",
+        "path": "evidence/I01-B2/startup-test-green.txt",
+        "kind": "evidence",
+        "match": true
+      },
+      {
+        "report": "report-startup-followup.json",
+        "path": "evidence/I01-B2/startup-legacy.txt",
+        "kind": "evidence",
+        "match": true
+      },
+      {
+        "report": "report-startup-followup.json",
+        "path": "evidence/I01-B2/startup-typecheck.txt",
+        "kind": "evidence",
+        "match": true
+      },
+      {
+        "report": "report-startup-followup.json",
+        "path": "evidence/I01-B2/startup-diffcheck.txt",
+        "kind": "evidence",
+        "match": true
+      }
+    ]
+  },
+  "independentEvidenceHashes": {
+    "/tmp/perabyte-I01-B2-startup-focused.txt": "8f6c27d536e14c5fa4b9565b0a8a931b8981785f7eaefece8431c8bd56c889ff",
+    "/tmp/perabyte-I01-B2-startup-processes.txt": "0b07c7ef5b907b5f2d26fe0106ed2169daef5ec41e75c6214affa9cece164928",
+    "/tmp/perabyte-b2-startup.py": "82faf298d3c0215daf64246ac9da078e038e231fc92848c5b48dcee271d41108"
+  },
+  "unverified": [
+    "Independent typecheck/full build not rerun; worker typecheck durable log hash verified.",
+    "B3 services/B4 atomic worker and trusted live provider evidence composition remain unfinished."
+  ],
+  "fullI01Accepted": false,
+  "networkPaidCalls": 0
+}

@@ -1,0 +1,8 @@
+$ git diff --check
+(no output, exit 0)
+
+$ git diff --cached --check
+(see below — rerun after final staging; recorded clean)
+
+$ git diff --cached --check (after final staging)
+(no output, exit 0)

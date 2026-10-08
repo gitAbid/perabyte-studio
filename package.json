@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
+    "dev:webpack": "next dev --webpack -p 3000",
     "build": "next build",
     "start": "next start -p 3000",
     "typecheck": "tsc --noEmit",
@@ -14,17 +15,25 @@
     "verify:generator": "node scripts/verify-generator.mjs",
     "verify:provider": "node scripts/verify-provider-ui.mjs",
     "verify:moderation": "node scripts/verify-moderation.mjs",
-    "verify:writer": "node scripts/verify-writer-scenes.mjs http://127.0.0.1:3100"
+    "verify:writer": "node scripts/verify-writer-scenes.mjs http://127.0.0.1:3100",
+    "studio:worker": "node --import tsx scripts/production-worker.mjs",
+    "studio:doctor": "node --import tsx scripts/production-doctor.mjs"
   },
   "dependencies": {
+    "@fastify/busboy": "3.2.2",
     "@sogni-ai/sogni-client": "^5.49.0",
+    "better-sqlite3": "13.0.3",
+    "msedge-tts": "^2.0.9",
     "next": "^16.3.5",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "sharp": "^0.35.4"
+    "sharp": "^0.35.4",
+    "tsx": "4.23.15",
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
+    "@types/better-sqlite3": "9.6.0",
     "@types/node": "26.5.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "^19.3.0",

@@ -1,0 +1,48 @@
+[2026-10-06T05:46:48.740Z] FINAL (live) against http://127.0.0.1:3100; artifacts: /tmp/c14-fix-drill/out-batch1
+[2026-10-06T05:46:48.771Z] [1] health ok (worker heartbeat 1728ms; env: key set, policy /tmp/c14-fix-drill/policy-placeholder.json)
+[2026-10-06T05:46:48.775Z] [audio] NOTE: music bed /tmp/c14-fix-drill/audio/music.wav spans 1.0s of the 226.0s timeline; the mix pins it to the first 1.0s. For the release long film supply a full-length bed.
+[2026-10-06T05:46:48.775Z] [1] narration /tmp/c14-fix-drill/audio/narr-01.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.775Z] [1] narration /tmp/c14-fix-drill/audio/narr-02.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.775Z] [1] narration /tmp/c14-fix-drill/audio/narr-03.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.775Z] [1] narration /tmp/c14-fix-drill/audio/narr-04.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.775Z] [1] narration /tmp/c14-fix-drill/audio/narr-05.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.776Z] [1] narration /tmp/c14-fix-drill/audio/narr-06.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.776Z] [1] narration /tmp/c14-fix-drill/audio/narr-07.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.776Z] [1] narration /tmp/c14-fix-drill/audio/narr-08.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.776Z] [1] narration /tmp/c14-fix-drill/audio/narr-09.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.776Z] [1] narration /tmp/c14-fix-drill/audio/narr-10.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.776Z] [1] narration /tmp/c14-fix-drill/audio/narr-11.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.776Z] [1] narration /tmp/c14-fix-drill/audio/narr-12.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.776Z] [1] narration /tmp/c14-fix-drill/audio/narr-13.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.777Z] [1] narration /tmp/c14-fix-drill/audio/narr-14.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.777Z] [1] narration /tmp/c14-fix-drill/audio/narr-15.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.777Z] [1] narration /tmp/c14-fix-drill/audio/narr-16.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.777Z] [1] narration /tmp/c14-fix-drill/audio/narr-17.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.777Z] [1] narration /tmp/c14-fix-drill/audio/narr-18.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.777Z] [1] narration /tmp/c14-fix-drill/audio/narr-19.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.777Z] [1] narration /tmp/c14-fix-drill/audio/narr-20.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.777Z] [1] narration /tmp/c14-fix-drill/audio/narr-21.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.777Z] [1] narration /tmp/c14-fix-drill/audio/narr-22.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.777Z] [1] narration /tmp/c14-fix-drill/audio/narr-23.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.777Z] [1] narration /tmp/c14-fix-drill/audio/narr-24.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.777Z] [1] music /tmp/c14-fix-drill/audio/music.wav: 48000 samples (1.0s)
+[2026-10-06T05:46:48.777Z] [1] sfx /tmp/c14-fix-drill/audio/sfx-01.wav: 4800 samples (0.1s)
+[2026-10-06T05:46:48.777Z] [2] seeding project, canon, story, approvals and the LONG shot plan
+[2026-10-06T05:46:48.777Z] [seed] creating project "Long landscape pilot muw9algj2lh3" (profile storybook-long-v1, 16:9)
+[2026-10-06T05:46:48.810Z] [seed] canon character char_milo_long_pilot -> revision 787f32cf-f0da-468b-8bb5-5252005fc8db
+[2026-10-06T05:46:48.819Z] [seed] canon character char_pip_long_pilot -> revision f63effbd-5aef-4ecd-97b3-a89d8aaa437c
+[2026-10-06T05:46:48.829Z] [seed] canon location loc_meadow_long_pilot -> revision 7a74be6a-e7d0-489f-a2d8-46ae68219cb9
+[2026-10-06T05:46:48.836Z] [seed] canon style style_watercolor_long_pilot -> revision e0d41e34-25e3-4e79-ba3d-0b95e0d45352
+[2026-10-06T05:46:48.851Z] [seed] story revision 1acccd17-0de4-415e-84c4-a861dd014d30 (24 beats)
+[2026-10-06T05:46:48.856Z] [seed] story approved
+[2026-10-06T05:46:48.873Z] [seed] LONG shot plan cfe720a9-a360-49df-862e-94807ab9900c with 24 shot revisions (x 226 frames), animatic 1e20161d-c6c3-44e2-814f-b57df79001d6 (totalFrames 5424)
+[2026-10-06T05:46:48.873Z] [seed] profile storybook-long-v1 targetFrames 5760 is the planning target; schema pins only the shot-sum 5424 (surveyed lib/production/contracts.ts + lib/services/production/shot-plan.ts)
+[2026-10-06T05:46:48.877Z] [seed] shotplan approved
+[2026-10-06T05:46:48.881Z] [seed] animatic approved
+[2026-10-06T05:46:48.897Z] [2] seeded project 05d70b64-9701-412d-a7b7-c6d70988cfdf; long plan asserted: 4 pages of 6 shots, order stable across independent reads
+[2026-10-06T05:46:50.548Z] [1] budget scope unit=spark_token: unavailable (POLICY_MISSING, AUTHORIZATION_MISSING)
+[2026-10-06T05:46:51.514Z] [1] budget scope unit=minor_currency&currency=USD: unavailable (AUTHORIZATION_MISSING)
+
+PILOT STOPPED: Budget identity did not resolve on the seeded project 05d70b64-9701-412d-a7b7-c6d70988cfdf (immediate stop per --budget-wait-seconds 0) (stop before any enqueue). authorize this project now via the budget routes (POST http://127.0.0.1:3100/api/production/projects/05d70b64-9701-412d-a7b7-c6d70988cfdf/budget) — see docs/production/pilots/long-landscape.md section 4; also install the reviewed policy (B6-POLICY-LOAD) and start the server/worker with SOGNI_API_KEY so live account observation works. See docs/production/pilots/long-landscape.md.
+run artifacts: /tmp/c14-fix-drill/out-batch1
+exit=1

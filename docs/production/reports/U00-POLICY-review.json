@@ -1,0 +1,44 @@
+{
+  "packet": "U00-POLICY",
+  "reviewer": "/root",
+  "reviewed_sha": "c5bc6774150ebcad80a003646c3843d163cfbc60",
+  "verdict": "accept",
+  "findings": [],
+  "source_review": "Three owned paths. Explicit policy classifies duration across buckets, overrides legacy reserve, preserves no-policy default, invalid data denies continuation; CLI forwards state policy. Paused-state validation consumes normalized duration-tagged windows.",
+  "commands": [
+    {
+      "case": "weekly-above",
+      "exit_code": 0,
+      "stdout": "{\n  \"state\": \"valid\",\n  \"usage\": {\n    \"decision\": \"continue\",\n    \"minimumRemainingPercent\": 1.5,\n    \"reasons\": [],\n    \"windows\": [\n      {\n        \"limitId\": \"codex\",\n        \"window\": \"primary\",\n        \"remainingPercent\": 80,\n        \"resetAt\": null\n      },\n      {\n        \"limitId\": \"codex\",\n        \"window\": \"secondary\",\n        \"remainingPercent\": 1.5,\n        \"resetAt\": null\n      }\n    ]\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "case": "weekly-stop",
+      "exit_code": 3,
+      "stdout": "{\n  \"state\": \"valid\",\n  \"usage\": {\n    \"decision\": \"stop\",\n    \"minimumRemainingPercent\": 1,\n    \"reasons\": [\n      \"weekly usage is at or below its 1% stop\"\n    ],\n    \"windows\": [\n      {\n        \"limitId\": \"codex\",\n        \"window\": \"primary\",\n        \"remainingPercent\": 80,\n        \"resetAt\": null\n      },\n      {\n        \"limitId\": \"codex\",\n        \"window\": \"secondary\",\n        \"remainingPercent\": 1,\n        \"resetAt\": null\n      }\n    ]\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "case": "fivehour-stop",
+      "exit_code": 3,
+      "stdout": "{\n  \"state\": \"valid\",\n  \"usage\": {\n    \"decision\": \"stop\",\n    \"minimumRemainingPercent\": 2,\n    \"reasons\": [\n      \"five-hour usage is at or below its 2% stop\"\n    ],\n    \"windows\": [\n      {\n        \"limitId\": \"codex\",\n        \"window\": \"primary\",\n        \"remainingPercent\": 2,\n        \"resetAt\": null\n      },\n      {\n        \"limitId\": \"codex\",\n        \"window\": \"secondary\",\n        \"remainingPercent\": 80,\n        \"resetAt\": null\n      }\n    ]\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "case": "used-two",
+      "exit_code": 0,
+      "stdout": "{\n  \"state\": \"valid\",\n  \"usage\": {\n    \"decision\": \"continue\",\n    \"minimumRemainingPercent\": 98,\n    \"reasons\": [],\n    \"windows\": [\n      {\n        \"limitId\": \"codex\",\n        \"window\": \"primary\",\n        \"remainingPercent\": 98,\n        \"resetAt\": null\n      },\n      {\n        \"limitId\": \"codex\",\n        \"window\": \"secondary\",\n        \"remainingPercent\": 98,\n        \"resetAt\": null\n      }\n    ]\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "case": "duration-unknown",
+      "exit_code": 4,
+      "stdout": "{\n  \"state\": \"valid\",\n  \"usage\": {\n    \"decision\": \"unknown\",\n    \"minimumRemainingPercent\": 1,\n    \"reasons\": [\n      \"primary window duration is missing or invalid\"\n    ],\n    \"windows\": [\n      {\n        \"limitId\": \"codex\",\n        \"window\": \"primary\",\n        \"remainingPercent\": 80,\n        \"resetAt\": null\n      },\n      {\n        \"limitId\": \"codex\",\n        \"window\": \"secondary\",\n        \"remainingPercent\": 1,\n        \"resetAt\": null\n      }\n    ]\n  }\n}\n",
+      "stderr": ""
+    }
+  ],
+  "limitations": [
+    "Focused CLI behavior only; no broad suite or build. Historical default remains for snapshots with no explicit policy."
+  ],
+  "paid_calls": []
+}

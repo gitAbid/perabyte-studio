@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "actualSHA": "f0856bbebf2a54572c44fd4d24d1f3bb5455b8c1",
+  "parentSHA": "872c326b056dd0fa7502efab8a15245b2c3231fb",
+  "previousReviewedSHA": "5a838a1b4d8b676f4a700c8bf9ce474a83e0ed1e",
+  "decision": "source_accepted_for_combined_gate",
+  "findings": [],
+  "metadataFindings": [],
+  "review": [
+    "Shared accepted helper runs inside beginSubmission before reserve callback or replay guard, fixing companion entitlement/currency/amount/expiry/unit mismatch without weakening current lease/current approvals/account/context pins.",
+    "Fixture quotes now explicitly100..200 USD, same2000 expiry as companion; positive existing cases retained. No hidden fake live quote producer or money conversion introduced.",
+    "Real SQLite new fivecase mismatch test has zero callback, reservation and fake submit;54 queue/worker tests pass. Current source retains previously reviewed atomic rollback and shutdown ACK behavior."
+  ],
+  "commands": [
+    {
+      "command": "npm test -- lib/jobs/production/queue.test.ts lib/jobs/production/worker.test.ts",
+      "exitCode": 0,
+      "testsPassed": 54,
+      "log": "/tmp/perabyte-I01-B4-rereview-focused.txt"
+    },
+    {
+      "command": "git diff 872c326 f0856bb --check",
+      "exitCode": 0
+    }
+  ],
+  "followupHashAudit": [
+    {
+      "path": "lib/jobs/production/queue.ts",
+      "match": true
+    },
+    {
+      "path": "lib/jobs/production/worker.test.ts",
+      "match": true
+    },
+    {
+      "path": "evidence/I01-B4/compatibility-red.log",
+      "match": true
+    },
+    {
+      "path": "evidence/I01-B4/compatibility-green.log",
+      "match": true
+    },
+    {
+      "path": "evidence/I01-B4/focused-green.log",
+      "match": true
+    },
+    {
+      "path": "evidence/I01-B4/typecheck.log",
+      "match": true
+    },
+    {
+      "path": "evidence/I01-B4/diff-check.log",
+      "match": true
+    }
+  ],
+  "allFollowupHashesMatch": true,
+  "reportHashMatchesSupplied": true,
+  "independentLogSHA256": "f31b29c5c311c0db730ce04691152acdf8e0606084c7c7980aa70c464f796f1b",
+  "redEvidence": "Saved targeted RED shows mismatch regression fails1 while42tests selected/41skipped; raw compact reporter omits assertion payload, so no independent detailed assertion was inferred beyond targeted failed test. Followup targeted GREEN and full54 logs verified. Prospective split-transaction proof remains separately accepted; no historical behavioral RED invented.",
+  "unverified": [
+    "B4 complete slice acceptance awaits real accepted B3 service combined fourcase race/unknownactual/finalactual/rollback gate.",
+    "Independent typecheck not rerun; worker typecheck log hash verified.",
+    "Fullsuite/build/liveaccountquote composer/paid release remain outside review."
+  ],
+  "fullI01Accepted": false,
+  "paidNetworkCalls": 0,
+  "metadataClosedFindings": [
+    {
+      "priority": "P2",
+      "title": "Historical report references overwritten focused log",
+      "closure": "Original immutable report bytes preserved; exact53test log restored under initial-focused-green.log. Corrected historical and followup reports reference distinct matching raw bytes; all correction/report/log hashes verified."
+    }
+  ],
+  "metadataCorrectionAudit": [
+    {
+      "path": "evidence-correction.json",
+      "match": true
+    },
+    {
+      "path": "report-original-5a838a1.json",
+      "match": true
+    },
+    {
+      "path": "report.json",
+      "match": true
+    },
+    {
+      "path": "compatibility-followup.json",
+      "match": true
+    },
+    {
+      "report": "report.json",
+      "path": "evidence/I01-B4/initial-focused-green.log",
+      "match": true
+    },
+    {
+      "report": "report.json",
+      "path": "evidence/I01-B4/typecheck.log",
+      "match": true
+    },
+    {
+      "report": "report.json",
+      "path": "evidence/I01-B4/diff-check.log",
+      "match": true
+    },
+    {
+      "report": "compatibility-followup.json",
+      "path": "evidence/I01-B4/compatibility-red.log",
+      "match": true
+    },
+    {
+      "report": "compatibility-followup.json",
+      "path": "evidence/I01-B4/compatibility-green.log",
+      "match": true
+    },
+    {
+      "report": "compatibility-followup.json",
+      "path": "evidence/I01-B4/compatibility-focused-green.log",
+      "match": true
+    },
+    {
+      "report": "compatibility-followup.json",
+      "path": "evidence/I01-B4/typecheck.log",
+      "match": true
+    },
+    {
+      "report": "compatibility-followup.json",
+      "path": "evidence/I01-B4/diff-check.log",
+      "match": true
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "review_kind": "independent_read_only_follow_up_review",
+  "packet": "C04",
+  "commit_sha": "ff6d3df93425e7f876d58162b96152eab2cf7ef9",
+  "parent_sha": "477665ee3f75541516123e57889d93f7302f007e",
+  "worktree": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio",
+  "status": "no_new_p1_blocker_in_reviewed_continuation_fix",
+  "prior_findings": [
+    {
+      "id": "C04-IR-001",
+      "status": "closed",
+      "prior_issue": "Duplicate end_frame roles could pass eligibility and overwrite the continuation endpoint in a provider transport.",
+      "implementation": "lib/jobs/production/queue.ts:235 now collects all end_frame roles and requires exactly one, required, and equal to shot.continuation.endFrameAssetId.",
+      "regression_coverage": "lib/jobs/production/worker.test.ts:44-45 blocks duplicate optional and swapped required continuation end_frame inputs before discovery and provider.submit; evidence/C04/continuation-integrity-green.txt records 50 passing focused tests."
+    },
+    {
+      "id": "C04-IR-002",
+      "status": "closed_against_available_v1_contract",
+      "prior_issue": "Canon-only reuse treated any existing predecessor and asset as a valid continuation.",
+      "implementation": "lib/jobs/production/queue.ts:238-241 now requires the predecessor to be immediately before the shot in the selected active plan, resolves it, requires its story to belong to the project, and requires the exact pinned end-frame asset to exist. The same boolean feeds the C02 compatibility predicate at :219.",
+      "regression_coverage": "lib/jobs/production/queue.test.ts:20 exercises valid adjacency plus rejection for reordered predecessor, missing pinned asset, and foreign predecessor story."
+    }
+  ],
+  "semantic_note": "The v1 continuation schema stores only previousShotRevisionId and endFrameAssetId. It contains no source-take/frame-derivation relation. The reviewed validation therefore proves the strongest contract-supported relation: selected-plan adjacency, project ownership, and existence of the pinned asset. The worker report explicitly records this limitation; it is not a new blocker for this commit.",
+  "unchanged_integrity_paths_inspected": [
+    {
+      "area": "Latest exact story, animatic, and anchor approval policy",
+      "evidence": "No changes outside continuation files. lib/production/approval-policy.ts:5-18 and lib/jobs/production/queue.ts:218,224 remain as previously reviewed."
+    },
+    {
+      "area": "Active story/plan/animatic relationships and slot membership",
+      "evidence": "lib/jobs/production/queue.ts:213-219 retains active-pointer, relationship, plan membership, slot membership, compatibility, and approval checks."
+    },
+    {
+      "area": "TOCTOU eligibility comparison",
+      "evidence": "lib/jobs/production/worker.ts:53,65-70 is unchanged by this commit; it compares the captured eligibility fingerprint after asynchronous authorization and immediately before provider.submit."
+    },
+    {
+      "area": "Exact anchor start-frame and ordered receipt/atomic completion",
+      "evidence": "lib/jobs/production/queue.ts:230-245 retains the exact one-required-start_frame check and receipt comparison; complete() remains transaction-scoped at :123-157."
+    }
+  ],
+  "evidence_hashes": {
+    "continuation_integrity_green": {
+      "path": "evidence/C04/continuation-integrity-green.txt",
+      "reported_sha256": "c9a932cb7f997265bbefe17888086f3e95aaf937436fe481a1173bbc0dafa930",
+      "computed_sha256": "c9a932cb7f997265bbefe17888086f3e95aaf937436fe481a1173bbc0dafa930",
+      "match": true
+    },
+    "continuation_typecheck": {
+      "path": "evidence/C04/continuation-integrity-typecheck.txt",
+      "reported_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "computed_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+      "match": true
+    },
+    "continuation_diff_check": {
+      "path": "evidence/C04/continuation-integrity-diff-check.txt",
+      "reported_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "computed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "match": true
+    },
+    "red_duplicate_end_frame": {
+      "path": "evidence/C04/duplicate-end-frame-red.txt",
+      "reported_sha256": "f5025c5babd7beeccb16f21dab63b884863c2804121cde8a6d75da0440a5fb8e",
+      "computed_sha256": "f5025c5babd7beeccb16f21dab63b884863c2804121cde8a6d75da0440a5fb8e",
+      "match": true
+    },
+    "red_successor_adjacency": {
+      "path": "evidence/C04/successor-adjacency-red.txt",
+      "reported_sha256": "626079c19e391b85b0e76de8ab4e5051522be8e0143cc025a0a655ec6f8e2285",
+      "computed_sha256": "626079c19e391b85b0e76de8ab4e5051522be8e0143cc025a0a655ec6f8e2285",
+      "match": true
+    }
+  },
+  "verification": {
+    "commit_parent_confirmed": true,
+    "full_commit_diff_inspected": true,
+    "diff_check_inspected": true,
+    "tests_run_by_reviewer": false,
+    "paid_provider_calls_by_reviewer": false,
+    "reason": "Read-only follow-up review; evidence outputs and hashes were inspected rather than rerunning tests."
+  },
+  "operational_gates": {
+    "packet_complete": false,
+    "lifecycle_media_gates_verified": false,
+    "note": "This review closes only the two prior continuation P1 findings. C04 lifecycle, scheduler/heartbeat ownership, media-vault, completed-result-shape, integrated build, and I01 budget-authorization gates remain outside this follow-up review."
+  },
+  "root_reproduction": {
+    "tests": 50,
+    "exit_code": 0,
+    "output_file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/root-continuation-reproduction.txt",
+    "sha256": "e7489045603dec90e1df4d9dfe954346a1be462fa1e225fa3075a09a8c954863",
+    "typecheck_exit_code": 0,
+    "typecheck_file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/root-continuation-typecheck.txt",
+    "typecheck_sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+  },
+  "worker_report": {
+    "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/C04-continuation-integrity-report.json",
+    "sha256": "0f2009f00e8f1ce3dd4f1226c8f37ace09af7148987e59b05457af89568e4457",
+    "report_declared_sha256": "0f2009f00e8f1ce3dd4f1226c8f37ace09af7148987e59b05457af89568e4457"
+  },
+  "decision": "approved_integrity_slice_only; C04 packet remains incomplete and unintegrated"
+}

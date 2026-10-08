@@ -1,0 +1,8 @@
+$ git diff --check
+(no output, exit 0)
+
+$ git diff --cached --check
+(no output, exit 0)
+
+Scope verified via git status: only the four owned files plus evidence/C17-PUBLISHING/ are
+added; no app/, components/, docs/, scripts/, routes, or existing lib files were modified.

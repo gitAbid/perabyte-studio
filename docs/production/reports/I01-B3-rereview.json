@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "taskId": "I01-B3-independent-corrected-review",
+  "actualSHA": "1c664c3f46bf993d59b1791ba2ac4961ca40ed9d",
+  "initialSHA": "435449ae33210c087ad07d32b6faebdb0dd4464a",
+  "followupParentSHA": "4ff5dc8debc4bdb33fe82e230f9fb3a54ef34277",
+  "decision": "accepted_service_api_slice",
+  "findings": [],
+  "closedFindings": [
+    {
+      "id": "B3-R1",
+      "priority": "P1",
+      "closure": "Accepted shared quote compatibility helper now runs inside prepare transaction and final reserve transaction before idempotent replay; actual matching anchor/take and entitlement/currency/amount/expiry rejection matrix pass with no finance writes."
+    },
+    {
+      "id": "B3-R2",
+      "priority": "P2",
+      "closure": "Added policy/auth nullzeroexpiryrevocation no-write matrix, stale heads, transaction-instrumented credential rotation, expired evidence, exact take/startframe/approval pins, contradictory replay preserving original rows and midnight project cap with permissive daily1000. Trusted reconciliation rejects manual provenance/wrong account."
+    }
+  ],
+  "commands": [
+    {
+      "command": "npm test -- lib/services/production/budget.test.ts app/api/production/projects/[projectId]/budget/route.test.ts",
+      "exitCode": 0,
+      "testsPassed": 27,
+      "log": "/tmp/perabyte-I01-B3-rereview-focused.txt"
+    },
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0,
+      "log": "/tmp/perabyte-I01-B3-rereview-typecheck.txt"
+    },
+    {
+      "command": "git diff 4ff5dc8 1c664c3 --check",
+      "exitCode": 0
+    }
+  ],
+  "reviewedBehavior": [
+    "Actual four-file service/API initial source plus two-file followup reviewed. Helpers are prerequisite production/budget code; followup ownership verified service.ts/tests only.",
+    "Fresh service reserve samples current credential inside caller transaction; folds scoped real ledger via shared B1 function, applies current heads/caps and pins maximum. Callback registers execution only after eligibility.",
+    "Existing accounting replay preserves historical pins after cap edits, does not add charge/reservation; worker must retain own no-readmission guard.",
+    "Browser API remains strict16KiB same-origin envelope, no caller account/evidence/billing/refund fields; query validates exact scope and duplicate parameters before trusted producer. Unknown project/scoped identity/CAS statuses and sanitized no-store responses retained. Default missing producer fails closed.",
+    "Text reserve is firstclass execution, no fake media job. Zero upperestimate remains unsettled until trusted billing; no implied pricing evidence."
+  ],
+  "hashAudit": [
+    {
+      "path": "lib/services/production/budget.ts",
+      "match": true
+    },
+    {
+      "path": "lib/services/production/budget.test.ts",
+      "match": true
+    },
+    {
+      "path": "app/api/production/projects/[projectId]/budget/route.ts",
+      "match": true
+    },
+    {
+      "path": "app/api/production/projects/[projectId]/budget/route.test.ts",
+      "match": true
+    },
+    {
+      "path": "evidence/I01-B3/companion-prepare-red.txt",
+      "match": true
+    },
+    {
+      "path": "evidence/I01-B3/companion-compatibility-matrix-red.txt",
+      "match": true
+    },
+    {
+      "path": "evidence/I01-B3/companion-reserve-probe-red.txt",
+      "match": true
+    },
+    {
+      "path": "evidence/I01-B3/policy-replay-red.txt",
+      "match": true
+    },
+    {
+      "path": "evidence/I01-B3/route-validation-red.txt",
+      "match": true
+    },
+    {
+      "path": "evidence/I01-B3/bootstrap-service-scaffold-red.txt",
+      "match": true
+    },
+    {
+      "path": "evidence/I01-B3/focused-green.txt",
+      "match": true
+    },
+    {
+      "path": "evidence/I01-B3/typecheck-green.txt",
+      "match": true
+    },
+    {
+      "path": "evidence/I01-B3/diff-check.txt",
+      "match": true
+    }
+  ],
+  "allHashesMatch": true,
+  "reportSHA256": "2526944dbe85969b14c9ee68c82c8f4c64c70d2b73863488228213dc3e340344",
+  "evidenceSHA256": {
+    "/tmp/perabyte-I01-B3-rereview-focused.txt": "42f862fa90443307d0a7901a043c819ece8ec6bc9c7404b6ce6e686d0f81494b",
+    "/tmp/perabyte-I01-B3-rereview-typecheck.txt": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+  },
+  "redEvidence": "Behavioral prepare-matrix failures and original reserve guard logs preserved; scaffold zero-collected-tests log explicitly not counted.",
+  "reportQualification": "B3-06 test title/report includes nonbilling but current service test exercises unknown/actual/refund/finality/dedupe/conflicts rather than direct nonbilling producer success; nonbilling fold invariants are established by accepted B1/B2. Do not infer additional unexecuted service case from broad title.",
+  "unverified": [
+    "Real B3+B4 combined service race/settlement/trigger rollback gates remain required.",
+    "Live account/quote proof composer, durable subscription evidence, C06 request recipe and paid provider behavior remain outside acceptance.",
+    "Integrated full suite/build/builtHTTP are root gates."
+  ],
+  "fullI01Accepted": false,
+  "paidNetworkCalls": 0,
+  "reportHashMatchesSupplied": true
+}

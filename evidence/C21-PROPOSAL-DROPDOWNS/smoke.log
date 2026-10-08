@@ -1,0 +1,23 @@
+PASS  server health — http://127.0.0.1:3212
+PASS  route /api/production/text-engines — {"engines":[{"providerId":"sogni","modelId":"sogni:qwen3.5-35b-a3b-abliterated-gguf-q4km","label":"sogni:qwen3.5-35b-a3b-abliterated-gguf-q4km — Sogni"},{"providerId":"sogni","modelId":"sogni:qwen3.6-35b-a3b-gguf-iq4xs","label":"sogni:qwen3.6-35b-a3b-gguf-iq4xs — Sogni"},{"providerId":"sogni","modelId":"sogni:deepseek-v4-flash-vision-exp-dspark-1m","label":"sogni:deepseek-v4-flash-vision-exp-dspark-1m — Sogni"},{"providerId":"pollinations","modelId":"pollinations:default","label":"pollinations:default — Pollinations"}]}
+PASS  route: default built-in engines served — providerIds=sogni,pollinations models=3
+PASS  project created — 9cd77bac-7160-4122-aeaf-db30ba70c2ec
+SCREENSHOT 01-project-overview.png
+PASS  proposal provider control is a SELECT
+PASS  proposal model control is a SELECT
+PASS  no free-text proposal inputs remain
+PASS  provider select offers the deduped chain providers — sogni, pollinations
+PASS  model select fed by the engines route (sogni first) — sogni:qwen3.5-35b-a3b-abliterated-gguf-q4km, sogni:qwen3.6-35b-a3b-gguf-iq4xs, sogni:deepseek-v4-flash-vision-exp-dspark-1m
+PASS  provider select enabled
+PASS  model select enabled
+PASS  default model preselected to the chain's first sogni engine — sogni:qwen3.5-35b-a3b-abliterated-gguf-q4km
+PASS  model option label is model id + provider label — sogni:qwen3.5-35b-a3b-abliterated-gguf-q4km — Sogni
+PASS  provider change resets model to that provider's first engine — pollinations:default
+PASS  switching back restores the first sogni engine — sogni:qwen3.5-35b-a3b-abliterated-gguf-q4km
+SCREENSHOT 02-proposal-dropdowns.png
+PASS  provider hint copy verbatim
+PASS  model hint copy verbatim
+PASS  button fail-closed note verbatim
+PASS  request returns the by-design BUDGET_BLOCKED envelope — BUDGET_BLOCKED — Text proposal generation is not authorized: no reviewed text entitlement or standing budget authorization exists for text proposals. · What to do: Edit the script manually, or configure I01 text-charge coverage before propo
+SCREENSHOT 04-proposal-not-entitled.png
+PASS  zero media-quote/enqueue requests — 9 production API requests, all reads + the one blocked proposal POST

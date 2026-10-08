@@ -1,0 +1,44 @@
+ERROR: more than one base URL given.
+C14 long-landscape pilot orchestration
+
+Usage:
+  node scripts/pilot-long-landscape.mjs --preflight [baseURL] [audio flags]
+      Offline RED walk (no SOGNI_API_KEY needed). Never sends a paid enqueue.
+      Exits 0 with the structured blockers report. With the creator audio flags the
+      48 kHz pre-probe runs as part of the offline walk; without them the missing
+      audio is recorded as a blocker.
+
+  node scripts/pilot-long-landscape.mjs --final [baseURL] [flags]
+      Live run. Fail-closed env gate: requires SOGNI_API_KEY and
+      PERABYTE_STUDIO_REVIEWED_POLICY_PATH in this shell (start the server and
+      worker with the same env). Flags:
+        --narration <file>     one creator narration file per narrated beat, in beat
+                               order (repeat the flag; the long fixture has 24 beats)
+        --music <file>         creator music bed (one file, spans the timeline)
+        --sfx <file>           creator SFX accent; the i-th file accents shot i+1
+                               (repeatable, max 23)
+        --anchor-model <id>    image model covered by the reviewed policy
+                               (default flux1-schnell-fp8)
+        --take-model <id>      H3 video model covered by the reviewed policy
+                               (default minimax-h3-fl2va-fp8_i2v_turbo)
+        --data-dir <dir>       server's PERABYTE_STUDIO_DATA_DIR (read-only creator-side
+                               asset checksum lookup for first approval hashes)
+        --out-dir <dir>        run artifact directory (default: fresh temp dir)
+        --job-timeout-minutes <n>    per-job poll budget (default 15)
+        --export-timeout-minutes <n> export render budget for the 226 s film (default 60)
+        --budget-wait-seconds <n>    budget-gate wait budget: when the seeded project's
+                               budget read model is still unavailable, re-check both
+                               scopes every 15s for up to <n> seconds so the operator
+                               can authorize the project mid-run (default 600;
+                               0 restores the immediate stop). No media quote or
+                               enqueue is ever sent before a scope resolves available.
+        --seed-base <n>        deterministic seed base (default 11)
+        --yes                  non-TTY acknowledgment that the creator supervises approvals
+        --restart-after-shot <n>  exit cleanly after shot <n>'s take selection (1..24),
+                               saving a resumable batch state file (restart drill)
+        --resume <file>        batch resume: load the batch state saved by --restart-after-shot
+                               and continue from shot N+1 (skips completed shots)
+        --state <file>         step-8 resume: load the pilot state saved at the final stop
+        --creator-approved <file>  step-8 resume: creator's written final-review evidence
+                               (must name narrative/visual/audio/captions and give an
+                               "ack <advisory-code>: <reason>" line per QC advisory)

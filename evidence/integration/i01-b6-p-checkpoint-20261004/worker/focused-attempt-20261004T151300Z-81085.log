@@ -1,0 +1,41 @@
+
+> perabyte-studio@0.1.0 test
+> vitest run lib/providers/production/sogni-provider.test.ts -t I01-B6-P
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.0 /Users/abid/.codex/worktrees/production-provider-session/perabyte-studio
+
+ ❯ lib/providers/production/sogni-provider.test.ts (23 tests | 2 failed | 21 skipped) 51ms
+   ❯ Sogni production provider composition (23)
+     × I01-B6-P observes bounded account facts from the actual cached SDK client 26ms
+     × I01-B6-P runs the synchronous proof guard after asset awaits immediately before SDK create 24ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lib/providers/production/sogni-provider.test.ts > Sogni production provider composition > I01-B6-P observes bounded account facts from the actual cached SDK client
+ProductionApplicationError: Sogni provider proof could not be validated; submission is blocked.
+ ❯ budgetBlocked lib/providers/production/sogni-provider.ts:41:25
+
+ ❯ Object.observeAccount lib/providers/production/sogni-provider.ts:132:320
+ ❯ lib/providers/production/sogni-provider.test.ts:28:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  lib/providers/production/sogni-provider.test.ts > Sogni production provider composition > I01-B6-P runs the synchronous proof guard after asset awaits immediately before SDK create
+ProductionApplicationError: Sogni provider proof could not be validated; submission is blocked.
+ ❯ budgetBlocked lib/providers/production/sogni-provider.ts:41:25
+
+ ❯ Object.observeAccount lib/providers/production/sogni-provider.ts:132:320
+ ❯ lib/providers/production/sogni-provider.test.ts:50:233
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 21 skipped (23)
+   Start at  21:13:00
+   Duration  423ms (transform 47%, import 33%, tests 20%, worker 1%)
+

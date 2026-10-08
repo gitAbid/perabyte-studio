@@ -1,0 +1,67 @@
+{
+  "task_id": "I00",
+  "status": "accepted",
+  "worker_head_sha": "ae3a22e7cb9b5ae565e82f0ddf46b51827b45093",
+  "integration_head_sha": "e2b80d73a6a0435931bf3d8e2d6f5756e16ea861",
+  "focused_tests": 10,
+  "test_files": 3,
+  "integration_contract_tests": 14,
+  "typecheck_exit_code": 0,
+  "evidence": [
+    {
+      "path": "/Users/abid/.codex/worktrees/production-runtime/perabyte-studio/evidence/I00/initial/diff-check.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-runtime/perabyte-studio/evidence/I00/initial/green.txt",
+      "sha256": "1136f24ebcd2f90983028bcdbff33190102126bb66a397e578415f8b2469fec2"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-runtime/perabyte-studio/evidence/I00/initial/red.txt",
+      "sha256": "25933b020046b66af228ad8856beb11f57ec57bf090afd012e8084c2afdb2abd"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-runtime/perabyte-studio/evidence/I00/initial/typecheck.txt",
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-runtime/perabyte-studio/evidence/I00/revision/diff-check.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-runtime/perabyte-studio/evidence/I00/revision/green.txt",
+      "sha256": "fe8b66026c8cce8e77cfde55b8ce06922d46c3b4293b5fd042efbef4439eba41"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-runtime/perabyte-studio/evidence/I00/revision/red.txt",
+      "sha256": "d4af9c3fa7af27af644ee9a9cc3c3eebfadacf49d679900ab5dce6eef36da68a"
+    },
+    {
+      "path": "/Users/abid/.codex/worktrees/production-runtime/perabyte-studio/evidence/I00/revision/typecheck.txt",
+      "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0"
+    }
+  ],
+  "independent_review": {
+    "agent": "/root/planner_review",
+    "model": "gpt-6.1-sol",
+    "findings": "P2 context loss and internal code fixed; approved"
+  },
+  "paid_calls": [],
+  "unverified": [],
+  "integration_verification": {
+    "tests": 954,
+    "test_files": 91,
+    "typecheck_exit_code": 0,
+    "build_exit_code": 0,
+    "logs": [
+      {
+        "path": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/runtime-tests.txt",
+        "sha256": "e60b4790716f9a4cb027e86f899b923c372104ee6165e8f8f989299a385c856a"
+      },
+      {
+        "path": "/Users/abid/.codex/worktrees/production-core/perabyte-studio/evidence/integration/runtime-build.txt",
+        "sha256": "87a981cbed222422964539d88c30a13a035e4887009b7b5f47f16e70c899efc5"
+      }
+    ]
+  }
+}

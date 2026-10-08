@@ -1,0 +1,77 @@
+{
+  "sha": "b19c0c4894c227521c077c8399019cbe97b3dfb7",
+  "decision": "unaccepted_incomplete",
+  "method": "Bounded committed-source review; no new tests/provider calls",
+  "fixed_prior_findings": [
+    "Verified H3 FL endpoint capacity2",
+    "SDK initialization failure releases worker ownership"
+  ],
+  "findings": [
+    {
+      "priority": "P1",
+      "path": "lib/jobs/production/queue.ts",
+      "line": 200,
+      "trigger": "Selected story/animatic lacks genuine matching human approval; submission validator never reads either approval.",
+      "expected": "Fail closed before provider access; bind approved selected story/animatic hashes and latest decisions, recheck after async discovery/authorization immediately before submitting."
+    },
+    {
+      "priority": "P1",
+      "path": "lib/jobs/production/queue.ts",
+      "line": 187,
+      "trigger": "Take target pins approved anchor A but transport inputs omit A or carry a different start frame B; fingerprint still computes successfully.",
+      "expected": "Require the exact approved anchor asset in required compatible transport role, plus pinned continuation/reference conditioning; zero provider calls for swaps/omissions."
+    },
+    {
+      "priority": "P2",
+      "path": "lib/jobs/production/queue.ts",
+      "line": 209,
+      "trigger": "Unchanged originating shot is reused by a genuinely approved canon-only story successor.",
+      "expected": "Use accepted shotsCompatibleWithStory predicate and selected-plan membership instead of requiring origin story ID to equal active story ID."
+    },
+    {
+      "priority": "P2",
+      "path": "lib/jobs/production/queue.ts",
+      "line": 125,
+      "trigger": "Honored-input receipt contains required rejected/missing conditioning; completion checks receipt job identity only.",
+      "expected": "Validate exact ordered requested roles/assets and reject explicit required conditioning drops before committing a take."
+    }
+  ],
+  "known_remaining": [
+    "CLI heartbeat/ownership/readiness composition",
+    "Import staging/orphan cleanup",
+    "Provider completed SDK-shaped result fallback"
+  ],
+  "unverified": [
+    "Root reproduces focused41tests; this review ran no tests",
+    "Full C04 packet remains incomplete; no integration approval"
+  ],
+  "paid_calls": [],
+  "root_reproduction": {
+    "tests": 41,
+    "exit_code": 0,
+    "output_file": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/root-checkpoint-tests.txt",
+    "sha256": "0c7283a22744ed4f00be202b0d17d2367605a834e207b26d5ac2d37b08fa4f5d"
+  },
+  "worker_report": {
+    "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/C04-checkpoint-resume.json",
+    "sha256": "7f759b2ca0396c199622d09eaf6acc72246fa8df92077201648ef3346b0d7895",
+    "evidence_integrity": [
+      {
+        "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/focused-checkpoint-resume.txt",
+        "sha256": "d033922f7a7eb57f97daad57d79012c63dc24b98a303c552565ebf5da6cac71b",
+        "matches_report": true
+      },
+      {
+        "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/typecheck-checkpoint-resume.txt",
+        "sha256": "bd9e056aa38b37d4abac445ddeafe0a0fa8d1607547e4269bf3d4f2b61d8b8e0",
+        "matches_report": true
+      },
+      {
+        "path": "/Users/abid/.codex/worktrees/production-worker/perabyte-studio/evidence/C04/diff-check-checkpoint-resume.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "matches_report": true
+      }
+    ],
+    "changed_files_match": true
+  }
+}
